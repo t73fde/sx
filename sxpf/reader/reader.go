@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
 // Copyright (c) 2022-present Detlef Stern
 //
-// This file is part of sxpf.
+// This file is part of sx.
 //
-// sxpf is licensed under the latest version of the EUPL // (European Union
+// sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
 //-----------------------------------------------------------------------------
