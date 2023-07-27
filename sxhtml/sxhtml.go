@@ -16,29 +16,29 @@ import (
 	"sort"
 	"strings"
 
-	"zettelstore.de/sx.fossil/sxpf"
+	"zettelstore.de/sx.fossil"
 )
 
 const (
 	// keyVoid marks void HTML elements, i.e. w/o end tag.
-	keyVoid = sxpf.Keyword("sxhtml:isVoid")
+	keyVoid = sx.Keyword("sxhtml:isVoid")
 
 	// keyIgnoreEmpty marks HTML tags that may be ignored if empty.
-	keyIgnoreEmpty = sxpf.Keyword("sxhtml:igEm")
+	keyIgnoreEmpty = sx.Keyword("sxhtml:igEm")
 
 	// keyWithNL marks HTML elements that may start with a new-line character
-	keyWithNL = sxpf.Keyword("sxhtml:nl")
+	keyWithNL = sx.Keyword("sxhtml:nl")
 
 	// keyAlwaysNL signals that an new-line character should be emitted if needed.
-	keyAlwaysNL = sxpf.Keyword("sxhtml:alwaysNL")
+	keyAlwaysNL = sx.Keyword("sxhtml:alwaysNL")
 
 	// keyAttr specifies the type of an HTML attribute value.
 	// This controls how attribute values are escaped.
-	keyAttr   = sxpf.Keyword("sxhtml:attrType")
-	attrPlain = sxpf.Keyword("sxhtml:plain") // No further escape needed
-	attrURL   = sxpf.Keyword("sxhtml:url")   // Escape URL
-	attrCSS   = sxpf.Keyword("sxhtml:css")   // Special CSS escaping
-	attrJS    = sxpf.Keyword("sxhtml:js")    // Escape JavaScript
+	keyAttr   = sx.Keyword("sxhtml:attrType")
+	attrPlain = sx.Keyword("sxhtml:plain") // No further escape needed
+	attrURL   = sx.Keyword("sxhtml:url")   // Escape URL
+	attrCSS   = sx.Keyword("sxhtml:css")   // Special CSS escaping
+	attrJS    = sx.Keyword("sxhtml:js")    // Escape JavaScript
 )
 
 // Names for special symbols.
@@ -53,8 +53,8 @@ const (
 
 // Generator is the object that allows to generate HTML.
 type Generator struct {
-	sf          sxpf.SymbolFactory
-	symAttr     *sxpf.Symbol
+	sf          sx.SymbolFactory
+	symAttr     *sx.Symbol
 	withNewline bool
 }
 
@@ -65,7 +65,7 @@ type Option func(*Generator)
 func WithNewline(gen *Generator) { gen.withNewline = true }
 
 // NewGenerator creates a new generator based on a symbol factory.
-func NewGenerator(sf sxpf.SymbolFactory, opts ...Option) *Generator {
+func NewGenerator(sf sx.SymbolFactory, opts ...Option) *Generator {
 	gen := Generator{sf: sf}
 	for _, opt := range opts {
 		opt(&gen)
@@ -75,14 +75,14 @@ func NewGenerator(sf sxpf.SymbolFactory, opts ...Option) *Generator {
 	}
 	gen.symAttr = sf.MustMake(NameSymAttr)
 
-	addBinding := func(symName string, key, val sxpf.Object) {
+	addBinding := func(symName string, key, val sx.Object) {
 		if sym := sf.MustMake(symName); sym.Assoc(key) == nil {
 			sym.Cons(key, val)
 		}
 	}
 
 	for _, voidTag := range voidTags {
-		addBinding(voidTag, keyVoid, sxpf.Nil())
+		addBinding(voidTag, keyVoid, sx.Nil())
 	}
 
 	for _, urlAttr := range urlAttrs {
@@ -93,15 +93,15 @@ func NewGenerator(sf sxpf.SymbolFactory, opts ...Option) *Generator {
 
 	if gen.withNewline {
 		for _, alNlTag := range allNLTags {
-			addBinding(alNlTag, keyAlwaysNL, sxpf.Nil())
+			addBinding(alNlTag, keyAlwaysNL, sx.Nil())
 		}
 		for _, nlTag := range nlTags {
-			addBinding(nlTag, keyWithNL, sxpf.Nil())
+			addBinding(nlTag, keyWithNL, sx.Nil())
 		}
 	}
 
 	for _, emptyTag := range emptyTags {
-		addBinding(emptyTag, keyIgnoreEmpty, sxpf.Nil())
+		addBinding(emptyTag, keyIgnoreEmpty, sx.Nil())
 	}
 
 	return &gen
@@ -136,14 +136,14 @@ var (
 )
 
 // WriteHTML emit HTML code for the s-expression to the given writer.
-func (gen *Generator) WriteHTML(w io.Writer, obj sxpf.Object) (int, error) {
+func (gen *Generator) WriteHTML(w io.Writer, obj sx.Object) (int, error) {
 	enc := myEncoder{gen: gen, pr: printer{w: w}, lastWasTag: true}
 	enc.generate(obj)
 	return enc.pr.length, enc.pr.err
 }
 
 // WriteListHTML emits HTML code for a list of s-expressions to the given writer.
-func (gen *Generator) WriteListHTML(w io.Writer, lst *sxpf.Pair) (int, error) {
+func (gen *Generator) WriteListHTML(w io.Writer, lst *sx.Pair) (int, error) {
 	enc := myEncoder{gen: gen, pr: printer{w: w}, lastWasTag: true}
 	for elem := lst; elem != nil; elem = elem.Tail() {
 		enc.generate(elem.Car())
@@ -157,17 +157,17 @@ type myEncoder struct {
 	lastWasTag bool
 }
 
-func (enc *myEncoder) generate(obj sxpf.Object) {
+func (enc *myEncoder) generate(obj sx.Object) {
 	switch o := obj.(type) {
-	case sxpf.String:
+	case sx.String:
 		enc.pr.printHTML(o.String())
 		enc.lastWasTag = false
-	case *sxpf.Pair:
+	case *sx.Pair:
 		if o.IsNil() {
 			enc.lastWasTag = false
 			return
 		}
-		if sym, isSymbol := sxpf.GetSymbol(o.Car()); isSymbol {
+		if sym, isSymbol := sx.GetSymbol(o.Car()); isSymbol {
 			tail := o.Tail()
 			if s := sym.String(); s[0] == '@' {
 				switch s {
@@ -195,27 +195,27 @@ func (enc *myEncoder) generate(obj sxpf.Object) {
 	}
 }
 
-func (enc *myEncoder) generateList(lst *sxpf.Pair) {
+func (enc *myEncoder) generateList(lst *sx.Pair) {
 	for n := lst; n != nil; n = n.Tail() {
 		enc.generate(n.Car())
 	}
 }
 
-func (enc *myEncoder) writeCDATA(elems *sxpf.Pair) {
+func (enc *myEncoder) writeCDATA(elems *sx.Pair) {
 	enc.pr.printString("<![CDATA[")
 	enc.writeNoEscape(elems)
 	enc.pr.printString("]]>")
 }
 
-func (enc *myEncoder) writeNoEscape(elems *sxpf.Pair) {
+func (enc *myEncoder) writeNoEscape(elems *sx.Pair) {
 	for n := elems; n != nil; n = n.Tail() {
-		if s, isString := sxpf.GetString(n.Car()); isString {
+		if s, isString := sx.GetString(n.Car()); isString {
 			enc.pr.printString(s.String())
 		}
 	}
 }
 
-func (enc *myEncoder) writeComment(elems *sxpf.Pair) {
+func (enc *myEncoder) writeComment(elems *sx.Pair) {
 	enc.pr.printString("<!--")
 	for n := elems; n != nil; n = n.Tail() {
 		commentVal := n.Car() // TODO: check for valid node types
@@ -224,7 +224,7 @@ func (enc *myEncoder) writeComment(elems *sxpf.Pair) {
 	}
 	enc.pr.printString(" -->")
 }
-func (enc *myEncoder) writeCommentML(elems *sxpf.Pair) {
+func (enc *myEncoder) writeCommentML(elems *sx.Pair) {
 	enc.pr.printString("<!--")
 	for n := elems; n != nil; n = n.Tail() {
 		commentVal := n.Car() // TODO: check for valid node types
@@ -234,13 +234,13 @@ func (enc *myEncoder) writeCommentML(elems *sxpf.Pair) {
 	enc.pr.printString("\n-->\n")
 }
 
-func (enc *myEncoder) writeDoctype(elems *sxpf.Pair) {
+func (enc *myEncoder) writeDoctype(elems *sx.Pair) {
 	// TODO: check for multiple doctypes, error on second
 	enc.pr.printString("<!DOCTYPE html>\n")
 	enc.generateList(elems)
 }
 
-func (enc *myEncoder) writeTag(sym *sxpf.Symbol, elems *sxpf.Pair) {
+func (enc *myEncoder) writeTag(sym *sx.Symbol, elems *sx.Pair) {
 	if sym.Assoc(keyIgnoreEmpty) != nil && ignoreEmptyStrings(elems) == nil {
 		return
 	}
@@ -270,39 +270,39 @@ func (enc *myEncoder) writeTag(sym *sxpf.Symbol, elems *sxpf.Pair) {
 	enc.lastWasTag = withNewline
 }
 
-func ignoreEmptyStrings(elem *sxpf.Pair) *sxpf.Pair {
+func ignoreEmptyStrings(elem *sx.Pair) *sx.Pair {
 	for node := elem; node != nil; node = node.Tail() {
-		if s, isString := sxpf.GetString(node.Car()); !isString || s != "" {
+		if s, isString := sx.GetString(node.Car()); !isString || s != "" {
 			return node
 		}
 	}
 	return nil
 }
 
-func (enc *myEncoder) getAttributes(lst *sxpf.Pair) *sxpf.Pair {
-	pair, isPair := sxpf.GetPair(lst.Car())
+func (enc *myEncoder) getAttributes(lst *sx.Pair) *sx.Pair {
+	pair, isPair := sx.GetPair(lst.Car())
 	if !isPair || pair == nil {
 		return nil
 	}
-	sym, isSymbol := sxpf.GetSymbol(pair.Car())
+	sym, isSymbol := sx.GetSymbol(pair.Car())
 	if !isSymbol || !sym.IsEqual(enc.gen.symAttr) {
 		return nil
 	}
 	return pair.Tail()
 }
 
-func (enc *myEncoder) writeAttributes(attrs *sxpf.Pair) {
+func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 	length := attrs.Length()
 	found := make(map[string]struct{}, length)
 	empty := make(map[string]struct{}, length)
 	a := make(map[string]string, length)
 	sf := enc.gen.sf
 	for node := attrs; node != nil; node = node.Tail() {
-		pair, isPair := sxpf.GetPair(node.Car())
+		pair, isPair := sx.GetPair(node.Car())
 		if !isPair {
 			continue
 		}
-		sym, isSymbol := sxpf.GetSymbol(pair.Car())
+		sym, isSymbol := sx.GetSymbol(pair.Car())
 		if !isSymbol {
 			continue
 		}
@@ -311,14 +311,14 @@ func (enc *myEncoder) writeAttributes(attrs *sxpf.Pair) {
 			continue
 		}
 		found[key] = struct{}{}
-		if cdr := pair.Cdr(); !sxpf.IsNil(cdr) {
-			var obj sxpf.Object
-			if tail, isTail := sxpf.GetPair(cdr); isTail {
+		if cdr := pair.Cdr(); !sx.IsNil(cdr) {
+			var obj sx.Object
+			if tail, isTail := sx.GetPair(cdr); isTail {
 				obj = tail.Car()
 			} else {
 				obj = cdr
 			}
-			if sxpf.False.IsEql(obj) || sxpf.IsList(obj) {
+			if sx.False.IsEql(obj) || sx.IsList(obj) {
 				continue
 			}
 			a[key] = strings.TrimSpace(getAttributeValue(sym, obj, sf))
@@ -343,7 +343,7 @@ func (enc *myEncoder) writeAttributes(attrs *sxpf.Pair) {
 	}
 }
 
-func getAttributeValue(sym *sxpf.Symbol, value sxpf.Object, sf sxpf.SymbolFactory) string {
+func getAttributeValue(sym *sx.Symbol, value sx.Object, sf sx.SymbolFactory) string {
 	switch getAttributeType(sym, sf) {
 	case attrURL:
 		return urlEscape(value.String())
@@ -352,7 +352,7 @@ func getAttributeValue(sym *sxpf.Symbol, value sxpf.Object, sf sxpf.SymbolFactor
 	}
 }
 
-func getAttributeType(sym *sxpf.Symbol, sf sxpf.SymbolFactory) sxpf.Keyword {
+func getAttributeType(sym *sx.Symbol, sf sx.SymbolFactory) sx.Keyword {
 	name := sym.String()
 	if dataName, isData := strings.CutPrefix(name, "data-"); isData {
 		name = dataName
@@ -366,7 +366,7 @@ func getAttributeType(sym *sxpf.Symbol, sf sxpf.SymbolFactory) sxpf.Keyword {
 	}
 
 	if p := sym.Assoc(keyAttr); p != nil {
-		return p.Cdr().(sxpf.Keyword)
+		return p.Cdr().(sx.Keyword)
 	}
 
 	// Attribute names starting with "on" (e.g. "onload") are treated as JavaScript values.

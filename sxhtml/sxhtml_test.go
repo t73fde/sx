@@ -14,9 +14,9 @@ import (
 	"strings"
 	"testing"
 
+	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxhtml"
-	"zettelstore.de/sx.fossil/sxpf"
-	"zettelstore.de/sx.fossil/sxpf/reader"
+	"zettelstore.de/sx.fossil/sxreader"
 )
 
 type testcase struct {
@@ -67,22 +67,22 @@ func TestSXHTML(t *testing.T) {
 		{name: "IgnoreTagWithEmptyString2", src: `(div "" "")`, exp: ``},
 		{name: "NoIgnoreTagWithTagAfterEmptySpace", src: `(div "" (p "A"))`, exp: `<div><p>A</p></div>`},
 	}
-	checkTestcases(t, testcases, func(sf sxpf.SymbolFactory) *sxhtml.Generator { return sxhtml.NewGenerator(sf) })
+	checkTestcases(t, testcases, func(sf sx.SymbolFactory) *sxhtml.Generator { return sxhtml.NewGenerator(sf) })
 }
 
 func TestWithNewline(t *testing.T) {
 	testcases := []testcase{
 		{name: "HeadBody", src: `(@@@@ (html (head (title "T"))))`, exp: "<!DOCTYPE html>\n<html>\n<head>\n<title>T</title>\n</head>\n</html>"},
 	}
-	checkTestcases(t, testcases, func(sf sxpf.SymbolFactory) *sxhtml.Generator {
+	checkTestcases(t, testcases, func(sf sx.SymbolFactory) *sxhtml.Generator {
 		return sxhtml.NewGenerator(sf, sxhtml.WithNewline)
 	})
 }
 
-func checkTestcases(t *testing.T, testcases []testcase, newGen func(sxpf.SymbolFactory) *sxhtml.Generator) {
+func checkTestcases(t *testing.T, testcases []testcase, newGen func(sx.SymbolFactory) *sxhtml.Generator) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			rd := reader.MakeReader(strings.NewReader(tc.src))
+			rd := sxreader.MakeReader(strings.NewReader(tc.src))
 			val, err := rd.Read()
 			if err != nil {
 				t.Error(err)
