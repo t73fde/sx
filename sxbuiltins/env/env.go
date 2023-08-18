@@ -18,12 +18,12 @@ import (
 )
 
 // Env returns the current environment
-func Env(_ *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
+func Env(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := sxbuiltins.CheckArgs(args, 0, 0)
 	if err != nil {
 		return nil, err
 	}
-	return env, nil
+	return frame.Environment(), nil
 }
 
 // ParentEnv returns the parent environment of the given environment.
@@ -57,15 +57,12 @@ func AllBindings(args []sx.Object) (sx.Object, error) {
 }
 
 // BoundP returns true, if the given symbol is bound in the given environment.
-func BoundP(_ *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 2)
+func BoundP(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	err := sxbuiltins.CheckArgs(args, 1, 1)
 	sym, err := sxbuiltins.GetSymbol(err, args, 0)
-	if len(args) > 1 {
-		env, err = sxbuiltins.GetEnvironment(err, args, 1)
-	}
 	if err != nil {
 		return nil, err
 	}
-	_, found := sxeval.Resolve(env, sym)
+	_, found := frame.Resolve(sym)
 	return sx.MakeBoolean(found), nil
 }

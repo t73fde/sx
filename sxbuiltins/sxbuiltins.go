@@ -138,12 +138,12 @@ func GetCallable(err error, args []sx.Object, pos int) (sxeval.Callable, error) 
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func ParseExprSeq(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (front []sxeval.Expr, last sxeval.Expr, _ error) {
+func ParseExprSeq(frame *sxeval.Frame, args *sx.Pair) (front []sxeval.Expr, last sxeval.Expr, _ error) {
 	if args == nil {
 		return nil, nil, nil
 	}
 	for node := args; ; {
-		ex, err := eng.Parse(env, node.Car())
+		ex, err := frame.Parse(node.Car())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -156,7 +156,7 @@ func ParseExprSeq(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (fr
 			node = next
 			continue
 		}
-		ex, err = eng.Parse(env, cdr)
+		ex, err = frame.Parse(cdr)
 		if err != nil {
 			return nil, nil, err
 		}

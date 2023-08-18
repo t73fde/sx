@@ -45,7 +45,7 @@ func TestBuiltinSimple(t *testing.T) {
 
 	args := []sx.Object{}
 	for i := 0; i < 10; i++ {
-		res, err := b.Call(nil, nil, args)
+		res, err := b.Call(nil, args)
 		if err != nil {
 			t.Error(err)
 			break

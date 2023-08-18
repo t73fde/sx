@@ -40,9 +40,13 @@ func (b BuiltinA) Print(w io.Writer) (int, error) { return printBuiltin(w, b) }
 func (b BuiltinA) Name(eng *Engine) string        { return eng.BuiltinName(b) }
 
 // Call the builtin function.
-func (b BuiltinA) Call(eng *Engine, _ Environment, args []sx.Object) (sx.Object, error) {
+func (b BuiltinA) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
 	res, err := b(args)
-	err = handleBuiltinError(eng, b, err)
+	var engine *Engine
+	if frame != nil {
+		engine = frame.engine
+	}
+	err = handleBuiltinError(engine, b, err)
 	return res, err
 }
 
@@ -64,22 +68,26 @@ func handleBuiltinError(eng *Engine, b Builtin, err error) error {
 	return err
 }
 
-// BuiltinEEA is the signature of builtin functions that use all information,
-// engine, environment, and arguments.
-type BuiltinEEA func(*Engine, Environment, []sx.Object) (sx.Object, error)
+// BuiltinFA is the signature of builtin functions that use all information,
+// frame (i.e. engine, environment), and arguments.
+type BuiltinFA func(*Frame, []sx.Object) (sx.Object, error)
 
-func (b BuiltinEEA) IsNil() bool                    { return b == nil }
-func (b BuiltinEEA) IsAtom() bool                   { return b == nil }
-func (b BuiltinEEA) IsEql(other sx.Object) bool     { return sx.Object(b) == other }
-func (b BuiltinEEA) IsEqual(other sx.Object) bool   { return b.IsEql(other) }
-func (b BuiltinEEA) String() string                 { return b.Repr() }
-func (b BuiltinEEA) Repr() string                   { return sx.Repr(b) }
-func (b BuiltinEEA) Print(w io.Writer) (int, error) { return printBuiltin(w, b) }
-func (b BuiltinEEA) Name(eng *Engine) string        { return eng.BuiltinName(b) }
+func (b BuiltinFA) IsNil() bool                    { return b == nil }
+func (b BuiltinFA) IsAtom() bool                   { return b == nil }
+func (b BuiltinFA) IsEql(other sx.Object) bool     { return sx.Object(b) == other }
+func (b BuiltinFA) IsEqual(other sx.Object) bool   { return b.IsEql(other) }
+func (b BuiltinFA) String() string                 { return b.Repr() }
+func (b BuiltinFA) Repr() string                   { return sx.Repr(b) }
+func (b BuiltinFA) Print(w io.Writer) (int, error) { return printBuiltin(w, b) }
+func (b BuiltinFA) Name(eng *Engine) string        { return eng.BuiltinName(b) }
 
 // Call the builtin function.
-func (b BuiltinEEA) Call(eng *Engine, env Environment, args []sx.Object) (sx.Object, error) {
-	res, err := b(eng, env, args)
-	err = handleBuiltinError(eng, b, err)
+func (b BuiltinFA) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
+	res, err := b(frame, args)
+	var engine *Engine
+	if frame != nil {
+		engine = frame.engine
+	}
+	err = handleBuiltinError(engine, b, err)
 	return res, err
 }

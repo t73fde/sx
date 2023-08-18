@@ -19,7 +19,7 @@ import (
 )
 
 // DefineSyntax parses a (define name value) form.
-func SetXS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func SetXS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("needs at least two arguments")
 	}
@@ -28,7 +28,7 @@ func SetXS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Ex
 	if !ok {
 		return nil, fmt.Errorf("argument 1 must be a symbol, but is: %T/%v", car, car)
 	}
-	val, err := parseValueDefinition(eng, env, args)
+	val, err := parseValueDefinition(frame, args)
 	if err != nil {
 		return val, err
 	}
@@ -41,13 +41,13 @@ type SetXExpr struct {
 	Val sxeval.Expr
 }
 
-func (se *SetXExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
-	if _, found := env.Lookup(se.Sym); !found {
-		return nil, sxeval.NotBoundError{Env: env, Sym: se.Sym}
+func (se *SetXExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+	if _, found := frame.Lookup(se.Sym); !found {
+		return nil, frame.MakeNotBoundError(se.Sym)
 	}
-	val, err := eng.Execute(env, se.Val)
+	val, err := frame.Execute(se.Val)
 	if err == nil {
-		err = env.Bind(se.Sym, val)
+		err = frame.Bind(se.Sym, val)
 	}
 	return val, err
 }

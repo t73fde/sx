@@ -23,7 +23,7 @@ import (
 )
 
 // LetS parses the `(let (binding...) expr...)` syntax.`
-func LetS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func LetS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("binding spec and body missing")
 	}
@@ -36,7 +36,7 @@ func LetS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Exp
 		return nil, sx.ErrImproper{Pair: args}
 	}
 	if bindings == nil {
-		return cond.BeginS(eng, env, body)
+		return cond.BeginS(frame, body)
 	}
 	letExpr := LetExpr{
 		Symbols: nil,
@@ -44,7 +44,7 @@ func LetS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Exp
 		Front:   nil,
 		Last:    nil,
 	}
-	letEnv := sxeval.MakeChildEnvironment(env, "let-def", 128)
+	letFrame := frame.MakeChildFrame("let-def", 128)
 	for node := bindings; node != nil; {
 		sym, err := callable.GetParameterSymbol(letExpr.Symbols, node.Car())
 		if err != nil {
@@ -57,11 +57,11 @@ func LetS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Exp
 		if next == nil {
 			return nil, fmt.Errorf("binding missing for %v", sym)
 		}
-		expr, err := eng.Parse(env, next.Car())
+		expr, err := frame.Parse(next.Car())
 		if err != nil {
 			return nil, err
 		}
-		err = letEnv.Bind(sym, sx.MakeUndefined())
+		err = letFrame.Bind(sym, sx.MakeUndefined())
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +74,7 @@ func LetS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Exp
 		node = next
 	}
 
-	front, last, err := sxbuiltins.ParseExprSeq(eng, letEnv, body)
+	front, last, err := sxbuiltins.ParseExprSeq(letFrame, body)
 	if err != nil {
 		return nil, err
 	}
@@ -91,25 +91,25 @@ type LetExpr struct {
 	Last    sxeval.Expr
 }
 
-func (le *LetExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
-	letEnv := sxeval.MakeChildEnvironment(env, "let", len(le.Symbols))
+func (le *LetExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+	letFrame := frame.MakeChildFrame("let", len(le.Symbols))
 	for i, sym := range le.Symbols {
-		obj, err := eng.Execute(env, le.Expr[i])
+		obj, err := frame.Execute(le.Expr[i])
 		if err != nil {
 			return nil, err
 		}
-		err = letEnv.Bind(sym, obj)
+		err = letFrame.Bind(sym, obj)
 		if err != nil {
 			return nil, err
 		}
 	}
 	for _, expr := range le.Front {
-		_, err := eng.Execute(letEnv, expr)
+		_, err := letFrame.Execute(expr)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return eng.ExecuteTCO(letEnv, le.Last)
+	return letFrame.ExecuteTCO(le.Last)
 }
 
 func (le *LetExpr) Print(w io.Writer) (int, error) {

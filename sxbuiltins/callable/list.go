@@ -19,7 +19,7 @@ import (
 )
 
 // Map returns a list, where all member are the result of the given function to all original list members.
-func Map(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
+func Map(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := sxbuiltins.CheckArgs(args, 2, 2)
 	fn, err := sxbuiltins.GetCallable(err, args, 0)
 	lst, err := sxbuiltins.GetList(err, args, 1)
@@ -30,7 +30,7 @@ func Map(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Objec
 	if sx.IsNil(lst) {
 		return sx.Nil(), nil
 	}
-	val, err := eng.Call(env, fn, []sx.Object{lst.Car()})
+	val, err := frame.Call(fn, []sx.Object{lst.Car()})
 	if err != nil {
 		return sx.Nil(), nil
 	}
@@ -43,14 +43,14 @@ func Map(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Objec
 		}
 		pair, isPair := sx.GetPair(cdr2)
 		if !isPair {
-			val2, err2 := eng.Call(env, fn, []sx.Object{cdr2})
+			val2, err2 := frame.Call(fn, []sx.Object{cdr2})
 			if err2 != nil {
 				return result, err2
 			}
 			curr.SetCdr(val2)
 			break
 		}
-		val2, err2 := eng.Call(env, fn, []sx.Object{pair.Car()})
+		val2, err2 := frame.Call(fn, []sx.Object{pair.Car()})
 		if err2 != nil {
 			return result, err2
 		}
@@ -61,7 +61,7 @@ func Map(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Objec
 }
 
 // Apply calls the given function with the given arguments.
-func Apply(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
+func Apply(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := sxbuiltins.CheckArgs(args, 2, 2)
 	lst, err := sxbuiltins.GetList(err, args, 1)
 	if err != nil {
@@ -72,13 +72,13 @@ func Apply(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Obj
 		Args: nil,
 	}
 	if lst == nil {
-		return eng.ExecuteTCO(env, &expr)
+		return frame.ExecuteTCO(&expr)
 	}
 	expr.Args = append(expr.Args, sxeval.ObjExpr{Obj: lst.Car()})
 	for node := lst; ; {
 		cdr := node.Cdr()
 		if sx.IsNil(cdr) {
-			return eng.ExecuteTCO(env, &expr)
+			return frame.ExecuteTCO(&expr)
 		}
 		if next, ok2 := sx.GetPair(cdr); ok2 {
 			node = next
@@ -90,7 +90,7 @@ func Apply(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Obj
 }
 
 // Fold will apply the given function pairwise to list of args.
-func Fold(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
+func Fold(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := sxbuiltins.CheckArgs(args, 3, 3)
 	fn, err := sxbuiltins.GetCallable(err, args, 0)
 	lst, err := sxbuiltins.GetList(err, args, 2)
@@ -102,7 +102,7 @@ func Fold(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Obje
 	for node := lst; node != nil; {
 		params[0] = node.Car()
 		params[1] = res
-		res, err = eng.Call(env, fn, params)
+		res, err = frame.Call(fn, params)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +116,7 @@ func Fold(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Obje
 }
 
 // FoldReverse will apply the given function reversed pairwise to reversed list of args.
-func FoldReverse(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
+func FoldReverse(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := sxbuiltins.CheckArgs(args, 3, 3)
 	fn, err := sxbuiltins.GetCallable(err, args, 0)
 	lst, err := sxbuiltins.GetList(err, args, 2)
@@ -133,7 +133,7 @@ func FoldReverse(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (
 	for node := rev; node != nil; {
 		params[0] = node.Car()
 		params[1] = res
-		res, err = eng.Call(env, fn, params)
+		res, err = frame.Call(fn, params)
 		if err != nil {
 			return nil, err
 		}

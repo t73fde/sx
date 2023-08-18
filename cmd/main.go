@@ -46,12 +46,13 @@ type mainParserExecutor struct {
 	logExecutor  bool
 }
 
-func (mpe *mainParserExecutor) Parse(eng *sxeval.Engine, env sxeval.Environment, form sx.Object) (sxeval.Expr, error) {
+func (mpe *mainParserExecutor) Parse(frame *sxeval.Frame, form sx.Object) (sxeval.Expr, error) {
 	if !mpe.logParser {
-		return mpe.origParser.Parse(eng, env, form)
+		return mpe.origParser.Parse(frame, form)
 	}
+	env := frame.Environment()
 	fmt.Printf(";P %v<-%v %T %v\n", env, env.Parent(), form, form)
-	expr, err := mpe.origParser.Parse(eng, env, form)
+	expr, err := mpe.origParser.Parse(frame, form)
 	if err != nil {
 		return nil, err
 	}
@@ -61,14 +62,15 @@ func (mpe *mainParserExecutor) Parse(eng *sxeval.Engine, env sxeval.Environment,
 	return expr, nil
 }
 
-func (mpe *mainParserExecutor) Execute(eng *sxeval.Engine, env sxeval.Environment, expr sxeval.Expr) (sx.Object, error) {
+func (mpe *mainParserExecutor) Execute(frame *sxeval.Frame, expr sxeval.Expr) (sx.Object, error) {
 	if !mpe.logExecutor {
-		return mpe.origExecutor.Execute(eng, env, expr)
+		return mpe.origExecutor.Execute(frame, expr)
 	}
+	env := frame.Environment()
 	fmt.Printf(";X %v<-%v ", env, env.Parent())
 	expr.Print(os.Stdout)
 	fmt.Println()
-	obj, err := mpe.origExecutor.Execute(eng, env, expr)
+	obj, err := mpe.origExecutor.Execute(frame, expr)
 	if err != nil {
 		return nil, err
 	}
@@ -111,9 +113,9 @@ var builtinsA = []struct {
 	{"callable?", callable.CallableP},
 	{"parent-env", env.ParentEnv}, {"bindings", env.Bindings}, {"all-bindings", env.AllBindings},
 }
-var builtinsEEA = []struct {
+var builtinsFA = []struct {
 	name string
-	fn   sxeval.BuiltinEEA
+	fn   sxeval.BuiltinFA
 }{
 	{"map", callable.Map}, {"apply", callable.Apply},
 	{"fold", callable.Fold}, {"fold-reverse", callable.FoldReverse},
@@ -151,8 +153,8 @@ func main() {
 	for _, bDef := range builtinsA {
 		engine.BindBuiltinA(bDef.name, bDef.fn)
 	}
-	for _, bDef := range builtinsEEA {
-		engine.BindBuiltinEEA(bDef.name, bDef.fn)
+	for _, bDef := range builtinsFA {
+		engine.BindBuiltinFA(bDef.name, bDef.fn)
 	}
 	engine.Bind("UNDEFINED", sx.MakeUndefined())
 	engine.BindBuiltinA("log-reader", func(args []sx.Object) (sx.Object, error) {

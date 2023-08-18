@@ -45,27 +45,27 @@ func InstallQuasiQuoteReader(rd *sxreader.Reader, symQQ *sx.Symbol, chQQ rune, s
 
 }
 
-func InstallQuasiQuoteSyntax(env sxeval.Environment, symQQ, symUQ, symUQS *sx.Symbol) error {
-	err := env.Bind(symQQ, sxeval.MakeSyntax(symQQ.Name(), makeQuasiQuoteSyntax(symQQ, symUQ, symUQS)))
+func InstallQuasiQuoteSyntax(env sxeval.Environment, symQQ, symUQ, symUQS *sx.Symbol) (sxeval.Environment, error) {
+	newEnv, err := env.Bind(symQQ, sxeval.MakeSyntax(symQQ.Name(), makeQuasiQuoteSyntax(symQQ, symUQ, symUQS)))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	err = env.Bind(symUQ, sxeval.MakeSyntax(symUQ.Name(), makeUnquoteSyntax(symQQ)))
+	newEnv, err = newEnv.Bind(symUQ, sxeval.MakeSyntax(symUQ.Name(), makeUnquoteSyntax(symQQ)))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	err = env.Bind(symUQS, sxeval.MakeSyntax(symUQS.Name(), makeUnquoteSyntax(symQQ)))
-	return err
+	newEnv, err = newEnv.Bind(symUQS, sxeval.MakeSyntax(symUQS.Name(), makeUnquoteSyntax(symQQ)))
+	return newEnv, err
 }
 
 func makeUnquoteSyntax(symQQ *sx.Symbol) sxeval.SyntaxFn {
-	return func(*sxeval.Engine, sxeval.Environment, *sx.Pair) (sxeval.Expr, error) {
+	return func(*sxeval.Frame, *sx.Pair) (sxeval.Expr, error) {
 		return nil, fmt.Errorf("not allowed outside %s", symQQ.Name())
 	}
 }
 
 func makeQuasiQuoteSyntax(symQQ, symUQ, symUQS *sx.Symbol) sxeval.SyntaxFn {
-	return func(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
+	return func(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs
 		}
@@ -73,8 +73,7 @@ func makeQuasiQuoteSyntax(symQQ, symUQ, symUQS *sx.Symbol) sxeval.SyntaxFn {
 			return nil, fmt.Errorf("more than one argument: %v", args)
 		}
 		qqp := qqParser{
-			engine:             eng,
-			env:                env,
+			frame:              frame,
 			symQuasiQuote:      symQQ,
 			symUnquote:         symUQ,
 			symUnquoteSplicing: symUQS,
@@ -84,15 +83,14 @@ func makeQuasiQuoteSyntax(symQQ, symUQ, symUQS *sx.Symbol) sxeval.SyntaxFn {
 }
 
 type qqParser struct {
-	engine             *sxeval.Engine
-	env                sxeval.Environment
+	frame              *sxeval.Frame
 	symQuasiQuote      *sx.Symbol
 	symUnquote         *sx.Symbol
 	symUnquoteSplicing *sx.Symbol
 }
 
 func (qqp *qqParser) parse(obj sx.Object) (sxeval.Expr, error) {
-	return qqp.engine.Parse(qqp.env, obj)
+	return qqp.frame.Parse(obj)
 }
 
 func (qqp *qqParser) parseQQ(obj sx.Object) (sxeval.Expr, error) {
@@ -395,8 +393,8 @@ func getUnquoteObj(sym *sx.Symbol, lst *sx.Pair) (sx.Object, error) {
 
 type MakeListExpr struct{ Elem sxeval.Expr }
 
-func (mle MakeListExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
-	elem, err := eng.Execute(env, mle.Elem)
+func (mle MakeListExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+	elem, err := frame.Execute(mle.Elem)
 	if err != nil {
 		return nil, err
 	}

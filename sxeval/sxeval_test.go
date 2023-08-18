@@ -72,7 +72,7 @@ func TestEval(t *testing.T) {
 	}
 	sf := sx.MakeMappedFactory()
 	root := createTestEnv(sf)
-	root.Bind(sf.MustMake("quote"), sxeval.MakeSyntax("quote", func(_ *sxeval.Engine, _ sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
+	root.Bind(sf.MustMake("quote"), sxeval.MakeSyntax("quote", func(_ *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 		return sxeval.ObjExpr{Obj: args.Car()}, nil
 	}))
 	engine := sxeval.MakeEngine(sf, root)

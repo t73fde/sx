@@ -35,7 +35,7 @@ type Environment interface {
 
 	// Bind creates a local mapping with a given symbol and object.
 	// A previous mapping will be overwritten.
-	Bind(*sx.Symbol, sx.Object) error
+	Bind(*sx.Symbol, sx.Object) (Environment, error)
 
 	// Lookup will search for a local binding of the given symbol. If not
 	// found, the search will *not* be continued in the parent environment.
@@ -46,7 +46,7 @@ type Environment interface {
 	Bindings() *sx.Pair
 
 	// Unbind removes the mapping of the given symbol to an object.
-	Unbind(*sx.Symbol) error
+	Unbind(*sx.Symbol) (Environment, error)
 
 	// Freeze sets the environment in a read-only state.
 	Freeze()
@@ -137,7 +137,7 @@ func (re *rootEnvironment) Print(w io.Writer) (int, error) {
 	return length, err
 }
 func (re *rootEnvironment) Parent() Environment { return nil }
-func (re *rootEnvironment) Bind(sym *sx.Symbol, obj sx.Object) error {
+func (re *rootEnvironment) Bind(sym *sx.Symbol, obj sx.Object) (Environment, error) {
 	re.mu.Lock()
 	var err error
 	if re.frozen {
@@ -146,7 +146,7 @@ func (re *rootEnvironment) Bind(sym *sx.Symbol, obj sx.Object) error {
 		re.vars[sym] = obj
 	}
 	re.mu.Unlock()
-	return err
+	return re, err
 }
 func (re *rootEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	re.mu.RLock()
@@ -160,7 +160,7 @@ func (re *rootEnvironment) Bindings() *sx.Pair {
 	re.mu.RUnlock()
 	return al
 }
-func (re *rootEnvironment) Unbind(sym *sx.Symbol) error {
+func (re *rootEnvironment) Unbind(sym *sx.Symbol) (Environment, error) {
 	re.mu.Lock()
 	var err error
 	if re.frozen {
@@ -169,7 +169,7 @@ func (re *rootEnvironment) Unbind(sym *sx.Symbol) error {
 		delete(re.vars, sym)
 	}
 	re.mu.Unlock()
-	return err
+	return re, err
 }
 func (re *rootEnvironment) Freeze() { re.frozen = true }
 
@@ -215,24 +215,24 @@ func (ce *childEnvironment) Print(w io.Writer) (int, error) {
 }
 func (ce *childEnvironment) String() string      { return ce.name }
 func (ce *childEnvironment) Parent() Environment { return ce.parent }
-func (ce *childEnvironment) Bind(sym *sx.Symbol, val sx.Object) error {
+func (ce *childEnvironment) Bind(sym *sx.Symbol, val sx.Object) (Environment, error) {
 	if ce.frozen {
-		return ErrEnvFrozen{Env: ce}
+		return nil, ErrEnvFrozen{Env: ce}
 	}
 	ce.vars[sym] = val
-	return nil
+	return ce, nil
 }
 func (ce *childEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	obj, found := ce.vars[sym]
 	return obj, found
 }
 func (ce *childEnvironment) Bindings() *sx.Pair { return ce.vars.asAlist() }
-func (ce *childEnvironment) Unbind(sym *sx.Symbol) error {
+func (ce *childEnvironment) Unbind(sym *sx.Symbol) (Environment, error) {
 	if ce.frozen {
-		return ErrEnvFrozen{Env: ce}
+		return nil, ErrEnvFrozen{Env: ce}
 	}
 	delete(ce.vars, sym)
-	return nil
+	return ce, nil
 }
 func (ce *childEnvironment) Freeze() { ce.frozen = true }
 

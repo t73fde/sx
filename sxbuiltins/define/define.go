@@ -21,19 +21,19 @@ import (
 )
 
 // DefineS parses a (define name value) form.
-func DefineS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func DefineS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("need at least two arguments")
 	}
 	switch car := args.Car().(type) {
 	case *sx.Symbol:
-		val, err := parseValueDefinition(eng, env, args)
+		val, err := parseValueDefinition(frame, args)
 		if err != nil {
 			return val, err
 		}
 		return &DefineExpr{Sym: car, Val: val}, nil
 	case *sx.Pair:
-		sym, fun, err := parseProcedureDefinition(eng, env, car, args)
+		sym, fun, err := parseProcedureDefinition(frame, car, args)
 		if err != nil {
 			return fun, err
 		}
@@ -43,7 +43,7 @@ func DefineS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.
 	}
 }
 
-func parseValueDefinition(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func parseValueDefinition(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	cdr := args.Cdr()
 	if sx.IsNil(cdr) {
 		return nil, fmt.Errorf("argument 2 missing")
@@ -52,10 +52,10 @@ func parseValueDefinition(eng *sxeval.Engine, env sxeval.Environment, args *sx.P
 	if !isPair {
 		return nil, fmt.Errorf("argument 2 must be a proper list")
 	}
-	return eng.Parse(env, pair.Car())
+	return frame.Parse(pair.Car())
 }
 
-func parseProcedureDefinition(eng *sxeval.Engine, env sxeval.Environment, head, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
+func parseProcedureDefinition(frame *sxeval.Frame, head, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
 	if head == nil {
 		return nil, nil, fmt.Errorf("empty function head")
 	}
@@ -63,7 +63,7 @@ func parseProcedureDefinition(eng *sxeval.Engine, env sxeval.Environment, head, 
 	if !ok {
 		return nil, nil, fmt.Errorf("first element in function head is not a symbol, but: %T/%v", head.Car(), head.Car())
 	}
-	expr, err := callable.ParseProcedure(eng, env, sym.Name(), head.Cdr(), args.Cdr())
+	expr, err := callable.ParseProcedure(frame, sym.Name(), head.Cdr(), args.Cdr())
 	return sym, expr, err
 }
 
@@ -73,10 +73,10 @@ type DefineExpr struct {
 	Val sxeval.Expr
 }
 
-func (de *DefineExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
-	val, err := eng.Execute(env, de.Val)
+func (de *DefineExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+	val, err := frame.Execute(de.Val)
 	if err == nil {
-		err = env.Bind(de.Sym, val)
+		err = frame.Bind(de.Sym, val)
 	}
 	return val, err
 }

@@ -24,8 +24,8 @@ import (
 
 // Callable is a value that can be called for evaluation.
 type Callable interface {
-	// Call the value with the given args and environment.
-	Call(*Engine, Environment, []sx.Object) (sx.Object, error)
+	// Call the value with the given args and frame.
+	Call(*Frame, []sx.Object) (sx.Object, error)
 }
 
 // GetCallable returns the object as a Callable, if possible.
@@ -52,10 +52,10 @@ func (e CallError) Error() string {
 // Executor is about controlling the execution of expressions.
 // Do not call the method `Expr.Execute` directly, call the executor to do this.
 type Executor interface {
-	// Execute the expression in an environment and return the result.
-	// It may have side-effects, on the given environment, or on the
+	// Execute the expression in a frame and return the result.
+	// It may have side-effects, on the given frame, or on the
 	// general environment of the system.
-	Execute(*Engine, Environment, Expr) (sx.Object, error)
+	Execute(*Frame, Expr) (sx.Object, error)
 }
 
 type simpleExecutor struct{}
@@ -63,8 +63,8 @@ type simpleExecutor struct{}
 var mySimpleExecutor simpleExecutor
 
 // Execute the given expression in the given environment of the given engine.
-func (*simpleExecutor) Execute(eng *Engine, env Environment, expr Expr) (sx.Object, error) {
-	return expr.Compute(eng, env)
+func (*simpleExecutor) Execute(frame *Frame, expr Expr) (sx.Object, error) {
+	return expr.Compute(frame)
 }
 
 // Engine is the collection of all relevant data element to execute / evaluate an object.
@@ -155,7 +155,7 @@ func (eng *Engine) Eval(env Environment, obj sx.Object) (sx.Object, error) {
 
 // Parse the given object in the given environment.
 func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
-	return eng.pars.Parse(eng, env, obj)
+	return eng.pars.Parse(&Frame{engine: eng, env: env}, obj)
 }
 
 // Rework the given expression with the options stored in the engine.
@@ -165,14 +165,16 @@ func (eng *Engine) Rework(env Environment, expr Expr) Expr {
 
 // Execute the given expression in the given environment.
 func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
+	frame := Frame{engine: eng, env: env}
 	if exec := eng.exec; exec != nil {
 		for {
-			res, err := eng.exec.Execute(eng, env, expr)
+			res, err := eng.exec.Execute(&frame, expr)
 			if err == nil {
 				return res, nil
 			}
 			if again, ok := err.(executeAgain); ok {
 				env, expr = again.Env, again.Expr
+				frame.env = env
 				continue
 			}
 			return res, err
@@ -180,12 +182,13 @@ func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
 	}
 
 	for {
-		res, err := expr.Compute(eng, env)
+		res, err := expr.Compute(&frame)
 		if err == nil {
 			return res, nil
 		}
 		if again, ok := err.(executeAgain); ok {
 			env, expr = again.Env, again.Expr
+			frame.env = env
 			continue
 		}
 		return res, err
@@ -207,7 +210,8 @@ type executeAgain struct {
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.Expr) }
 
 func (eng *Engine) Call(env Environment, fn Callable, args []sx.Object) (sx.Object, error) {
-	res, err := fn.Call(eng, env, args)
+	frame := Frame{engine: eng, env: env}
+	res, err := fn.Call(&frame, args)
 	if err == nil {
 		return res, nil
 	}
@@ -224,7 +228,7 @@ func (eng *Engine) BindBuiltinA(name string, fn BuiltinA) error {
 }
 
 // BindBuiltinEEA binds a special builtin function to the given name in the engine's root environment.
-func (eng *Engine) BindBuiltinEEA(name string, fn BuiltinEEA) error {
+func (eng *Engine) BindBuiltinFA(name string, fn BuiltinFA) error {
 	eng.bNames[reflect.ValueOf(fn).Pointer()] = name
 	return eng.Bind(name, fn)
 }
@@ -236,8 +240,9 @@ func (eng *Engine) BindSyntax(name string, fn SyntaxFn) error {
 }
 
 // Bind a given object to a symbol of the given name in the engine's root environment.
-func (eng *Engine) Bind(name string, obj sx.Object) error {
-	return eng.root.Bind(eng.sf.MustMake(name), obj)
+func (eng *Engine) Bind(name string, obj sx.Object) (err error) {
+	eng.root, err = eng.root.Bind(eng.sf.MustMake(name), obj)
+	return err
 }
 
 // BuiltinName returns the name of the given Builtin.

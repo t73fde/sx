@@ -20,11 +20,11 @@ import (
 )
 
 // IfS parses an if-statement: (if cond then else). If else is missing, a nil is assumed.
-func IfS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func IfS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("requires 2 or 3 arguments, got none")
 	}
-	testExpr, err := eng.Parse(env, args.Car())
+	testExpr, err := frame.Parse(args.Car())
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func IfS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr
 	if argTrue == nil {
 		return nil, fmt.Errorf("requires 2 or 3 arguments, got one")
 	}
-	trueExpr, err := eng.Parse(env, argTrue.Car())
+	trueExpr, err := frame.Parse(argTrue.Car())
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func IfS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr
 	if argFalse.Tail() != nil {
 		return nil, fmt.Errorf("requires 2 or 3 arguments, got more")
 	}
-	falseExpr, err := eng.Parse(env, argFalse.Car())
+	falseExpr, err := frame.Parse(argFalse.Car())
 	if err != nil {
 		return nil, err
 	}
@@ -63,13 +63,13 @@ type If2Expr struct {
 	True sxeval.Expr
 }
 
-func (ife *If2Expr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
-	test, err := eng.Execute(env, ife.Test)
+func (ife *If2Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+	test, err := frame.Execute(ife.Test)
 	if err != nil {
 		return nil, err
 	}
 	if sx.IsTrue(test) {
-		return eng.ExecuteTCO(env, ife.True)
+		return frame.ExecuteTCO(ife.True)
 	}
 	return sx.Nil(), nil
 }
@@ -118,15 +118,15 @@ type If3Expr struct {
 	False sxeval.Expr
 }
 
-func (ife *If3Expr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
-	test, err := eng.Execute(env, ife.Test)
+func (ife *If3Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+	test, err := frame.Execute(ife.Test)
 	if err != nil {
 		return nil, err
 	}
 	if sx.IsTrue(test) {
-		return eng.ExecuteTCO(env, ife.True)
+		return frame.ExecuteTCO(ife.True)
 	}
-	return eng.ExecuteTCO(env, ife.False)
+	return frame.ExecuteTCO(ife.False)
 }
 func (ife *If3Expr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{IF3 ")

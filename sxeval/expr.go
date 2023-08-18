@@ -19,10 +19,10 @@ import (
 
 // Expr are values that are computed for evaluation in an environment.
 type Expr interface {
-	// Compute the expression in an environment and return the result.
+	// Compute the expression in a frame and return the result.
 	// It may have side-effects, on the given environment, or on the
 	// general environment of the system.
-	Compute(*Engine, Environment) (sx.Object, error)
+	Compute(*Frame) (sx.Object, error)
 
 	// Print the expression on the given writer.
 	Print(io.Writer) (int, error)
@@ -81,37 +81,37 @@ var NilExpr = nilExpr{}
 
 type nilExpr struct{}
 
-func (nilExpr) Compute(*Engine, Environment) (sx.Object, error) { return sx.Nil(), nil }
-func (nilExpr) Print(w io.Writer) (int, error)                  { return io.WriteString(w, "{NIL}") }
-func (nilExpr) Rework(*ReworkOptions, Environment) Expr         { return NilExpr }
-func (nilExpr) Object() sx.Object                               { return sx.Nil() }
+func (nilExpr) Compute(*Frame) (sx.Object, error)       { return sx.Nil(), nil }
+func (nilExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{NIL}") }
+func (nilExpr) Rework(*ReworkOptions, Environment) Expr { return NilExpr }
+func (nilExpr) Object() sx.Object                       { return sx.Nil() }
 
 // FalseExpr returns always False
 var FalseExpr = falseExpr{}
 
 type falseExpr struct{}
 
-func (falseExpr) Compute(*Engine, Environment) (sx.Object, error) { return sx.False, nil }
-func (falseExpr) Print(w io.Writer) (int, error)                  { return io.WriteString(w, "{FALSE}") }
-func (falseExpr) Rework(*ReworkOptions, Environment) Expr         { return FalseExpr }
-func (falseExpr) Object() sx.Object                               { return sx.False }
+func (falseExpr) Compute(*Frame) (sx.Object, error)       { return sx.False, nil }
+func (falseExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{FALSE}") }
+func (falseExpr) Rework(*ReworkOptions, Environment) Expr { return FalseExpr }
+func (falseExpr) Object() sx.Object                       { return sx.False }
 
 // TrueExpr returns always True
 var TrueExpr = trueExpr{}
 
 type trueExpr struct{}
 
-func (trueExpr) Compute(*Engine, Environment) (sx.Object, error) { return sx.True, nil }
-func (trueExpr) Print(w io.Writer) (int, error)                  { return io.WriteString(w, "{TRUE}") }
-func (trueExpr) Rework(*ReworkOptions, Environment) Expr         { return TrueExpr }
-func (trueExpr) Object() sx.Object                               { return sx.True }
+func (trueExpr) Compute(*Frame) (sx.Object, error)       { return sx.True, nil }
+func (trueExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{TRUE}") }
+func (trueExpr) Rework(*ReworkOptions, Environment) Expr { return TrueExpr }
+func (trueExpr) Object() sx.Object                       { return sx.True }
 
 // ObjExpr returns the stored object.
 type ObjExpr struct {
 	Obj sx.Object
 }
 
-func (oe ObjExpr) Compute(*Engine, Environment) (sx.Object, error) { return oe.Obj, nil }
+func (oe ObjExpr) Compute(*Frame) (sx.Object, error) { return oe.Obj, nil }
 func (oe ObjExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{OBJ ")
 	if err != nil {
@@ -143,11 +143,11 @@ type ResolveExpr struct {
 	Symbol *sx.Symbol
 }
 
-func (re ResolveExpr) Compute(_ *Engine, env Environment) (sx.Object, error) {
-	if obj, found := Resolve(env, re.Symbol); found {
+func (re ResolveExpr) Compute(frame *Frame) (sx.Object, error) {
+	if obj, found := frame.Resolve(re.Symbol); found {
 		return obj, nil
 	}
-	return nil, NotBoundError{Env: env, Sym: re.Symbol}
+	return nil, NotBoundError{Env: frame.env, Sym: re.Symbol}
 }
 func (re ResolveExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{RESOLVE %v}", re.Symbol)
@@ -178,8 +178,8 @@ type CallExpr struct {
 }
 
 func (ce *CallExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
-func (ce *CallExpr) Compute(eng *Engine, env Environment) (sx.Object, error) {
-	val, err := eng.Execute(env, ce.Proc)
+func (ce *CallExpr) Compute(frame *Frame) (sx.Object, error) {
+	val, err := frame.Execute(ce.Proc)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func (ce *CallExpr) Compute(eng *Engine, env Environment) (sx.Object, error) {
 		return nil, NotCallableError{Obj: val}
 	}
 
-	return computeCallable(eng, env, proc, ce.Args)
+	return computeCallable(frame, proc, ce.Args)
 }
 func (ce *CallExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{CALL ")
@@ -232,19 +232,19 @@ func (ce *CallExpr) Rework(ro *ReworkOptions, env Environment) Expr {
 	return ce
 }
 
-func computeCallable(eng *Engine, env Environment, proc Callable, args []Expr) (sx.Object, error) {
+func computeCallable(frame *Frame, proc Callable, args []Expr) (sx.Object, error) {
 	if len(args) == 0 {
-		return proc.Call(eng, env, nil)
+		return proc.Call(frame, nil)
 	}
 	objArgs := make([]sx.Object, len(args))
 	for i, exprArg := range args {
-		val, err := eng.Execute(env, exprArg)
+		val, err := frame.Execute(exprArg)
 		if err != nil {
 			return val, err
 		}
 		objArgs[i] = val
 	}
-	return proc.Call(eng, env, objArgs)
+	return proc.Call(frame, objArgs)
 }
 
 // NotCallableError signals that a value cannot be called when it must be called.
@@ -265,8 +265,8 @@ type BuiltinCallExpr struct {
 }
 
 func (bce *BuiltinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
-func (bce *BuiltinCallExpr) Compute(eng *Engine, env Environment) (sx.Object, error) {
-	return computeCallable(eng, env, bce.Proc, bce.Args)
+func (bce *BuiltinCallExpr) Compute(frame *Frame) (sx.Object, error) {
+	return computeCallable(frame, bce.Proc, bce.Args)
 }
 func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{BCALL ")

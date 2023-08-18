@@ -21,11 +21,11 @@ import (
 )
 
 // TimeitS is a syntax to measure code execution time.
-func TimeitS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func TimeitS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("one argument expected")
 	}
-	expr, err := eng.Parse(env, args.Car())
+	expr, err := frame.Parse(args.Car())
 	if err != nil {
 		return nil, err
 	}
@@ -37,9 +37,9 @@ type TimeitExpr struct {
 	expr sxeval.Expr
 }
 
-func (te *TimeitExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
+func (te *TimeitExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	start := time.Now()
-	obj, err := eng.Execute(env, te.expr)
+	obj, err := frame.Execute(te.expr)
 	duration := sx.MakeString(time.Since(start).String())
 	if err == nil {
 		return sx.MakeList(duration, obj), nil

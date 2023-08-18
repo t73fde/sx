@@ -45,8 +45,8 @@ func Not(args []sx.Object) (sx.Object, error) {
 }
 
 // AndS parses an and statement: (and expr...).
-func AndS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := sxbuiltins.ParseExprSeq(eng, env, args)
+func AndS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+	front, last, err := sxbuiltins.ParseExprSeq(frame, args)
 	if err != nil {
 		return nil, err
 	}
@@ -65,9 +65,9 @@ type AndExpr struct {
 	Last  sxeval.Expr
 }
 
-func (ae *AndExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
+func (ae *AndExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	for _, e := range ae.Front {
-		obj, err := eng.Execute(env, e)
+		obj, err := frame.Execute(e)
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +75,7 @@ func (ae *AndExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Objec
 			return obj, nil
 		}
 	}
-	return eng.ExecuteTCO(env, ae.Last)
+	return frame.ExecuteTCO(ae.Last)
 }
 func (ae *AndExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{AND")
@@ -108,8 +108,8 @@ func (ae *AndExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxev
 }
 
 // OrS parses an or statement: (or expr...).
-func OrS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := sxbuiltins.ParseExprSeq(eng, env, args)
+func OrS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+	front, last, err := sxbuiltins.ParseExprSeq(frame, args)
 	if err != nil {
 		return nil, err
 	}
@@ -128,9 +128,9 @@ type OrExpr struct {
 	Last  sxeval.Expr
 }
 
-func (oe *OrExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
+func (oe *OrExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	for _, e := range oe.Front {
-		obj, err := eng.Execute(env, e)
+		obj, err := frame.Execute(e)
 		if err != nil {
 			return nil, err
 		}
@@ -138,7 +138,7 @@ func (oe *OrExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object
 			return obj, nil
 		}
 	}
-	return eng.ExecuteTCO(env, oe.Last)
+	return frame.ExecuteTCO(oe.Last)
 }
 func (oe *OrExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{OR")

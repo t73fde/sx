@@ -19,8 +19,8 @@ import (
 )
 
 // BeginS parses a begin-statement: (begin expr...).
-func BeginS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := sxbuiltins.ParseExprSeq(eng, env, args)
+func BeginS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+	front, last, err := sxbuiltins.ParseExprSeq(frame, args)
 	if err != nil {
 		return nil, err
 	}
@@ -39,14 +39,14 @@ type BeginExpr struct {
 	Last  sxeval.Expr
 }
 
-func (be *BeginExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
+func (be *BeginExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	for _, e := range be.Front {
-		_, err := eng.Execute(env, e)
+		_, err := frame.Execute(e)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return eng.ExecuteTCO(env, be.Last)
+	return frame.ExecuteTCO(be.Last)
 }
 func (be *BeginExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{BEGIN")
