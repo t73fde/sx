@@ -46,7 +46,7 @@ func executeTestCases(t *testing.T, testcases []testcase) {
 			symQQ, symUQ, symUQS := sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")
 			quote.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
 
-			root := sx.MakeRootEnvironment()
+			root := sxeval.MakeRootEnvironment()
 			quote.InstallQuoteSyntax(root, symQuote)
 			quote.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
 
@@ -56,7 +56,7 @@ func executeTestCases(t *testing.T, testcases []testcase) {
 			engine.BindBuiltinA("list", list.List)
 			engine.BindBuiltinA("+", number.Add)
 
-			child := sx.MakeChildEnvironment(root, "common", 128)
+			child := sxeval.MakeChildEnvironment(root, "common", 128)
 			child.Bind(sf.MustMake("b"), sx.Int64(11))
 			child.Bind(sf.MustMake("c"), sx.MakeList(sx.Int64(22), sx.Int64(33)))
 			child.Bind(sf.MustMake("d"), sx.MakeList(sx.Int64(44), sx.Int64(55)))
@@ -76,7 +76,7 @@ func executeTestCases(t *testing.T, testcases []testcase) {
 				t.Errorf("%q result in unexpected read error %q, expected result %q", tc.src, err.Error(), tc.exp)
 				return
 			}
-			env := sx.MakeChildEnvironment(child, name, 0)
+			env := sxeval.MakeChildEnvironment(child, name, 0)
 			res, err := engine.Eval(env, val)
 			if err != nil {
 				if tc.withErr {

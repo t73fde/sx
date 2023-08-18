@@ -45,7 +45,7 @@ func InstallQuasiQuoteReader(rd *sxreader.Reader, symQQ *sx.Symbol, chQQ rune, s
 
 }
 
-func InstallQuasiQuoteSyntax(env sx.Environment, symQQ, symUQ, symUQS *sx.Symbol) error {
+func InstallQuasiQuoteSyntax(env sxeval.Environment, symQQ, symUQ, symUQS *sx.Symbol) error {
 	err := env.Bind(symQQ, sxeval.MakeSyntax(symQQ.Name(), makeQuasiQuoteSyntax(symQQ, symUQ, symUQS)))
 	if err != nil {
 		return err
@@ -59,13 +59,13 @@ func InstallQuasiQuoteSyntax(env sx.Environment, symQQ, symUQ, symUQS *sx.Symbol
 }
 
 func makeUnquoteSyntax(symQQ *sx.Symbol) sxeval.SyntaxFn {
-	return func(*sxeval.Engine, sx.Environment, *sx.Pair) (sxeval.Expr, error) {
+	return func(*sxeval.Engine, sxeval.Environment, *sx.Pair) (sxeval.Expr, error) {
 		return nil, fmt.Errorf("not allowed outside %s", symQQ.Name())
 	}
 }
 
 func makeQuasiQuoteSyntax(symQQ, symUQ, symUQS *sx.Symbol) sxeval.SyntaxFn {
-	return func(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+	return func(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs
 		}
@@ -85,7 +85,7 @@ func makeQuasiQuoteSyntax(symQQ, symUQ, symUQS *sx.Symbol) sxeval.SyntaxFn {
 
 type qqParser struct {
 	engine             *sxeval.Engine
-	env                sx.Environment
+	env                sxeval.Environment
 	symQuasiQuote      *sx.Symbol
 	symUnquote         *sx.Symbol
 	symUnquoteSplicing *sx.Symbol
@@ -395,7 +395,7 @@ func getUnquoteObj(sym *sx.Symbol, lst *sx.Pair) (sx.Object, error) {
 
 type MakeListExpr struct{ Elem sxeval.Expr }
 
-func (mle MakeListExpr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
+func (mle MakeListExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
 	elem, err := eng.Execute(env, mle.Elem)
 	if err != nil {
 		return nil, err
@@ -417,7 +417,7 @@ func (mle MakeListExpr) Print(w io.Writer) (int, error) {
 	return length, err
 
 }
-func (mle MakeListExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (mle MakeListExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	mle.Elem = mle.Elem.Rework(ro, env)
 	return mle
 }

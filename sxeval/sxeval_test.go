@@ -19,8 +19,8 @@ import (
 	"zettelstore.de/sx.fossil/sxreader"
 )
 
-func createTestEnv(sf sx.SymbolFactory) sx.Environment {
-	env := sx.MakeRootEnvironment()
+func createTestEnv(sf sx.SymbolFactory) sxeval.Environment {
+	env := sxeval.MakeRootEnvironment()
 
 	symCat := sf.MustMake("cat")
 	env.Bind(symCat, sxeval.BuiltinA(func(args []sx.Object) (sx.Object, error) {
@@ -72,7 +72,7 @@ func TestEval(t *testing.T) {
 	}
 	sf := sx.MakeMappedFactory()
 	root := createTestEnv(sf)
-	root.Bind(sf.MustMake("quote"), sxeval.MakeSyntax("quote", func(_ *sxeval.Engine, _ sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+	root.Bind(sf.MustMake("quote"), sxeval.MakeSyntax("quote", func(_ *sxeval.Engine, _ sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 		return sxeval.ObjExpr{Obj: args.Car()}, nil
 	}))
 	engine := sxeval.MakeEngine(sf, root)
@@ -84,7 +84,7 @@ func TestEval(t *testing.T) {
 				t.Errorf("Error %v while reading %s", err, tc.src)
 				return
 			}
-			env := sx.MakeChildEnvironment(root, tc.name, 0)
+			env := sxeval.MakeChildEnvironment(root, tc.name, 0)
 			res, err := engine.Eval(env, val)
 			if err != nil {
 				t.Error(err) // TODO: temp

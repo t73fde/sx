@@ -20,7 +20,7 @@ import (
 )
 
 // LambdaS parses a procedure specification.
-func LambdaS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func LambdaS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("parameter spec and body missing")
 	}
@@ -29,7 +29,7 @@ func LambdaS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr
 }
 
 // ParseProcedure parses a procedure definition, where some parsing is already done.
-func ParseProcedure(eng *sxeval.Engine, env sx.Environment, name string, paramSpec, bodySpec sx.Object) (*LambdaExpr, error) {
+func ParseProcedure(eng *sxeval.Engine, env sxeval.Environment, name string, paramSpec, bodySpec sx.Object) (*LambdaExpr, error) {
 	var params []*sx.Symbol
 	var rest *sx.Symbol
 	if !sx.IsNil(paramSpec) {
@@ -57,7 +57,7 @@ func ParseProcedure(eng *sxeval.Engine, env sx.Environment, name string, paramSp
 	if rest != nil {
 		envSize++
 	}
-	fnEnv := sx.MakeChildEnvironment(env, name+"-def", envSize)
+	fnEnv := sxeval.MakeChildEnvironment(env, name+"-def", envSize)
 	for _, p := range params {
 		err := fnEnv.Bind(p, sx.MakeUndefined())
 		if err != nil {
@@ -131,7 +131,7 @@ type LambdaExpr struct {
 	Last   sxeval.Expr
 }
 
-func (le *LambdaExpr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
+func (le *LambdaExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
 	return &Procedure{
 		Env:    env,
 		Name:   le.Name,
@@ -171,7 +171,7 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
-func (le *LambdaExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (le *LambdaExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	for i, expr := range le.Front {
 		le.Front[i] = expr.Rework(ro, env)
 	}
@@ -181,7 +181,7 @@ func (le *LambdaExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeva
 
 // Procedure represents the procedure definition form (aka lambda).
 type Procedure struct {
-	Env    sx.Environment
+	Env    sxeval.Environment
 	Name   string
 	Params []*sx.Symbol
 	Rest   *sx.Symbol
@@ -225,7 +225,7 @@ func (p *Procedure) Repr() string                 { return sx.Repr(p) }
 func (p *Procedure) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<lambda:", p.Name, ">")
 }
-func (p *Procedure) Call(eng *sxeval.Engine, _ sx.Environment, args []sx.Object) (sx.Object, error) {
+func (p *Procedure) Call(eng *sxeval.Engine, _ sxeval.Environment, args []sx.Object) (sx.Object, error) {
 	numParams := len(p.Params)
 	if len(args) < numParams {
 		return nil, fmt.Errorf("missing arguments: %v", p.Params[len(args):])
@@ -234,7 +234,7 @@ func (p *Procedure) Call(eng *sxeval.Engine, _ sx.Environment, args []sx.Object)
 	if p.Rest != nil {
 		envSize++
 	}
-	env := sx.MakeChildEnvironment(p.Env, p.Name, envSize)
+	env := sxeval.MakeChildEnvironment(p.Env, p.Name, envSize)
 	for i, p := range p.Params {
 		err := env.Bind(p, args[i])
 		if err != nil {

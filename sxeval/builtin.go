@@ -40,7 +40,7 @@ func (b BuiltinA) Print(w io.Writer) (int, error) { return printBuiltin(w, b) }
 func (b BuiltinA) Name(eng *Engine) string        { return eng.BuiltinName(b) }
 
 // Call the builtin function.
-func (b BuiltinA) Call(eng *Engine, _ sx.Environment, args []sx.Object) (sx.Object, error) {
+func (b BuiltinA) Call(eng *Engine, _ Environment, args []sx.Object) (sx.Object, error) {
 	res, err := b(args)
 	err = handleBuiltinError(eng, b, err)
 	return res, err
@@ -66,7 +66,7 @@ func handleBuiltinError(eng *Engine, b Builtin, err error) error {
 
 // BuiltinEEA is the signature of builtin functions that use all information,
 // engine, environment, and arguments.
-type BuiltinEEA func(*Engine, sx.Environment, []sx.Object) (sx.Object, error)
+type BuiltinEEA func(*Engine, Environment, []sx.Object) (sx.Object, error)
 
 func (b BuiltinEEA) IsNil() bool                    { return b == nil }
 func (b BuiltinEEA) IsAtom() bool                   { return b == nil }
@@ -78,7 +78,7 @@ func (b BuiltinEEA) Print(w io.Writer) (int, error) { return printBuiltin(w, b) 
 func (b BuiltinEEA) Name(eng *Engine) string        { return eng.BuiltinName(b) }
 
 // Call the builtin function.
-func (b BuiltinEEA) Call(eng *Engine, env sx.Environment, args []sx.Object) (sx.Object, error) {
+func (b BuiltinEEA) Call(eng *Engine, env Environment, args []sx.Object) (sx.Object, error) {
 	res, err := b(eng, env, args)
 	err = handleBuiltinError(eng, b, err)
 	return res, err

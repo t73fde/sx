@@ -19,7 +19,7 @@ import (
 )
 
 // BeginS parses a begin-statement: (begin expr...).
-func BeginS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func BeginS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	front, last, err := sxbuiltins.ParseExprSeq(eng, env, args)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ type BeginExpr struct {
 	Last  sxeval.Expr
 }
 
-func (be *BeginExpr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
+func (be *BeginExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
 	for _, e := range be.Front {
 		_, err := eng.Execute(env, e)
 		if err != nil {
@@ -58,7 +58,7 @@ func (be *BeginExpr) Print(w io.Writer) (int, error) {
 	return length, err
 
 }
-func (be *BeginExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (be *BeginExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	for i, expr := range be.Front {
 		be.Front[i] = expr.Rework(ro, env)
 	}

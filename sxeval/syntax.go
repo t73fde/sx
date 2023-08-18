@@ -18,7 +18,7 @@ import (
 )
 
 // SpecialFn is the signature of all syntax constructing functions.
-type SyntaxFn func(*Engine, sx.Environment, *sx.Pair) (Expr, error)
+type SyntaxFn func(*Engine, Environment, *sx.Pair) (Expr, error)
 
 // Syntax represents all syntax constructing functions implemented in Go.
 type Syntax struct {
@@ -59,7 +59,7 @@ func (sy *Syntax) Print(w io.Writer) (int, error) {
 }
 
 // Parse the args by calling the syntax function.
-func (sy *Syntax) Parse(eng *Engine, env sx.Environment, args *sx.Pair) (Expr, error) {
+func (sy *Syntax) Parse(eng *Engine, env Environment, args *sx.Pair) (Expr, error) {
 	res, err := sy.fn(eng, env, args)
 	if err != nil {
 		if _, ok := err.(CallError); !ok {
@@ -81,7 +81,7 @@ func GetSyntax(obj sx.Object) (*Syntax, bool) {
 // Special is a special form that produces an expression by parsing.
 type Special interface {
 	// Parse the args.
-	Parse(eng *Engine, env sx.Environment, args *sx.Pair) (Expr, error)
+	Parse(eng *Engine, env Environment, args *sx.Pair) (Expr, error)
 }
 
 // GetSpecial returns the object as a special value if possible.

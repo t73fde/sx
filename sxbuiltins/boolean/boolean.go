@@ -45,7 +45,7 @@ func Not(args []sx.Object) (sx.Object, error) {
 }
 
 // AndS parses an and statement: (and expr...).
-func AndS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func AndS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	front, last, err := sxbuiltins.ParseExprSeq(eng, env, args)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ type AndExpr struct {
 	Last  sxeval.Expr
 }
 
-func (ae *AndExpr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
+func (ae *AndExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
 	for _, e := range ae.Front {
 		obj, err := eng.Execute(env, e)
 		if err != nil {
@@ -87,7 +87,7 @@ func (ae *AndExpr) Print(w io.Writer) (int, error) {
 	return length, err
 
 }
-func (ae *AndExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (ae *AndExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	for i, expr := range ae.Front {
 		front := expr.Rework(ro, env)
 		if objectExpr, isObjectExpr := front.(sxeval.ObjectExpr); isObjectExpr {
@@ -108,7 +108,7 @@ func (ae *AndExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.E
 }
 
 // OrS parses an or statement: (or expr...).
-func OrS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func OrS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	front, last, err := sxbuiltins.ParseExprSeq(eng, env, args)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ type OrExpr struct {
 	Last  sxeval.Expr
 }
 
-func (oe *OrExpr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
+func (oe *OrExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
 	for _, e := range oe.Front {
 		obj, err := eng.Execute(env, e)
 		if err != nil {
@@ -150,7 +150,7 @@ func (oe *OrExpr) Print(w io.Writer) (int, error) {
 	return length, err
 
 }
-func (oe *OrExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (oe *OrExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	for i, expr := range oe.Front {
 		front := expr.Rework(ro, env)
 		if objectExpr, isObjectExpr := front.(sxeval.ObjectExpr); isObjectExpr {

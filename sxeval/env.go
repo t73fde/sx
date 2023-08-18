@@ -8,20 +8,22 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-package sx
+package sxeval
 
 import (
 	"fmt"
 	"io"
 	"strconv"
 	"sync"
+
+	"zettelstore.de/sx.fossil"
 )
 
 // Environment maintains a mapping between symbols and values.
 // Form are evaluated within environments.
 type Environment interface {
 	// An environment is an object by itself
-	Object
+	sx.Object
 
 	// String returns the local name of this environment.
 	String() string
@@ -33,18 +35,18 @@ type Environment interface {
 
 	// Bind creates a local mapping with a given symbol and object.
 	// A previous mapping will be overwritten.
-	Bind(*Symbol, Object) error
+	Bind(*sx.Symbol, sx.Object) error
 
 	// Lookup will search for a local binding of the given symbol. If not
 	// found, the search will *not* be continued in the parent environment.
 	// Use the global `Resolve` function, if you want a search up to the parent.
-	Lookup(*Symbol) (Object, bool)
+	Lookup(*sx.Symbol) (sx.Object, bool)
 
 	// Bindings returns all bindings as an a-list in some random order.
-	Bindings() *Pair
+	Bindings() *sx.Pair
 
 	// Unbind removes the mapping of the given symbol to an object.
-	Unbind(*Symbol) error
+	Unbind(*sx.Symbol) error
 
 	// Freeze sets the environment in a read-only state.
 	Freeze()
@@ -55,7 +57,7 @@ type ErrEnvFrozen struct{ Env Environment }
 
 func (err ErrEnvFrozen) Error() string { return fmt.Sprintf("enviroment is frozen: %v", err.Env) }
 
-type mapSymObj map[*Symbol]Object
+type mapSymObj map[*sx.Symbol]sx.Object
 
 func (mso mapSymObj) isEqual(other mapSymObj) bool {
 	if len(mso) != len(other) {
@@ -71,18 +73,18 @@ func (mso mapSymObj) isEqual(other mapSymObj) bool {
 }
 
 // GetEnvironment returns the object as an environment, if possible.
-func GetEnvironment(obj Object) (Environment, bool) {
-	if IsNil(obj) {
+func GetEnvironment(obj sx.Object) (Environment, bool) {
+	if sx.IsNil(obj) {
 		return nil, false
 	}
 	env, ok := obj.(Environment)
 	return env, ok
 }
 
-func (mso mapSymObj) asAlist() *Pair {
-	result := Nil()
+func (mso mapSymObj) asAlist() *sx.Pair {
+	result := sx.Nil()
 	for k, v := range mso {
-		result = result.Cons(Cons(k, v))
+		result = result.Cons(sx.Cons(k, v))
 	}
 	return result
 }
@@ -105,15 +107,15 @@ type rootEnvironment struct {
 	frozen bool
 }
 
-func (re *rootEnvironment) IsNil() bool             { return re == nil }
-func (re *rootEnvironment) IsAtom() bool            { return re == nil }
-func (re *rootEnvironment) IsEql(other Object) bool { return re == other }
-func (re *rootEnvironment) IsEqual(other Object) bool {
+func (re *rootEnvironment) IsNil() bool                { return re == nil }
+func (re *rootEnvironment) IsAtom() bool               { return re == nil }
+func (re *rootEnvironment) IsEql(other sx.Object) bool { return re == other }
+func (re *rootEnvironment) IsEqual(other sx.Object) bool {
 	if re == other {
 		return true
 	}
 	if re.IsNil() {
-		return IsNil(other)
+		return sx.IsNil(other)
 	}
 	ore, ok := other.(*rootEnvironment)
 	if !ok {
@@ -126,16 +128,16 @@ func (re *rootEnvironment) IsEqual(other Object) bool {
 	re.mu.RUnlock()
 	return result
 }
-func (re *rootEnvironment) Repr() string   { return Repr(re) }
+func (re *rootEnvironment) Repr() string   { return sx.Repr(re) }
 func (re *rootEnvironment) String() string { return "<root>" }
 func (re *rootEnvironment) Print(w io.Writer) (int, error) {
 	re.mu.RLock()
-	length, err := WriteStrings(w, "#<env:", re.String(), "/", strconv.Itoa(len(re.vars)), ">")
+	length, err := sx.WriteStrings(w, "#<env:", re.String(), "/", strconv.Itoa(len(re.vars)), ">")
 	re.mu.RUnlock()
 	return length, err
 }
 func (re *rootEnvironment) Parent() Environment { return nil }
-func (re *rootEnvironment) Bind(sym *Symbol, obj Object) error {
+func (re *rootEnvironment) Bind(sym *sx.Symbol, obj sx.Object) error {
 	re.mu.Lock()
 	var err error
 	if re.frozen {
@@ -146,19 +148,19 @@ func (re *rootEnvironment) Bind(sym *Symbol, obj Object) error {
 	re.mu.Unlock()
 	return err
 }
-func (re *rootEnvironment) Lookup(sym *Symbol) (Object, bool) {
+func (re *rootEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	re.mu.RLock()
 	obj, found := re.vars[sym]
 	re.mu.RUnlock()
 	return obj, found
 }
-func (re *rootEnvironment) Bindings() *Pair {
+func (re *rootEnvironment) Bindings() *sx.Pair {
 	re.mu.RLock()
 	al := re.vars.asAlist()
 	re.mu.RUnlock()
 	return al
 }
-func (re *rootEnvironment) Unbind(sym *Symbol) error {
+func (re *rootEnvironment) Unbind(sym *sx.Symbol) error {
 	re.mu.Lock()
 	var err error
 	if re.frozen {
@@ -191,15 +193,15 @@ type childEnvironment struct {
 	frozen bool
 }
 
-func (ce *childEnvironment) IsNil() bool             { return ce == nil }
-func (ce *childEnvironment) IsAtom() bool            { return ce == nil }
-func (ce *childEnvironment) IsEql(other Object) bool { return ce == other }
-func (ce *childEnvironment) IsEqual(other Object) bool {
+func (ce *childEnvironment) IsNil() bool                { return ce == nil }
+func (ce *childEnvironment) IsAtom() bool               { return ce == nil }
+func (ce *childEnvironment) IsEql(other sx.Object) bool { return ce == other }
+func (ce *childEnvironment) IsEqual(other sx.Object) bool {
 	if ce == other {
 		return true
 	}
 	if ce.IsNil() {
-		return IsNil(other)
+		return sx.IsNil(other)
 	}
 	oce, ok := other.(*childEnvironment)
 	if !ok {
@@ -207,25 +209,25 @@ func (ce *childEnvironment) IsEqual(other Object) bool {
 	}
 	return ce.vars.isEqual(oce.vars)
 }
-func (ce *childEnvironment) Repr() string { return Repr(ce) }
+func (ce *childEnvironment) Repr() string { return sx.Repr(ce) }
 func (ce *childEnvironment) Print(w io.Writer) (int, error) {
-	return WriteStrings(w, "#<env:", ce.name, "/", strconv.Itoa(len(ce.vars)), ">")
+	return sx.WriteStrings(w, "#<env:", ce.name, "/", strconv.Itoa(len(ce.vars)), ">")
 }
 func (ce *childEnvironment) String() string      { return ce.name }
 func (ce *childEnvironment) Parent() Environment { return ce.parent }
-func (ce *childEnvironment) Bind(sym *Symbol, val Object) error {
+func (ce *childEnvironment) Bind(sym *sx.Symbol, val sx.Object) error {
 	if ce.frozen {
 		return ErrEnvFrozen{Env: ce}
 	}
 	ce.vars[sym] = val
 	return nil
 }
-func (ce *childEnvironment) Lookup(sym *Symbol) (Object, bool) {
+func (ce *childEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	obj, found := ce.vars[sym]
 	return obj, found
 }
-func (ce *childEnvironment) Bindings() *Pair { return ce.vars.asAlist() }
-func (ce *childEnvironment) Unbind(sym *Symbol) error {
+func (ce *childEnvironment) Bindings() *sx.Pair { return ce.vars.asAlist() }
+func (ce *childEnvironment) Unbind(sym *sx.Symbol) error {
 	if ce.frozen {
 		return ErrEnvFrozen{Env: ce}
 	}
@@ -245,7 +247,7 @@ func RootEnv(env Environment) Environment {
 }
 
 // Resolve a symbol is an environment and all of its parent environment.
-func Resolve(env Environment, sym *Symbol) (Object, bool) {
+func Resolve(env Environment, sym *sx.Symbol) (sx.Object, bool) {
 	currEnv := env
 	for {
 		obj, found := currEnv.Lookup(sym)
@@ -253,14 +255,14 @@ func Resolve(env Environment, sym *Symbol) (Object, bool) {
 			return obj, true
 		}
 		if _, ok := currEnv.(*rootEnvironment); ok {
-			return Nil(), false
+			return sx.Nil(), false
 		}
 		currEnv = currEnv.Parent()
 	}
 }
 
 // AllBindings returns an a-list of all bindings in the given environment and its parent environments.
-func AllBindings(env Environment) *Pair {
+func AllBindings(env Environment) *sx.Pair {
 	currEnv := env
 	result := currEnv.Bindings()
 	currResult := result

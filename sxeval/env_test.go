@@ -8,26 +8,27 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-package sx_test
+package sxeval_test
 
 import (
 	"testing"
 
 	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxeval"
 )
 
 func TestGetEnvironment(t *testing.T) {
-	if _, ok := sx.GetEnvironment(nil); ok {
+	if _, ok := sxeval.GetEnvironment(nil); ok {
 		t.Error("nil is not an environment")
 	}
-	if _, ok := sx.GetEnvironment(sx.Environment(nil)); ok {
+	if _, ok := sxeval.GetEnvironment(sxeval.Environment(nil)); ok {
 		t.Error("nil environment is not an environment")
 	}
-	if _, ok := sx.GetEnvironment(sx.Nil()); ok {
+	if _, ok := sxeval.GetEnvironment(sx.Nil()); ok {
 		t.Error("Nil() is not an environment")
 	}
-	var o sx.Object = sx.MakeRootEnvironment()
-	res, ok := sx.GetEnvironment(o)
+	var o sx.Object = sxeval.MakeRootEnvironment()
+	res, ok := sxeval.GetEnvironment(o)
 	if !ok {
 		t.Error("is an environment:", o)
 	} else if !o.IsEqual(res) {
@@ -37,15 +38,15 @@ func TestGetEnvironment(t *testing.T) {
 
 func TestEnvRoot(t *testing.T) {
 	t.Parallel()
-	root := sx.MakeRootEnvironment()
+	root := sxeval.MakeRootEnvironment()
 	if got := root.Parent(); got != nil {
 		t.Error("root env has a parent", got)
 	}
-	child := sx.MakeChildEnvironment(root, "child", 0)
+	child := sxeval.MakeChildEnvironment(root, "child", 0)
 	if got := child.Parent(); got != root {
 		t.Error("root child parent is not root", got)
 	}
-	grandchild := sx.MakeChildEnvironment(child, "grandchild", 0)
+	grandchild := sxeval.MakeChildEnvironment(child, "grandchild", 0)
 	if got := grandchild.Parent(); got != child {
 		t.Error("grandchild parent is not child", got)
 	}
@@ -56,7 +57,7 @@ func TestBindLookupUnbind(t *testing.T) {
 	sf := sx.MakeMappedFactory()
 	sym1 := sf.MustMake("sym1")
 	sym2 := sf.MustMake("sym2")
-	root := sx.MakeRootEnvironment()
+	root := sxeval.MakeRootEnvironment()
 	root.Bind(sym1, sym2)
 
 	val, found := root.Lookup(sym2)
@@ -64,14 +65,14 @@ func TestBindLookupUnbind(t *testing.T) {
 		t.Errorf("Symbol %v should not be found, but resolves to %v", sym2, val)
 	}
 
-	child := sx.MakeChildEnvironment(root, "child1", 0)
+	child := sxeval.MakeChildEnvironment(root, "child1", 0)
 	child.Bind(sym2, sym1)
 
 	_, found = child.Lookup(sym1)
 	if found {
 		t.Error("Symbol", sym1, "was found in child")
 	}
-	val, found = sx.Resolve(child, sym1)
+	val, found = sxeval.Resolve(child, sym1)
 	if !found {
 		t.Error("Symbol", sym1, "not resolved")
 	} else if val != sym2 {
@@ -84,7 +85,7 @@ func TestBindLookupUnbind(t *testing.T) {
 	} else if val != sym1 {
 		t.Errorf("Symbol %v should resolve to %v, but got %v", sym2, sym1, val)
 	}
-	val, found = sx.Resolve(child, sym2)
+	val, found = sxeval.Resolve(child, sym2)
 	if !found {
 		t.Error("Symbol", sym2, "not resolved")
 	} else if val != sym1 {
@@ -97,7 +98,7 @@ func TestBindLookupUnbind(t *testing.T) {
 	if cc := child.Bindings().Assoc(sym2); cc == nil {
 		t.Error("Symbol", sym2, "not found in child bindings")
 	}
-	bindings := sx.AllBindings(child)
+	bindings := sxeval.AllBindings(child)
 	if cc := bindings.Assoc(sym1); cc == nil {
 		t.Error("Symbol", sym1, "not found in bindings")
 	}
@@ -120,7 +121,7 @@ func TestBindLookupUnbind(t *testing.T) {
 func TestAlist(t *testing.T) {
 	t.Parallel()
 	sf := sx.MakeMappedFactory()
-	env := sx.MakeRootEnvironment()
+	env := sxeval.MakeRootEnvironment()
 	env.Bind(sf.MustMake("sym1"), sx.MakeString("sym1"))
 	env.Bind(sf.MustMake("sym2"), sx.MakeString("sym2"))
 	env.Bind(sf.MustMake("sym3"), sx.MakeString("sym3"))
@@ -150,17 +151,17 @@ func TestAlist(t *testing.T) {
 
 func TestRootEnvEqual(t *testing.T) {
 	t.Parallel()
-	root1 := sx.MakeRootEnvironment()
-	root2 := sx.MakeRootEnvironment()
+	root1 := sxeval.MakeRootEnvironment()
+	root2 := sxeval.MakeRootEnvironment()
 	checkEnvEqual(t, root1, root2)
 
-	root := sx.MakeRootEnvironment()
-	child1 := sx.MakeChildEnvironment(root, "child1", 7)
-	child2 := sx.MakeChildEnvironment(root, "child2", 1)
+	root := sxeval.MakeRootEnvironment()
+	child1 := sxeval.MakeChildEnvironment(root, "child1", 7)
+	child2 := sxeval.MakeChildEnvironment(root, "child2", 1)
 	checkEnvEqual(t, child1, child2)
 }
 
-func checkEnvEqual(t *testing.T, env1, env2 sx.Environment) {
+func checkEnvEqual(t *testing.T, env1, env2 sxeval.Environment) {
 	if !env1.IsEqual(env2) {
 		t.Error("empty", env1, "is not equal to empty", env2)
 		return

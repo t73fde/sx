@@ -18,13 +18,13 @@ import (
 
 // Parser transform an object into an executable expression.
 type Parser interface {
-	Parse(*Engine, sx.Environment, sx.Object) (Expr, error)
+	Parse(*Engine, Environment, sx.Object) (Expr, error)
 }
 
 // ErrParseAgain is a non-error error signalling that the given form should be
 // parsed again in the given environment.
 type ErrParseAgain struct {
-	Env  sx.Environment
+	Env  Environment
 	Form sx.Object
 }
 
@@ -35,7 +35,7 @@ type defaultParser struct{}
 
 var myDefaultParser defaultParser
 
-func (dp *defaultParser) Parse(eng *Engine, env sx.Environment, form sx.Object) (Expr, error) {
+func (dp *defaultParser) Parse(eng *Engine, env Environment, form sx.Object) (Expr, error) {
 restart:
 	if sx.IsNil(form) {
 		return NilExpr, nil
@@ -62,11 +62,11 @@ restart:
 	return ObjExpr{Obj: form}, nil
 }
 
-func (*defaultParser) parsePair(eng *Engine, env sx.Environment, pair *sx.Pair) (Expr, error) {
+func (*defaultParser) parsePair(eng *Engine, env Environment, pair *sx.Pair) (Expr, error) {
 	var proc Expr
 	first := pair.Car()
 	if sym, isSymbol := sx.GetSymbol(first); isSymbol {
-		if val, found := sx.Resolve(env, sym); found {
+		if val, found := Resolve(env, sym); found {
 			if sp, isSpecial := GetSpecial(val); isSpecial {
 				return sp.Parse(eng, env, pair.Tail())
 			}

@@ -23,7 +23,7 @@ import (
 )
 
 // LetS parses the `(let (binding...) expr...)` syntax.`
-func LetS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func LetS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("binding spec and body missing")
 	}
@@ -44,7 +44,7 @@ func LetS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, e
 		Front:   nil,
 		Last:    nil,
 	}
-	letEnv := sx.MakeChildEnvironment(env, "let-def", 128)
+	letEnv := sxeval.MakeChildEnvironment(env, "let-def", 128)
 	for node := bindings; node != nil; {
 		sym, err := callable.GetParameterSymbol(letExpr.Symbols, node.Car())
 		if err != nil {
@@ -91,8 +91,8 @@ type LetExpr struct {
 	Last    sxeval.Expr
 }
 
-func (le *LetExpr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
-	letEnv := sx.MakeChildEnvironment(env, "let", len(le.Symbols))
+func (le *LetExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
+	letEnv := sxeval.MakeChildEnvironment(env, "let", len(le.Symbols))
 	for i, sym := range le.Symbols {
 		obj, err := eng.Execute(env, le.Expr[i])
 		if err != nil {
@@ -144,7 +144,7 @@ func (le *LetExpr) Print(w io.Writer) (int, error) {
 	return length, err
 }
 
-func (le *LetExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (le *LetExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	for i, expr := range le.Expr {
 		le.Expr[i] = expr.Rework(ro, env)
 	}

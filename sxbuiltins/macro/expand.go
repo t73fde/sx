@@ -19,12 +19,12 @@ import (
 // MacroExpand implements one level of macro expansion.
 //
 // It is mostly used for debugging macros.
-func MacroExpand0(eng *sxeval.Engine, env sx.Environment, args []sx.Object) (sx.Object, error) {
+func MacroExpand0(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
 	err := sxbuiltins.CheckArgs(args, 1, 1)
 	lst, err := sxbuiltins.GetList(err, args, 0)
 	if err == nil && lst != nil {
 		if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
-			if obj, found := sx.Resolve(env, sym); found {
+			if obj, found := sxeval.Resolve(env, sym); found {
 				if macro, isMacro := obj.(*Macro); isMacro {
 					return macro.Expand(eng, env, lst.Tail())
 				}

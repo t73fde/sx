@@ -25,7 +25,7 @@ import (
 // Callable is a value that can be called for evaluation.
 type Callable interface {
 	// Call the value with the given args and environment.
-	Call(*Engine, sx.Environment, []sx.Object) (sx.Object, error)
+	Call(*Engine, Environment, []sx.Object) (sx.Object, error)
 }
 
 // GetCallable returns the object as a Callable, if possible.
@@ -55,7 +55,7 @@ type Executor interface {
 	// Execute the expression in an environment and return the result.
 	// It may have side-effects, on the given environment, or on the
 	// general environment of the system.
-	Execute(*Engine, sx.Environment, Expr) (sx.Object, error)
+	Execute(*Engine, Environment, Expr) (sx.Object, error)
 }
 
 type simpleExecutor struct{}
@@ -63,15 +63,15 @@ type simpleExecutor struct{}
 var mySimpleExecutor simpleExecutor
 
 // Execute the given expression in the given environment of the given engine.
-func (*simpleExecutor) Execute(eng *Engine, env sx.Environment, expr Expr) (sx.Object, error) {
+func (*simpleExecutor) Execute(eng *Engine, env Environment, expr Expr) (sx.Object, error) {
 	return expr.Compute(eng, env)
 }
 
 // Engine is the collection of all relevant data element to execute / evaluate an object.
 type Engine struct {
 	sf        sx.SymbolFactory
-	root      sx.Environment
-	toplevel  sx.Environment
+	root      Environment
+	toplevel  Environment
 	pars      Parser
 	reworkOpt *ReworkOptions
 	exec      Executor
@@ -79,7 +79,7 @@ type Engine struct {
 }
 
 // MakeEngine creates a new engine.
-func MakeEngine(sf sx.SymbolFactory, root sx.Environment) *Engine {
+func MakeEngine(sf sx.SymbolFactory, root Environment) *Engine {
 	return &Engine{
 		sf:        sf,
 		root:      root,
@@ -95,12 +95,12 @@ func MakeEngine(sf sx.SymbolFactory, root sx.Environment) *Engine {
 func (eng *Engine) SymbolFactory() sx.SymbolFactory { return eng.sf }
 
 // RootEnvironment returns the root environment of the engine.
-func (eng *Engine) RootEnvironment() sx.Environment { return eng.root }
+func (eng *Engine) RootEnvironment() Environment { return eng.root }
 
 // SetToplevelEnv sets the given environment as the top-level environment.
 // It must be the root environment or a child of it.
-func (eng *Engine) SetToplevelEnv(env sx.Environment) error {
-	root := sx.RootEnv(env)
+func (eng *Engine) SetToplevelEnv(env Environment) error {
+	root := RootEnv(env)
 	if root != eng.root {
 		return fmt.Errorf("root of %v is not root of engine %v: %v", env, eng.root, root)
 	}
@@ -109,7 +109,7 @@ func (eng *Engine) SetToplevelEnv(env sx.Environment) error {
 }
 
 // GetToplevelEnv returns the current top-level environment.
-func (eng *Engine) GetToplevelEnv() sx.Environment { return eng.toplevel }
+func (eng *Engine) GetToplevelEnv() Environment { return eng.toplevel }
 
 // SetParser updates the current s-expression parser of the engine.
 func (eng *Engine) SetParser(p Parser) Parser {
@@ -144,7 +144,7 @@ func (eng *Engine) SetReworkOptions(ro *ReworkOptions) *ReworkOptions {
 }
 
 // Eval parses the given object and executes it in the environment.
-func (eng *Engine) Eval(env sx.Environment, obj sx.Object) (sx.Object, error) {
+func (eng *Engine) Eval(env Environment, obj sx.Object) (sx.Object, error) {
 	expr, err := eng.Parse(env, obj)
 	if err != nil {
 		return nil, err
@@ -154,17 +154,17 @@ func (eng *Engine) Eval(env sx.Environment, obj sx.Object) (sx.Object, error) {
 }
 
 // Parse the given object in the given environment.
-func (eng *Engine) Parse(env sx.Environment, obj sx.Object) (Expr, error) {
+func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
 	return eng.pars.Parse(eng, env, obj)
 }
 
 // Rework the given expression with the options stored in the engine.
-func (eng *Engine) Rework(env sx.Environment, expr Expr) Expr {
+func (eng *Engine) Rework(env Environment, expr Expr) Expr {
 	return expr.Rework(eng.reworkOpt, env)
 }
 
 // Execute the given expression in the given environment.
-func (eng *Engine) Execute(env sx.Environment, expr Expr) (sx.Object, error) {
+func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
 	if exec := eng.exec; exec != nil {
 		for {
 			res, err := eng.exec.Execute(eng, env, expr)
@@ -193,20 +193,20 @@ func (eng *Engine) Execute(env sx.Environment, expr Expr) (sx.Object, error) {
 }
 
 // ExecuteTCO the given expression in the given environment, but tail-call optimized.
-func (eng *Engine) ExecuteTCO(env sx.Environment, expr Expr) (sx.Object, error) {
+func (eng *Engine) ExecuteTCO(env Environment, expr Expr) (sx.Object, error) {
 	return nil, executeAgain{Env: env, Expr: expr}
 }
 
 // executeAgain is a non-error error signalling that the given expression should be
 // executed again in the given environment.
 type executeAgain struct {
-	Env  sx.Environment
+	Env  Environment
 	Expr Expr
 }
 
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.Expr) }
 
-func (eng *Engine) Call(env sx.Environment, fn Callable, args []sx.Object) (sx.Object, error) {
+func (eng *Engine) Call(env Environment, fn Callable, args []sx.Object) (sx.Object, error) {
 	res, err := fn.Call(eng, env, args)
 	if err == nil {
 		return res, nil

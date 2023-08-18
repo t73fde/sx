@@ -46,7 +46,7 @@ type mainParserExecutor struct {
 	logExecutor  bool
 }
 
-func (mpe *mainParserExecutor) Parse(eng *sxeval.Engine, env sx.Environment, form sx.Object) (sxeval.Expr, error) {
+func (mpe *mainParserExecutor) Parse(eng *sxeval.Engine, env sxeval.Environment, form sx.Object) (sxeval.Expr, error) {
 	if !mpe.logParser {
 		return mpe.origParser.Parse(eng, env, form)
 	}
@@ -61,7 +61,7 @@ func (mpe *mainParserExecutor) Parse(eng *sxeval.Engine, env sx.Environment, for
 	return expr, nil
 }
 
-func (mpe *mainParserExecutor) Execute(eng *sxeval.Engine, env sx.Environment, expr sxeval.Expr) (sx.Object, error) {
+func (mpe *mainParserExecutor) Execute(eng *sxeval.Engine, env sxeval.Environment, expr sxeval.Expr) (sx.Object, error) {
 	if !mpe.logExecutor {
 		return mpe.origExecutor.Execute(eng, env, expr)
 	}
@@ -139,7 +139,7 @@ func main() {
 		logExpr:      false,
 		logExecutor:  true,
 	}
-	engine := sxeval.MakeEngine(sf, sx.MakeRootEnvironment())
+	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment())
 	mpe.origParser = engine.SetParser(&mpe)
 	mpe.origExecutor = engine.SetExecutor(&mpe)
 	root := engine.RootEnvironment()
@@ -212,7 +212,7 @@ func main() {
 		panic(args[0])
 	})
 	root.Freeze()
-	env := sx.MakeChildEnvironment(engine.GetToplevelEnv(), "repl", 1024)
+	env := sxeval.MakeChildEnvironment(engine.GetToplevelEnv(), "repl", 1024)
 	env.Bind(sf.MustMake("root-env"), root)
 	env.Bind(sf.MustMake("repl-env"), env)
 	var wg sync.WaitGroup
@@ -221,7 +221,7 @@ func main() {
 	wg.Wait()
 }
 
-func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env sx.Environment, wg *sync.WaitGroup) {
+func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env sxeval.Environment, wg *sync.WaitGroup) {
 	defer func() {
 		if val := recover(); val != nil {
 			stack := debug.Stack()

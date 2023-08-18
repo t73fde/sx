@@ -19,7 +19,7 @@ import (
 )
 
 // Map returns a list, where all member are the result of the given function to all original list members.
-func Map(eng *sxeval.Engine, env sx.Environment, args []sx.Object) (sx.Object, error) {
+func Map(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
 	err := sxbuiltins.CheckArgs(args, 2, 2)
 	fn, err := sxbuiltins.GetCallable(err, args, 0)
 	lst, err := sxbuiltins.GetList(err, args, 1)
@@ -61,7 +61,7 @@ func Map(eng *sxeval.Engine, env sx.Environment, args []sx.Object) (sx.Object, e
 }
 
 // Apply calls the given function with the given arguments.
-func Apply(eng *sxeval.Engine, env sx.Environment, args []sx.Object) (sx.Object, error) {
+func Apply(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
 	err := sxbuiltins.CheckArgs(args, 2, 2)
 	lst, err := sxbuiltins.GetList(err, args, 1)
 	if err != nil {
@@ -90,7 +90,7 @@ func Apply(eng *sxeval.Engine, env sx.Environment, args []sx.Object) (sx.Object,
 }
 
 // Fold will apply the given function pairwise to list of args.
-func Fold(eng *sxeval.Engine, env sx.Environment, args []sx.Object) (sx.Object, error) {
+func Fold(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
 	err := sxbuiltins.CheckArgs(args, 3, 3)
 	fn, err := sxbuiltins.GetCallable(err, args, 0)
 	lst, err := sxbuiltins.GetList(err, args, 2)
@@ -116,7 +116,7 @@ func Fold(eng *sxeval.Engine, env sx.Environment, args []sx.Object) (sx.Object, 
 }
 
 // FoldReverse will apply the given function reversed pairwise to reversed list of args.
-func FoldReverse(eng *sxeval.Engine, env sx.Environment, args []sx.Object) (sx.Object, error) {
+func FoldReverse(eng *sxeval.Engine, env sxeval.Environment, args []sx.Object) (sx.Object, error) {
 	err := sxbuiltins.CheckArgs(args, 3, 3)
 	fn, err := sxbuiltins.GetCallable(err, args, 0)
 	lst, err := sxbuiltins.GetList(err, args, 2)

@@ -20,7 +20,7 @@ import (
 )
 
 // IfS parses an if-statement: (if cond then else). If else is missing, a nil is assumed.
-func IfS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func IfS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("requires 2 or 3 arguments, got none")
 	}
@@ -63,7 +63,7 @@ type If2Expr struct {
 	True sxeval.Expr
 }
 
-func (ife *If2Expr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
+func (ife *If2Expr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
 	test, err := eng.Execute(env, ife.Test)
 	if err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func (ife *If2Expr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
-func (ife *If2Expr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (ife *If2Expr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	testExpr := ife.Test.Rework(ro, env)
 	trueExpr := ife.True.Rework(ro, env)
 	if objectExpr, isObjectExpr := testExpr.(sxeval.ObjectExpr); isObjectExpr {
@@ -118,7 +118,7 @@ type If3Expr struct {
 	False sxeval.Expr
 }
 
-func (ife *If3Expr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
+func (ife *If3Expr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
 	test, err := eng.Execute(env, ife.Test)
 	if err != nil {
 		return nil, err
@@ -162,7 +162,7 @@ func (ife *If3Expr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
-func (ife *If3Expr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (ife *If3Expr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	testExpr := ife.Test.Rework(ro, env)
 	trueExpr := ife.True.Rework(ro, env)
 	falseExpr := ife.False.Rework(ro, env)

@@ -19,7 +19,7 @@ import (
 )
 
 // DefineSyntax parses a (define name value) form.
-func SetXS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func SetXS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("needs at least two arguments")
 	}
@@ -41,7 +41,7 @@ type SetXExpr struct {
 	Val sxeval.Expr
 }
 
-func (se *SetXExpr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
+func (se *SetXExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
 	if _, found := env.Lookup(se.Sym); !found {
 		return nil, sxeval.NotBoundError{Env: env, Sym: se.Sym}
 	}
@@ -75,7 +75,7 @@ func (se *SetXExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
-func (se *SetXExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (se *SetXExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	se.Val = se.Val.Rework(ro, env)
 	return se
 }

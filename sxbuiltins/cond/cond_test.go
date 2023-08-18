@@ -51,7 +51,7 @@ func TestQuote(t *testing.T) {
 		{name: "if-3-err-sym", src: "(if x 2 3)", exp: "symbol \"x\" not bound in environment \"if-3-err-sym\"", withErr: true},
 	}
 
-	root := sx.MakeRootEnvironment()
+	root := sxeval.MakeRootEnvironment()
 	engine := sxeval.MakeEngine(sx.MakeMappedFactory(), root)
 	engine.BindSyntax("if", cond.IfS)
 	for _, tc := range testcases {
@@ -63,7 +63,7 @@ func TestQuote(t *testing.T) {
 				t.Errorf("Error %v while reading %s", err, tc.src)
 				return
 			}
-			env := sx.MakeChildEnvironment(root, tc.name, 0)
+			env := sxeval.MakeChildEnvironment(root, tc.name, 0)
 			res, err := engine.Eval(env, val)
 			if err != nil {
 				if tc.withErr {

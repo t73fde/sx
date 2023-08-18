@@ -114,10 +114,10 @@ func GetPair(err error, args []sx.Object, pos int) (*sx.Pair, error) {
 }
 
 // GetEnvironment returns the given argument as an environment, and checks for errors.
-func GetEnvironment(err error, args []sx.Object, pos int) (sx.Environment, error) {
+func GetEnvironment(err error, args []sx.Object, pos int) (sxeval.Environment, error) {
 	obj, err := getObject(err, args, pos)
 	if err == nil {
-		if env, ok := sx.GetEnvironment(obj); ok {
+		if env, ok := sxeval.GetEnvironment(obj); ok {
 			return env, nil
 		}
 		err = fmt.Errorf("argument %d is not an environment, but %T/%v", pos+1, obj, obj)
@@ -138,7 +138,7 @@ func GetCallable(err error, args []sx.Object, pos int) (sxeval.Callable, error) 
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func ParseExprSeq(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (front []sxeval.Expr, last sxeval.Expr, _ error) {
+func ParseExprSeq(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (front []sxeval.Expr, last sxeval.Expr, _ error) {
 	if args == nil {
 		return nil, nil, nil
 	}

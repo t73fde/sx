@@ -21,7 +21,7 @@ import (
 )
 
 // Pretty writes the first argument to stdout.
-func Pretty(_ *sxeval.Engine, _ sx.Environment, args []sx.Object) (sx.Object, error) {
+func Pretty(_ *sxeval.Engine, _ sxeval.Environment, args []sx.Object) (sx.Object, error) {
 	// Must be a BuiltinEEA, because this function has some side effects.
 	err := sxbuiltins.CheckArgs(args, 0, 1)
 	if err != nil {

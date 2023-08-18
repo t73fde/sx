@@ -32,12 +32,12 @@ func InstallQuoteReader(rd *sxreader.Reader, quoteSym *sx.Symbol, initCh rune) {
 }
 
 // InstallQuoteSyntax will setup the system to allow quoting values.
-func InstallQuoteSyntax(env sx.Environment, symQuote *sx.Symbol) error {
+func InstallQuoteSyntax(env sxeval.Environment, symQuote *sx.Symbol) error {
 	err := env.Bind(
 		symQuote,
 		sxeval.MakeSyntax(
 			symQuote.Name(),
-			func(_ *sxeval.Engine, _ sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+			func(_ *sxeval.Engine, _ sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 				if sx.IsNil(args) {
 					return nil, sxeval.ErrNoArgs
 				}

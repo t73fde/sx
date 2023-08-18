@@ -23,7 +23,7 @@ import (
 // MacroS parses a macro specification.
 //
 // Syntactically, it is the same as a procedure specification (aka lambda).
-func MacroS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func MacroS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	le, err := callable.LambdaS(eng, env, args)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func makeMacroExpr(le *callable.LambdaExpr) sxeval.Expr {
 }
 
 // DefMacroS parses a macro specfication and assigns it to a value.
-func DefMacroS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func DefMacroS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, sxeval.ErrNoArgs
 	}
@@ -69,7 +69,7 @@ type MacroExpr struct {
 	Last   sxeval.Expr
 }
 
-func (me *MacroExpr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
+func (me *MacroExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
 	return &Macro{
 		Env:    env,
 		Name:   me.Name,
@@ -109,7 +109,7 @@ func (me *MacroExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
-func (me *MacroExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (me *MacroExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	for i, expr := range me.Front {
 		me.Front[i] = expr.Rework(ro, env)
 	}
@@ -119,7 +119,7 @@ func (me *MacroExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval
 
 // Macro represents the macro definition form.
 type Macro struct {
-	Env    sx.Environment
+	Env    sxeval.Environment
 	Name   string
 	Params []*sx.Symbol
 	Rest   *sx.Symbol
@@ -163,7 +163,7 @@ func (m *Macro) Repr() string                 { return sx.Repr(m) }
 func (m *Macro) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<macro:", m.Name, ">")
 }
-func (m *Macro) Parse(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func (m *Macro) Parse(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	form, err := m.Expand(eng, env, args)
 	if err != nil {
 		return nil, err
@@ -171,7 +171,7 @@ func (m *Macro) Parse(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sx
 	return nil, sxeval.ErrParseAgain{Env: env, Form: form}
 }
 
-func (m *Macro) Expand(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sx.Object, error) {
+func (m *Macro) Expand(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sx.Object, error) {
 	var macroArgs []sx.Object
 	arg := sx.Object(args)
 	for {

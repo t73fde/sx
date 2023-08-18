@@ -21,7 +21,7 @@ import (
 )
 
 // DefineS parses a (define name value) form.
-func DefineS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func DefineS(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("need at least two arguments")
 	}
@@ -43,7 +43,7 @@ func DefineS(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr
 	}
 }
 
-func parseValueDefinition(eng *sxeval.Engine, env sx.Environment, args *sx.Pair) (sxeval.Expr, error) {
+func parseValueDefinition(eng *sxeval.Engine, env sxeval.Environment, args *sx.Pair) (sxeval.Expr, error) {
 	cdr := args.Cdr()
 	if sx.IsNil(cdr) {
 		return nil, fmt.Errorf("argument 2 missing")
@@ -55,7 +55,7 @@ func parseValueDefinition(eng *sxeval.Engine, env sx.Environment, args *sx.Pair)
 	return eng.Parse(env, pair.Car())
 }
 
-func parseProcedureDefinition(eng *sxeval.Engine, env sx.Environment, head, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
+func parseProcedureDefinition(eng *sxeval.Engine, env sxeval.Environment, head, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
 	if head == nil {
 		return nil, nil, fmt.Errorf("empty function head")
 	}
@@ -73,7 +73,7 @@ type DefineExpr struct {
 	Val sxeval.Expr
 }
 
-func (de *DefineExpr) Compute(eng *sxeval.Engine, env sx.Environment) (sx.Object, error) {
+func (de *DefineExpr) Compute(eng *sxeval.Engine, env sxeval.Environment) (sx.Object, error) {
 	val, err := eng.Execute(env, de.Val)
 	if err == nil {
 		err = env.Bind(de.Sym, val)
@@ -104,7 +104,7 @@ func (de *DefineExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
-func (de *DefineExpr) Rework(ro *sxeval.ReworkOptions, env sx.Environment) sxeval.Expr {
+func (de *DefineExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	de.Val = de.Val.Rework(ro, env)
 	return de
 }
