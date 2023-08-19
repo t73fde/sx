@@ -11,88 +11,111 @@
 package sxeval
 
 import (
+	"fmt"
+
 	"zettelstore.de/sx.fossil"
 )
 
-// ParseFrame is a parsing environment.
-type ParseFrame struct {
-	engine *Engine
-	env    Environment
-}
-
-func (frame *ParseFrame) IsEql(other *ParseFrame) bool {
-	if frame == other {
-		return true
-	}
-	if frame == nil || other == nil {
-		return false
-	}
-	if frame.engine != other.engine {
-		return false
-	}
-	return frame.env.IsEql(other.env)
-}
-
-func (pf *ParseFrame) Parse(obj sx.Object) (Expr, error) {
-	return pf.engine.Parse(pf.env, obj)
-}
-
-func (pf *ParseFrame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
-	return pf.engine.Call(pf.env, fn, args)
-}
-
-func (pf *ParseFrame) MakeChildFrame(name string, baseSize int) *ParseFrame {
-	return &ParseFrame{
-		engine: pf.engine,
-		env:    MakeChildEnvironment(pf.env, name, baseSize),
-	}
-}
-
-func (pf *ParseFrame) Bind(sym *sx.Symbol, obj sx.Object) error {
-	env, err := pf.env.Bind(sym, obj)
-	pf.env = env
-	return err
-}
-
-func (pf *ParseFrame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
-	return Resolve(pf.env, sym)
-}
-func (pf *ParseFrame) Environment() Environment { return pf.env }
-
 // Frame is a runtime object of the current computing environment.
 type Frame struct {
-	engine *Engine
-	env    Environment
+	engine   *Engine
+	env      Environment
+	caller   *Frame
+	executor Executor
 }
 
+func (frame *Frame) MakeCalleeFrame() *Frame {
+	return &Frame{
+		engine:   frame.engine,
+		env:      frame.env,
+		caller:   frame,
+		executor: frame.executor,
+	}
+}
 func (frame *Frame) MakeParseFrame() *ParseFrame {
 	return &ParseFrame{
 		engine: frame.engine,
 		env:    frame.env,
+		parser: frame.engine.pars,
 	}
 }
+
 func (frame *Frame) MakeChildEnvFrame(name string, baseSize int) *Frame {
 	return &Frame{
-		engine: frame.engine,
-		env:    MakeChildEnvironment(frame.env, name, baseSize),
+		engine:   frame.engine,
+		env:      MakeChildEnvironment(frame.env, name, baseSize),
+		caller:   frame,
+		executor: frame.executor,
 	}
 }
 func (frame *Frame) UpdateChildFrame(pf *ParseFrame, name string, baseSize int) *Frame {
 	return &Frame{
-		engine: frame.engine,
-		env:    MakeChildEnvironment(pf.env, name, baseSize),
+		engine:   frame.engine,
+		env:      MakeChildEnvironment(pf.env, name, baseSize),
+		caller:   frame,
+		executor: frame.executor,
 	}
 }
 
 func (frame *Frame) Execute(expr Expr) (sx.Object, error) {
-	return frame.engine.Execute(frame.env, expr)
+	execFrame := frame.MakeCalleeFrame()
+	if exec := frame.executor; exec != nil {
+		for {
+			res, err := exec.Execute(execFrame, expr)
+			if err == nil {
+				return res, nil
+			}
+			if again, ok := err.(executeAgain); ok {
+				execFrame.env = again.env
+				expr = again.expr
+				continue
+			}
+			return res, err
+		}
+	}
+
+	for {
+		res, err := expr.Compute(execFrame)
+		if err == nil {
+			return res, nil
+		}
+		if again, ok := err.(executeAgain); ok {
+			execFrame.env = again.env
+			expr = again.expr
+			continue
+		}
+		return res, err
+	}
 }
 func (frame *Frame) ExecuteTCO(expr Expr) (sx.Object, error) {
-	return frame.engine.ExecuteTCO(frame.env, expr)
+	return nil, executeAgain{env: frame.env, expr: expr}
 }
 func (frame *Frame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
-	return frame.engine.Call(frame.env, fn, args)
+	callFrame := Frame{
+		engine: frame.engine,
+		env:    frame.env,
+		caller: frame,
+	}
+	res, err := fn.Call(&callFrame, args)
+	if err == nil {
+		return res, nil
+	}
+	if again, ok := err.(executeAgain); ok {
+		callFrame.env = again.env
+		return callFrame.Execute(again.expr)
+	}
+	return nil, err
+
 }
+
+// executeAgain is a non-error error signalling that the given expression should be
+// executed again in the given environment.
+type executeAgain struct {
+	env  Environment
+	expr Expr
+}
+
+func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }
 
 func (frame *Frame) Bind(sym *sx.Symbol, obj sx.Object) error {
 	env, err := frame.env.Bind(sym, obj)

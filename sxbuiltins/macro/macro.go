@@ -71,6 +71,7 @@ type MacroExpr struct {
 
 func (me *MacroExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	return &Macro{
+		Frame:  frame,
 		PFrame: frame.MakeParseFrame(),
 		Name:   me.Name,
 		Params: me.Params,
@@ -119,6 +120,7 @@ func (me *MacroExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sx
 
 // Macro represents the macro definition form.
 type Macro struct {
+	Frame  *sxeval.Frame
 	PFrame *sxeval.ParseFrame
 	Name   string
 	Params []*sx.Symbol
@@ -163,15 +165,15 @@ func (m *Macro) Repr() string                 { return sx.Repr(m) }
 func (m *Macro) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<macro:", m.Name, ">")
 }
-func (m *Macro) Parse(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	form, err := m.Expand(frame, args)
+func (m *Macro) Parse(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	form, err := m.Expand(pf, args)
 	if err != nil {
 		return nil, err
 	}
-	return nil, sxeval.ErrParseAgain{Frame: frame, Form: form}
+	return nil, pf.ParseAgain(form)
 }
 
-func (m *Macro) Expand(frame *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
+func (m *Macro) Expand(pf *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 	var macroArgs []sx.Object
 	arg := sx.Object(args)
 	for {
@@ -195,5 +197,5 @@ func (m *Macro) Expand(frame *sxeval.ParseFrame, args *sx.Pair) (sx.Object, erro
 		Last:   m.Last,
 	}
 
-	return frame.Call(&proc, macroArgs)
+	return m.Frame.MakeCalleeFrame().Call(&proc, macroArgs)
 }

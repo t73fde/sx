@@ -10,25 +10,12 @@
 
 package sxeval
 
-import (
-	"fmt"
-
-	"zettelstore.de/sx.fossil"
-)
+import "zettelstore.de/sx.fossil"
 
 // Parser transform an object into an executable expression.
 type Parser interface {
 	Parse(*ParseFrame, sx.Object) (Expr, error)
 }
-
-// ErrParseAgain is a non-error error signalling that the given form should be
-// parsed again in the given environment.
-type ErrParseAgain struct {
-	Frame *ParseFrame
-	Form  sx.Object
-}
-
-func (e ErrParseAgain) Error() string { return fmt.Sprintf("Again: %T/%v", e.Form, e.Form) }
 
 // defaultParser is the parser for normal use.
 type defaultParser struct{}
@@ -48,8 +35,8 @@ restart:
 		if err == nil {
 			return expr, nil
 		}
-		if again, isAgain := err.(ErrParseAgain); isAgain {
-			pf, form = again.Frame, again.Form
+		if again, isAgain := err.(errParseAgain); isAgain {
+			pf, form = again.pf, again.form
 			goto restart
 		}
 		return nil, err

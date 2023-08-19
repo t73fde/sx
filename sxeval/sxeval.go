@@ -155,7 +155,8 @@ func (eng *Engine) Eval(env Environment, obj sx.Object) (sx.Object, error) {
 
 // Parse the given object in the given environment.
 func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
-	return eng.pars.Parse(&ParseFrame{engine: eng, env: env}, obj)
+	pf := ParseFrame{engine: eng, env: env, parser: eng.pars}
+	return pf.Parse(obj)
 }
 
 // Rework the given expression with the options stored in the engine.
@@ -165,60 +166,8 @@ func (eng *Engine) Rework(env Environment, expr Expr) Expr {
 
 // Execute the given expression in the given environment.
 func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
-	frame := Frame{engine: eng, env: env}
-	if exec := eng.exec; exec != nil {
-		for {
-			res, err := eng.exec.Execute(&frame, expr)
-			if err == nil {
-				return res, nil
-			}
-			if again, ok := err.(executeAgain); ok {
-				env, expr = again.Env, again.Expr
-				frame.env = env
-				continue
-			}
-			return res, err
-		}
-	}
-
-	for {
-		res, err := expr.Compute(&frame)
-		if err == nil {
-			return res, nil
-		}
-		if again, ok := err.(executeAgain); ok {
-			env, expr = again.Env, again.Expr
-			frame.env = env
-			continue
-		}
-		return res, err
-	}
-}
-
-// ExecuteTCO the given expression in the given environment, but tail-call optimized.
-func (eng *Engine) ExecuteTCO(env Environment, expr Expr) (sx.Object, error) {
-	return nil, executeAgain{Env: env, Expr: expr}
-}
-
-// executeAgain is a non-error error signalling that the given expression should be
-// executed again in the given environment.
-type executeAgain struct {
-	Env  Environment
-	Expr Expr
-}
-
-func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.Expr) }
-
-func (eng *Engine) Call(env Environment, fn Callable, args []sx.Object) (sx.Object, error) {
-	frame := Frame{engine: eng, env: env}
-	res, err := fn.Call(&frame, args)
-	if err == nil {
-		return res, nil
-	}
-	if again, ok := err.(executeAgain); ok {
-		return eng.Execute(again.Env, again.Expr)
-	}
-	return nil, err
+	frame := Frame{engine: eng, env: env, caller: nil, executor: eng.exec}
+	return frame.Execute(expr)
 }
 
 // BindBuiltinA binds a standard builtin function to the given name in the engine's root environment.
