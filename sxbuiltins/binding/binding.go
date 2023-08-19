@@ -23,7 +23,7 @@ import (
 )
 
 // LetS parses the `(let (binding...) expr...)` syntax.`
-func LetS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+func LetS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("binding spec and body missing")
 	}
@@ -36,7 +36,7 @@ func LetS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 		return nil, sx.ErrImproper{Pair: args}
 	}
 	if bindings == nil {
-		return cond.BeginS(frame, body)
+		return cond.BeginS(pf, body)
 	}
 	letExpr := LetExpr{
 		Symbols: nil,
@@ -44,7 +44,7 @@ func LetS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 		Front:   nil,
 		Last:    nil,
 	}
-	letFrame := frame.MakeChildFrame("let-def", 128)
+	letFrame := pf.MakeChildFrame("let-def", 128)
 	for node := bindings; node != nil; {
 		sym, err := callable.GetParameterSymbol(letExpr.Symbols, node.Car())
 		if err != nil {
@@ -57,7 +57,7 @@ func LetS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 		if next == nil {
 			return nil, fmt.Errorf("binding missing for %v", sym)
 		}
-		expr, err := frame.Parse(next.Car())
+		expr, err := pf.Parse(next.Car())
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +92,7 @@ type LetExpr struct {
 }
 
 func (le *LetExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	letFrame := frame.MakeChildFrame("let", len(le.Symbols))
+	letFrame := frame.MakeChildEnvFrame("let", len(le.Symbols))
 	for i, sym := range le.Symbols {
 		obj, err := frame.Execute(le.Expr[i])
 		if err != nil {

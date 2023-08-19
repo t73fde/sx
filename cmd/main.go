@@ -46,13 +46,13 @@ type mainParserExecutor struct {
 	logExecutor  bool
 }
 
-func (mpe *mainParserExecutor) Parse(frame *sxeval.Frame, form sx.Object) (sxeval.Expr, error) {
+func (mpe *mainParserExecutor) Parse(pf *sxeval.ParseFrame, form sx.Object) (sxeval.Expr, error) {
 	if !mpe.logParser {
-		return mpe.origParser.Parse(frame, form)
+		return mpe.origParser.Parse(pf, form)
 	}
-	env := frame.Environment()
+	env := pf.Environment()
 	fmt.Printf(";P %v<-%v %T %v\n", env, env.Parent(), form, form)
-	expr, err := mpe.origParser.Parse(frame, form)
+	expr, err := mpe.origParser.Parse(pf, form)
 	if err != nil {
 		return nil, err
 	}

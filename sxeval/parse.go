@@ -18,13 +18,13 @@ import (
 
 // Parser transform an object into an executable expression.
 type Parser interface {
-	Parse(*Frame, sx.Object) (Expr, error)
+	Parse(*ParseFrame, sx.Object) (Expr, error)
 }
 
 // ErrParseAgain is a non-error error signalling that the given form should be
 // parsed again in the given environment.
 type ErrParseAgain struct {
-	Frame *Frame
+	Frame *ParseFrame
 	Form  sx.Object
 }
 
@@ -35,7 +35,7 @@ type defaultParser struct{}
 
 var myDefaultParser defaultParser
 
-func (dp *defaultParser) Parse(frame *Frame, form sx.Object) (Expr, error) {
+func (dp *defaultParser) Parse(pf *ParseFrame, form sx.Object) (Expr, error) {
 restart:
 	if sx.IsNil(form) {
 		return NilExpr, nil
@@ -44,12 +44,12 @@ restart:
 	case *sx.Symbol:
 		return ResolveExpr{Symbol: f}, nil
 	case *sx.Pair:
-		expr, err := dp.parsePair(frame, f)
+		expr, err := dp.parsePair(pf, f)
 		if err == nil {
 			return expr, nil
 		}
 		if again, isAgain := err.(ErrParseAgain); isAgain {
-			frame, form = again.Frame, again.Form
+			pf, form = again.Frame, again.Form
 			goto restart
 		}
 		return nil, err
@@ -62,18 +62,18 @@ restart:
 	return ObjExpr{Obj: form}, nil
 }
 
-func (*defaultParser) parsePair(frame *Frame, pair *sx.Pair) (Expr, error) {
+func (*defaultParser) parsePair(pf *ParseFrame, pair *sx.Pair) (Expr, error) {
 	var proc Expr
 	first := pair.Car()
 	if sym, isSymbol := sx.GetSymbol(first); isSymbol {
-		if val, found := frame.Resolve(sym); found {
+		if val, found := pf.Resolve(sym); found {
 			if sp, isSpecial := GetSpecial(val); isSpecial {
-				return sp.Parse(frame, pair.Tail())
+				return sp.Parse(pf, pair.Tail())
 			}
 		}
 		proc = ResolveExpr{Symbol: sym}
 	} else {
-		p, err := frame.Parse(first)
+		p, err := pf.Parse(first)
 		if err != nil {
 			return nil, err
 		}
@@ -90,7 +90,7 @@ func (*defaultParser) parsePair(frame *Frame, pair *sx.Pair) (Expr, error) {
 		if !isPair {
 			return nil, sx.ErrImproper{Pair: pair}
 		}
-		expr, err2 := frame.Parse(elem.Car())
+		expr, err2 := pf.Parse(elem.Car())
 		if err2 != nil {
 			return nil, err2
 		}

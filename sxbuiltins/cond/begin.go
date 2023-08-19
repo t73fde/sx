@@ -19,8 +19,8 @@ import (
 )
 
 // BeginS parses a begin-statement: (begin expr...).
-func BeginS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := sxbuiltins.ParseExprSeq(frame, args)
+func BeginS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	front, last, err := sxbuiltins.ParseExprSeq(pf, args)
 	if err != nil {
 		return nil, err
 	}

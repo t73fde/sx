@@ -21,19 +21,19 @@ import (
 )
 
 // DefineS parses a (define name value) form.
-func DefineS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+func DefineS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("need at least two arguments")
 	}
 	switch car := args.Car().(type) {
 	case *sx.Symbol:
-		val, err := parseValueDefinition(frame, args)
+		val, err := parseValueDefinition(pf, args)
 		if err != nil {
 			return val, err
 		}
 		return &DefineExpr{Sym: car, Val: val}, nil
 	case *sx.Pair:
-		sym, fun, err := parseProcedureDefinition(frame, car, args)
+		sym, fun, err := parseProcedureDefinition(pf, car, args)
 		if err != nil {
 			return fun, err
 		}
@@ -43,7 +43,7 @@ func DefineS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	}
 }
 
-func parseValueDefinition(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+func parseValueDefinition(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	cdr := args.Cdr()
 	if sx.IsNil(cdr) {
 		return nil, fmt.Errorf("argument 2 missing")
@@ -52,10 +52,10 @@ func parseValueDefinition(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, erro
 	if !isPair {
 		return nil, fmt.Errorf("argument 2 must be a proper list")
 	}
-	return frame.Parse(pair.Car())
+	return pf.Parse(pair.Car())
 }
 
-func parseProcedureDefinition(frame *sxeval.Frame, head, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
+func parseProcedureDefinition(pf *sxeval.ParseFrame, head, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
 	if head == nil {
 		return nil, nil, fmt.Errorf("empty function head")
 	}
@@ -63,7 +63,7 @@ func parseProcedureDefinition(frame *sxeval.Frame, head, args *sx.Pair) (*sx.Sym
 	if !ok {
 		return nil, nil, fmt.Errorf("first element in function head is not a symbol, but: %T/%v", head.Car(), head.Car())
 	}
-	expr, err := callable.ParseProcedure(frame, sym.Name(), head.Cdr(), args.Cdr())
+	expr, err := callable.ParseProcedure(pf, sym.Name(), head.Cdr(), args.Cdr())
 	return sym, expr, err
 }
 

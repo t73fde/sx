@@ -20,16 +20,16 @@ import (
 )
 
 // LambdaS parses a procedure specification.
-func LambdaS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+func LambdaS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("parameter spec and body missing")
 	}
 	car := args.Car()
-	return ParseProcedure(frame, sx.Repr(car), car, args.Cdr())
+	return ParseProcedure(pf, sx.Repr(car), car, args.Cdr())
 }
 
 // ParseProcedure parses a procedure definition, where some parsing is already done.
-func ParseProcedure(frame *sxeval.Frame, name string, paramSpec, bodySpec sx.Object) (*LambdaExpr, error) {
+func ParseProcedure(pf *sxeval.ParseFrame, name string, paramSpec, bodySpec sx.Object) (*LambdaExpr, error) {
 	var params []*sx.Symbol
 	var rest *sx.Symbol
 	if !sx.IsNil(paramSpec) {
@@ -57,7 +57,7 @@ func ParseProcedure(frame *sxeval.Frame, name string, paramSpec, bodySpec sx.Obj
 	if rest != nil {
 		envSize++
 	}
-	fnFrame := frame.MakeChildFrame(name+"-def", envSize)
+	fnFrame := pf.MakeChildFrame(name+"-def", envSize)
 	for _, p := range params {
 		err := fnFrame.Bind(p, sx.MakeUndefined())
 		if err != nil {
@@ -133,7 +133,7 @@ type LambdaExpr struct {
 
 func (le *LambdaExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	return &Procedure{
-		Frame:  frame,
+		PFrame: frame.MakeParseFrame(),
 		Name:   le.Name,
 		Params: le.Params,
 		Rest:   le.Rest,
@@ -181,7 +181,7 @@ func (le *LambdaExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) s
 
 // Procedure represents the procedure definition form (aka lambda).
 type Procedure struct {
-	Frame  *sxeval.Frame
+	PFrame *sxeval.ParseFrame
 	Name   string
 	Params []*sx.Symbol
 	Rest   *sx.Symbol
@@ -215,7 +215,7 @@ func (p *Procedure) IsEql(other sx.Object) bool {
 				return false
 			}
 		}
-		return p.Frame.IsEql(otherF.Frame)
+		return p.PFrame.IsEql(otherF.PFrame)
 	}
 	return false
 }
@@ -225,7 +225,7 @@ func (p *Procedure) Repr() string                 { return sx.Repr(p) }
 func (p *Procedure) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<lambda:", p.Name, ">")
 }
-func (p *Procedure) Call(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	numParams := len(p.Params)
 	if len(args) < numParams {
 		return nil, fmt.Errorf("missing arguments: %v", p.Params[len(args):])
@@ -234,7 +234,7 @@ func (p *Procedure) Call(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	if p.Rest != nil {
 		envSize++
 	}
-	childFrame := p.Frame.MakeChildFrame(p.Name, envSize)
+	childFrame := frame.UpdateChildFrame(p.PFrame, p.Name, envSize)
 	for i, p := range p.Params {
 		err := childFrame.Bind(p, args[i])
 		if err != nil {

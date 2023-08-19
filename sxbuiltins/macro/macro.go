@@ -23,7 +23,7 @@ import (
 // MacroS parses a macro specification.
 //
 // Syntactically, it is the same as a procedure specification (aka lambda).
-func MacroS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+func MacroS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	le, err := callable.LambdaS(frame, args)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func makeMacroExpr(le *callable.LambdaExpr) sxeval.Expr {
 }
 
 // DefMacroS parses a macro specfication and assigns it to a value.
-func DefMacroS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+func DefMacroS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, sxeval.ErrNoArgs
 	}
@@ -71,7 +71,7 @@ type MacroExpr struct {
 
 func (me *MacroExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	return &Macro{
-		Frame:  frame,
+		PFrame: frame.MakeParseFrame(),
 		Name:   me.Name,
 		Params: me.Params,
 		Rest:   me.Rest,
@@ -119,7 +119,7 @@ func (me *MacroExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sx
 
 // Macro represents the macro definition form.
 type Macro struct {
-	Frame  *sxeval.Frame
+	PFrame *sxeval.ParseFrame
 	Name   string
 	Params []*sx.Symbol
 	Rest   *sx.Symbol
@@ -153,7 +153,7 @@ func (m *Macro) IsEql(other sx.Object) bool {
 				return false
 			}
 		}
-		return m.Frame.IsEql(otherF.Frame)
+		return m.PFrame.IsEql(otherF.PFrame)
 	}
 	return false
 }
@@ -163,7 +163,7 @@ func (m *Macro) Repr() string                 { return sx.Repr(m) }
 func (m *Macro) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<macro:", m.Name, ">")
 }
-func (m *Macro) Parse(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+func (m *Macro) Parse(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	form, err := m.Expand(frame, args)
 	if err != nil {
 		return nil, err
@@ -171,7 +171,7 @@ func (m *Macro) Parse(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	return nil, sxeval.ErrParseAgain{Frame: frame, Form: form}
 }
 
-func (m *Macro) Expand(frame *sxeval.Frame, args *sx.Pair) (sx.Object, error) {
+func (m *Macro) Expand(frame *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 	var macroArgs []sx.Object
 	arg := sx.Object(args)
 	for {
@@ -187,7 +187,7 @@ func (m *Macro) Expand(frame *sxeval.Frame, args *sx.Pair) (sx.Object, error) {
 	}
 
 	proc := callable.Procedure{
-		Frame:  m.Frame,
+		PFrame: m.PFrame,
 		Name:   m.Name,
 		Params: m.Params,
 		Rest:   m.Rest,

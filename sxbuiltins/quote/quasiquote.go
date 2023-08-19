@@ -59,13 +59,13 @@ func InstallQuasiQuoteSyntax(env sxeval.Environment, symQQ, symUQ, symUQS *sx.Sy
 }
 
 func makeUnquoteSyntax(symQQ *sx.Symbol) sxeval.SyntaxFn {
-	return func(*sxeval.Frame, *sx.Pair) (sxeval.Expr, error) {
+	return func(*sxeval.ParseFrame, *sx.Pair) (sxeval.Expr, error) {
 		return nil, fmt.Errorf("not allowed outside %s", symQQ.Name())
 	}
 }
 
 func makeQuasiQuoteSyntax(symQQ, symUQ, symUQS *sx.Symbol) sxeval.SyntaxFn {
-	return func(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+	return func(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs
 		}
@@ -83,7 +83,7 @@ func makeQuasiQuoteSyntax(symQQ, symUQ, symUQS *sx.Symbol) sxeval.SyntaxFn {
 }
 
 type qqParser struct {
-	frame              *sxeval.Frame
+	frame              *sxeval.ParseFrame
 	symQuasiQuote      *sx.Symbol
 	symUnquote         *sx.Symbol
 	symUnquoteSplicing *sx.Symbol

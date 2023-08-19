@@ -16,7 +16,7 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// MacroExpand implements one level of macro expansion.
+// MacroExpand0 implements one level of macro expansion.
 //
 // It is mostly used for debugging macros.
 func MacroExpand0(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
@@ -26,7 +26,7 @@ func MacroExpand0(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
 			if obj, found := frame.Resolve(sym); found {
 				if macro, isMacro := obj.(*Macro); isMacro {
-					return macro.Expand(frame, lst.Tail())
+					return macro.Expand(frame.MakeParseFrame(), lst.Tail())
 				}
 			}
 		}

@@ -45,8 +45,8 @@ func Not(args []sx.Object) (sx.Object, error) {
 }
 
 // AndS parses an and statement: (and expr...).
-func AndS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := sxbuiltins.ParseExprSeq(frame, args)
+func AndS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	front, last, err := sxbuiltins.ParseExprSeq(pf, args)
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +108,8 @@ func (ae *AndExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxev
 }
 
 // OrS parses an or statement: (or expr...).
-func OrS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := sxbuiltins.ParseExprSeq(frame, args)
+func OrS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	front, last, err := sxbuiltins.ParseExprSeq(pf, args)
 	if err != nil {
 		return nil, err
 	}

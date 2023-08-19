@@ -155,7 +155,7 @@ func (eng *Engine) Eval(env Environment, obj sx.Object) (sx.Object, error) {
 
 // Parse the given object in the given environment.
 func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
-	return eng.pars.Parse(&Frame{engine: eng, env: env}, obj)
+	return eng.pars.Parse(&ParseFrame{engine: eng, env: env}, obj)
 }
 
 // Rework the given expression with the options stored in the engine.

@@ -20,11 +20,11 @@ import (
 )
 
 // IfS parses an if-statement: (if cond then else). If else is missing, a nil is assumed.
-func IfS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+func IfS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("requires 2 or 3 arguments, got none")
 	}
-	testExpr, err := frame.Parse(args.Car())
+	testExpr, err := pf.Parse(args.Car())
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func IfS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	if argTrue == nil {
 		return nil, fmt.Errorf("requires 2 or 3 arguments, got one")
 	}
-	trueExpr, err := frame.Parse(argTrue.Car())
+	trueExpr, err := pf.Parse(argTrue.Car())
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func IfS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	if argFalse.Tail() != nil {
 		return nil, fmt.Errorf("requires 2 or 3 arguments, got more")
 	}
-	falseExpr, err := frame.Parse(argFalse.Car())
+	falseExpr, err := pf.Parse(argFalse.Car())
 	if err != nil {
 		return nil, err
 	}

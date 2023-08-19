@@ -19,7 +19,7 @@ import (
 )
 
 // DefineSyntax parses a (define name value) form.
-func SetXS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+func SetXS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("needs at least two arguments")
 	}
@@ -28,7 +28,7 @@ func SetXS(frame *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
 	if !ok {
 		return nil, fmt.Errorf("argument 1 must be a symbol, but is: %T/%v", car, car)
 	}
-	val, err := parseValueDefinition(frame, args)
+	val, err := parseValueDefinition(pf, args)
 	if err != nil {
 		return val, err
 	}

@@ -37,7 +37,7 @@ func InstallQuoteSyntax(env sxeval.Environment, symQuote *sx.Symbol) (sxeval.Env
 		symQuote,
 		sxeval.MakeSyntax(
 			symQuote.Name(),
-			func(_ *sxeval.Frame, args *sx.Pair) (sxeval.Expr, error) {
+			func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 				if sx.IsNil(args) {
 					return nil, sxeval.ErrNoArgs
 				}
