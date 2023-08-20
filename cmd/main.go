@@ -21,7 +21,6 @@ import (
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxbuiltins/binding"
-	"zettelstore.de/sx.fossil/sxbuiltins/boolean"
 	"zettelstore.de/sx.fossil/sxbuiltins/callable"
 	"zettelstore.de/sx.fossil/sxbuiltins/cond"
 	"zettelstore.de/sx.fossil/sxbuiltins/define"
@@ -85,7 +84,7 @@ var syntaxes = []struct {
 	{"define", define.DefineS}, {"set!", define.SetXS},
 	{"if", cond.IfS},
 	{"begin", cond.BeginS},
-	{"and", boolean.AndS}, {"or", boolean.OrS},
+	{"and", sxbuiltins.AndS}, {"or", sxbuiltins.OrS},
 	{"lambda", callable.LambdaS},
 	{"let", binding.LetS},
 	{"timeit", timeit.TimeitS},
@@ -97,7 +96,7 @@ var builtinsA = []struct {
 	fn   sxeval.BuiltinA
 }{
 	{"eq?", equiv.EqP}, {"eql?", equiv.EqlP}, {"equal?", equiv.EqualP},
-	{"boolean?", boolean.BooleanP}, {"boolean", boolean.Boolean}, {"not", boolean.Not},
+	{"boolean?", sxbuiltins.BooleanP}, {"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
 	{"number?", number.NumberP},
 	{"+", number.Add}, {"-", number.Sub}, {"*", number.Mul},
 	{"div", number.Div}, {"mod", number.Mod},
@@ -304,13 +303,13 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 			printExpr(eng, ex, level+1)
 		}
 		printExpr(eng, e.Last, level+1)
-	case *boolean.AndExpr:
+	case *sxbuiltins.AndExpr:
 		fmt.Println("AND")
 		for _, ex := range e.Front {
 			printExpr(eng, ex, level+1)
 		}
 		printExpr(eng, e.Last, level+1)
-	case *boolean.OrExpr:
+	case *sxbuiltins.OrExpr:
 		fmt.Println("OR")
 		for _, ex := range e.Front {
 			printExpr(eng, ex, level+1)

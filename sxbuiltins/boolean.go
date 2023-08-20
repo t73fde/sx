@@ -8,20 +8,20 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-// Package boolean contains builtins and syntax for boolean values.
-package boolean
+package sxbuiltins
+
+// Contains builtins and syntax for boolean values.
 
 import (
 	"io"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
 // BooleanP is the boolean that returns true if the argument is a number.
 func BooleanP(args []sx.Object) (sx.Object, error) {
-	if err := sxbuiltins.CheckArgs(args, 1, 1); err != nil {
+	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 	_, ok := sx.GetBoolean(args[0])
@@ -30,7 +30,7 @@ func BooleanP(args []sx.Object) (sx.Object, error) {
 
 // Boolean negates the given value interpreted as a boolean.
 func Boolean(args []sx.Object) (sx.Object, error) {
-	if err := sxbuiltins.CheckArgs(args, 1, 1); err != nil {
+	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 	return sx.MakeBoolean(sx.IsTrue(args[0])), nil
@@ -38,7 +38,7 @@ func Boolean(args []sx.Object) (sx.Object, error) {
 
 // Not negates the given value interpreted as a boolean.
 func Not(args []sx.Object) (sx.Object, error) {
-	if err := sxbuiltins.CheckArgs(args, 1, 1); err != nil {
+	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 	return sx.MakeBoolean(sx.IsFalse(args[0])), nil
@@ -46,7 +46,7 @@ func Not(args []sx.Object) (sx.Object, error) {
 
 // AndS parses an and statement: (and expr...).
 func AndS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := sxbuiltins.ParseExprSeq(pf, args)
+	front, last, err := ParseExprSeq(pf, args)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (ae *AndExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxev
 
 // OrS parses an or statement: (or expr...).
 func OrS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := sxbuiltins.ParseExprSeq(pf, args)
+	front, last, err := ParseExprSeq(pf, args)
 	if err != nil {
 		return nil, err
 	}
