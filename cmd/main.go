@@ -145,8 +145,8 @@ func main() {
 	mpe.origParser = engine.SetParser(&mpe)
 	mpe.origExecutor = engine.SetExecutor(&mpe)
 	root := engine.RootEnvironment()
-	quote.InstallQuoteSyntax(root, symQuote)
-	quote.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
+	root, _ = quote.InstallQuoteSyntax(root, symQuote)
+	root, _ = quote.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
 	for _, synDef := range syntaxes {
 		engine.BindSyntax(synDef.name, synDef.fn)
 	}
