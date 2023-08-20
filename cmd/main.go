@@ -20,18 +20,6 @@ import (
 
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxbuiltins"
-	"zettelstore.de/sx.fossil/sxbuiltins/binding"
-	"zettelstore.de/sx.fossil/sxbuiltins/callable"
-	"zettelstore.de/sx.fossil/sxbuiltins/cond"
-	"zettelstore.de/sx.fossil/sxbuiltins/define"
-	"zettelstore.de/sx.fossil/sxbuiltins/env"
-	"zettelstore.de/sx.fossil/sxbuiltins/equiv"
-	"zettelstore.de/sx.fossil/sxbuiltins/list"
-	"zettelstore.de/sx.fossil/sxbuiltins/macro"
-	"zettelstore.de/sx.fossil/sxbuiltins/number"
-	"zettelstore.de/sx.fossil/sxbuiltins/pprint"
-	"zettelstore.de/sx.fossil/sxbuiltins/quote"
-	"zettelstore.de/sx.fossil/sxbuiltins/timeit"
 	"zettelstore.de/sx.fossil/sxeval"
 	"zettelstore.de/sx.fossil/sxreader"
 )
@@ -81,56 +69,58 @@ var syntaxes = []struct {
 	name string
 	fn   sxeval.SyntaxFn
 }{
-	{"define", define.DefineS}, {"set!", define.SetXS},
-	{"if", cond.IfS},
-	{"begin", cond.BeginS},
+	{"define", sxbuiltins.DefineS}, {"set!", sxbuiltins.SetXS},
+	{"if", sxbuiltins.IfS},
+	{"begin", sxbuiltins.BeginS},
 	{"and", sxbuiltins.AndS}, {"or", sxbuiltins.OrS},
-	{"lambda", callable.LambdaS},
-	{"let", binding.LetS},
-	{"timeit", timeit.TimeitS},
-	{"defmacro", macro.DefMacroS}, {"macro", macro.MacroS},
+	{"lambda", sxbuiltins.LambdaS},
+	{"let", sxbuiltins.LetS},
+	{"timeit", sxbuiltins.TimeitS},
+	{"defmacro", sxbuiltins.DefMacroS}, {"macro", sxbuiltins.MacroS},
 }
 
 var builtinsA = []struct {
 	name string
 	fn   sxeval.BuiltinA
 }{
-	{"eq?", equiv.EqP}, {"eql?", equiv.EqlP}, {"equal?", equiv.EqualP},
+	{"eq?", sxbuiltins.EqP}, {"eql?", sxbuiltins.EqlP}, {"equal?", sxbuiltins.EqualP},
 	{"boolean?", sxbuiltins.BooleanP}, {"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
-	{"number?", number.NumberP},
-	{"+", number.Add}, {"-", number.Sub}, {"*", number.Mul},
-	{"div", number.Div}, {"mod", number.Mod},
-	{"=", number.Equal},
-	{"<", number.Less}, {"<=", number.LessEqual},
-	{">=", number.GreaterEqual}, {">", number.Greater},
-	{"min", number.Min}, {"max", number.Max},
-	{"cons", list.Cons}, {"pair?", list.PairP},
-	{"null?", list.NullP}, {"list?", list.ListP},
-	{"car", list.Car}, {"cdr", list.Cdr}, {"last", list.Last},
-	{"list", list.List}, {"list*", list.ListStar}, {"append", list.Append}, {"reverse", list.Reverse},
-	{"length", list.Length},
-	{"callable?", callable.CallableP},
-	{"parent-env", env.ParentEnv}, {"bindings", env.Bindings}, {"all-bindings", env.AllBindings},
+	{"number?", sxbuiltins.NumberP},
+	{"+", sxbuiltins.Add}, {"-", sxbuiltins.Sub}, {"*", sxbuiltins.Mul},
+	{"div", sxbuiltins.Div}, {"mod", sxbuiltins.Mod},
+	{"=", sxbuiltins.Equal},
+	{"<", sxbuiltins.Less}, {"<=", sxbuiltins.LessEqual},
+	{">=", sxbuiltins.GreaterEqual}, {">", sxbuiltins.Greater},
+	{"min", sxbuiltins.Min}, {"max", sxbuiltins.Max},
+	{"cons", sxbuiltins.Cons}, {"pair?", sxbuiltins.PairP},
+	{"null?", sxbuiltins.NullP}, {"list?", sxbuiltins.ListP},
+	{"car", sxbuiltins.Car}, {"cdr", sxbuiltins.Cdr}, {"last", sxbuiltins.Last},
+	{"list", sxbuiltins.List}, {"list*", sxbuiltins.ListStar},
+	{"append", sxbuiltins.Append}, {"reverse", sxbuiltins.Reverse},
+	{"length", sxbuiltins.Length},
+	{"callable?", sxbuiltins.CallableP},
+	{"parent-env", sxbuiltins.ParentEnv},
+	{"bindings", sxbuiltins.Bindings}, {"all-bindings", sxbuiltins.AllBindings},
 }
 var builtinsFA = []struct {
 	name string
 	fn   sxeval.BuiltinFA
 }{
-	{"map", callable.Map}, {"apply", callable.Apply},
-	{"fold", callable.Fold}, {"fold-reverse", callable.FoldReverse},
-	{"env", env.Env},
-	{"bound?", env.BoundP},
-	{"macroexpand-0", macro.MacroExpand0},
-	{"pp", pprint.Pretty},
+	{"map", sxbuiltins.Map}, {"apply", sxbuiltins.Apply},
+	{"fold", sxbuiltins.Fold}, {"fold-reverse", sxbuiltins.FoldReverse},
+	{"env", sxbuiltins.Env},
+	{"bound?", sxbuiltins.BoundP},
+	{"macroexpand-0", sxbuiltins.MacroExpand0},
+	{"pp", sxbuiltins.Pretty},
 }
 
 func main() {
 	rd := sxreader.MakeReader(os.Stdin)
 	sf := rd.SymbolFactory()
 	symQuote := sf.MustMake("quote")
-	quote.InstallQuoteReader(rd, symQuote, '\'')
+	sxbuiltins.InstallQuoteReader(rd, symQuote, '\'')
 	symQQ, symUQ, symUQS := sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")
-	quote.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
+	sxbuiltins.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
 
 	mpe := mainParserExecutor{
 		origParser:   nil,
@@ -144,8 +134,8 @@ func main() {
 	mpe.origParser = engine.SetParser(&mpe)
 	mpe.origExecutor = engine.SetExecutor(&mpe)
 	root := engine.RootEnvironment()
-	root, _ = quote.InstallQuoteSyntax(root, symQuote)
-	root, _ = quote.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
+	root, _ = sxbuiltins.InstallQuoteSyntax(root, symQuote)
+	root, _ = sxbuiltins.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
 	for _, synDef := range syntaxes {
 		engine.BindSyntax(synDef.name, synDef.fn)
 	}
@@ -292,7 +282,7 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 		fmt.Printf("RESOLVE %v\n", e.Symbol)
 	case sxeval.ObjExpr:
 		fmt.Printf("OBJ %T/%v\n", e.Obj, e.Obj)
-	case *binding.LetExpr:
+	case *sxbuiltins.LetExpr:
 		fmt.Println("LET")
 		for i, sym := range e.Symbols {
 			fmt.Print(strings.Repeat(" ", (level+1)*2))
@@ -315,7 +305,7 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 			printExpr(eng, ex, level+1)
 		}
 		printExpr(eng, e.Last, level+1)
-	case *callable.LambdaExpr:
+	case *sxbuiltins.LambdaExpr:
 		fmt.Printf("LAMBDA %q", e.Name)
 		for _, sym := range e.Params {
 			fmt.Printf(" %v", sym)
@@ -328,28 +318,28 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 			printExpr(eng, ex, level+1)
 		}
 		printExpr(eng, e.Last, level+1)
-	case *cond.BeginExpr:
+	case *sxbuiltins.BeginExpr:
 		fmt.Println("BEGIN")
 		for _, ex := range e.Front {
 			printExpr(eng, ex, level+1)
 		}
 		printExpr(eng, e.Last, level+1)
-	case *cond.If2Expr:
+	case *sxbuiltins.If2Expr:
 		fmt.Println("IF2")
 		printExpr(eng, e.Test, level+1)
 		printExpr(eng, e.True, level+1)
-	case *cond.If3Expr:
+	case *sxbuiltins.If3Expr:
 		fmt.Println("IF3")
 		printExpr(eng, e.Test, level+1)
 		printExpr(eng, e.True, level+1)
 		printExpr(eng, e.False, level+1)
-	case *define.DefineExpr:
+	case *sxbuiltins.DefineExpr:
 		fmt.Println("DEFINE", e.Sym)
 		printExpr(eng, e.Val, level+1)
-	case *define.SetXExpr:
+	case *sxbuiltins.SetXExpr:
 		fmt.Println("SET!", e.Sym)
 		printExpr(eng, e.Val, level+1)
-	case quote.MakeListExpr:
+	case sxbuiltins.MakeListExpr:
 		fmt.Println("MAKELIST")
 		printExpr(eng, e.Elem, level+1)
 	default:

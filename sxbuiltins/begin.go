@@ -8,19 +8,18 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-package cond
+package sxbuiltins
 
 import (
 	"io"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
 // BeginS parses a begin-statement: (begin expr...).
 func BeginS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := sxbuiltins.ParseExprSeq(pf, args)
+	front, last, err := ParseExprSeq(pf, args)
 	if err != nil {
 		return nil, err
 	}

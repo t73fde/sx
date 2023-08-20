@@ -8,8 +8,9 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-// Package timeit provides functions to measure evaluation.
-package timeit
+package sxbuiltins
+
+// Provides functions to measure evaluation.
 
 import (
 	"fmt"

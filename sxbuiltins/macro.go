@@ -8,15 +8,13 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-package macro
+package sxbuiltins
 
 import (
 	"fmt"
 	"io"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins/callable"
-	"zettelstore.de/sx.fossil/sxbuiltins/define"
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
@@ -24,14 +22,14 @@ import (
 //
 // Syntactically, it is the same as a procedure specification (aka lambda).
 func MacroS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	le, err := callable.LambdaS(frame, args)
+	le, err := LambdaS(frame, args)
 	if err != nil {
 		return nil, err
 	}
-	return makeMacroExpr(le.(*callable.LambdaExpr)), err
+	return makeMacroExpr(le.(*LambdaExpr)), err
 }
 
-func makeMacroExpr(le *callable.LambdaExpr) sxeval.Expr {
+func makeMacroExpr(le *LambdaExpr) sxeval.Expr {
 	return &MacroExpr{
 		Name:   le.Name,
 		Params: le.Params,
@@ -54,11 +52,11 @@ func DefMacroS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return nil, fmt.Errorf("parameter spec and body missing")
 	}
-	le, err := callable.ParseProcedure(frame, sx.Repr(sym), args.Car(), args.Cdr())
+	le, err := ParseProcedure(frame, sx.Repr(sym), args.Car(), args.Cdr())
 	if err != nil {
 		return nil, err
 	}
-	return &define.DefineExpr{Sym: sym, Val: makeMacroExpr(le)}, nil
+	return &DefineExpr{Sym: sym, Val: makeMacroExpr(le)}, nil
 }
 
 type MacroExpr struct {
@@ -188,7 +186,7 @@ func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 		arg = pair.Cdr()
 	}
 
-	proc := callable.Procedure{
+	proc := Procedure{
 		PFrame: m.PFrame,
 		Name:   m.Name,
 		Params: m.Params,
@@ -198,4 +196,22 @@ func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 	}
 
 	return m.Frame.MakeCalleeFrame().Call(&proc, macroArgs)
+}
+
+// MacroExpand0 implements one level of macro expansion.
+//
+// It is mostly used for debugging macros.
+func MacroExpand0(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	err := CheckArgs(args, 1, 1)
+	lst, err := GetList(err, args, 0)
+	if err == nil && lst != nil {
+		if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
+			if obj, found := frame.Resolve(sym); found {
+				if macro, isMacro := obj.(*Macro); isMacro {
+					return macro.Expand(frame.MakeParseFrame(), lst.Tail())
+				}
+			}
+		}
+	}
+	return lst, err
 }

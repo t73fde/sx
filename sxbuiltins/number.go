@@ -8,17 +8,15 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-// Package number contains builtins to work with numbers.
-package number
+package sxbuiltins
 
-import (
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
-)
+// Contains builtins to work with numbers.
+
+import "zettelstore.de/sx.fossil"
 
 // NumberP is the boolean that returns true if the argument is a number.
 func NumberP(args []sx.Object) (sx.Object, error) {
-	if err := sxbuiltins.CheckArgs(args, 1, 1); err != nil {
+	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 	_, ok := sx.GetNumber(args[0])
@@ -33,7 +31,7 @@ func Add(args []sx.Object) (sx.Object, error) {
 	}
 
 	for i := 0; i < len(args); i++ {
-		num, err := sxbuiltins.GetNumber(nil, args, i)
+		num, err := GetNumber(nil, args, i)
 		if err != nil {
 			return nil, err
 		}
@@ -44,8 +42,8 @@ func Add(args []sx.Object) (sx.Object, error) {
 
 // Sub is the builtin that implements (- n n...)
 func Sub(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 0)
-	acc, err := sxbuiltins.GetNumber(err, args, 0)
+	err := CheckArgs(args, 1, 0)
+	acc, err := GetNumber(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +51,7 @@ func Sub(args []sx.Object) (sx.Object, error) {
 		return sx.NumNeg(acc), nil
 	}
 	for i := 1; i < len(args); i++ {
-		num, err2 := sxbuiltins.GetNumber(nil, args, i)
+		num, err2 := GetNumber(nil, args, i)
 		if err2 != nil {
 			return nil, err2
 		}
@@ -70,7 +68,7 @@ func Mul(args []sx.Object) (sx.Object, error) {
 	}
 
 	for i := 0; i < len(args); i++ {
-		num, err := sxbuiltins.GetNumber(nil, args, i)
+		num, err := GetNumber(nil, args, i)
 		if err != nil {
 			return nil, err
 		}
@@ -81,9 +79,9 @@ func Mul(args []sx.Object) (sx.Object, error) {
 
 // Div is the builtin that implements (div n m)
 func Div(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 2, 2)
-	acc, err := sxbuiltins.GetNumber(err, args, 0)
-	num, err := sxbuiltins.GetNumber(err, args, 1)
+	err := CheckArgs(args, 2, 2)
+	acc, err := GetNumber(err, args, 0)
+	num, err := GetNumber(err, args, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -92,9 +90,9 @@ func Div(args []sx.Object) (sx.Object, error) {
 
 // Mod is the builtin that implements (mod n m)
 func Mod(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 2, 2)
-	acc, err := sxbuiltins.GetNumber(err, args, 0)
-	num, err := sxbuiltins.GetNumber(err, args, 1)
+	err := CheckArgs(args, 2, 2)
+	acc, err := GetNumber(err, args, 0)
+	num, err := GetNumber(err, args, 1)
 	if err != nil {
 		return nil, err
 	}

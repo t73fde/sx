@@ -8,21 +8,20 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-package callable
+package sxbuiltins
 
 import (
 	"log"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
 // Map returns a list, where all member are the result of the given function to all original list members.
 func Map(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 2, 2)
-	fn, err := sxbuiltins.GetCallable(err, args, 0)
-	lst, err := sxbuiltins.GetList(err, args, 1)
+	err := CheckArgs(args, 2, 2)
+	fn, err := GetCallable(err, args, 0)
+	lst, err := GetList(err, args, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +61,8 @@ func Map(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 
 // Apply calls the given function with the given arguments.
 func Apply(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 2, 2)
-	lst, err := sxbuiltins.GetList(err, args, 1)
+	err := CheckArgs(args, 2, 2)
+	lst, err := GetList(err, args, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -91,9 +90,9 @@ func Apply(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 
 // Fold will apply the given function pairwise to list of args.
 func Fold(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 3, 3)
-	fn, err := sxbuiltins.GetCallable(err, args, 0)
-	lst, err := sxbuiltins.GetList(err, args, 2)
+	err := CheckArgs(args, 3, 3)
+	fn, err := GetCallable(err, args, 0)
+	lst, err := GetList(err, args, 2)
 	if err != nil {
 		return nil, err
 	}
@@ -117,9 +116,9 @@ func Fold(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 
 // FoldReverse will apply the given function reversed pairwise to reversed list of args.
 func FoldReverse(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 3, 3)
-	fn, err := sxbuiltins.GetCallable(err, args, 0)
-	lst, err := sxbuiltins.GetList(err, args, 2)
+	err := CheckArgs(args, 3, 3)
+	fn, err := GetCallable(err, args, 0)
+	lst, err := GetList(err, args, 2)
 	if err != nil {
 		return nil, err
 	}

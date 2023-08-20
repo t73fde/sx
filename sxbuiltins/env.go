@@ -8,18 +8,18 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-// Package env provides some special/builtin functions to work with environments.
-package env
+package sxbuiltins
+
+// Provides some special/builtin functions to work with environments.
 
 import (
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
 // Env returns the current environment
 func Env(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 0, 0)
+	err := CheckArgs(args, 0, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +28,8 @@ func Env(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 
 // ParentEnv returns the parent environment of the given environment.
 func ParentEnv(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 1)
-	env, err := sxbuiltins.GetEnvironment(err, args, 0)
+	err := CheckArgs(args, 1, 1)
+	env, err := GetEnvironment(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +38,8 @@ func ParentEnv(args []sx.Object) (sx.Object, error) {
 
 // Bindings returns the bindings as a a-list of the given environment.
 func Bindings(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 1)
-	env, err := sxbuiltins.GetEnvironment(err, args, 0)
+	err := CheckArgs(args, 1, 1)
+	env, err := GetEnvironment(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +48,8 @@ func Bindings(args []sx.Object) (sx.Object, error) {
 
 // AllBindings returns all bindings as a a-list of the given environment.
 func AllBindings(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 1)
-	env, err := sxbuiltins.GetEnvironment(err, args, 0)
+	err := CheckArgs(args, 1, 1)
+	env, err := GetEnvironment(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +58,8 @@ func AllBindings(args []sx.Object) (sx.Object, error) {
 
 // BoundP returns true, if the given symbol is bound in the given environment.
 func BoundP(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 1)
-	sym, err := sxbuiltins.GetSymbol(err, args, 0)
+	err := CheckArgs(args, 1, 1)
+	sym, err := GetSymbol(err, args, 0)
 	if err != nil {
 		return nil, err
 	}

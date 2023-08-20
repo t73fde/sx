@@ -8,12 +8,13 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-// Package quote contains functions to use quotations
+package sxbuiltins
+
+// Contains functions to use quotations
 // These are: quote, quasiquote, unquote, unquote-splicing.
 //
 // Quasiquote implementation is a little bit too simple as it does not support
 // nested quasiquotes.
-package quote
 
 import (
 	"fmt"

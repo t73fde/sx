@@ -18,18 +18,6 @@ import (
 
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxbuiltins"
-	"zettelstore.de/sx.fossil/sxbuiltins/binding"
-	"zettelstore.de/sx.fossil/sxbuiltins/callable"
-	"zettelstore.de/sx.fossil/sxbuiltins/cond"
-	"zettelstore.de/sx.fossil/sxbuiltins/define"
-	"zettelstore.de/sx.fossil/sxbuiltins/env"
-	"zettelstore.de/sx.fossil/sxbuiltins/equiv"
-	"zettelstore.de/sx.fossil/sxbuiltins/list"
-	"zettelstore.de/sx.fossil/sxbuiltins/macro"
-	"zettelstore.de/sx.fossil/sxbuiltins/number"
-	"zettelstore.de/sx.fossil/sxbuiltins/pprint"
-	"zettelstore.de/sx.fossil/sxbuiltins/quote"
-	"zettelstore.de/sx.fossil/sxbuiltins/timeit"
 	"zettelstore.de/sx.fossil/sxeval"
 	"zettelstore.de/sx.fossil/sxreader"
 )
@@ -54,9 +42,9 @@ func (tcs tTestCases) Run(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
 			symQuote := sf.MustMake("quote")
-			quote.InstallQuoteReader(rd, symQuote, '\'')
+			sxbuiltins.InstallQuoteReader(rd, symQuote, '\'')
 			symQQ, symUQ, symUQS := sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")
-			quote.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
+			sxbuiltins.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
 
 			var sb strings.Builder
 			for {
@@ -94,11 +82,11 @@ func (tcs tTestCases) Run(t *testing.T) {
 func createEngine() *sxeval.Engine {
 	sf := sx.MakeMappedFactory()
 	root := sxeval.MakeRootEnvironment()
-	root, err := quote.InstallQuoteSyntax(root, sf.MustMake("quote"))
+	root, err := sxbuiltins.InstallQuoteSyntax(root, sf.MustMake("quote"))
 	if err != nil {
 		panic(err)
 	}
-	root, err = quote.InstallQuasiQuoteSyntax(root, sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing"))
+	root, err = sxbuiltins.InstallQuasiQuoteSyntax(root, sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing"))
 	if err != nil {
 		panic(err)
 	}
@@ -128,47 +116,48 @@ var syntaxes = []struct {
 	name string
 	fn   sxeval.SyntaxFn
 }{
-	{"define", define.DefineS}, {"set!", define.SetXS},
-	{"if", cond.IfS},
-	{"begin", cond.BeginS},
+	{"define", sxbuiltins.DefineS}, {"set!", sxbuiltins.SetXS},
+	{"if", sxbuiltins.IfS},
+	{"begin", sxbuiltins.BeginS},
 	{"and", sxbuiltins.AndS}, {"or", sxbuiltins.OrS},
-	{"lambda", callable.LambdaS},
-	{"let", binding.LetS},
-	{"timeit", timeit.TimeitS},
-	{"defmacro", macro.DefMacroS}, {"macro", macro.MacroS},
+	{"lambda", sxbuiltins.LambdaS},
+	{"let", sxbuiltins.LetS},
+	{"timeit", sxbuiltins.TimeitS},
+	{"defmacro", sxbuiltins.DefMacroS}, {"macro", sxbuiltins.MacroS},
 }
 
 var builtinsA = []struct {
 	name string
 	fn   sxeval.BuiltinA
 }{
-	{"eq?", equiv.EqP}, {"eql?", equiv.EqlP}, {"equal?", equiv.EqualP},
+	{"eq?", sxbuiltins.EqP}, {"eql?", sxbuiltins.EqlP}, {"equal?", sxbuiltins.EqualP},
 	{"boolean?", sxbuiltins.BooleanP}, {"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
-	{"number?", number.NumberP},
-	{"+", number.Add}, {"-", number.Sub}, {"*", number.Mul},
-	{"div", number.Div}, {"mod", number.Mod},
-	{"=", number.Equal},
-	{"<", number.Less}, {"<=", number.LessEqual},
-	{">=", number.GreaterEqual}, {">", number.Greater},
-	{"min", number.Min}, {"max", number.Max},
-	{"cons", list.Cons}, {"pair?", list.PairP},
-	{"null?", list.NullP}, {"list?", list.ListP},
-	{"car", list.Car}, {"cdr", list.Cdr}, {"last", list.Last},
-	{"list", list.List}, {"list*", list.ListStar}, {"append", list.Append}, {"reverse", list.Reverse},
-	{"length", list.Length},
-	{"callable?", callable.CallableP},
-	{"parent-env", env.ParentEnv}, {"bindings", env.Bindings}, {"all-bindings", env.AllBindings},
+	{"number?", sxbuiltins.NumberP},
+	{"+", sxbuiltins.Add}, {"-", sxbuiltins.Sub}, {"*", sxbuiltins.Mul},
+	{"div", sxbuiltins.Div}, {"mod", sxbuiltins.Mod},
+	{"=", sxbuiltins.Equal},
+	{"<", sxbuiltins.Less}, {"<=", sxbuiltins.LessEqual},
+	{">=", sxbuiltins.GreaterEqual}, {">", sxbuiltins.Greater},
+	{"min", sxbuiltins.Min}, {"max", sxbuiltins.Max},
+	{"cons", sxbuiltins.Cons}, {"pair?", sxbuiltins.PairP},
+	{"null?", sxbuiltins.NullP}, {"list?", sxbuiltins.ListP},
+	{"car", sxbuiltins.Car}, {"cdr", sxbuiltins.Cdr}, {"last", sxbuiltins.Last},
+	{"list", sxbuiltins.List}, {"list*", sxbuiltins.ListStar},
+	{"append", sxbuiltins.Append}, {"reverse", sxbuiltins.Reverse},
+	{"length", sxbuiltins.Length},
+	{"callable?", sxbuiltins.CallableP},
+	{"parent-env", sxbuiltins.ParentEnv}, {"bindings", sxbuiltins.Bindings}, {"all-bindings", sxbuiltins.AllBindings},
 }
 var builtinsFA = []struct {
 	name string
 	fn   sxeval.BuiltinFA
 }{
-	{"map", callable.Map}, {"apply", callable.Apply},
-	{"fold", callable.Fold}, {"fold-reverse", callable.FoldReverse},
-	{"env", env.Env},
-	{"bound?", env.BoundP},
-	{"macroexpand-0", macro.MacroExpand0},
-	{"pp", pprint.Pretty},
+	{"map", sxbuiltins.Map}, {"apply", sxbuiltins.Apply},
+	{"fold", sxbuiltins.Fold}, {"fold-reverse", sxbuiltins.FoldReverse},
+	{"env", sxbuiltins.Env},
+	{"bound?", sxbuiltins.BoundP},
+	{"macroexpand-0", sxbuiltins.MacroExpand0},
+	{"pp", sxbuiltins.Pretty},
 }
 
 var objects = []struct {

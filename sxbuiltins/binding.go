@@ -8,17 +8,15 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
+package sxbuiltins
+
 // Package binding contains builtins and syntax to bind values.
-package binding
 
 import (
 	"fmt"
 	"io"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
-	"zettelstore.de/sx.fossil/sxbuiltins/callable"
-	"zettelstore.de/sx.fossil/sxbuiltins/cond"
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
@@ -36,7 +34,7 @@ func LetS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		return nil, sx.ErrImproper{Pair: args}
 	}
 	if bindings == nil {
-		return cond.BeginS(pf, body)
+		return BeginS(pf, body)
 	}
 	letExpr := LetExpr{
 		Symbols: nil,
@@ -46,7 +44,7 @@ func LetS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	}
 	letFrame := pf.MakeChildFrame("let-def", 128)
 	for node := bindings; node != nil; {
-		sym, err := callable.GetParameterSymbol(letExpr.Symbols, node.Car())
+		sym, err := GetParameterSymbol(letExpr.Symbols, node.Car())
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +72,7 @@ func LetS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		node = next
 	}
 
-	front, last, err := sxbuiltins.ParseExprSeq(letFrame, body)
+	front, last, err := ParseExprSeq(letFrame, body)
 	if err != nil {
 		return nil, err
 	}

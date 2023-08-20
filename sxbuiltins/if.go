@@ -8,8 +8,7 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-// Package cond provides some special/builtin functions to conditionally evaluate values.
-package cond
+package sxbuiltins
 
 import (
 	"fmt"

@@ -8,18 +8,14 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-package quote_test
+package sxbuiltins_test
 
 import (
 	"strings"
 	"testing"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins/binding"
-	"zettelstore.de/sx.fossil/sxbuiltins/cond"
-	"zettelstore.de/sx.fossil/sxbuiltins/list"
-	"zettelstore.de/sx.fossil/sxbuiltins/number"
-	"zettelstore.de/sx.fossil/sxbuiltins/quote"
+	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 	"zettelstore.de/sx.fossil/sxreader"
 )
@@ -42,19 +38,19 @@ func executeTestCases(t *testing.T, testcases []testcase) {
 			sf := rd.SymbolFactory()
 
 			symQuote := sf.MustMake("quote")
-			quote.InstallQuoteReader(rd, symQuote, '\'')
+			sxbuiltins.InstallQuoteReader(rd, symQuote, '\'')
 			symQQ, symUQ, symUQS := sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")
-			quote.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
+			sxbuiltins.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
 
 			root := sxeval.MakeRootEnvironment()
-			quote.InstallQuoteSyntax(root, symQuote)
-			quote.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
+			sxbuiltins.InstallQuoteSyntax(root, symQuote)
+			sxbuiltins.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
 
 			engine := sxeval.MakeEngine(sf, root)
-			engine.BindSyntax("if", cond.IfS)
-			engine.BindSyntax("let", binding.LetS)
-			engine.BindBuiltinA("list", list.List)
-			engine.BindBuiltinA("+", number.Add)
+			engine.BindSyntax("if", sxbuiltins.IfS)
+			engine.BindSyntax("let", sxbuiltins.LetS)
+			engine.BindBuiltinA("list", sxbuiltins.List)
+			engine.BindBuiltinA("+", sxbuiltins.Add)
 
 			child := sxeval.MakeChildEnvironment(root, "common", 128)
 			child.Bind(sf.MustMake("b"), sx.Int64(11))

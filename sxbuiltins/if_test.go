@@ -8,19 +8,19 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-package cond_test
+package sxbuiltins_test
 
 import (
 	"strings"
 	"testing"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins/cond"
+	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 	"zettelstore.de/sx.fossil/sxreader"
 )
 
-func TestQuote(t *testing.T) {
+func TestIf(t *testing.T) {
 	t.Parallel()
 
 	testcases := []struct {
@@ -53,7 +53,7 @@ func TestQuote(t *testing.T) {
 
 	root := sxeval.MakeRootEnvironment()
 	engine := sxeval.MakeEngine(sx.MakeMappedFactory(), root)
-	engine.BindSyntax("if", cond.IfS)
+	engine.BindSyntax("if", sxbuiltins.IfS)
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(engine.SymbolFactory()))

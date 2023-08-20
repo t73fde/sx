@@ -8,16 +8,24 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-package callable
+package sxbuiltins
 
 import (
 	"fmt"
 	"io"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 )
+
+// CallableP returns True, if the given argument is a callable.
+func CallableP(args []sx.Object) (sx.Object, error) {
+	if err := CheckArgs(args, 1, 1); err != nil {
+		return nil, err
+	}
+	_, ok := sxeval.GetCallable(args[0])
+	return sx.MakeBoolean(ok), nil
+}
 
 // LambdaS parses a procedure specification.
 func LambdaS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
@@ -70,7 +78,7 @@ func ParseProcedure(pf *sxeval.ParseFrame, name string, paramSpec, bodySpec sx.O
 			return nil, err
 		}
 	}
-	front, last, err := sxbuiltins.ParseExprSeq(fnFrame, body)
+	front, last, err := ParseExprSeq(fnFrame, body)
 	if err != nil {
 		return nil, err
 	}

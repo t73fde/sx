@@ -8,17 +8,17 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-// Package list contains all list-related builtins
-package list
+package sxbuiltins
+
+// Contains all list-related builtins
 
 import (
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
 )
 
 // Cons returns a cons pair of the two arguments.
 func Cons(args []sx.Object) (sx.Object, error) {
-	if err := sxbuiltins.CheckArgs(args, 2, 2); err != nil {
+	if err := CheckArgs(args, 2, 2); err != nil {
 		return nil, err
 	}
 	return sx.Cons(args[0], args[1]), nil
@@ -26,7 +26,7 @@ func Cons(args []sx.Object) (sx.Object, error) {
 
 // PairP returns True if the argument is a pair.
 func PairP(args []sx.Object) (sx.Object, error) {
-	if err := sxbuiltins.CheckArgs(args, 1, 1); err != nil {
+	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 	obj := args[0]
@@ -39,7 +39,7 @@ func PairP(args []sx.Object) (sx.Object, error) {
 
 // NullP returns True if the argument is nil.
 func NullP(args []sx.Object) (sx.Object, error) {
-	if err := sxbuiltins.CheckArgs(args, 1, 1); err != nil {
+	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 	return sx.MakeBoolean(sx.IsNil(args[0])), nil
@@ -47,7 +47,7 @@ func NullP(args []sx.Object) (sx.Object, error) {
 
 // ListP returns True if the argument is a (proper) list.
 func ListP(args []sx.Object) (sx.Object, error) {
-	if err := sxbuiltins.CheckArgs(args, 1, 1); err != nil {
+	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 	return sx.MakeBoolean(sx.IsList(args[0])), nil
@@ -55,8 +55,8 @@ func ListP(args []sx.Object) (sx.Object, error) {
 
 // Car returns the car of a pair argument.
 func Car(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 1)
-	pair, err := sxbuiltins.GetPair(err, args, 0)
+	err := CheckArgs(args, 1, 1)
+	pair, err := GetPair(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +65,8 @@ func Car(args []sx.Object) (sx.Object, error) {
 
 // Cdr returns the cdr of a pair argument.
 func Cdr(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 1)
-	pair, err := sxbuiltins.GetPair(err, args, 0)
+	err := CheckArgs(args, 1, 1)
+	pair, err := GetPair(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +75,8 @@ func Cdr(args []sx.Object) (sx.Object, error) {
 
 // Last returns the last element of a list
 func Last(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 1)
-	lst, err := sxbuiltins.GetList(err, args, 0)
+	err := CheckArgs(args, 1, 1)
+	lst, err := GetList(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func List(args []sx.Object) (sx.Object, error) { return sx.MakeList(args...), ni
 
 // ListStar returns a list of all arguments, when the last argument is a cons to the second last.
 func ListStar(args []sx.Object) (sx.Object, error) {
-	if err := sxbuiltins.CheckArgs(args, 1, 0); err != nil {
+	if err := CheckArgs(args, 1, 0); err != nil {
 		return nil, err
 	}
 	if len(args) == 1 {
@@ -114,7 +114,7 @@ func Append(args []sx.Object) (sx.Object, error) {
 	lastList := len(args) - 1
 	lsts := make([]*sx.Pair, lastList)
 	for i := 0; i < lastList; i++ {
-		lst, err := sxbuiltins.GetList(nil, args, i)
+		lst, err := GetList(nil, args, i)
 		if err != nil {
 			return nil, err
 		}
@@ -138,8 +138,8 @@ func Append(args []sx.Object) (sx.Object, error) {
 
 // Reverse returns a reversed list.
 func Reverse(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 1)
-	lst, err := sxbuiltins.GetList(err, args, 0)
+	err := CheckArgs(args, 1, 1)
+	lst, err := GetList(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +148,8 @@ func Reverse(args []sx.Object) (sx.Object, error) {
 
 // Length returns the length of the given list.
 func Length(args []sx.Object) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 1, 1)
-	lst, err := sxbuiltins.GetList(err, args, 0)
+	err := CheckArgs(args, 1, 1)
+	lst, err := GetList(err, args, 0)
 	if err != nil {
 		return nil, err
 	}

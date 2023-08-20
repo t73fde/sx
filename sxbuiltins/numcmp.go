@@ -8,12 +8,9 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-package number
+package sxbuiltins
 
-import (
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
-)
+import "zettelstore.de/sx.fossil"
 
 // Less implements a numeric comparision w.r.t to the less operation.
 func Less(args []sx.Object) (sx.Object, error) {
@@ -41,13 +38,13 @@ func Greater(args []sx.Object) (sx.Object, error) {
 }
 
 func cmpBuiltin(args []sx.Object, cmpFn func(int) bool) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 2, 0)
-	acc, err := sxbuiltins.GetNumber(err, args, 0)
+	err := CheckArgs(args, 2, 0)
+	acc, err := GetNumber(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
 	for i := 1; i < len(args); i++ {
-		num, err2 := sxbuiltins.GetNumber(err, args, i)
+		num, err2 := GetNumber(err, args, i)
 		if err2 != nil {
 			return nil, err2
 		}
@@ -71,13 +68,13 @@ func Max(args []sx.Object) (sx.Object, error) {
 }
 
 func minmaxBuiltin(args []sx.Object, cmpFn func(int) bool) (sx.Object, error) {
-	err := sxbuiltins.CheckArgs(args, 2, 0)
-	acc, err := sxbuiltins.GetNumber(err, args, 0)
+	err := CheckArgs(args, 2, 0)
+	acc, err := GetNumber(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
 	for i := 1; i < len(args); i++ {
-		num, err2 := sxbuiltins.GetNumber(err, args, i)
+		num, err2 := GetNumber(err, args, i)
 		if err2 != nil {
 			return nil, err2
 		}

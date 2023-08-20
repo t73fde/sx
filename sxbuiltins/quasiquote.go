@@ -8,14 +8,13 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-package quote
+package sxbuiltins
 
 import (
 	"fmt"
 	"io"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins/list"
 	"zettelstore.de/sx.fossil/sxeval"
 	"zettelstore.de/sx.fossil/sxreader"
 )
@@ -153,7 +152,7 @@ func combineArgs(args []sxeval.Expr) sxeval.Expr {
 	mleCount := countMLE(args)
 	if mleCount < len(args)-1 {
 		newArgs := collectMakeList(args)
-		return &sxeval.BuiltinCallExpr{Proc: sxeval.BuiltinA(list.Append), Args: newArgs}
+		return &sxeval.BuiltinCallExpr{Proc: sxeval.BuiltinA(Append), Args: newArgs}
 	}
 	newArgs := make([]sxeval.Expr, len(args))
 	for i := 0; i < mleCount; i++ {
@@ -205,7 +204,7 @@ func listArgs(args []sxeval.Expr) sxeval.Expr {
 	}
 	if countQuote(args) < len(args) {
 		lstArgs := resolveMakeListQuoted(args)
-		return &sxeval.BuiltinCallExpr{Proc: sxeval.BuiltinA(list.List), Args: lstArgs}
+		return &sxeval.BuiltinCallExpr{Proc: sxeval.BuiltinA(List), Args: lstArgs}
 	}
 	lstArgs := make([]sx.Object, len(args))
 	for i, arg := range args {
@@ -264,10 +263,10 @@ func listStarArgs(args []sxeval.Expr) sxeval.Expr {
 		return lstArgs[0]
 	case 2:
 		lstArgs := resolveMakeListQuoted(args)
-		return &sxeval.BuiltinCallExpr{Proc: sxeval.BuiltinA(list.Cons), Args: lstArgs}
+		return &sxeval.BuiltinCallExpr{Proc: sxeval.BuiltinA(Cons), Args: lstArgs}
 	default:
 		lstArgs := resolveMakeListQuoted(args)
-		return &sxeval.BuiltinCallExpr{Proc: sxeval.BuiltinA(list.ListStar), Args: lstArgs}
+		return &sxeval.BuiltinCallExpr{Proc: sxeval.BuiltinA(ListStar), Args: lstArgs}
 	}
 }
 

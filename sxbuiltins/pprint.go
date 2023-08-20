@@ -8,22 +8,22 @@
 // under this license.
 //-----------------------------------------------------------------------------
 
-// Package pprint provides some function to pretty-print objects.
-package pprint
+package sxbuiltins
+
+// Provides some function to pretty-print objects.
 
 import (
 	"io"
 	"os"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
 // Pretty writes the first argument to stdout.
 func Pretty(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	// Must be a BuiltinFA, because this function has some side effects.
-	err := sxbuiltins.CheckArgs(args, 0, 1)
+	err := CheckArgs(args, 0, 1)
 	if err != nil {
 		if len(args) == 0 {
 			return sx.Nil(), nil

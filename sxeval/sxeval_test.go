@@ -16,11 +16,7 @@ import (
 	"testing"
 
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins/callable"
-	"zettelstore.de/sx.fossil/sxbuiltins/cond"
-	"zettelstore.de/sx.fossil/sxbuiltins/define"
-	"zettelstore.de/sx.fossil/sxbuiltins/number"
-	"zettelstore.de/sx.fossil/sxbuiltins/quote"
+	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 	"zettelstore.de/sx.fossil/sxreader"
 )
@@ -66,8 +62,6 @@ func (testcases testCases) Run(t *testing.T, engine *sxeval.Engine) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
-			symQuote := sf.MustMake("quote")
-			quote.InstallQuoteReader(rd, symQuote, '\'')
 			val, err := rd.Read()
 			if err != nil {
 				t.Errorf("Error %v while reading %s", err, tc.src)
@@ -121,17 +115,13 @@ func createEngineForTCO() *sxeval.Engine {
 	sf := sx.MakeMappedFactory()
 	root := sxeval.MakeRootEnvironment()
 	engine := sxeval.MakeEngine(sf, root)
-	engine.BindSyntax("define", define.DefineS)
-	engine.BindSyntax("if", cond.IfS)
-	engine.BindBuiltinA("=", number.Equal)
-	engine.BindBuiltinA("-", number.Sub)
-	engine.BindBuiltinFA("map", callable.Map)
+	engine.BindSyntax("define", sxbuiltins.DefineS)
+	engine.BindSyntax("if", sxbuiltins.IfS)
+	engine.BindBuiltinA("=", sxbuiltins.Equal)
+	engine.BindBuiltinA("-", sxbuiltins.Sub)
+	engine.BindBuiltinFA("map", sxbuiltins.Map)
+	engine.BindBuiltinA("list", sxbuiltins.List)
 	rd := sxreader.MakeReader(strings.NewReader(sxEvenOdd), sxreader.WithSymbolFactory(sf))
-	symQuote := sf.MustMake("quote")
-	root, errQ := quote.InstallQuoteSyntax(root, symQuote)
-	if errQ != nil {
-		panic(errQ)
-	}
 	env := sxeval.MakeChildEnvironment(root, "TCO", 0)
 	for {
 		obj, err := rd.Read()
@@ -154,8 +144,8 @@ func TestTailCallOptimization(t *testing.T) {
 	testcases := testCases{
 		{name: "trivial-even", src: "(even? 0)", exp: "True"},
 		{name: "trivial-odd", src: "(odd? 0)", exp: "False"},
-		{name: "trivial-map-even", src: "(map even? '(0 1 2 3 4 5 6))", exp: "(True False True False True False True)"},
-		{name: "trivial-map-odd", src: "(map odd? '(0 1 2 3 4 5 6))", exp: "(False True False True False True False)"},
+		{name: "trivial-map-even", src: "(map even? (list 0 1 2 3 4 5 6))", exp: "(True False True False True False True)"},
+		{name: "trivial-map-odd", src: "(map odd? (list 0 1 2 3 4 5 6))", exp: "(False True False True False True False)"},
 		{name: "heavy-even", src: "(even? 1000000)", exp: "True"},
 	}
 	engine := createEngineForTCO()
