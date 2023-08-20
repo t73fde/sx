@@ -54,7 +54,7 @@ func Print(w io.Writer, obj Object) (int, error) {
 	if IsNil(obj) {
 		return Nil().Print(w)
 	}
-	return io.WriteString(w, obj.String())
+	return io.WriteString(w, obj.Repr())
 }
 
 // WriteStrings is a helper function to write multiple strings at once.

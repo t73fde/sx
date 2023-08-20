@@ -173,7 +173,7 @@ func (m *Macro) Parse(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error)
 	return nil, pf.ParseAgain(form)
 }
 
-func (m *Macro) Expand(pf *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
+func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 	var macroArgs []sx.Object
 	arg := sx.Object(args)
 	for {

@@ -240,9 +240,13 @@ func (ce *childEnvironment) Freeze() { ce.frozen = true }
 func RootEnv(env Environment) Environment {
 	currEnv := env
 	for {
+		if currEnv.IsNil() {
+			return nil
+		}
 		if _, found := (currEnv).(*rootEnvironment); found {
 			return currEnv
 		}
+		currEnv = currEnv.Parent()
 	}
 }
 

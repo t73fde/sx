@@ -88,6 +88,7 @@ func (frame *Frame) Execute(expr Expr) (sx.Object, error) {
 	}
 }
 func (frame *Frame) ExecuteTCO(expr Expr) (sx.Object, error) {
+	// return frame.Execute(expr) // Uncomment this line to test for non-TCO
 	return nil, executeAgain{env: frame.env, expr: expr}
 }
 func (frame *Frame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
