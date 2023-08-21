@@ -18,6 +18,7 @@ package sxbuiltins
 
 import (
 	"fmt"
+	"io"
 
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
@@ -54,6 +55,9 @@ func makeQuotationMacro(sym *sx.Symbol) sxreader.Macro {
 		obj, err := rd.Read()
 		if err == nil {
 			return sx.Nil().Cons(obj).Cons(sym), nil
+		}
+		if err == io.EOF {
+			return obj, sxreader.ErrEOF
 		}
 		return obj, err
 	}

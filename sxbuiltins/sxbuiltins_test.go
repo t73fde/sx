@@ -35,11 +35,13 @@ type (
 )
 
 func (tcs tTestCases) Run(t *testing.T) {
+	t.Helper()
 	engine := createEngine()
 	sf := engine.SymbolFactory()
 	root := engine.GetToplevelEnv()
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Helper()
 			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
 			symQuote := sf.MustMake("quote")
 			sxbuiltins.InstallQuoteReader(rd, symQuote, '\'')
@@ -53,6 +55,10 @@ func (tcs tTestCases) Run(t *testing.T) {
 					if err == io.EOF {
 						break
 					}
+					if tc.withErr {
+						sb.WriteString(fmt.Errorf("{[{%w}]}", err).Error())
+						continue
+					}
 					t.Errorf("Error %v while reading %s", err, tc.src)
 					return
 				}
@@ -64,10 +70,10 @@ func (tcs tTestCases) Run(t *testing.T) {
 						continue
 					}
 					t.Errorf("unexpected error: %v", fmt.Errorf("%w", err))
-					continue
+					break
 				} else if tc.withErr {
 					t.Errorf("should fail, but got: %v", res)
-					continue
+					break
 				}
 				sx.Print(&sb, res)
 			}
@@ -166,4 +172,10 @@ var objects = []struct {
 }{
 	{"NIL", sx.Nil()}, {"TRUE", sx.True}, {"FALSE", sx.False},
 	{"ZERO", sx.Int64(0)}, {"ONE", sx.Int64(1)}, {"TWO", sx.Int64(2)},
+
+	{"b", sx.Int64(11)},
+	{"c", sx.MakeList(sx.Int64(22), sx.Int64(33))},
+	{"d", sx.MakeList(sx.Int64(44), sx.Int64(55))},
+	{"x", sx.Int64(3)}, {"y", sx.Int64(5)},
+	{"lang0", sx.MakeString("")}, {"lang1", sx.MakeString("de-DE")},
 }

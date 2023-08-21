@@ -22,7 +22,7 @@ var ErrSkip = errors.New("skip s-expression")
 
 // ErrEOF is returned when reader ends prematurely to indicate
 // that more data is needed to complete the current s-expression.
-var ErrEOF = errors.New("unexpected EOF while reading")
+var ErrEOF = errors.New("unexpected EOF")
 
 // ErrNumberFormat is returned when a reader macro encounters a invalid number.
 var ErrNumberFormat = errors.New("invalid number format")

@@ -124,8 +124,8 @@ func TestReaderString(t *testing.T) {
 		{name: "Esc6hex", src: `"\U000041"`, exp: `"A"`},
 		{name: "Esc6hexNonGraphic", src: `"\U0e0000"`, exp: `"\U0E0000"`},
 		{name: "EscUnknown", src: `"moin\x"`, exp: `ReaderError 1-8: no hex digit found: "/34`, mustErr: true},
-		{name: "MissingQuote", src: `"moin`, exp: "ReaderError 1-5: unexpected EOF while reading", mustErr: true},
-		{name: "EscEOF", src: `"moin\`, exp: "ReaderError 1-6: unexpected EOF while reading", mustErr: true},
+		{name: "MissingQuote", src: `"moin`, exp: "ReaderError 1-5: unexpected EOF", mustErr: true},
+		{name: "EscEOF", src: `"moin\`, exp: "ReaderError 1-6: unexpected EOF", mustErr: true},
 	})
 }
 
@@ -137,7 +137,7 @@ func TestReadList(t *testing.T) {
 		{name: "two values", src: "( 1 2)", exp: "(1 2)"},
 		{name: "list of two nils", src: "(()())", exp: "(() ())"},
 		{name: "unbalanced", src: ")", exp: "ReaderError 1-1: unmatched delimiter ')'", mustErr: true},
-		{name: "EOF", src: "(1 2", exp: "ReaderError 1-4: unexpected EOF while reading", mustErr: true},
+		{name: "EOF", src: "(1 2", exp: "ReaderError 1-4: unexpected EOF", mustErr: true},
 		{name: "WithComment", src: "(1 ; one\n a\n µ)", exp: "(1 a µ)"},
 		{name: "SimpleDot", src: "(1 . 2)", exp: "(1 . 2)"},
 		{name: "NilDot", src: "(. 2)", exp: "(() . 2)"},

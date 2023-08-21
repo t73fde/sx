@@ -151,20 +151,16 @@ func TestTailCallOptimization(t *testing.T) {
 	engine := createEngineForTCO()
 	testcases.Run(t, engine)
 }
-func BenchmarkTCO10(b *testing.B)    { benchmarkTCO(b, 10) }
-func BenchmarkTCO20(b *testing.B)    { benchmarkTCO(b, 20) }
-func BenchmarkTCO40(b *testing.B)    { benchmarkTCO(b, 40) }
-func BenchmarkTCO80(b *testing.B)    { benchmarkTCO(b, 80) }
-func BenchmarkTCO160(b *testing.B)   { benchmarkTCO(b, 160) }
-func BenchmarkTCO320(b *testing.B)   { benchmarkTCO(b, 320) }
-func BenchmarkTCO640(b *testing.B)   { benchmarkTCO(b, 640) }
-func BenchmarkTCO1280(b *testing.B)  { benchmarkTCO(b, 1680) }
-func BenchmarkTCO2560(b *testing.B)  { benchmarkTCO(b, 2560) }
-func BenchmarkTCO5120(b *testing.B)  { benchmarkTCO(b, 5120) }
-func BenchmarkTCO10240(b *testing.B) { benchmarkTCO(b, 10240) }
-func BenchmarkTCO20480(b *testing.B) { benchmarkTCO(b, 20480) }
-func BenchmarkTCO40960(b *testing.B) { benchmarkTCO(b, 40960) }
-func BenchmarkTCO81920(b *testing.B) { benchmarkTCO(b, 81920) }
+func BenchmarkTCO1(b *testing.B)     { benchmarkTCO(b, 1) }
+func BenchmarkTCO2(b *testing.B)     { benchmarkTCO(b, 2) }
+func BenchmarkTCO4(b *testing.B)     { benchmarkTCO(b, 4) }
+func BenchmarkTCO16(b *testing.B)    { benchmarkTCO(b, 16) }
+func BenchmarkTCO64(b *testing.B)    { benchmarkTCO(b, 64) }
+func BenchmarkTCO256(b *testing.B)   { benchmarkTCO(b, 256) }
+func BenchmarkTCO1024(b *testing.B)  { benchmarkTCO(b, 1024) }
+func BenchmarkTCO4096(b *testing.B)  { benchmarkTCO(b, 4096) }
+func BenchmarkTCO16384(b *testing.B) { benchmarkTCO(b, 16384) }
+func BenchmarkTCO65536(b *testing.B) { benchmarkTCO(b, 65536) }
 func benchmarkTCO(b *testing.B, i int) {
 	engine := createEngineForTCO()
 	obj := sx.MakeList(
