@@ -12,9 +12,7 @@ package sxbuiltins
 
 // Contains all list-related builtins
 
-import (
-	"zettelstore.de/sx.fossil"
-)
+import "zettelstore.de/sx.fossil"
 
 // Cons returns a cons pair of the two arguments.
 func Cons(args []sx.Object) (sx.Object, error) {

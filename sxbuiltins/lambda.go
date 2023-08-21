@@ -179,6 +179,7 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
+
 func (le *LambdaExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
 	for i, expr := range le.Front {
 		le.Front[i] = expr.Rework(ro, env)
@@ -236,7 +237,7 @@ func (p *Procedure) Print(w io.Writer) (int, error) {
 func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	numParams := len(p.Params)
 	if len(args) < numParams {
-		return nil, fmt.Errorf("missing arguments: %v", p.Params[len(args):])
+		return nil, fmt.Errorf("%s: missing arguments: %v", p.Name, p.Params[len(args):])
 	}
 	envSize := numParams
 	if p.Rest != nil {
@@ -255,7 +256,7 @@ func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, erro
 			return nil, err
 		}
 	} else if len(args) > numParams {
-		return nil, fmt.Errorf("excess arguments: %v", args[numParams:])
+		return nil, fmt.Errorf("%s: excess arguments: %v", p.Name, args[numParams:])
 	}
 	for _, e := range p.Front {
 		_, err := childFrame.Execute(e)
