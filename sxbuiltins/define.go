@@ -112,7 +112,7 @@ func (de *DefineExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) s
 // SetXS parses a (set! name value) form.
 func SetXS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
-		return nil, fmt.Errorf("needs at least two arguments")
+		return nil, fmt.Errorf("need at least two arguments")
 	}
 	car := args.Car()
 	sym, ok := sx.GetSymbol(car)

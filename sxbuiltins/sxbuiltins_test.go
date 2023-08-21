@@ -49,6 +49,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 			sxbuiltins.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
 
 			var sb strings.Builder
+			env := sxeval.MakeChildEnvironment(root, tc.name, 0)
 			for {
 				val, err := rd.Read()
 				if err != nil {
@@ -62,7 +63,6 @@ func (tcs tTestCases) Run(t *testing.T) {
 					t.Errorf("Error %v while reading %s", err, tc.src)
 					return
 				}
-				env := sxeval.MakeChildEnvironment(root, tc.name, 0)
 				res, err := engine.Eval(env, val)
 				if err != nil {
 					if tc.withErr {
@@ -70,10 +70,13 @@ func (tcs tTestCases) Run(t *testing.T) {
 						continue
 					}
 					t.Errorf("unexpected error: %v", fmt.Errorf("%w", err))
-					break
+					return
 				} else if tc.withErr {
 					t.Errorf("should fail, but got: %v", res)
-					break
+					return
+				}
+				if sb.Len() > 0 {
+					sb.WriteByte(' ')
 				}
 				sx.Print(&sb, res)
 			}
