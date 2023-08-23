@@ -18,27 +18,6 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// MacroS parses a macro specification.
-//
-// Syntactically, it is the same as a procedure specification (aka lambda).
-func MacroS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	le, err := LambdaS(frame, args)
-	if err != nil {
-		return nil, err
-	}
-	return makeMacroExpr(le.(*LambdaExpr)), err
-}
-
-func makeMacroExpr(le *LambdaExpr) sxeval.Expr {
-	return &MacroExpr{
-		Name:   le.Name,
-		Params: le.Params,
-		Rest:   le.Rest,
-		Front:  le.Front,
-		Last:   le.Last,
-	}
-}
-
 // DefMacroS parses a macro specfication and assigns it to a value.
 func DefMacroS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
@@ -56,7 +35,14 @@ func DefMacroS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DefineExpr{Sym: sym, Val: makeMacroExpr(le)}, nil
+	me := &MacroExpr{
+		Name:   le.Name,
+		Params: le.Params,
+		Rest:   le.Rest,
+		Front:  le.Front,
+		Last:   le.Last,
+	}
+	return &DefineExpr{Sym: sym, Val: me}, nil
 }
 
 type MacroExpr struct {

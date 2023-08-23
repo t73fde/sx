@@ -31,12 +31,6 @@ type Expr interface {
 	Print(io.Writer) (int, error)
 }
 
-// ReworkOptions controls the behaviour of Expr.Rework.
-type ReworkOptions struct {
-	// The environment where resolve should try to resolve a symbol.
-	ResolveEnv Environment
-}
-
 // PrintExprs is a helper method to implement Expr.Print.
 func PrintExprs(w io.Writer, exprs []Expr) (int, error) {
 	length := 0

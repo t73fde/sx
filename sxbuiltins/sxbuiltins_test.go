@@ -132,7 +132,7 @@ var syntaxes = []struct {
 	{"lambda", sxbuiltins.LambdaS},
 	{"let", sxbuiltins.LetS},
 	{"timeit", sxbuiltins.TimeitS},
-	{"defmacro", sxbuiltins.DefMacroS}, {"macro", sxbuiltins.MacroS},
+	{"defmacro", sxbuiltins.DefMacroS},
 }
 
 var builtinsA = []struct {

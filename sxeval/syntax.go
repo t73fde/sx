@@ -17,7 +17,7 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// SpecialFn is the signature of all syntax constructing functions.
+// SyntaxFn is the signature of all syntax constructing functions.
 type SyntaxFn func(*ParseFrame, *sx.Pair) (Expr, error)
 
 // Syntax represents all syntax constructing functions implemented in Go.
@@ -79,6 +79,8 @@ func GetSyntax(obj sx.Object) (*Syntax, bool) {
 }
 
 // Special is a special form that produces an expression by parsing.
+//
+// It is not the same as interface `Parser`, because the second parameter is a pair.
 type Special interface {
 	// Parse the args.
 	Parse(pf *ParseFrame, args *sx.Pair) (Expr, error)

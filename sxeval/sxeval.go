@@ -131,6 +131,12 @@ func (eng *Engine) SetExecutor(e Executor) Executor {
 	return &mySimpleExecutor
 }
 
+// ReworkOptions controls the behaviour of Expr.Rework.
+type ReworkOptions struct {
+	// The environment where resolve should try to resolve a symbol.
+	ResolveEnv Environment
+}
+
 // SetReworkOptions sets the rework options for this engine and returns the previous value.
 //
 // If nil is given, the current value is unchanged and it is just returned.
