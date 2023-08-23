@@ -1,4 +1,4 @@
-# sxhtml - Generate HTML from S-Expressions
+# SxHTML - Generate HTML from S-Expressions
 
 HTML can be represented as a symbolic expression, also called
 [s-expression](https://en.wikipedia.org/wiki/S-expression)

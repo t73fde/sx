@@ -1,0 +1,55 @@
+<title>Sx</title>
+
+<b>Sx</b> is a framework, implemented in the Go programming language, to work
+with [[https://en.wikipedia.org/wiki/S-expression|s-expressions]] (symbolic
+expressions). S-expressions are one of the most mature techniques to encode
+data in a portable and interpretable way. It follows a simple guide: every
+value is either an atomic value (like numbers, strings, symbols), or a list of
+values. A list might be empty. List are likely to be nested to allow more
+complex structures.
+
+Many atomic values have an external representation. For example, the number
+zero is represented by the character sequence <tt>0</tt>. A string is
+represented by a character sequence that is delimited by double quotes.
+A symbol is a sequence of non-space characters. A list is represented with
+a left, opening parenthesis, the possibly empty sequence of list elements,
+separated by a space, and a right, closing parenthesis.
+
+S-expressions are also able to represent software functions. This is done by
+a simple trick: the first element of a list is interpreted as a function, all
+other elements are treated as arguments to this function. For example <tt>3
++ 4</tt> can be encoded as a s-expression as <tt>(+ 3 4)</tt>. This trick can
+easily transformed into a full calculus. There are several programming language
+based on s-epressions, notable LISP and Scheme.
+
+Since s-expressions encode both data and source code, i.e. software, it is easy
+to write a software that works not just on ordinary data, but on software. To
+an extreme, a software might modify itself. A more moderate way is to write
+macros, or an internal domain specific language, which make you more
+productive.
+
+Sx does not only provide raw s-expression, but also some functions to interpret
+s-expressions as software. This allows you to encode your data, but also to
+develop gigh-level software that works on that data. Sx provides an evaluator
+for s-expressions. Basically, it implements an LISP-1 interpreter, where
+functions and all other data use a single namespace. The programming language
+Scheme is also based on LISP-1. LISP itself, is a LISP-2, where functions
+reside in a different namespace.
+
+This repository contains several sub-projects / packages:
+
+  *  The package [/dir?ci=tip|Sx] itself contains all relevant data values , such as numbers,
+     symbols, strings, booleans, &hellip;
+  *  [/dir?ci=tip&name=sxreader|SxReader] rovides functions and data structures
+     to read a s-expression representation and transforms it into the data
+     values.
+  *  [/dir?ci=tip&name=sxeval|SxEval] provides a way to interpret s-expressions
+     as software. This is done by evaluating s-expressions, resulting in
+     a (possibly new) s-expression.
+  *  [/dir?ci=tip&name=sxbuiltins|SxBuiltins] provide a collection of functions
+     that can be used for a base evaluator.
+  *  [/dir?ci=tip&name=sxhtml|SxHTML] is a domain specific language to
+     represent HTML. It is used for HTML templating engines.
+  *  Package [/dir?ci=tip&name=cmd|cmd] contains a simple command line tool to
+     work interactively with s-expressions. It combines all previous packages
+     and also serves as an example to use them.
