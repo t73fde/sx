@@ -11,8 +11,6 @@
 package sxbuiltins
 
 import (
-	"log"
-
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
 )
@@ -31,7 +29,7 @@ func Map(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	}
 	val, err := frame.Call(fn, []sx.Object{lst.Car()})
 	if err != nil {
-		return sx.Nil(), nil
+		return sx.Nil(), err
 	}
 	result := sx.Cons(val, sx.Nil())
 	curr := result
@@ -126,7 +124,6 @@ func FoldReverse(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println("REVL", rev)
 	res := args[1]
 	params := []sx.Object{res, res}
 	for node := rev; node != nil; {
