@@ -65,6 +65,25 @@ type AndExpr struct {
 	Last  sxeval.Expr
 }
 
+func (ae *AndExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	for i, expr := range ae.Front {
+		front := expr.Rework(rf)
+		if objectExpr, isObjectExpr := front.(sxeval.ObjectExpr); isObjectExpr {
+			if sx.IsFalse(objectExpr.Object()) {
+				return front
+			}
+		}
+		ae.Front[i] = front
+	}
+	last := ae.Last.Rework(rf)
+	if objectExpr, isObjectExpr := last.(sxeval.ObjectExpr); isObjectExpr {
+		if sx.IsFalse(objectExpr.Object()) {
+			return last
+		}
+	}
+	ae.Last = last
+	return ae
+}
 func (ae *AndExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	for _, e := range ae.Front {
 		obj, err := frame.Execute(e)
@@ -86,25 +105,6 @@ func (ae *AndExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 
-}
-func (ae *AndExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	for i, expr := range ae.Front {
-		front := expr.Rework(ro, env)
-		if objectExpr, isObjectExpr := front.(sxeval.ObjectExpr); isObjectExpr {
-			if sx.IsFalse(objectExpr.Object()) {
-				return front
-			}
-		}
-		ae.Front[i] = front
-	}
-	last := ae.Last.Rework(ro, env)
-	if objectExpr, isObjectExpr := last.(sxeval.ObjectExpr); isObjectExpr {
-		if sx.IsFalse(objectExpr.Object()) {
-			return last
-		}
-	}
-	ae.Last = last
-	return ae
 }
 
 // OrS parses an or statement: (or expr...).
@@ -128,6 +128,25 @@ type OrExpr struct {
 	Last  sxeval.Expr
 }
 
+func (oe *OrExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	for i, expr := range oe.Front {
+		front := expr.Rework(rf)
+		if objectExpr, isObjectExpr := front.(sxeval.ObjectExpr); isObjectExpr {
+			if sx.IsTrue(objectExpr.Object()) {
+				return front
+			}
+		}
+		oe.Front[i] = front
+	}
+	last := oe.Last.Rework(rf)
+	if objectExpr, isObjectExpr := last.(sxeval.ObjectExpr); isObjectExpr {
+		if sx.IsTrue(objectExpr.Object()) {
+			return last
+		}
+	}
+	oe.Last = last
+	return oe
+}
 func (oe *OrExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	for _, e := range oe.Front {
 		obj, err := frame.Execute(e)
@@ -149,23 +168,4 @@ func (oe *OrExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 
-}
-func (oe *OrExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	for i, expr := range oe.Front {
-		front := expr.Rework(ro, env)
-		if objectExpr, isObjectExpr := front.(sxeval.ObjectExpr); isObjectExpr {
-			if sx.IsTrue(objectExpr.Object()) {
-				return front
-			}
-		}
-		oe.Front[i] = front
-	}
-	last := oe.Last.Rework(ro, env)
-	if objectExpr, isObjectExpr := last.(sxeval.ObjectExpr); isObjectExpr {
-		if sx.IsTrue(objectExpr.Object()) {
-			return last
-		}
-	}
-	oe.Last = last
-	return oe
 }

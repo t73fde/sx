@@ -392,6 +392,10 @@ func getUnquoteObj(sym *sx.Symbol, lst *sx.Pair) (sx.Object, error) {
 
 type MakeListExpr struct{ Elem sxeval.Expr }
 
+func (mle MakeListExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	mle.Elem = mle.Elem.Rework(rf)
+	return mle
+}
 func (mle MakeListExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	elem, err := frame.Execute(mle.Elem)
 	if err != nil {
@@ -413,8 +417,4 @@ func (mle MakeListExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 
-}
-func (mle MakeListExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	mle.Elem = mle.Elem.Rework(ro, env)
-	return mle
 }

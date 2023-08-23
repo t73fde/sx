@@ -73,6 +73,10 @@ type DefineExpr struct {
 	Val sxeval.Expr
 }
 
+func (de *DefineExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	de.Val = de.Val.Rework(rf)
+	return de
+}
 func (de *DefineExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	val, err := frame.Execute(de.Val)
 	if err == nil {
@@ -104,10 +108,6 @@ func (de *DefineExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
-func (de *DefineExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	de.Val = de.Val.Rework(ro, env)
-	return de
-}
 
 // SetXS parses a (set! name value) form.
 func SetXS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
@@ -132,6 +132,10 @@ type SetXExpr struct {
 	Val sxeval.Expr
 }
 
+func (se *SetXExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	se.Val = se.Val.Rework(rf)
+	return se
+}
 func (se *SetXExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	if _, found := frame.Lookup(se.Sym); !found {
 		return nil, frame.MakeNotBoundError(se.Sym)
@@ -165,8 +169,4 @@ func (se *SetXExpr) Print(w io.Writer) (int, error) {
 	l, err = io.WriteString(w, "}")
 	length += l
 	return length, err
-}
-func (se *SetXExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	se.Val = se.Val.Rework(ro, env)
-	return se
 }

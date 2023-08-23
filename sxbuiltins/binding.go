@@ -89,6 +89,16 @@ type LetExpr struct {
 	Last    sxeval.Expr
 }
 
+func (le *LetExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	for i, expr := range le.Expr {
+		le.Expr[i] = expr.Rework(rf)
+	}
+	for i, expr := range le.Front {
+		le.Front[i] = expr.Rework(rf)
+	}
+	le.Last = le.Last.Rework(rf)
+	return le
+}
 func (le *LetExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	letFrame := frame.MakeChildEnvFrame("let", len(le.Symbols))
 	for i, sym := range le.Symbols {
@@ -140,15 +150,4 @@ func (le *LetExpr) Print(w io.Writer) (int, error) {
 	l, err := sxeval.PrintFrontLast(w, le.Front, le.Last)
 	length += l
 	return length, err
-}
-
-func (le *LetExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	for i, expr := range le.Expr {
-		le.Expr[i] = expr.Rework(ro, env)
-	}
-	for i, expr := range le.Front {
-		le.Front[i] = expr.Rework(ro, env)
-	}
-	le.Last = le.Last.Rework(ro, env)
-	return le
 }

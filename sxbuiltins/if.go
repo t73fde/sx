@@ -62,6 +62,19 @@ type If2Expr struct {
 	True sxeval.Expr
 }
 
+func (ife *If2Expr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	testExpr := ife.Test.Rework(rf)
+	trueExpr := ife.True.Rework(rf)
+	if objectExpr, isObjectExpr := testExpr.(sxeval.ObjectExpr); isObjectExpr {
+		if sx.IsTrue(objectExpr.Object()) {
+			return trueExpr
+		}
+		return sxeval.NilExpr.Rework(rf)
+	}
+	ife.Test = testExpr
+	ife.True = trueExpr
+	return ife
+}
 func (ife *If2Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	test, err := frame.Execute(ife.Test)
 	if err != nil {
@@ -96,19 +109,6 @@ func (ife *If2Expr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
-func (ife *If2Expr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	testExpr := ife.Test.Rework(ro, env)
-	trueExpr := ife.True.Rework(ro, env)
-	if objectExpr, isObjectExpr := testExpr.(sxeval.ObjectExpr); isObjectExpr {
-		if sx.IsTrue(objectExpr.Object()) {
-			return trueExpr
-		}
-		return sxeval.NilExpr.Rework(ro, env)
-	}
-	ife.Test = testExpr
-	ife.True = trueExpr
-	return ife
-}
 
 // IfExpr represents the if-then-else form.
 type If3Expr struct {
@@ -117,6 +117,35 @@ type If3Expr struct {
 	False sxeval.Expr
 }
 
+func (ife *If3Expr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	testExpr := ife.Test.Rework(rf)
+	trueExpr := ife.True.Rework(rf)
+	falseExpr := ife.False.Rework(rf)
+
+	// Check for constant condition
+	if objectExpr, isObjectExpr := testExpr.(sxeval.ObjExpr); isObjectExpr {
+		if sx.IsTrue(objectExpr.Object()) {
+			return trueExpr
+		}
+		return falseExpr
+	}
+
+	// A nil false expression will result in a If2Expr.
+	if objectExpr, isObjectExpr := falseExpr.(sxeval.ObjectExpr); isObjectExpr {
+		if sx.IsNil(objectExpr.Object()) {
+			if2expr := &If2Expr{
+				Test: testExpr,
+				True: trueExpr,
+			}
+			return if2expr.Rework(rf)
+		}
+	}
+
+	ife.Test = testExpr
+	ife.True = trueExpr
+	ife.False = falseExpr
+	return ife
+}
 func (ife *If3Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	test, err := frame.Execute(ife.Test)
 	if err != nil {
@@ -160,33 +189,4 @@ func (ife *If3Expr) Print(w io.Writer) (int, error) {
 	l, err = io.WriteString(w, "}")
 	length += l
 	return length, err
-}
-func (ife *If3Expr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	testExpr := ife.Test.Rework(ro, env)
-	trueExpr := ife.True.Rework(ro, env)
-	falseExpr := ife.False.Rework(ro, env)
-
-	// Check for constant condition
-	if objectExpr, isObjectExpr := testExpr.(sxeval.ObjExpr); isObjectExpr {
-		if sx.IsTrue(objectExpr.Object()) {
-			return trueExpr
-		}
-		return falseExpr
-	}
-
-	// A nil false expression will result in a If2Expr.
-	if objectExpr, isObjectExpr := falseExpr.(sxeval.ObjectExpr); isObjectExpr {
-		if sx.IsNil(objectExpr.Object()) {
-			if2expr := &If2Expr{
-				Test: testExpr,
-				True: trueExpr,
-			}
-			return if2expr.Rework(ro, env)
-		}
-	}
-
-	ife.Test = testExpr
-	ife.True = trueExpr
-	ife.False = falseExpr
-	return ife
 }

@@ -38,6 +38,10 @@ type TimeitExpr struct {
 	expr sxeval.Expr
 }
 
+func (te *TimeitExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	te.expr = te.expr.Rework(rf)
+	return te
+}
 func (te *TimeitExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	start := time.Now()
 	obj, err := frame.Execute(te.expr)
@@ -60,8 +64,4 @@ func (te *TimeitExpr) Print(w io.Writer) (int, error) {
 	l, err = io.WriteString(w, "}")
 	length += l
 	return length, err
-}
-func (te *TimeitExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	te.expr = te.expr.Rework(ro, env)
-	return te
 }

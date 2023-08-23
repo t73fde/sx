@@ -67,6 +67,13 @@ type MacroExpr struct {
 	Last   sxeval.Expr
 }
 
+func (me *MacroExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	for i, expr := range me.Front {
+		me.Front[i] = expr.Rework(rf)
+	}
+	me.Last = me.Last.Rework(rf)
+	return me
+}
 func (me *MacroExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	return &Macro{
 		Frame:  frame,
@@ -107,13 +114,6 @@ func (me *MacroExpr) Print(w io.Writer) (int, error) {
 	l, err = sxeval.PrintFrontLast(w, me.Front, me.Last)
 	length += l
 	return length, err
-}
-func (me *MacroExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	for i, expr := range me.Front {
-		me.Front[i] = expr.Rework(ro, env)
-	}
-	me.Last = me.Last.Rework(ro, env)
-	return me
 }
 
 // Macro represents the macro definition form.

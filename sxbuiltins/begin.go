@@ -38,6 +38,17 @@ type BeginExpr struct {
 	Last  sxeval.Expr
 }
 
+func (be *BeginExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	for i, expr := range be.Front {
+		be.Front[i] = expr.Rework(rf)
+	}
+	last := be.Last.Rework(rf)
+	if len(be.Front) == 0 {
+		return last
+	}
+	be.Last = last
+	return be
+}
 func (be *BeginExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	for _, e := range be.Front {
 		_, err := frame.Execute(e)
@@ -56,11 +67,4 @@ func (be *BeginExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 
-}
-func (be *BeginExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	for i, expr := range be.Front {
-		be.Front[i] = expr.Rework(ro, env)
-	}
-	be.Last = be.Last.Rework(ro, env)
-	return be
 }

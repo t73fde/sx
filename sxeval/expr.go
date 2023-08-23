@@ -19,6 +19,9 @@ import (
 
 // Expr are values that are computed for evaluation in an environment.
 type Expr interface {
+	// Rework the expressions to a possible simpler one.
+	Rework(*ReworkFrame) Expr
+
 	// Compute the expression in a frame and return the result.
 	// It may have side-effects, on the given environment, or on the
 	// general environment of the system.
@@ -26,9 +29,6 @@ type Expr interface {
 
 	// Print the expression on the given writer.
 	Print(io.Writer) (int, error)
-
-	// Rework the expressions to a possible simpler one.
-	Rework(*ReworkOptions, Environment) Expr
 }
 
 // ReworkOptions controls the behaviour of Expr.Rework.
@@ -81,36 +81,46 @@ var NilExpr = nilExpr{}
 
 type nilExpr struct{}
 
-func (nilExpr) Compute(*Frame) (sx.Object, error)       { return sx.Nil(), nil }
-func (nilExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{NIL}") }
-func (nilExpr) Rework(*ReworkOptions, Environment) Expr { return NilExpr }
-func (nilExpr) Object() sx.Object                       { return sx.Nil() }
+func (nilExpr) Rework(*ReworkFrame) Expr          { return NilExpr }
+func (nilExpr) Compute(*Frame) (sx.Object, error) { return sx.Nil(), nil }
+func (nilExpr) Print(w io.Writer) (int, error)    { return io.WriteString(w, "{NIL}") }
+func (nilExpr) Object() sx.Object                 { return sx.Nil() }
 
 // FalseExpr returns always False
 var FalseExpr = falseExpr{}
 
 type falseExpr struct{}
 
-func (falseExpr) Compute(*Frame) (sx.Object, error)       { return sx.False, nil }
-func (falseExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{FALSE}") }
-func (falseExpr) Rework(*ReworkOptions, Environment) Expr { return FalseExpr }
-func (falseExpr) Object() sx.Object                       { return sx.False }
+func (falseExpr) Rework(*ReworkFrame) Expr          { return FalseExpr }
+func (falseExpr) Compute(*Frame) (sx.Object, error) { return sx.False, nil }
+func (falseExpr) Print(w io.Writer) (int, error)    { return io.WriteString(w, "{FALSE}") }
+func (falseExpr) Object() sx.Object                 { return sx.False }
 
 // TrueExpr returns always True
 var TrueExpr = trueExpr{}
 
 type trueExpr struct{}
 
-func (trueExpr) Compute(*Frame) (sx.Object, error)       { return sx.True, nil }
-func (trueExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{TRUE}") }
-func (trueExpr) Rework(*ReworkOptions, Environment) Expr { return TrueExpr }
-func (trueExpr) Object() sx.Object                       { return sx.True }
+func (trueExpr) Rework(*ReworkFrame) Expr          { return TrueExpr }
+func (trueExpr) Compute(*Frame) (sx.Object, error) { return sx.True, nil }
+func (trueExpr) Print(w io.Writer) (int, error)    { return io.WriteString(w, "{TRUE}") }
+func (trueExpr) Object() sx.Object                 { return sx.True }
 
 // ObjExpr returns the stored object.
 type ObjExpr struct {
 	Obj sx.Object
 }
 
+func (oe ObjExpr) Rework(rf *ReworkFrame) Expr {
+	if obj := oe.Obj; sx.IsNil(obj) {
+		return NilExpr.Rework(rf)
+	} else if obj == sx.False {
+		return FalseExpr.Rework(rf)
+	} else if obj == sx.True {
+		return TrueExpr.Rework(rf)
+	}
+	return oe
+}
 func (oe ObjExpr) Compute(*Frame) (sx.Object, error) { return oe.Obj, nil }
 func (oe ObjExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{OBJ ")
@@ -126,16 +136,6 @@ func (oe ObjExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
-func (oe ObjExpr) Rework(ro *ReworkOptions, env Environment) Expr {
-	if obj := oe.Obj; sx.IsNil(obj) {
-		return NilExpr.Rework(ro, env)
-	} else if obj == sx.False {
-		return FalseExpr.Rework(ro, env)
-	} else if obj == sx.True {
-		return TrueExpr.Rework(ro, env)
-	}
-	return oe
-}
 func (oe ObjExpr) Object() sx.Object { return oe.Obj }
 
 // ResolveExpr resolves the given symbol in an environment and returns the value.
@@ -143,6 +143,12 @@ type ResolveExpr struct {
 	Symbol *sx.Symbol
 }
 
+func (re ResolveExpr) Rework(rf *ReworkFrame) Expr {
+	if obj, found := rf.ResolveConst(re.Symbol); found {
+		return ObjExpr{Obj: obj}.Rework(rf)
+	}
+	return re
+}
 func (re ResolveExpr) Compute(frame *Frame) (sx.Object, error) {
 	if obj, found := frame.Resolve(re.Symbol); found {
 		return obj, nil
@@ -151,14 +157,6 @@ func (re ResolveExpr) Compute(frame *Frame) (sx.Object, error) {
 }
 func (re ResolveExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{RESOLVE %v}", re.Symbol)
-}
-func (re ResolveExpr) Rework(ro *ReworkOptions, env Environment) Expr {
-	if reEnv := ro.ResolveEnv; reEnv != nil {
-		if obj, found := Resolve(reEnv, re.Symbol); found {
-			return ObjExpr{Obj: obj}.Rework(ro, env)
-		}
-	}
-	return re
 }
 
 // NotBoundError signals that a symbol was not found in an environment.
@@ -178,6 +176,25 @@ type CallExpr struct {
 }
 
 func (ce *CallExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
+func (ce *CallExpr) Rework(rf *ReworkFrame) Expr {
+	// If the ce.Proc is a builtin, rework to a BuiltinCallExpr.
+
+	proc := ce.Proc.Rework(rf)
+	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
+		if bi, isBuiltin := objExpr.Obj.(Builtin); isBuiltin {
+			bce := &BuiltinCallExpr{
+				Proc: bi,
+				Args: ce.Args,
+			}
+			return bce.Rework(rf)
+		}
+	}
+	ce.Proc = proc
+	for i, arg := range ce.Args {
+		ce.Args[i] = arg.Rework(rf)
+	}
+	return ce
+}
 func (ce *CallExpr) Compute(frame *Frame) (sx.Object, error) {
 	val, err := frame.Execute(ce.Proc)
 	if err != nil {
@@ -211,25 +228,6 @@ func (ce *CallExpr) Print(w io.Writer) (int, error) {
 	l, err = io.WriteString(w, "}")
 	length += l
 	return length, err
-}
-func (ce *CallExpr) Rework(ro *ReworkOptions, env Environment) Expr {
-	// If the ce.Proc is a builtin, rework to a BuiltinCallExpr.
-
-	proc := ce.Proc.Rework(ro, env)
-	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
-		if bi, isBuiltin := objExpr.Obj.(Builtin); isBuiltin {
-			bce := &BuiltinCallExpr{
-				Proc: bi,
-				Args: ce.Args,
-			}
-			return bce.Rework(ro, env)
-		}
-	}
-	ce.Proc = proc
-	for i, arg := range ce.Args {
-		ce.Args[i] = arg.Rework(ro, env)
-	}
-	return ce
 }
 
 func computeCallable(frame *Frame, proc Callable, args []Expr) (sx.Object, error) {
@@ -265,6 +263,35 @@ type BuiltinCallExpr struct {
 }
 
 func (bce *BuiltinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
+func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
+	// Rework checks if the Builtin is a simple BuilinA and if all args are
+	// constant sx.Object's. If this is true, it will call the builtin with
+	// the args. If no error was signaled, the result object will be used
+	// instead the BuiltinCallExpr. This assumes that there is no side effect
+	// when the builtin is called.
+	mayInline := true
+	if _, isBuiltinA := bce.Proc.(BuiltinA); !isBuiltinA {
+		mayInline = false
+	}
+	for i, arg := range bce.Args {
+		bce.Args[i] = arg.Rework(rf)
+		if _, isObjectExpr := bce.Args[i].(ObjectExpr); !isObjectExpr {
+			mayInline = false
+		}
+	}
+	if !mayInline {
+		return bce
+	}
+	args := make([]sx.Object, len(bce.Args))
+	for i, arg := range bce.Args {
+		args[i] = arg.(ObjectExpr).Object()
+	}
+	result, err := bce.Proc.(BuiltinA)(args)
+	if err != nil {
+		return bce
+	}
+	return ObjExpr{Obj: result}.Rework(rf)
+}
 func (bce *BuiltinCallExpr) Compute(frame *Frame) (sx.Object, error) {
 	return computeCallable(frame, bce.Proc, bce.Args)
 }
@@ -286,33 +313,4 @@ func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {
 	l, err = io.WriteString(w, "}")
 	length += l
 	return length, err
-}
-func (bce *BuiltinCallExpr) Rework(ro *ReworkOptions, env Environment) Expr {
-	// Rework checks if the Builtin is a simple BuilinA and if all args are
-	// constant sx.Object's. If this is true, it will call the builtin with
-	// the args. If no error was signaled, the result object will be used
-	// instead the BuiltinCallExpr. This assumes that there is no side effect
-	// when the builtin is called.
-	mayInline := true
-	if _, isBuiltinA := bce.Proc.(BuiltinA); !isBuiltinA {
-		mayInline = false
-	}
-	for i, arg := range bce.Args {
-		bce.Args[i] = arg.Rework(ro, env)
-		if _, isObjectExpr := bce.Args[i].(ObjectExpr); !isObjectExpr {
-			mayInline = false
-		}
-	}
-	if !mayInline {
-		return bce
-	}
-	args := make([]sx.Object, len(bce.Args))
-	for i, arg := range bce.Args {
-		args[i] = arg.(ObjectExpr).Object()
-	}
-	result, err := bce.Proc.(BuiltinA)(args)
-	if err != nil {
-		return bce
-	}
-	return ObjExpr{Obj: result}.Rework(ro, env)
 }

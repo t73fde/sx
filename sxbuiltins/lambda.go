@@ -139,6 +139,13 @@ type LambdaExpr struct {
 	Last   sxeval.Expr
 }
 
+func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	for i, expr := range le.Front {
+		le.Front[i] = expr.Rework(rf)
+	}
+	le.Last = le.Last.Rework(rf)
+	return le
+}
 func (le *LambdaExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	return &Procedure{
 		PFrame: frame.MakeParseFrame(),
@@ -178,14 +185,6 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 	l, err = sxeval.PrintFrontLast(w, le.Front, le.Last)
 	length += l
 	return length, err
-}
-
-func (le *LambdaExpr) Rework(ro *sxeval.ReworkOptions, env sxeval.Environment) sxeval.Expr {
-	for i, expr := range le.Front {
-		le.Front[i] = expr.Rework(ro, env)
-	}
-	le.Last = le.Last.Rework(ro, env)
-	return le
 }
 
 // Procedure represents the procedure definition form (aka lambda).
