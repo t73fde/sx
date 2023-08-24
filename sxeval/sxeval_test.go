@@ -12,6 +12,7 @@ package sxeval_test
 
 import (
 	"io"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -151,30 +152,25 @@ func TestTailCallOptimization(t *testing.T) {
 	engine := createEngineForTCO()
 	testcases.Run(t, engine)
 }
-func BenchmarkTCO1(b *testing.B)     { benchmarkTCO(b, 1) }
-func BenchmarkTCO2(b *testing.B)     { benchmarkTCO(b, 2) }
-func BenchmarkTCO4(b *testing.B)     { benchmarkTCO(b, 4) }
-func BenchmarkTCO16(b *testing.B)    { benchmarkTCO(b, 16) }
-func BenchmarkTCO64(b *testing.B)    { benchmarkTCO(b, 64) }
-func BenchmarkTCO256(b *testing.B)   { benchmarkTCO(b, 256) }
-func BenchmarkTCO1024(b *testing.B)  { benchmarkTCO(b, 1024) }
-func BenchmarkTCO4096(b *testing.B)  { benchmarkTCO(b, 4096) }
-func BenchmarkTCO16384(b *testing.B) { benchmarkTCO(b, 16384) }
-func BenchmarkTCO65536(b *testing.B) { benchmarkTCO(b, 65536) }
-func benchmarkTCO(b *testing.B, i int) {
+
+func BenchmarkEvenTCO(b *testing.B) {
+	testcases := [...]int{1, 2, 4, 16, 64, 256, 1024, 4096, 16384, 65536}
 	engine := createEngineForTCO()
-	obj := sx.MakeList(
-		engine.SymbolFactory().MustMake("even?"),
-		sx.Int64(i),
-	)
 	root := engine.GetToplevelEnv()
-	expr, err := engine.Parse(root, obj)
-	if err != nil {
-		panic(err)
-	}
-	expr = engine.Rework(root, expr)
+	evenSym := engine.SymbolFactory().MustMake("even?")
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		engine.Execute(root, expr)
+	for _, tc := range testcases {
+		b.Run(strconv.Itoa(tc), func(b *testing.B) {
+			obj := sx.MakeList(evenSym, sx.Int64(tc))
+			expr, err := engine.Parse(root, obj)
+			if err != nil {
+				panic(err)
+			}
+			expr = engine.Rework(root, expr)
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				engine.Execute(root, expr)
+			}
+		})
 	}
 }
