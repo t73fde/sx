@@ -68,7 +68,7 @@ func Max(args []sx.Object) (sx.Object, error) {
 }
 
 func minmaxBuiltin(args []sx.Object, cmpFn func(int) bool) (sx.Object, error) {
-	err := CheckArgs(args, 2, 0)
+	err := CheckArgs(args, 1, 0)
 	acc, err := GetNumber(err, args, 0)
 	if err != nil {
 		return nil, err

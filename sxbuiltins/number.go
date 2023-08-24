@@ -96,5 +96,5 @@ func Mod(args []sx.Object) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return sx.NumDiv(acc, num)
+	return sx.NumMod(acc, num)
 }

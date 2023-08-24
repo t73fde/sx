@@ -12,6 +12,7 @@ package sxeval
 
 import (
 	"io"
+	"reflect"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -30,9 +31,11 @@ type Builtin interface {
 // us BuiltinEEA instead.
 type BuiltinA func([]sx.Object) (sx.Object, error)
 
-func (b BuiltinA) IsNil() bool                    { return b == nil }
-func (b BuiltinA) IsAtom() bool                   { return b == nil }
-func (b BuiltinA) IsEql(other sx.Object) bool     { return sx.Object(b) == other }
+func (b BuiltinA) IsNil() bool  { return b == nil }
+func (b BuiltinA) IsAtom() bool { return b == nil }
+func (b BuiltinA) IsEql(other sx.Object) bool {
+	return reflect.ValueOf(b).Pointer() == reflect.ValueOf(other).Pointer()
+}
 func (b BuiltinA) IsEqual(other sx.Object) bool   { return b.IsEql(other) }
 func (b BuiltinA) String() string                 { return b.Repr() }
 func (b BuiltinA) Repr() string                   { return sx.Repr(b) }
@@ -72,9 +75,11 @@ func handleBuiltinError(eng *Engine, b Builtin, err error) error {
 // frame (i.e. engine, environment), and arguments.
 type BuiltinFA func(*Frame, []sx.Object) (sx.Object, error)
 
-func (b BuiltinFA) IsNil() bool                    { return b == nil }
-func (b BuiltinFA) IsAtom() bool                   { return b == nil }
-func (b BuiltinFA) IsEql(other sx.Object) bool     { return sx.Object(b) == other }
+func (b BuiltinFA) IsNil() bool  { return b == nil }
+func (b BuiltinFA) IsAtom() bool { return b == nil }
+func (b BuiltinFA) IsEql(other sx.Object) bool {
+	return reflect.ValueOf(b).Pointer() == reflect.ValueOf(other).Pointer()
+}
 func (b BuiltinFA) IsEqual(other sx.Object) bool   { return b.IsEql(other) }
 func (b BuiltinFA) String() string                 { return b.Repr() }
 func (b BuiltinFA) Repr() string                   { return sx.Repr(b) }

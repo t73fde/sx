@@ -71,6 +71,19 @@ func (me *MacroExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 		Last:   me.Last,
 	}, nil
 }
+func (me *MacroExpr) IsEqual(other sxeval.Expr) bool {
+	if me == other {
+		return true
+	}
+	if otherM, ok := other.(*MacroExpr); ok && otherM != nil {
+		return me.Name == otherM.Name &&
+			sxeval.EqualSymbolSlice(me.Params, otherM.Params) &&
+			me.Rest.IsEqual(otherM.Rest) &&
+			sxeval.EqualExprSlice(me.Front, otherM.Front) &&
+			me.Last.IsEqual(otherM.Last)
+	}
+	return false
+}
 func (me *MacroExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{MACRO ")
 	if err != nil {
@@ -122,30 +135,27 @@ func (m *Macro) IsEql(other sx.Object) bool {
 	if m.IsNil() {
 		return sx.IsNil(other)
 	}
-	if otherF, ok := other.(*Macro); ok {
-		if m.Name != otherF.Name || m.Rest != otherF.Rest || m.Last != otherF.Last {
-			return false
-		}
-		if len(m.Params) != len(otherF.Params) || len(m.Front) != len(otherF.Front) {
-			return false
-		}
-		for i, p := range m.Params {
-			if p != otherF.Params[i] {
-				return false
-			}
-		}
-		for i, e := range m.Front {
-			if e != otherF.Front[i] {
-				return false
-			}
-		}
-		return m.PFrame.IsEql(otherF.PFrame)
+	return false
+}
+func (m *Macro) IsEqual(other sx.Object) bool {
+	if m == other {
+		return true
+	}
+	if m.IsNil() {
+		return sx.IsNil(other)
+	}
+	if otherM, ok := other.(*Macro); ok {
+		// Don't compare Name, because they are always different, but that does not matter.
+		return m.PFrame.IsEqual(otherM.PFrame) &&
+			sxeval.EqualSymbolSlice(m.Params, otherM.Params) &&
+			m.Rest.IsEqual(otherM.Rest) &&
+			sxeval.EqualExprSlice(m.Front, otherM.Front) &&
+			m.Last.IsEqual(otherM.Last)
 	}
 	return false
 }
-func (m *Macro) IsEqual(other sx.Object) bool { return m.IsEql(other) }
-func (m *Macro) String() string               { return m.Repr() }
-func (m *Macro) Repr() string                 { return sx.Repr(m) }
+func (m *Macro) String() string { return m.Repr() }
+func (m *Macro) Repr() string   { return sx.Repr(m) }
 func (m *Macro) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<macro:", m.Name, ">")
 }

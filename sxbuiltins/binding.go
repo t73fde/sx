@@ -119,7 +119,18 @@ func (le *LetExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	}
 	return letFrame.ExecuteTCO(le.Last)
 }
-
+func (le *LetExpr) IsEqual(other sxeval.Expr) bool {
+	if le == other {
+		return true
+	}
+	if otherL, ok := other.(*LetExpr); ok && otherL != nil {
+		return sxeval.EqualSymbolSlice(le.Symbols, otherL.Symbols) &&
+			sxeval.EqualExprSlice(le.Expr, otherL.Expr) &&
+			sxeval.EqualExprSlice(le.Front, otherL.Front) &&
+			le.Last.IsEqual(otherL.Last)
+	}
+	return false
+}
 func (le *LetExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{LET")
 	if err != nil {

@@ -84,6 +84,16 @@ func (de *DefineExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	}
 	return val, err
 }
+func (de *DefineExpr) IsEqual(other sxeval.Expr) bool {
+	if de == other {
+		return true
+	}
+	if otherM, ok := other.(*DefineExpr); ok && otherM != nil {
+		return de.Sym.IsEqual(otherM.Sym) && de.Val.IsEqual(otherM.Val)
+	}
+	return false
+}
+
 func (de *DefineExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{DEFINE ")
 	if err != nil {
@@ -146,6 +156,16 @@ func (se *SetXExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	}
 	return val, err
 }
+func (se *SetXExpr) IsEqual(other sxeval.Expr) bool {
+	if se == other {
+		return true
+	}
+	if otherM, ok := other.(*SetXExpr); ok && otherM != nil {
+		return se.Sym.IsEqual(otherM.Sym) && se.Val.IsEqual(otherM.Val)
+	}
+	return false
+}
+
 func (se *SetXExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{SET! ")
 	if err != nil {

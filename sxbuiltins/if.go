@@ -85,6 +85,16 @@ func (ife *If2Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	}
 	return sx.Nil(), nil
 }
+func (ife *If2Expr) IsEqual(other sxeval.Expr) bool {
+	if ife == other {
+		return true
+	}
+	if otherI, ok := other.(*If2Expr); ok && otherI != nil {
+		return ife.Test.IsEqual(otherI.Test) && ife.True.IsEqual(otherI.True)
+	}
+	return false
+}
+
 func (ife *If2Expr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{IF2 ")
 	if err != nil {
@@ -156,6 +166,16 @@ func (ife *If3Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	}
 	return frame.ExecuteTCO(ife.False)
 }
+func (ife *If3Expr) IsEqual(other sxeval.Expr) bool {
+	if ife == other {
+		return true
+	}
+	if otherI, ok := other.(*If3Expr); ok && otherI != nil {
+		return ife.Test.IsEqual(otherI.Test) && ife.True.IsEqual(otherI.True) && ife.False.IsEqual(otherI.False)
+	}
+	return false
+}
+
 func (ife *If3Expr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{IF3 ")
 	if err != nil {

@@ -21,4 +21,5 @@ var tcsBegin = tTestCases{
 	{name: "begin-0", src: "(begin)", exp: "()"},
 	{name: "begin-1", src: "(begin 1)", exp: "1"},
 	{name: "begin-2", src: "(begin 1 2)", exp: "2"},
+	{name: "begin-cons", src: "(begin 1 2 . 3)", exp: "3"},
 }

@@ -403,6 +403,16 @@ func (mle MakeListExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	}
 	return sx.Cons(elem, nil), nil
 }
+func (mle MakeListExpr) IsEqual(other sxeval.Expr) bool {
+	if mle == other {
+		return true
+	}
+	if otherM, ok := other.(*MakeListExpr); ok && otherM != nil {
+		return mle.Elem.IsEqual(otherM.Elem)
+	}
+	return false
+}
+
 func (mle MakeListExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{MAKELIST ")
 	if err != nil {

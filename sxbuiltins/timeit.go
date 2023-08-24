@@ -51,6 +51,15 @@ func (te *TimeitExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	}
 	return sx.MakeList(duration, obj, sx.MakeString(err.Error())), nil
 }
+func (te *TimeitExpr) IsEqual(other sxeval.Expr) bool {
+	if te == other {
+		return true
+	}
+	if otherT, ok := other.(*TimeitExpr); ok && otherT != nil {
+		return te.expr.IsEqual(otherT.expr)
+	}
+	return false
+}
 func (te *TimeitExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{TIMEIT ")
 	if err != nil {

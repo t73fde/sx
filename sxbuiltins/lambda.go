@@ -156,6 +156,19 @@ func (le *LambdaExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 		Last:   le.Last,
 	}, nil
 }
+func (le *LambdaExpr) IsEqual(other sxeval.Expr) bool {
+	if le == other {
+		return true
+	}
+	if otherL, ok := other.(*LambdaExpr); ok && otherL != nil {
+		return le.Name == otherL.Name &&
+			sxeval.EqualSymbolSlice(le.Params, otherL.Params) &&
+			le.Rest.IsEqual(otherL.Rest) &&
+			sxeval.EqualExprSlice(le.Front, otherL.Front) &&
+			le.Last.IsEqual(otherL.Last)
+	}
+	return false
+}
 func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{LAMBDA ")
 	if err != nil {
@@ -206,30 +219,27 @@ func (p *Procedure) IsEql(other sx.Object) bool {
 	if p.IsNil() {
 		return sx.IsNil(other)
 	}
-	if otherF, ok := other.(*Procedure); ok {
-		if p.Name != otherF.Name || p.Rest != otherF.Rest || p.Last != otherF.Last {
-			return false
-		}
-		if len(p.Params) != len(otherF.Params) || len(p.Front) != len(otherF.Front) {
-			return false
-		}
-		for i, p := range p.Params {
-			if p != otherF.Params[i] {
-				return false
-			}
-		}
-		for i, e := range p.Front {
-			if e != otherF.Front[i] {
-				return false
-			}
-		}
-		return p.PFrame.IsEql(otherF.PFrame)
+	return false
+}
+func (p *Procedure) IsEqual(other sx.Object) bool {
+	if p == other {
+		return true
+	}
+	if p.IsNil() {
+		return sx.IsNil(other)
+	}
+	if otherP, ok := other.(*Procedure); ok {
+		// Don't compare Name, because they are always different, but that does not matter.
+		return p.PFrame.IsEqual(otherP.PFrame) &&
+			sxeval.EqualSymbolSlice(p.Params, otherP.Params) &&
+			p.Rest.IsEqual(otherP.Rest) &&
+			sxeval.EqualExprSlice(p.Front, otherP.Front) &&
+			p.Last.IsEqual(otherP.Last)
 	}
 	return false
 }
-func (p *Procedure) IsEqual(other sx.Object) bool { return p.IsEql(other) }
-func (p *Procedure) String() string               { return p.Repr() }
-func (p *Procedure) Repr() string                 { return sx.Repr(p) }
+func (p *Procedure) String() string { return p.Repr() }
+func (p *Procedure) Repr() string   { return sx.Repr(p) }
 func (p *Procedure) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<lambda:", p.Name, ">")
 }

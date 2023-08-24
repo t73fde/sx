@@ -96,6 +96,16 @@ func (ae *AndExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	}
 	return frame.ExecuteTCO(ae.Last)
 }
+func (ae *AndExpr) IsEqual(other sxeval.Expr) bool {
+	if ae == other {
+		return true
+	}
+	if otherA, ok := other.(*AndExpr); ok && otherA != nil {
+		return sxeval.EqualExprSlice(ae.Front, otherA.Front) &&
+			ae.Last.IsEqual(otherA.Last)
+	}
+	return false
+}
 func (ae *AndExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{AND")
 	if err != nil {
@@ -158,6 +168,16 @@ func (oe *OrExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 		}
 	}
 	return frame.ExecuteTCO(oe.Last)
+}
+func (oe *OrExpr) IsEqual(other sxeval.Expr) bool {
+	if oe == other {
+		return true
+	}
+	if otherO, ok := other.(*OrExpr); ok && otherO != nil {
+		return sxeval.EqualExprSlice(oe.Front, otherO.Front) &&
+			oe.Last.IsEqual(otherO.Last)
+	}
+	return false
 }
 func (oe *OrExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{OR")

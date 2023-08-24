@@ -13,6 +13,7 @@ package sxeval
 import (
 	"fmt"
 	"io"
+	"slices"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -27,8 +28,21 @@ type Expr interface {
 	// general environment of the system.
 	Compute(*Frame) (sx.Object, error)
 
+	// IsEqual compare two expressions for deep equality.
+	IsEqual(Expr) bool
+
 	// Print the expression on the given writer.
 	Print(io.Writer) (int, error)
+}
+
+// EqualExprSlice compares two `Expr` slices if they are `IsEqual`.
+func EqualExprSlice(s1, s2 []Expr) bool {
+	return slices.EqualFunc(s1, s2, func(e1, e2 Expr) bool { return e1.IsEqual(e2) })
+}
+
+// EqualSymbolSlice compares two `sx.Symbol` slices if they are `IsEqual`.
+func EqualSymbolSlice(s1, s2 []*sx.Symbol) bool {
+	return slices.EqualFunc(s1, s2, func(e1, e2 *sx.Symbol) bool { return e1.IsEqual(e2) })
 }
 
 // PrintExprs is a helper method to implement Expr.Print.
@@ -77,6 +91,7 @@ type nilExpr struct{}
 
 func (nilExpr) Rework(*ReworkFrame) Expr          { return NilExpr }
 func (nilExpr) Compute(*Frame) (sx.Object, error) { return sx.Nil(), nil }
+func (nilExpr) IsEqual(other Expr) bool           { return other == NilExpr }
 func (nilExpr) Print(w io.Writer) (int, error)    { return io.WriteString(w, "{NIL}") }
 func (nilExpr) Object() sx.Object                 { return sx.Nil() }
 
@@ -87,6 +102,7 @@ type falseExpr struct{}
 
 func (falseExpr) Rework(*ReworkFrame) Expr          { return FalseExpr }
 func (falseExpr) Compute(*Frame) (sx.Object, error) { return sx.False, nil }
+func (falseExpr) IsEqual(other Expr) bool           { return other == FalseExpr }
 func (falseExpr) Print(w io.Writer) (int, error)    { return io.WriteString(w, "{FALSE}") }
 func (falseExpr) Object() sx.Object                 { return sx.False }
 
@@ -97,6 +113,7 @@ type trueExpr struct{}
 
 func (trueExpr) Rework(*ReworkFrame) Expr          { return TrueExpr }
 func (trueExpr) Compute(*Frame) (sx.Object, error) { return sx.True, nil }
+func (trueExpr) IsEqual(other Expr) bool           { return other == TrueExpr }
 func (trueExpr) Print(w io.Writer) (int, error)    { return io.WriteString(w, "{TRUE}") }
 func (trueExpr) Object() sx.Object                 { return sx.True }
 
@@ -116,6 +133,15 @@ func (oe ObjExpr) Rework(rf *ReworkFrame) Expr {
 	return oe
 }
 func (oe ObjExpr) Compute(*Frame) (sx.Object, error) { return oe.Obj, nil }
+func (oe ObjExpr) IsEqual(other Expr) bool {
+	if oe == other {
+		return true
+	}
+	if otherO, ok := other.(ObjExpr); ok {
+		return oe.Obj.IsEqual(otherO.Obj)
+	}
+	return false
+}
 func (oe ObjExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{OBJ ")
 	if err != nil {
@@ -148,6 +174,15 @@ func (re ResolveExpr) Compute(frame *Frame) (sx.Object, error) {
 		return obj, nil
 	}
 	return nil, NotBoundError{Env: frame.env, Sym: re.Symbol}
+}
+func (re ResolveExpr) IsEqual(other Expr) bool {
+	if re == other {
+		return true
+	}
+	if otherR, ok := other.(ResolveExpr); ok {
+		return re.Symbol.IsEqual(otherR.Symbol)
+	}
+	return false
 }
 func (re ResolveExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{RESOLVE %v}", re.Symbol)
@@ -203,6 +238,18 @@ func (ce *CallExpr) Compute(frame *Frame) (sx.Object, error) {
 	}
 
 	return computeCallable(frame, proc, ce.Args)
+}
+func (ce *CallExpr) IsEqual(other Expr) bool {
+	if ce == other {
+		return true
+	}
+	if otherC, ok := other.(*CallExpr); ok && otherC != nil {
+		if !ce.Proc.IsEqual(otherC.Proc) {
+			return false
+		}
+		return EqualExprSlice(ce.Args, otherC.Args)
+	}
+	return false
 }
 func (ce *CallExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{CALL ")
@@ -288,6 +335,18 @@ func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 }
 func (bce *BuiltinCallExpr) Compute(frame *Frame) (sx.Object, error) {
 	return computeCallable(frame, bce.Proc, bce.Args)
+}
+func (bce *BuiltinCallExpr) IsEqual(other Expr) bool {
+	if bce == other {
+		return true
+	}
+	if otherB, ok := other.(*BuiltinCallExpr); ok && otherB != nil {
+		if !bce.Proc.IsEqual(otherB.Proc) {
+			return false
+		}
+		return EqualExprSlice(bce.Args, otherB.Args)
+	}
+	return false
 }
 func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{BCALL ")

@@ -23,7 +23,7 @@ type ParseFrame struct {
 	parser Parser
 }
 
-func (frame *ParseFrame) IsEql(other *ParseFrame) bool {
+func (frame *ParseFrame) IsEqual(other *ParseFrame) bool {
 	if frame == other {
 		return true
 	}
@@ -33,7 +33,7 @@ func (frame *ParseFrame) IsEql(other *ParseFrame) bool {
 	if frame.engine != other.engine {
 		return false
 	}
-	return frame.env.IsEql(other.env)
+	return frame.env.IsEqual(other.env)
 }
 
 func (pf *ParseFrame) Parse(obj sx.Object) (Expr, error) {

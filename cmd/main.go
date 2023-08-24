@@ -241,7 +241,7 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env 
 			fmt.Println(";p", err)
 			continue
 		}
-		expr = eng.Rework(env, expr)
+		expr = eng.Rework(expr)
 		if mpe.logExpr {
 			printExpr(eng, expr, 0)
 			continue
