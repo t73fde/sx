@@ -64,11 +64,11 @@ func (pair *Pair) IsEqual(other Object) bool {
 	if pair.IsNil() {
 		return IsFalse(other)
 	}
-	if otherLst, ok := other.(*Pair); ok {
-		node, otherNode := pair, otherLst
+	if otherPair, ok := other.(*Pair); ok {
+		node, otherNode := pair, otherPair
 		for ; node != nil && otherNode != nil; node = node.Tail() {
 			if !node.Car().IsEqual(otherNode.Car()) {
-				return true
+				return false
 			}
 			otherNode = otherNode.Tail()
 		}
@@ -325,6 +325,26 @@ func (pair *Pair) Reverse() (*Pair, error) {
 			continue
 		}
 		return nil, ErrImproper{Pair: pair}
+	}
+}
+
+// Copy returns a copy of the given pair list.
+func (pair *Pair) Copy() *Pair {
+	if pair == nil {
+		return nil
+	}
+	result := Cons(pair.car, pair.cdr)
+	prev := result
+	for {
+		curr := prev.cdr
+		if next, isPair := GetPair(curr); isPair && next != nil {
+			copy := Cons(next.car, next.cdr)
+			prev.SetCdr(copy)
+			prev = copy
+			continue
+		}
+		prev.SetCdr(curr)
+		return result
 	}
 }
 

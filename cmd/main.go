@@ -134,8 +134,8 @@ func main() {
 	mpe.origParser = engine.SetParser(&mpe)
 	mpe.origExecutor = engine.SetExecutor(&mpe)
 	root := engine.RootEnvironment()
-	root, _ = sxbuiltins.InstallQuoteSyntax(root, symQuote)
-	root, _ = sxbuiltins.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
+	sxbuiltins.InstallQuoteSyntax(root, symQuote)
+	sxbuiltins.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
 	for _, synDef := range syntaxes {
 		engine.BindSyntax(synDef.name, synDef.fn)
 	}

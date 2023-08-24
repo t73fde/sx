@@ -60,33 +60,36 @@ func TestBindLookupUnbind(t *testing.T) {
 	root := sxeval.MakeRootEnvironment()
 	root.Bind(sym1, sym2)
 
-	val, found := root.Lookup(sym2)
-	if found {
+	if val, found := root.Lookup(sym2); found {
 		t.Errorf("Symbol %v should not be found, but resolves to %v", sym2, val)
 	}
 
-	child := sxeval.MakeChildEnvironment(root, "child1", 0)
+	t.Run("child", func(t *testing.T) {
+		root := sxeval.MakeRootEnvironment()
+		root.Bind(sym1, sym2)
+		child := sxeval.MakeChildEnvironment(root, "assoc", 30)
+		bindLookupUnbind(t, root, child, sym1, sym2)
+	})
+}
+
+func bindLookupUnbind(t *testing.T, root, child sxeval.Environment, sym1, sym2 *sx.Symbol) {
 	child.Bind(sym2, sym1)
 
-	_, found = child.Lookup(sym1)
-	if found {
+	if _, found := child.Lookup(sym1); found {
 		t.Error("Symbol", sym1, "was found in child")
 	}
-	val, found = sxeval.Resolve(child, sym1)
-	if !found {
+	if val, found := sxeval.Resolve(child, sym1); !found {
 		t.Error("Symbol", sym1, "not resolved")
 	} else if val != sym2 {
 		t.Errorf("Symbol %v should resolve to %v, but got %v", sym1, sym2, val)
 	}
 
-	val, found = child.Lookup(sym2)
-	if !found {
+	if val, found := child.Lookup(sym2); !found {
 		t.Error("Symbol", sym2, "not found")
 	} else if val != sym1 {
 		t.Errorf("Symbol %v should resolve to %v, but got %v", sym2, sym1, val)
 	}
-	val, found = sxeval.Resolve(child, sym2)
-	if !found {
+	if val, found := sxeval.Resolve(child, sym2); !found {
 		t.Error("Symbol", sym2, "not resolved")
 	} else if val != sym1 {
 		t.Errorf("Symbol %v should resolve to %v, but got %v", sym2, sym1, val)
@@ -107,13 +110,11 @@ func TestBindLookupUnbind(t *testing.T) {
 	}
 
 	root.Unbind(sym1)
-	_, found = root.Lookup(sym1)
-	if found {
+	if _, found := root.Lookup(sym1); found {
 		t.Error("Symbol", sym1, "was found in root")
 	}
 	child.Unbind(sym2)
-	_, found = child.Lookup(sym2)
-	if found {
+	if _, found := child.Lookup(sym2); found {
 		t.Error("Symbol", sym2, "was found in child")
 	}
 }
@@ -156,12 +157,13 @@ func TestRootEnvEqual(t *testing.T) {
 	checkEnvEqual(t, root1, root2)
 
 	root := sxeval.MakeRootEnvironment()
-	child1 := sxeval.MakeChildEnvironment(root, "child1", 7)
-	child2 := sxeval.MakeChildEnvironment(root, "child2", 1)
+	child1 := sxeval.MakeChildEnvironment(root, "child1", 17)
+	child2 := sxeval.MakeChildEnvironment(root, "child22", 11)
 	checkEnvEqual(t, child1, child2)
 }
 
 func checkEnvEqual(t *testing.T, env1, env2 sxeval.Environment) {
+	t.Helper()
 	if !env1.IsEqual(env2) {
 		t.Error("empty", env1, "is not equal to empty", env2)
 		return

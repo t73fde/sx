@@ -197,8 +197,7 @@ func (eng *Engine) BindSyntax(name string, fn SyntaxFn) error {
 
 // Bind a given object to a symbol of the given name in the engine's root environment.
 func (eng *Engine) Bind(name string, obj sx.Object) (err error) {
-	eng.root, err = eng.root.Bind(eng.sf.MustMake(name), obj)
-	return err
+	return eng.root.Bind(eng.sf.MustMake(name), obj)
 }
 
 // BuiltinName returns the name of the given Builtin.

@@ -91,12 +91,10 @@ func (tcs tTestCases) Run(t *testing.T) {
 func createEngine() *sxeval.Engine {
 	sf := sx.MakeMappedFactory()
 	root := sxeval.MakeRootEnvironment()
-	root, err := sxbuiltins.InstallQuoteSyntax(root, sf.MustMake("quote"))
-	if err != nil {
+	if err := sxbuiltins.InstallQuoteSyntax(root, sf.MustMake("quote")); err != nil {
 		panic(err)
 	}
-	root, err = sxbuiltins.InstallQuasiQuoteSyntax(root, sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing"))
-	if err != nil {
+	if err := sxbuiltins.InstallQuasiQuoteSyntax(root, sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")); err != nil {
 		panic(err)
 	}
 
@@ -112,8 +110,7 @@ func createEngine() *sxeval.Engine {
 	}
 	env := sxeval.MakeChildEnvironment(root, "vars", len(objects))
 	for _, obj := range objects {
-		env, err = env.Bind(sf.MustMake(obj.name), obj.obj)
-		if err != nil {
+		if err := env.Bind(sf.MustMake(obj.name), obj.obj); err != nil {
 			panic(err)
 		}
 	}

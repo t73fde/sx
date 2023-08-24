@@ -62,11 +62,7 @@ func (pf *ParseFrame) MakeChildFrame(name string, baseSize int) *ParseFrame {
 	}
 }
 
-func (pf *ParseFrame) Bind(sym *sx.Symbol, obj sx.Object) error {
-	env, err := pf.env.Bind(sym, obj)
-	pf.env = env
-	return err
-}
+func (pf *ParseFrame) Bind(sym *sx.Symbol, obj sx.Object) error { return pf.env.Bind(sym, obj) }
 
 func (pf *ParseFrame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return Resolve(pf.env, sym)

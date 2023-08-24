@@ -44,17 +44,16 @@ func InstallQuasiQuoteReader(rd *sxreader.Reader, symQQ *sx.Symbol, chQQ rune, s
 
 }
 
-func InstallQuasiQuoteSyntax(env sxeval.Environment, symQQ, symUQ, symUQS *sx.Symbol) (sxeval.Environment, error) {
-	newEnv, err := env.Bind(symQQ, sxeval.MakeSyntax(symQQ.Name(), makeQuasiQuoteSyntax(symQQ, symUQ, symUQS)))
+func InstallQuasiQuoteSyntax(env sxeval.Environment, symQQ, symUQ, symUQS *sx.Symbol) error {
+	err := env.Bind(symQQ, sxeval.MakeSyntax(symQQ.Name(), makeQuasiQuoteSyntax(symQQ, symUQ, symUQS)))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	newEnv, err = newEnv.Bind(symUQ, sxeval.MakeSyntax(symUQ.Name(), makeUnquoteSyntax(symQQ)))
+	err = env.Bind(symUQ, sxeval.MakeSyntax(symUQ.Name(), makeUnquoteSyntax(symQQ)))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	newEnv, err = newEnv.Bind(symUQS, sxeval.MakeSyntax(symUQS.Name(), makeUnquoteSyntax(symQQ)))
-	return newEnv, err
+	return env.Bind(symUQS, sxeval.MakeSyntax(symUQS.Name(), makeUnquoteSyntax(symQQ)))
 }
 
 func makeUnquoteSyntax(symQQ *sx.Symbol) sxeval.SyntaxFn {
