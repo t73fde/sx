@@ -159,3 +159,21 @@ func TestListReverse(t *testing.T) {
 		t.Error("ERR4", res)
 	}
 }
+
+func TestListCopy(t *testing.T) {
+	testcases := []*sx.Pair{
+		sx.Nil(),
+		sx.Cons(sx.Nil(), sx.Nil()),
+		sx.Cons(sx.Int64(3), sx.Nil()),
+		sx.Cons(sx.Int64(3), sx.Int64(7)),
+		sx.Cons(sx.Int64(3), sx.Nil()),
+		sx.Cons(sx.Int64(3), sx.Cons(sx.Int64(5), sx.Nil())),
+		sx.MakeList(sx.Int64(2), sx.Int64(3), sx.Int64(5), sx.Int64(7)),
+	}
+	for i, tc := range testcases {
+		copy := tc.Copy()
+		if !tc.IsEqual(copy) {
+			t.Errorf("%d: %v != %v", i, tc, copy)
+		}
+	}
+}

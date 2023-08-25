@@ -328,6 +328,26 @@ func (pair *Pair) Reverse() (*Pair, error) {
 	}
 }
 
+// Copy returns a copy of the given pair list.
+func (pair *Pair) Copy() *Pair {
+	if pair == nil {
+		return nil
+	}
+	result := Cons(pair.car, pair.cdr)
+	prev := result
+	for {
+		curr := prev.cdr
+		if next, isPair := GetPair(curr); isPair && next != nil {
+			copy := Cons(next.car, next.cdr)
+			prev.SetCdr(copy)
+			prev = copy
+			continue
+		}
+		prev.SetCdr(curr)
+		return result
+	}
+}
+
 // ErrImproper is signalled if an improper list is found where it is not appropriate.
 type ErrImproper struct{ Pair *Pair }
 
