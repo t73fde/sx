@@ -37,8 +37,8 @@ func CheckArgs(args []sx.Object, minArgs, maxArgs int) error {
 	return nil
 }
 
-// getObject returns the given argument as an object, but checks for errors.
-func getObject(err error, args []sx.Object, pos int) (sx.Object, error) {
+// GetObject returns the given argument as an object, but checks for errors.
+func GetObject(err error, args []sx.Object, pos int) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func getObject(err error, args []sx.Object, pos int) (sx.Object, error) {
 
 // GetSymbol returns the given argument as a symbol, and checks for errors.
 func GetSymbol(err error, args []sx.Object, pos int) (*sx.Symbol, error) {
-	obj, err := getObject(err, args, pos)
+	obj, err := GetObject(err, args, pos)
 	if err == nil {
 		if sym, ok := sx.GetSymbol(obj); ok {
 			return sym, nil
@@ -62,7 +62,7 @@ func GetSymbol(err error, args []sx.Object, pos int) (*sx.Symbol, error) {
 
 // GetString returns the given argument as a string, and checks for errors.
 func GetString(err error, args []sx.Object, pos int) (sx.String, error) {
-	obj, err := getObject(err, args, pos)
+	obj, err := GetObject(err, args, pos)
 	if err == nil {
 		if s, isString := sx.GetString(obj); isString {
 			return s, nil
@@ -74,7 +74,7 @@ func GetString(err error, args []sx.Object, pos int) (sx.String, error) {
 
 // GetNumber returns the given argument as a number, and checks for errors.
 func GetNumber(err error, args []sx.Object, pos int) (sx.Number, error) {
-	obj, err := getObject(err, args, pos)
+	obj, err := GetObject(err, args, pos)
 	if err == nil {
 		if num, ok := sx.GetNumber(obj); ok {
 			return num, nil
@@ -86,7 +86,7 @@ func GetNumber(err error, args []sx.Object, pos int) (sx.Number, error) {
 
 // GetList returns the given argument as a list, and checks for errors.
 func GetList(err error, args []sx.Object, pos int) (*sx.Pair, error) {
-	obj, err := getObject(err, args, pos)
+	obj, err := GetObject(err, args, pos)
 	if err == nil {
 		if sx.IsNil(obj) {
 			return nil, nil
@@ -101,7 +101,7 @@ func GetList(err error, args []sx.Object, pos int) (*sx.Pair, error) {
 
 // GetPair returns the given argument as a non-nil list, and checks for errors.
 func GetPair(err error, args []sx.Object, pos int) (*sx.Pair, error) {
-	obj, err := getObject(err, args, pos)
+	obj, err := GetObject(err, args, pos)
 	if err == nil {
 		if !sx.IsNil(obj) {
 			if pair, isPair := sx.GetPair(obj); isPair {
@@ -115,7 +115,7 @@ func GetPair(err error, args []sx.Object, pos int) (*sx.Pair, error) {
 
 // GetEnvironment returns the given argument as an environment, and checks for errors.
 func GetEnvironment(err error, args []sx.Object, pos int) (sxeval.Environment, error) {
-	obj, err := getObject(err, args, pos)
+	obj, err := GetObject(err, args, pos)
 	if err == nil {
 		if env, ok := sxeval.GetEnvironment(obj); ok {
 			return env, nil
@@ -127,7 +127,7 @@ func GetEnvironment(err error, args []sx.Object, pos int) (sxeval.Environment, e
 
 // GetCallable returns the given argument as a callable, and checks for errors.
 func GetCallable(err error, args []sx.Object, pos int) (sxeval.Callable, error) {
-	obj, err := getObject(err, args, pos)
+	obj, err := GetObject(err, args, pos)
 	if err == nil {
 		if fn, ok := sxeval.GetCallable(obj); ok {
 			return fn, nil

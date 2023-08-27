@@ -153,7 +153,9 @@ var builtinsA = []struct {
 	{"append", sxbuiltins.Append}, {"reverse", sxbuiltins.Reverse},
 	{"length", sxbuiltins.Length},
 	{"callable?", sxbuiltins.CallableP},
-	{"parent-env", sxbuiltins.ParentEnv}, {"bindings", sxbuiltins.Bindings}, {"all-bindings", sxbuiltins.AllBindings},
+	{"parent-environment", sxbuiltins.ParentEnv},
+	{"bindings", sxbuiltins.Bindings}, {"all-bindings", sxbuiltins.AllBindings},
+	{"undefined?", sxbuiltins.UndefinedP}, {"defined?", sxbuiltins.DefinedP},
 }
 var builtinsFA = []struct {
 	name string
@@ -161,8 +163,9 @@ var builtinsFA = []struct {
 }{
 	{"map", sxbuiltins.Map}, {"apply", sxbuiltins.Apply},
 	{"fold", sxbuiltins.Fold}, {"fold-reverse", sxbuiltins.FoldReverse},
-	{"env", sxbuiltins.Env},
+	{"current-environment", sxbuiltins.CurrentEnv},
 	{"bound?", sxbuiltins.BoundP},
+	{"lookup", sxbuiltins.Lookup}, {"resolve", sxbuiltins.Resolve},
 	{"macroexpand-0", sxbuiltins.MacroExpand0},
 	{"pp", sxbuiltins.Pretty},
 }
