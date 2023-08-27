@@ -27,7 +27,7 @@ func TestGetEnvironment(t *testing.T) {
 	if _, ok := sxeval.GetEnvironment(sx.Nil()); ok {
 		t.Error("Nil() is not an environment")
 	}
-	var o sx.Object = sxeval.MakeRootEnvironment()
+	var o sx.Object = sxeval.MakeRootEnvironment(0)
 	res, ok := sxeval.GetEnvironment(o)
 	if !ok {
 		t.Error("is an environment:", o)
@@ -38,7 +38,7 @@ func TestGetEnvironment(t *testing.T) {
 
 func TestEnvRoot(t *testing.T) {
 	t.Parallel()
-	root := sxeval.MakeRootEnvironment()
+	root := sxeval.MakeRootEnvironment(0)
 	if got := root.Parent(); got != nil {
 		t.Error("root env has a parent", got)
 	}
@@ -57,7 +57,7 @@ func TestBindLookupUnbind(t *testing.T) {
 	sf := sx.MakeMappedFactory()
 	sym1 := sf.MustMake("sym1")
 	sym2 := sf.MustMake("sym2")
-	root := sxeval.MakeRootEnvironment()
+	root := sxeval.MakeRootEnvironment(1)
 	root.Bind(sym1, sym2)
 
 	if val, found := root.Lookup(sym2); found {
@@ -65,7 +65,7 @@ func TestBindLookupUnbind(t *testing.T) {
 	}
 
 	t.Run("child", func(t *testing.T) {
-		root := sxeval.MakeRootEnvironment()
+		root := sxeval.MakeRootEnvironment(1)
 		root.Bind(sym1, sym2)
 		child := sxeval.MakeChildEnvironment(root, "assoc", 30)
 		bindLookupUnbind(t, root, child, sym1, sym2)
@@ -122,7 +122,7 @@ func bindLookupUnbind(t *testing.T, root, child sxeval.Environment, sym1, sym2 *
 func TestAlist(t *testing.T) {
 	t.Parallel()
 	sf := sx.MakeMappedFactory()
-	env := sxeval.MakeRootEnvironment()
+	env := sxeval.MakeRootEnvironment(7)
 	env.Bind(sf.MustMake("sym1"), sx.MakeString("sym1"))
 	env.Bind(sf.MustMake("sym2"), sx.MakeString("sym2"))
 	env.Bind(sf.MustMake("sym3"), sx.MakeString("sym3"))
@@ -152,11 +152,11 @@ func TestAlist(t *testing.T) {
 
 func TestRootEnvEqual(t *testing.T) {
 	t.Parallel()
-	root1 := sxeval.MakeRootEnvironment()
-	root2 := sxeval.MakeRootEnvironment()
+	root1 := sxeval.MakeRootEnvironment(0)
+	root2 := sxeval.MakeRootEnvironment(7)
 	checkEnvEqual(t, root1, root2)
 
-	root := sxeval.MakeRootEnvironment()
+	root := sxeval.MakeRootEnvironment(3)
 	child1 := sxeval.MakeChildEnvironment(root, "child1", 17)
 	child2 := sxeval.MakeChildEnvironment(root, "child22", 11)
 	checkEnvEqual(t, child1, child2)

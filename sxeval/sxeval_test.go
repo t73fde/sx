@@ -23,7 +23,7 @@ import (
 )
 
 func createTestEnv(sf sx.SymbolFactory) sxeval.Environment {
-	env := sxeval.MakeRootEnvironment()
+	env := sxeval.MakeRootEnvironment(2)
 
 	symCat := sf.MustMake("cat")
 	env.Bind(symCat, sxeval.BuiltinA(func(args []sx.Object) (sx.Object, error) {
@@ -114,7 +114,7 @@ var sxEvenOdd = `;;; Indirekt recursive definition of even/odd
 
 func createEngineForTCO() *sxeval.Engine {
 	sf := sx.MakeMappedFactory()
-	root := sxeval.MakeRootEnvironment()
+	root := sxeval.MakeRootEnvironment(6)
 	engine := sxeval.MakeEngine(sf, root)
 	engine.BindSyntax("define", sxbuiltins.DefineS)
 	engine.BindSyntax("if", sxbuiltins.IfS)
@@ -122,6 +122,7 @@ func createEngineForTCO() *sxeval.Engine {
 	engine.BindBuiltinA("-", sxbuiltins.Sub)
 	engine.BindBuiltinFA("map", sxbuiltins.Map)
 	engine.BindBuiltinA("list", sxbuiltins.List)
+	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxEvenOdd), sxreader.WithSymbolFactory(sf))
 	env := sxeval.MakeChildEnvironment(root, "TCO", 0)
 	for {

@@ -130,7 +130,7 @@ func main() {
 		logExpr:      false,
 		logExecutor:  true,
 	}
-	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment())
+	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment(len(syntaxes)+len(builtinsA)+len(builtinsFA)+16))
 	mpe.origParser = engine.SetParser(&mpe)
 	mpe.origExecutor = engine.SetExecutor(&mpe)
 	root := engine.RootEnvironment()

@@ -90,7 +90,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 
 func createEngine() *sxeval.Engine {
 	sf := sx.MakeMappedFactory()
-	root := sxeval.MakeRootEnvironment()
+	root := sxeval.MakeRootEnvironment(len(syntaxes) + len(builtinsA) + len(builtinsFA) + len(objects))
 	if err := sxbuiltins.InstallQuoteSyntax(root, sf.MustMake("quote")); err != nil {
 		panic(err)
 	}
@@ -108,6 +108,7 @@ func createEngine() *sxeval.Engine {
 	for _, builtinFA := range builtinsFA {
 		engine.BindBuiltinFA(builtinFA.name, builtinFA.fn)
 	}
+	root.Freeze()
 	env := sxeval.MakeChildEnvironment(root, "vars", len(objects))
 	for _, obj := range objects {
 		if err := env.Bind(sf.MustMake(obj.name), obj.obj); err != nil {
