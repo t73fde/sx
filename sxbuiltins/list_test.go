@@ -193,4 +193,31 @@ var tcsList = tTestCases{
 	{name: "length-cons", src: "(length (cons 1 2))", exp: "1"},
 	{name: "length-list-1", src: "(length (list 1))", exp: "1"},
 	{name: "length-list-3", src: "(length (list 1 2 3))", exp: "3"},
+
+	{
+		name:    "err-assoc-0",
+		src:     "(assoc)",
+		exp:     "{[{assoc: exactly 2 arguments required, but 0 given: []}]}",
+		withErr: true,
+	},
+	{
+		name:    "err-assoc-1",
+		src:     "(assoc ())",
+		exp:     "{[{assoc: exactly 2 arguments required, but 1 given: [()]}]}",
+		withErr: true,
+	},
+	{
+		name:    "err-assoc-2-nolist",
+		src:     "(assoc 1 1)",
+		exp:     "{[{assoc: argument 1 is not a list, but sx.Int64/1}]}",
+		withErr: true,
+	},
+	{
+		name: "assoc-nil-alist",
+		src:  "(assoc () 1)",
+		exp:  "()",
+	},
+	{name: "assoc-none", src: "(assoc '((1 . 2) (3 . 4)) 0)", exp: "()"},
+	{name: "assoc-first", src: "(assoc '((1 . 2) (3 . 4)) 1)", exp: "(1 . 2)"},
+	{name: "assoc-second", src: "(assoc '((1 . 2) (3 . 4)) 3)", exp: "(3 . 4)"},
 }

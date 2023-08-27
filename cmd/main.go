@@ -97,7 +97,7 @@ var builtinsA = []struct {
 	{"car", sxbuiltins.Car}, {"cdr", sxbuiltins.Cdr}, {"last", sxbuiltins.Last},
 	{"list", sxbuiltins.List}, {"list*", sxbuiltins.ListStar},
 	{"append", sxbuiltins.Append}, {"reverse", sxbuiltins.Reverse},
-	{"length", sxbuiltins.Length},
+	{"length", sxbuiltins.Length}, {"assoc", sxbuiltins.Assoc},
 	{"callable?", sxbuiltins.CallableP},
 	{"parent-environment", sxbuiltins.ParentEnv},
 	{"environment-bindings", sxbuiltins.EnvBindings},

@@ -153,3 +153,14 @@ func Length(args []sx.Object) (sx.Object, error) {
 	}
 	return sx.Int64(int64(lst.Length())), nil
 }
+
+// Assoc returns the first pair of the a-list where the second argument is eql?
+// to the pair's car. Otherwise, nil is returned.
+func Assoc(args []sx.Object) (sx.Object, error) {
+	err := CheckArgs(args, 2, 2)
+	lst, err := GetList(err, args, 0)
+	if err != nil {
+		return nil, err
+	}
+	return lst.Assoc(args[1]), nil
+}
