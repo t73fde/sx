@@ -24,6 +24,13 @@ type Symbol struct {
 	alist   *Pair
 }
 
+// NullSymbol is used when a symbol is technically needed, but its value does not matter.
+var NullSymbol = &Symbol{
+	cname:   "",
+	factory: nil,
+	alist:   nil,
+}
+
 // IsNil return true, if it is a nil symbol value.
 func (sy *Symbol) IsNil() bool { return sy == nil }
 

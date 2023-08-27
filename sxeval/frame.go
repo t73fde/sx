@@ -40,18 +40,18 @@ func (frame *Frame) MakeParseFrame() *ParseFrame {
 	}
 }
 
-func (frame *Frame) MakeChildEnvFrame(name string, baseSize int) *Frame {
+func (frame *Frame) MakeLetFrame(name string, numBindings int) *Frame {
 	return &Frame{
 		engine:   frame.engine,
-		env:      MakeChildEnvironment(frame.env, name, baseSize),
+		env:      MakeFixedEnvironment(frame.env, name, numBindings),
 		caller:   frame,
 		executor: frame.executor,
 	}
 }
-func (frame *Frame) UpdateChildFrame(pf *ParseFrame, name string, baseSize int) *Frame {
+func (frame *Frame) MakeLambdaFrame(pf *ParseFrame, name string, numBindings int) *Frame {
 	return &Frame{
 		engine:   frame.engine,
-		env:      MakeChildEnvironment(pf.env, name, baseSize),
+		env:      MakeFixedEnvironment(pf.env, name, numBindings),
 		caller:   frame,
 		executor: frame.executor,
 	}
@@ -119,6 +119,7 @@ type executeAgain struct {
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }
 
 func (frame *Frame) Bind(sym *sx.Symbol, obj sx.Object) error { return frame.env.Bind(sym, obj) }
+func (frame *Frame) Freeze()                                  { frame.env.Freeze() }
 func (frame *Frame) Lookup(sym *sx.Symbol) (sx.Object, bool)  { return frame.env.Lookup(sym) }
 func (frame *Frame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return Resolve(frame.env, sym)

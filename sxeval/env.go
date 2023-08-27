@@ -64,11 +64,12 @@ type mapSymObj = map[*sx.Symbol]sx.Object
 // MakeRootEnvironment creates a new root environment.
 func MakeRootEnvironment(sizeHint int) Environment {
 	return &mappedEnvironment{
-		name:   "root",
-		parent: nil,
-		vars:   make(mapSymObj, sizeHint),
-		isRoot: true,
-		frozen: false,
+		name:    "root",
+		parent:  nil,
+		vars:    make(mapSymObj, sizeHint),
+		maxVars: -1,
+		isRoot:  true,
+		frozen:  false,
 	}
 }
 
@@ -78,20 +79,53 @@ func MakeChildEnvironment(parent Environment, name string, sizeHint int) Environ
 		sizeHint = 7
 	}
 	return &mappedEnvironment{
-		name:   name,
-		parent: parent,
-		vars:   make(mapSymObj, sizeHint),
-		isRoot: false,
-		frozen: false,
+		name:    name,
+		parent:  parent,
+		vars:    make(mapSymObj, sizeHint),
+		maxVars: -1,
+		isRoot:  false,
+		frozen:  false,
+	}
+}
+
+// MakeFixedEnvironment creates a new child environment, which allows only a
+// fixed size of bindings.
+func MakeFixedEnvironment(parent Environment, name string, numBindings int) Environment {
+	if numBindings <= 0 {
+		return &mappedEnvironment{
+			name:    name,
+			parent:  parent,
+			vars:    nil,
+			maxVars: numBindings,
+			isRoot:  false,
+			frozen:  true,
+		}
+	}
+	if numBindings == 1 {
+		return &singleEnvironment{
+			name:   name,
+			parent: parent,
+			sym:    nil,
+			obj:    nil,
+		}
+	}
+	return &mappedEnvironment{
+		name:    name,
+		parent:  parent,
+		vars:    make(mapSymObj, numBindings),
+		maxVars: numBindings,
+		isRoot:  false,
+		frozen:  false,
 	}
 }
 
 type mappedEnvironment struct {
-	name   string
-	parent Environment
-	vars   mapSymObj
-	isRoot bool
-	frozen bool
+	name    string
+	parent  Environment
+	vars    mapSymObj
+	maxVars int
+	isRoot  bool
+	frozen  bool
 }
 
 func (me *mappedEnvironment) IsNil() bool                { return me == nil }
@@ -136,6 +170,9 @@ func (me *mappedEnvironment) Bind(sym *sx.Symbol, val sx.Object) error {
 		return ErrEnvFrozen{Env: me}
 	}
 	me.vars[sym] = val
+	if me.maxVars >= 0 && len(me.vars) >= me.maxVars {
+		me.frozen = true
+	}
 	return nil
 }
 func (me *mappedEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
@@ -157,6 +194,72 @@ func (me *mappedEnvironment) Unbind(sym *sx.Symbol) error {
 	return nil
 }
 func (me *mappedEnvironment) Freeze() { me.frozen = true }
+
+type singleEnvironment struct {
+	name   string
+	parent Environment
+	sym    *sx.Symbol
+	obj    sx.Object
+}
+
+func (me *singleEnvironment) IsNil() bool                { return me == nil }
+func (me *singleEnvironment) IsAtom() bool               { return me == nil }
+func (me *singleEnvironment) IsEql(other sx.Object) bool { return me == other }
+func (me *singleEnvironment) IsEqual(other sx.Object) bool {
+	if me == other {
+		return true
+	}
+	if me.IsNil() {
+		return sx.IsNil(other)
+	}
+	if ome, ok := other.(*singleEnvironment); ok {
+		return me.sym.IsEqual(ome.sym) && me.obj.IsEqual(ome.obj)
+	}
+	return false
+}
+func (me *singleEnvironment) Repr() string { return sx.Repr(me) }
+func (me *singleEnvironment) Print(w io.Writer) (int, error) {
+	return sx.WriteStrings(w, "#<env:", me.name, ">")
+}
+func (me *singleEnvironment) String() string { return me.name }
+func (me *singleEnvironment) Parent() Environment {
+	if me == nil {
+		return nil
+	}
+	return me.parent
+}
+func (me *singleEnvironment) IsRoot() bool { return false }
+func (me *singleEnvironment) Bind(sym *sx.Symbol, val sx.Object) error {
+	if me.sym != nil {
+		return ErrEnvFrozen{Env: me}
+	}
+	me.sym = sym
+	me.obj = val
+	return nil
+}
+func (me *singleEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
+	if me.sym.IsEqual(sym) {
+		return me.obj, true
+	}
+	return sx.Nil(), false
+}
+func (me *singleEnvironment) Bindings() *sx.Pair {
+	if me.sym == nil {
+		return sx.Nil()
+	}
+	return sx.Cons(sx.Cons(me.sym, me.obj), sx.Nil())
+}
+func (me *singleEnvironment) Unbind(sym *sx.Symbol) error {
+	if me.sym != nil {
+		return ErrEnvFrozen{Env: me}
+	}
+	return nil
+}
+func (me *singleEnvironment) Freeze() {
+	if me.sym != nil {
+		me.sym = sx.NullSymbol
+	}
+}
 
 // GetEnvironment returns the object as an environment, if possible.
 func GetEnvironment(obj sx.Object) (Environment, bool) {

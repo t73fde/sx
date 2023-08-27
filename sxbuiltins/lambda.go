@@ -252,15 +252,15 @@ func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, erro
 	if p.Rest != nil {
 		envSize++
 	}
-	childFrame := frame.UpdateChildFrame(p.PFrame, p.Name, envSize)
+	lambdaFrame := frame.MakeLambdaFrame(p.PFrame, p.Name, envSize)
 	for i, p := range p.Params {
-		err := childFrame.Bind(p, args[i])
+		err := lambdaFrame.Bind(p, args[i])
 		if err != nil {
 			return nil, err
 		}
 	}
 	if p.Rest != nil {
-		err := childFrame.Bind(p.Rest, sx.MakeList(args[numParams:]...))
+		err := lambdaFrame.Bind(p.Rest, sx.MakeList(args[numParams:]...))
 		if err != nil {
 			return nil, err
 		}
@@ -268,10 +268,10 @@ func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, erro
 		return nil, fmt.Errorf("%s: excess arguments: %v", p.Name, args[numParams:])
 	}
 	for _, e := range p.Front {
-		_, err := childFrame.Execute(e)
+		_, err := lambdaFrame.Execute(e)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return childFrame.ExecuteTCO(p.Last)
+	return lambdaFrame.ExecuteTCO(p.Last)
 }

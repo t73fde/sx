@@ -100,7 +100,7 @@ func (le *LetExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	return le
 }
 func (le *LetExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	letFrame := frame.MakeChildEnvFrame("let", len(le.Symbols))
+	letFrame := frame.MakeLetFrame("let", len(le.Symbols))
 	for i, sym := range le.Symbols {
 		obj, err := frame.Execute(le.Expr[i])
 		if err != nil {
