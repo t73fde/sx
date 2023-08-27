@@ -33,27 +33,20 @@ func ParentEnv(args []sx.Object) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return env.Parent(), nil
+	if parent := env.Parent(); parent != nil {
+		return parent, nil
+	}
+	return sx.MakeUndefined(), nil
 }
 
-// Bindings returns the bindings as a a-list of the given environment.
-func Bindings(args []sx.Object) (sx.Object, error) {
+// EnvBindings returns the bindings as a a-list of the given environment.
+func EnvBindings(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	env, err := GetEnvironment(err, args, 0)
 	if err != nil {
 		return nil, err
 	}
 	return env.Bindings(), nil
-}
-
-// AllBindings returns all bindings as a a-list of the given environment.
-func AllBindings(args []sx.Object) (sx.Object, error) {
-	err := CheckArgs(args, 1, 1)
-	env, err := GetEnvironment(err, args, 0)
-	if err != nil {
-		return nil, err
-	}
-	return sxeval.AllBindings(env), nil
 }
 
 // BoundP returns true, if the given symbol is bound in the given environment.
@@ -67,9 +60,9 @@ func BoundP(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	return sx.MakeBoolean(found), nil
 }
 
-// Lookup returns the symbol's binding value in the given
+// EnvLookup returns the symbol's binding value in the given
 // environment, or Undefined if there is no such value.
-func Lookup(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+func EnvLookup(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 2)
 	sym, err := GetSymbol(err, args, 0)
 	var env sxeval.Environment
@@ -87,9 +80,9 @@ func Lookup(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	return sx.MakeUndefined(), nil
 }
 
-// Resolve returns the symbol's binding value in the given environment
+// EnvResolve returns the symbol's binding value in the given environment
 // and all its parent environment, or Undefined if there is no such value.
-func Resolve(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+func EnvResolve(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 2)
 	sym, err := GetSymbol(err, args, 0)
 	var env sxeval.Environment

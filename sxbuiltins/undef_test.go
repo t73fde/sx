@@ -31,7 +31,7 @@ var tcsUndefined = tTestCases{
 		withErr: true,
 	},
 	{name: "undefined-a", src: "(undefined? 'a)", exp: "False"},
-	{name: "undefined-lookup-xyz", src: "(undefined? (lookup 'xyz))", exp: "True"},
+	{name: "undefined-lookup-xyz", src: "(undefined? (environment-lookup 'xyz))", exp: "True"},
 
 	{
 		name:    "err-defined-0",
@@ -46,5 +46,5 @@ var tcsUndefined = tTestCases{
 		withErr: true,
 	},
 	{name: "defined-a", src: "(defined? 'a)", exp: "True"},
-	{name: "defined-lookup-xyz", src: "(defined? (lookup 'xyz))", exp: "False"},
+	{name: "defined-lookup-xyz", src: "(defined? (environment-lookup 'xyz))", exp: "False"},
 }
