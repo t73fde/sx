@@ -63,22 +63,6 @@ func PrintExprs(w io.Writer, exprs []Expr) (int, error) {
 	return length, nil
 }
 
-// PrintFrontLast is a helper method to implement Expr.Print.
-func PrintFrontLast(w io.Writer, front []Expr, last Expr) (int, error) {
-	length, err := PrintExprs(w, front)
-	if err != nil {
-		return length, err
-	}
-	l, err := last.Print(w)
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = io.WriteString(w, "}")
-	length += l
-	return length, err
-}
-
 // ObjectExpr is an Expr that results in a specific sx.Object.
 type ObjectExpr interface {
 	Object() sx.Object

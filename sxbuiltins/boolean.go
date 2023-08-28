@@ -46,24 +46,18 @@ func Not(args []sx.Object) (sx.Object, error) {
 
 // AndS parses an and statement: (and expr...).
 func AndS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := ParseExprSeq(pf, args)
+	es, err := ParseExprSeq(pf, args)
 	if err != nil {
 		return nil, err
 	}
-	if last == nil {
-		return sxeval.TrueExpr, nil
+	if ex, ok := es.ParseRework(sxeval.TrueExpr); ok {
+		return ex, nil
 	}
-	if len(front) == 0 {
-		return last, nil
-	}
-	return &AndExpr{front, last}, nil
+	return &AndExpr{es}, nil
 }
 
 // AndExpr represents the and form.
-type AndExpr struct {
-	Front []sxeval.Expr // all expressions, but the last
-	Last  sxeval.Expr
-}
+type AndExpr struct{ ExprSeq }
 
 func (ae *AndExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	for i, expr := range ae.Front {
@@ -101,8 +95,7 @@ func (ae *AndExpr) IsEqual(other sxeval.Expr) bool {
 		return true
 	}
 	if otherA, ok := other.(*AndExpr); ok && otherA != nil {
-		return sxeval.EqualExprSlice(ae.Front, otherA.Front) &&
-			ae.Last.IsEqual(otherA.Last)
+		return ae.ExprSeq.IsEqual(&otherA.ExprSeq)
 	}
 	return false
 }
@@ -111,7 +104,7 @@ func (ae *AndExpr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
-	l, err := sxeval.PrintFrontLast(w, ae.Front, ae.Last)
+	l, err := ae.ExprSeq.Print(w)
 	length += l
 	return length, err
 
@@ -119,24 +112,18 @@ func (ae *AndExpr) Print(w io.Writer) (int, error) {
 
 // OrS parses an or statement: (or expr...).
 func OrS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := ParseExprSeq(pf, args)
+	es, err := ParseExprSeq(pf, args)
 	if err != nil {
 		return nil, err
 	}
-	if last == nil {
-		return sxeval.FalseExpr, nil
+	if ex, ok := es.ParseRework(sxeval.FalseExpr); ok {
+		return ex, nil
 	}
-	if len(front) == 0 {
-		return last, nil
-	}
-	return &OrExpr{front, last}, nil
+	return &OrExpr{es}, nil
 }
 
 // OrExpr represents the and form.
-type OrExpr struct {
-	Front []sxeval.Expr // all expressions, but the last
-	Last  sxeval.Expr
-}
+type OrExpr struct{ ExprSeq }
 
 func (oe *OrExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	for i, expr := range oe.Front {
@@ -174,8 +161,7 @@ func (oe *OrExpr) IsEqual(other sxeval.Expr) bool {
 		return true
 	}
 	if otherO, ok := other.(*OrExpr); ok && otherO != nil {
-		return sxeval.EqualExprSlice(oe.Front, otherO.Front) &&
-			oe.Last.IsEqual(otherO.Last)
+		return oe.ExprSeq.IsEqual(&otherO.ExprSeq)
 	}
 	return false
 }
@@ -184,7 +170,7 @@ func (oe *OrExpr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
-	l, err := sxeval.PrintFrontLast(w, oe.Front, oe.Last)
+	l, err := oe.ExprSeq.Print(w)
 	length += l
 	return length, err
 

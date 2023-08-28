@@ -289,24 +289,15 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 		for i, sym := range e.Symbols {
 			fmt.Print(strings.Repeat(" ", (level+1)*2))
 			fmt.Print(sym, ":")
-			printExpr(eng, e.Expr[i], -(level + 1))
+			printExpr(eng, e.Exprs[i], -(level + 1))
 		}
-		for _, ex := range e.Front {
-			printExpr(eng, ex, level+1)
-		}
-		printExpr(eng, e.Last, level+1)
+		printExprSeq(eng, &e.ExprSeq, level+1)
 	case *sxbuiltins.AndExpr:
 		fmt.Println("AND")
-		for _, ex := range e.Front {
-			printExpr(eng, ex, level+1)
-		}
-		printExpr(eng, e.Last, level+1)
+		printExprSeq(eng, &e.ExprSeq, level+1)
 	case *sxbuiltins.OrExpr:
 		fmt.Println("OR")
-		for _, ex := range e.Front {
-			printExpr(eng, ex, level+1)
-		}
-		printExpr(eng, e.Last, level+1)
+		printExprSeq(eng, &e.ExprSeq, level+1)
 	case *sxbuiltins.LambdaExpr:
 		fmt.Printf("LAMBDA %q", e.Name)
 		for _, sym := range e.Params {
@@ -316,16 +307,10 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 			fmt.Printf(" . %v", e.Rest)
 		}
 		fmt.Println()
-		for _, ex := range e.Front {
-			printExpr(eng, ex, level+1)
-		}
-		printExpr(eng, e.Last, level+1)
+		printExprSeq(eng, &e.ExprSeq, level+1)
 	case *sxbuiltins.BeginExpr:
 		fmt.Println("BEGIN")
-		for _, ex := range e.Front {
-			printExpr(eng, ex, level+1)
-		}
-		printExpr(eng, e.Last, level+1)
+		printExprSeq(eng, &e.ExprSeq, level+1)
 	case *sxbuiltins.If2Expr:
 		fmt.Println("IF2")
 		printExpr(eng, e.Test, level+1)
@@ -356,4 +341,10 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 			fmt.Printf("%T\n", expr)
 		}
 	}
+}
+func printExprSeq(eng *sxeval.Engine, exs *sxbuiltins.ExprSeq, level int) {
+	for _, ex := range exs.Front {
+		printExpr(eng, ex, level)
+	}
+	printExpr(eng, exs.Last, level)
 }

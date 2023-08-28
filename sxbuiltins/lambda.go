@@ -78,17 +78,15 @@ func ParseProcedure(pf *sxeval.ParseFrame, name string, paramSpec, bodySpec sx.O
 			return nil, err
 		}
 	}
-	front, last, err := ParseExprSeq(fnFrame, body)
+	es, err := ParseExprSeq(fnFrame, body)
 	if err != nil {
 		return nil, err
 	}
-
 	fn := &LambdaExpr{
-		Name:   name,
-		Params: params,
-		Rest:   rest,
-		Front:  front,
-		Last:   last,
+		Name:    name,
+		Params:  params,
+		Rest:    rest,
+		ExprSeq: es,
 	}
 	return fn, nil
 }
@@ -135,25 +133,20 @@ type LambdaExpr struct {
 	Name   string
 	Params []*sx.Symbol
 	Rest   *sx.Symbol
-	Front  []sxeval.Expr // all expressions, but the last
-	Last   sxeval.Expr
+	ExprSeq
 }
 
 func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	for i, expr := range le.Front {
-		le.Front[i] = expr.Rework(rf)
-	}
-	le.Last = le.Last.Rework(rf)
+	le.ExprSeq.Rework(rf)
 	return le
 }
 func (le *LambdaExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	return &Procedure{
-		PFrame: frame.MakeParseFrame(),
-		Name:   le.Name,
-		Params: le.Params,
-		Rest:   le.Rest,
-		Front:  le.Front,
-		Last:   le.Last,
+		PFrame:  frame.MakeParseFrame(),
+		Name:    le.Name,
+		Params:  le.Params,
+		Rest:    le.Rest,
+		ExprSeq: le.ExprSeq,
 	}, nil
 }
 func (le *LambdaExpr) IsEqual(other sxeval.Expr) bool {
@@ -164,8 +157,7 @@ func (le *LambdaExpr) IsEqual(other sxeval.Expr) bool {
 		return le.Name == otherL.Name &&
 			sxeval.EqualSymbolSlice(le.Params, otherL.Params) &&
 			le.Rest.IsEqual(otherL.Rest) &&
-			sxeval.EqualExprSlice(le.Front, otherL.Front) &&
-			le.Last.IsEqual(otherL.Last)
+			le.ExprSeq.IsEqual(&otherL.ExprSeq)
 	}
 	return false
 }
@@ -195,7 +187,7 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
-	l, err = sxeval.PrintFrontLast(w, le.Front, le.Last)
+	l, err = le.ExprSeq.Print(w)
 	length += l
 	return length, err
 }
@@ -206,8 +198,7 @@ type Procedure struct {
 	Name   string
 	Params []*sx.Symbol
 	Rest   *sx.Symbol
-	Front  []sxeval.Expr // all expressions, but the last
-	Last   sxeval.Expr
+	ExprSeq
 }
 
 func (p *Procedure) IsNil() bool  { return p == nil }
@@ -233,8 +224,7 @@ func (p *Procedure) IsEqual(other sx.Object) bool {
 		return p.PFrame.IsEqual(otherP.PFrame) &&
 			sxeval.EqualSymbolSlice(p.Params, otherP.Params) &&
 			p.Rest.IsEqual(otherP.Rest) &&
-			sxeval.EqualExprSlice(p.Front, otherP.Front) &&
-			p.Last.IsEqual(otherP.Last)
+			p.ExprSeq.IsEqual(&otherP.ExprSeq)
 	}
 	return false
 }
@@ -267,11 +257,5 @@ func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, erro
 	} else if len(args) > numParams {
 		return nil, fmt.Errorf("%s: excess arguments: %v", p.Name, args[numParams:])
 	}
-	for _, e := range p.Front {
-		_, err := lambdaFrame.Execute(e)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return lambdaFrame.ExecuteTCO(p.Last)
+	return p.ExprSeq.Compute(lambdaFrame)
 }

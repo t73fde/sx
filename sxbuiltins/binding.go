@@ -36,12 +36,7 @@ func LetS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if bindings == nil {
 		return BeginS(pf, body)
 	}
-	letExpr := LetExpr{
-		Symbols: nil,
-		Expr:    nil,
-		Front:   nil,
-		Last:    nil,
-	}
+	letExpr := LetExpr{}
 	letFrame := pf.MakeChildFrame("let-def", 128)
 	for node := bindings; node != nil; {
 		sym, err := GetParameterSymbol(letExpr.Symbols, node.Car())
@@ -64,7 +59,7 @@ func LetS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 			return nil, err
 		}
 		letExpr.Symbols = append(letExpr.Symbols, sym)
-		letExpr.Expr = append(letExpr.Expr, expr)
+		letExpr.Exprs = append(letExpr.Exprs, expr)
 		next, isPair2 = sx.GetPair(next.Cdr())
 		if !isPair2 {
 			return nil, sx.ErrImproper{Pair: bindings}
@@ -72,37 +67,32 @@ func LetS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		node = next
 	}
 
-	front, last, err := ParseExprSeq(letFrame, body)
+	es, err := ParseExprSeq(letFrame, body)
 	if err != nil {
 		return nil, err
 	}
-	letExpr.Front = front
-	letExpr.Last = last
+	letExpr.ExprSeq = es
 	return &letExpr, nil
 }
 
 // LetExpr stores everything for a (let ...) expression.
 type LetExpr struct {
 	Symbols []*sx.Symbol
-	Expr    []sxeval.Expr
-	Front   []sxeval.Expr
-	Last    sxeval.Expr
+	Exprs   []sxeval.Expr
+	ExprSeq
 }
 
 func (le *LetExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	for i, expr := range le.Expr {
-		le.Expr[i] = expr.Rework(rf)
+	for i, expr := range le.Exprs {
+		le.Exprs[i] = expr.Rework(rf)
 	}
-	for i, expr := range le.Front {
-		le.Front[i] = expr.Rework(rf)
-	}
-	le.Last = le.Last.Rework(rf)
+	le.ExprSeq.Rework(rf)
 	return le
 }
 func (le *LetExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	letFrame := frame.MakeLetFrame("let", len(le.Symbols))
 	for i, sym := range le.Symbols {
-		obj, err := frame.Execute(le.Expr[i])
+		obj, err := frame.Execute(le.Exprs[i])
 		if err != nil {
 			return nil, err
 		}
@@ -111,13 +101,7 @@ func (le *LetExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 			return nil, err
 		}
 	}
-	for _, expr := range le.Front {
-		_, err := letFrame.Execute(expr)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return letFrame.ExecuteTCO(le.Last)
+	return le.ExprSeq.Compute(letFrame)
 }
 func (le *LetExpr) IsEqual(other sxeval.Expr) bool {
 	if le == other {
@@ -125,9 +109,8 @@ func (le *LetExpr) IsEqual(other sxeval.Expr) bool {
 	}
 	if otherL, ok := other.(*LetExpr); ok && otherL != nil {
 		return sxeval.EqualSymbolSlice(le.Symbols, otherL.Symbols) &&
-			sxeval.EqualExprSlice(le.Expr, otherL.Expr) &&
-			sxeval.EqualExprSlice(le.Front, otherL.Front) &&
-			le.Last.IsEqual(otherL.Last)
+			sxeval.EqualExprSlice(le.Exprs, otherL.Exprs) &&
+			le.ExprSeq.IsEqual(&otherL.ExprSeq)
 	}
 	return false
 }
@@ -152,13 +135,13 @@ func (le *LetExpr) Print(w io.Writer) (int, error) {
 		if err2 != nil {
 			return length, err2
 		}
-		l, err2 = le.Expr[i].Print(w)
+		l, err2 = le.Exprs[i].Print(w)
 		length += l
 		if err2 != nil {
 			return length, err2
 		}
 	}
-	l, err := sxeval.PrintFrontLast(w, le.Front, le.Last)
+	l, err := le.ExprSeq.Print(w)
 	length += l
 	return length, err
 }

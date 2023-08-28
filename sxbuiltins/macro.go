@@ -36,11 +36,10 @@ func DefMacroS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		return nil, err
 	}
 	me := &MacroExpr{
-		Name:   le.Name,
-		Params: le.Params,
-		Rest:   le.Rest,
-		Front:  le.Front,
-		Last:   le.Last,
+		Name:    le.Name,
+		Params:  le.Params,
+		Rest:    le.Rest,
+		ExprSeq: le.ExprSeq,
 	}
 	return &DefineExpr{Sym: sym, Val: me}, nil
 }
@@ -49,26 +48,21 @@ type MacroExpr struct {
 	Name   string
 	Params []*sx.Symbol
 	Rest   *sx.Symbol
-	Front  []sxeval.Expr // all expressions, but the last
-	Last   sxeval.Expr
+	ExprSeq
 }
 
 func (me *MacroExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	for i, expr := range me.Front {
-		me.Front[i] = expr.Rework(rf)
-	}
-	me.Last = me.Last.Rework(rf)
+	me.ExprSeq.Rework(rf)
 	return me
 }
 func (me *MacroExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	return &Macro{
-		Frame:  frame,
-		PFrame: frame.MakeParseFrame(),
-		Name:   me.Name,
-		Params: me.Params,
-		Rest:   me.Rest,
-		Front:  me.Front,
-		Last:   me.Last,
+		Frame:   frame,
+		PFrame:  frame.MakeParseFrame(),
+		Name:    me.Name,
+		Params:  me.Params,
+		Rest:    me.Rest,
+		ExprSeq: me.ExprSeq,
 	}, nil
 }
 func (me *MacroExpr) IsEqual(other sxeval.Expr) bool {
@@ -79,8 +73,7 @@ func (me *MacroExpr) IsEqual(other sxeval.Expr) bool {
 		return me.Name == otherM.Name &&
 			sxeval.EqualSymbolSlice(me.Params, otherM.Params) &&
 			me.Rest.IsEqual(otherM.Rest) &&
-			sxeval.EqualExprSlice(me.Front, otherM.Front) &&
-			me.Last.IsEqual(otherM.Last)
+			me.ExprSeq.IsEqual(&otherM.ExprSeq)
 	}
 	return false
 }
@@ -110,7 +103,7 @@ func (me *MacroExpr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
-	l, err = sxeval.PrintFrontLast(w, me.Front, me.Last)
+	l, err = me.ExprSeq.Print(w)
 	length += l
 	return length, err
 }
@@ -122,8 +115,7 @@ type Macro struct {
 	Name   string
 	Params []*sx.Symbol
 	Rest   *sx.Symbol
-	Front  []sxeval.Expr // all expressions, but the last
-	Last   sxeval.Expr
+	ExprSeq
 }
 
 func (m *Macro) IsNil() bool  { return m == nil }
@@ -149,8 +141,7 @@ func (m *Macro) IsEqual(other sx.Object) bool {
 		return m.PFrame.IsEqual(otherM.PFrame) &&
 			sxeval.EqualSymbolSlice(m.Params, otherM.Params) &&
 			m.Rest.IsEqual(otherM.Rest) &&
-			sxeval.EqualExprSlice(m.Front, otherM.Front) &&
-			m.Last.IsEqual(otherM.Last)
+			m.ExprSeq.IsEqual(&otherM.ExprSeq)
 	}
 	return false
 }
@@ -183,14 +174,12 @@ func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 	}
 
 	proc := Procedure{
-		PFrame: m.PFrame,
-		Name:   m.Name,
-		Params: m.Params,
-		Rest:   m.Rest,
-		Front:  m.Front,
-		Last:   m.Last,
+		PFrame:  m.PFrame,
+		Name:    m.Name,
+		Params:  m.Params,
+		Rest:    m.Rest,
+		ExprSeq: m.ExprSeq,
 	}
-
 	return m.Frame.MakeCalleeFrame().Call(&proc, macroArgs)
 }
 

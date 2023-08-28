@@ -19,52 +19,32 @@ import (
 
 // BeginS parses a begin-statement: (begin expr...).
 func BeginS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	front, last, err := ParseExprSeq(pf, args)
+	es, err := ParseExprSeq(pf, args)
 	if err != nil {
 		return nil, err
 	}
-	if last == nil {
-		return sxeval.NilExpr, nil
+	if ex, ok := es.ParseRework(sxeval.NilExpr); ok {
+		return ex, nil
 	}
-	if len(front) == 0 {
-		return last, nil
-	}
-	return &BeginExpr{front, last}, nil
+	return &BeginExpr{es}, nil
 }
 
 // BeginExpr represents the begin form.
-type BeginExpr struct {
-	Front []sxeval.Expr // all expressions, but the last
-	Last  sxeval.Expr
-}
+type BeginExpr struct{ ExprSeq }
 
 func (be *BeginExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	for i, expr := range be.Front {
-		be.Front[i] = expr.Rework(rf)
-	}
-	last := be.Last.Rework(rf)
-	if len(be.Front) == 0 {
-		return last
-	}
-	be.Last = last
+	be.ExprSeq.Rework(rf)
 	return be
 }
 func (be *BeginExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	for _, e := range be.Front {
-		_, err := frame.Execute(e)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return frame.ExecuteTCO(be.Last)
+	return be.ExprSeq.Compute(frame)
 }
 func (be *BeginExpr) IsEqual(other sxeval.Expr) bool {
 	if be == other {
 		return true
 	}
-	if otherB, ok := other.(*LambdaExpr); ok && otherB != nil {
-		return sxeval.EqualExprSlice(be.Front, otherB.Front) &&
-			be.Last.IsEqual(otherB.Last)
+	if otherB, ok := other.(*BeginExpr); ok && otherB != nil {
+		return be.ExprSeq.IsEqual(&otherB.ExprSeq)
 	}
 	return false
 }
@@ -73,7 +53,7 @@ func (be *BeginExpr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
-	l, err := sxeval.PrintFrontLast(w, be.Front, be.Last)
+	l, err := be.ExprSeq.Print(w)
 	length += l
 	return length, err
 
