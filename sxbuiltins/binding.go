@@ -36,13 +36,13 @@ func LetS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	letExpr := LetExpr{Symbols: symbols}
 	letFrame := pf.MakeLetFrame("let-def", len(symbols))
 	for i, sym := range symbols {
-		expr, err := pf.Parse(objs[i])
-		if err != nil {
-			return nil, err
+		expr, err2 := pf.Parse(objs[i])
+		if err2 != nil {
+			return nil, err2
 		}
-		err = letFrame.Bind(sym, sx.MakeUndefined())
-		if err != nil {
-			return nil, err
+		err2 = letFrame.Bind(sym, sx.MakeUndefined())
+		if err2 != nil {
+			return nil, err2
 		}
 		letExpr.Exprs = append(letExpr.Exprs, expr)
 	}
@@ -186,14 +186,14 @@ func LetStarS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	le := LetExpr{Symbols: symbols}
 	letStarFrame := pf
 	for i, sym := range symbols {
-		expr, err := letStarFrame.Parse(objs[i])
-		if err != nil {
-			return nil, err
+		expr, err2 := letStarFrame.Parse(objs[i])
+		if err2 != nil {
+			return nil, err2
 		}
 		letStarFrame = letStarFrame.MakeLetFrame("let*-def", 1)
-		err = letStarFrame.Bind(sym, sx.MakeUndefined())
-		if err != nil {
-			return nil, err
+		err2 = letStarFrame.Bind(sym, sx.MakeUndefined())
+		if err2 != nil {
+			return nil, err2
 		}
 		le.Exprs = append(le.Exprs, expr)
 	}
@@ -254,9 +254,9 @@ func LetRecS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		}
 	}
 	for _, obj := range objs {
-		expr, err := letRecFrame.Parse(obj)
-		if err != nil {
-			return nil, err
+		expr, err2 := letRecFrame.Parse(obj)
+		if err2 != nil {
+			return nil, err2
 		}
 		le.Exprs = append(le.Exprs, expr)
 	}
