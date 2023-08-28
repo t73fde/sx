@@ -83,11 +83,14 @@ type LetExpr struct {
 }
 
 func (le *LetExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	le.ReworkInPlace(rf)
+	return le
+}
+func (le *LetExpr) ReworkInPlace(rf *sxeval.ReworkFrame) {
 	for i, expr := range le.Exprs {
 		le.Exprs[i] = expr.Rework(rf)
 	}
 	le.ExprSeq.Rework(rf)
-	return le
 }
 func (le *LetExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	letFrame := frame.MakeLetFrame("let", len(le.Symbols))
@@ -115,7 +118,10 @@ func (le *LetExpr) IsEqual(other sxeval.Expr) bool {
 	return false
 }
 func (le *LetExpr) Print(w io.Writer) (int, error) {
-	length, err := io.WriteString(w, "{LET")
+	return le.PrintLet(w, "{let")
+}
+func (le *LetExpr) PrintLet(w io.Writer, init string) (int, error) {
+	length, err := io.WriteString(w, init)
 	if err != nil {
 		return length, err
 	}
@@ -144,4 +150,84 @@ func (le *LetExpr) Print(w io.Writer) (int, error) {
 	l, err := le.ExprSeq.Print(w)
 	length += l
 	return length, err
+}
+
+// LetStarS parses the `(let* (binding...) expr...)` syntax.`
+func LetStarS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	expr, err := LetS(pf, args) // TODO: let-def must be build incrementally
+	if err != nil {
+		return nil, err
+	}
+	if letExpr, isLet := expr.(*LetExpr); isLet {
+		return &LetStarExpr{*letExpr}, nil
+	}
+	return expr, nil
+}
+
+// LetStarExpr stores everything for a (let* ...) expression.
+type LetStarExpr struct{ LetExpr }
+
+func (lse *LetStarExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	lse.ReworkInPlace(rf)
+	return lse
+}
+func (lse *LetStarExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+	letStarFrame := frame
+	for i, sym := range lse.Symbols {
+		obj, err := letStarFrame.Execute(lse.Exprs[i])
+		if err != nil {
+			return nil, err
+		}
+		letStarFrame = letStarFrame.MakeLetFrame("let*", 1)
+		err = letStarFrame.Bind(sym, obj)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return lse.ExprSeq.Compute(letStarFrame)
+}
+
+func (lse *LetStarExpr) Print(w io.Writer) (int, error) {
+	return lse.PrintLet(w, "{let*")
+}
+
+// LetRecS parses the `(letrec (binding...) expr...)` syntax.`
+func LetRecS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	expr, err := LetS(pf, args) // TODO: let-def must be build upfront.
+	if err != nil {
+		return nil, err
+	}
+	if letExpr, isLet := expr.(*LetExpr); isLet {
+		return &LetRecExpr{*letExpr}, nil
+	}
+	return expr, nil
+}
+
+// LetRecExpr stores everything for a (letrec ...) expression.
+type LetRecExpr struct{ LetExpr }
+
+func (lre *LetRecExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+	lre.ReworkInPlace(rf)
+	return lre
+}
+func (lre *LetRecExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+	letRecFrame := frame.MakeLetFrame("let", len(lre.Symbols)+1) // +1, because env should not freeze
+	for _, sym := range lre.Symbols {
+		letRecFrame.Bind(sym, sx.MakeUndefined())
+	}
+	for i, sym := range lre.Symbols {
+		obj, err := letRecFrame.Execute(lre.Exprs[i])
+		if err != nil {
+			return nil, err
+		}
+		err = letRecFrame.Bind(sym, obj)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return lre.ExprSeq.Compute(letRecFrame)
+}
+
+func (lre *LetRecExpr) Print(w io.Writer) (int, error) {
+	return lre.PrintLet(w, "{letrec")
 }

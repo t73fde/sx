@@ -54,4 +54,12 @@ var tcsBinding = tTestCases{
 		exp:     "{[{let: symbol a already defined}]}",
 		withErr: true,
 	},
+
+	{name: "err-let*-0", src: "(let*)", exp: "{[{let*: binding spec and body missing}]}", withErr: true},
+	{name: "let*", src: "(let* (a 1 b a) b)", exp: "1"},
+	{name: "let*-nil-1", src: "(let* () 1)", exp: "1"},
+
+	{name: "err-letrec-0", src: "(letrec)", exp: "{[{letrec: binding spec and body missing}]}", withErr: true},
+	{name: "letrec", src: "(letrec (a (lambda () b) b 1) (a))", exp: "1"},
+	{name: "letrec-nil-1", src: "(letrec () 1)", exp: "1"},
 }
