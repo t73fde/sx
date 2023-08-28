@@ -89,8 +89,9 @@ func (tcs tTestCases) Run(t *testing.T) {
 }
 
 func createEngine() *sxeval.Engine {
-	sf := sx.MakeMappedFactory()
-	root := sxeval.MakeRootEnvironment(len(syntaxes) + len(builtinsA) + len(builtinsFA) + len(objects))
+	numBuiltins := len(syntaxes) + len(builtinsA) + len(builtinsFA) + len(objects)
+	sf := sx.MakeMappedFactory(numBuiltins + 32)
+	root := sxeval.MakeRootEnvironment(numBuiltins)
 	if err := sxbuiltins.InstallQuoteSyntax(root, sf.MustMake("quote")); err != nil {
 		panic(err)
 	}

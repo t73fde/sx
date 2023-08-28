@@ -54,7 +54,7 @@ func TestEnvRoot(t *testing.T) {
 
 func TestBindLookupUnbind(t *testing.T) {
 	t.Parallel()
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(2)
 	sym1 := sf.MustMake("sym1")
 	sym2 := sf.MustMake("sym2")
 	root := sxeval.MakeRootEnvironment(1)
@@ -121,7 +121,7 @@ func bindLookupUnbind(t *testing.T, root, child sxeval.Environment, sym1, sym2 *
 
 func TestAlist(t *testing.T) {
 	t.Parallel()
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(7)
 	env := sxeval.MakeRootEnvironment(7)
 	env.Bind(sf.MustMake("sym1"), sx.MakeString("sym1"))
 	env.Bind(sf.MustMake("sym2"), sx.MakeString("sym2"))
@@ -168,7 +168,7 @@ func checkEnvEqual(t *testing.T, env1, env2 sxeval.Environment) {
 		t.Error("empty", env1, "is not equal to empty", env2)
 		return
 	}
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(2)
 	sym1 := sf.MustMake("sym1")
 	env1.Bind(sym1, sym1)
 	if env1.IsEqual(env2) {

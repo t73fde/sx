@@ -48,7 +48,7 @@ func (pair *Pair) IsNil() bool { return pair == nil }
 func (pair *Pair) IsAtom() bool { return pair == nil }
 
 // IsEql compares two objects for equivalence.
-// Two lists are eqv iff they are the same lists.
+// Two pairs are equivalent iff they are the same pair.
 func (pair *Pair) IsEql(other Object) bool {
 	if pair == nil && IsNil(other) {
 		return true
@@ -155,7 +155,8 @@ func IsPair(obj Object) bool {
 	return ok
 }
 
-// IsList returns true, if the object is a list, e.g. with nil at the last cdr.
+// IsList returns true, if the object is a list, not just a pair.
+// A list must have a nil value at the last cdr.
 func IsList(obj Object) bool {
 	pair, isPair := GetPair(obj)
 	if !isPair {
@@ -176,7 +177,7 @@ func IsList(obj Object) bool {
 	}
 }
 
-// Car returns the head object of a list.
+// Car returns the first object of a pair.
 func (pair *Pair) Car() Object {
 	if pair == nil {
 		return Nil()
@@ -184,7 +185,7 @@ func (pair *Pair) Car() Object {
 	return pair.car
 }
 
-// Cdr returns the second object of a list.
+// Cdr returns the second object of a pair.
 func (pair *Pair) Cdr() Object {
 	if pair == nil {
 		return Nil()
@@ -192,7 +193,7 @@ func (pair *Pair) Cdr() Object {
 	return pair.cdr
 }
 
-// SetCdr sets the cdr of the list to the given object.
+// SetCdr sets the cdr of the pair to the given object.
 func (pair *Pair) SetCdr(obj Object) {
 	if pair != nil {
 		pair.cdr = obj
@@ -216,7 +217,7 @@ func (pair *Pair) Last() (Object, error) {
 	}
 }
 
-// LastPair returns the last pair of the given list, or nil.
+// LastPair returns the last pair of the given pair list, or nil.
 func (pair *Pair) LastPair() *Pair {
 	if pair == nil {
 		return nil
@@ -235,7 +236,8 @@ func (pair *Pair) LastPair() *Pair {
 	}
 }
 
-// Head returns the first object as a list, if possible.
+// Head returns the first object as a pair, if possible.
+// Otherwise it returns nil.
 func (pair *Pair) Head() *Pair {
 	if pair != nil {
 		if head, ok := pair.car.(*Pair); ok {
@@ -245,7 +247,8 @@ func (pair *Pair) Head() *Pair {
 	return nil
 }
 
-// Tail returns the tail of a list, if the tail is a list.
+// Tail returns the second object as a pair, if possible.
+// Otherwise it returns nil.
 func (pair *Pair) Tail() *Pair {
 	if pair != nil {
 		if tail, ok := pair.cdr.(*Pair); ok {
@@ -255,7 +258,7 @@ func (pair *Pair) Tail() *Pair {
 	return nil
 }
 
-// Length returns the length of the list.
+// Length returns the length of the pair list.
 func (pair *Pair) Length() int {
 	result := 0
 	for n := pair; n != nil; n = n.Tail() {
@@ -264,7 +267,8 @@ func (pair *Pair) Length() int {
 	return result
 }
 
-// Assoc returns the first list where the car IsEqv to the given object.
+// Assoc returns the first pair of a list where the car IsEql to the given
+// object.
 func (pair *Pair) Assoc(obj Object) *Pair {
 	for node := pair; node != nil; node = node.Tail() {
 		if p, ok := node.car.(*Pair); ok {
@@ -276,7 +280,8 @@ func (pair *Pair) Assoc(obj Object) *Pair {
 	return nil
 }
 
-// AppendBang updates the given list by appending a new element after its end.
+// AppendBang updates the given pair by setting a new pair with the given
+// object and nil as its new second object.
 func (pair *Pair) AppendBang(obj Object) *Pair {
 	if pair == nil || !IsNil(pair.cdr) {
 		panic("AppendBang")
@@ -287,9 +292,10 @@ func (pair *Pair) AppendBang(obj Object) *Pair {
 	return t
 }
 
-// ExtendBang updates the given list by extending it with the second list after its end.
-// Returns the last list node of the newly formed list beginning with `lst`, which is
-// also the last list node of the list starting with `val`.
+// ExtendBang updates the given pair by extending it with the second pair list
+// after its end. Returns the last list node of the newly formed list
+// beginning with `lst`, which is also the last list node of the list starting
+// with `val`.
 func (pair *Pair) ExtendBang(obj *Pair) *Pair {
 	if obj == nil {
 		return pair
@@ -308,7 +314,7 @@ func (pair *Pair) ExtendBang(obj *Pair) *Pair {
 	}
 }
 
-// Reverse returns a reversed list.
+// Reverse returns a reversed pair list.
 func (pair *Pair) Reverse() (*Pair, error) {
 	if pair == nil {
 		return nil, nil
@@ -348,7 +354,9 @@ func (pair *Pair) Copy() *Pair {
 	}
 }
 
-// ErrImproper is signalled if an improper list is found where it is not appropriate.
+// ErrImproper is signalled if an improper list is found where it is not
+// appropriate.
 type ErrImproper struct{ Pair *Pair }
 
+// Error returns a textual representation for this error.
 func (err ErrImproper) Error() string { return fmt.Sprintf("improper list: %v", err.Pair) }

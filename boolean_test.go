@@ -59,9 +59,6 @@ func checkBoolean(t *testing.T, b sx.Boolean, s, bs string) {
 	if b.Repr() != s {
 		t.Error("Boolean", b, "has wrong repr value:", b.Repr())
 	}
-	if b.Negate() != sx.Negate(b) {
-		t.Error("Negate functions differ")
-	}
 	if sx.MakeBoolean(sx.IsTrue(b)) != b {
 		t.Error("MakeBoolean(IsTrue) is not", b)
 	}

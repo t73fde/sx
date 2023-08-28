@@ -10,10 +10,12 @@
 
 package sx
 
-// Boolean represents a boolean object.
+// Boolean represents the two boolean objects, `False` and `True`.
 type Boolean bool
 
-// The two boolean values, Do not use other constants.
+// The two boolean values.
+//
+// Do not use other constants.
 // There are defined string values other code must respect (e.g. symbol factory, reader, ...)
 const (
 	True  = Boolean(true)
@@ -32,18 +34,20 @@ func MakeBoolean(b bool) Boolean {
 }
 
 // IsNil return true, if it is a nil boolean value.
+// Since there is no such value, it always returns false.
 func (Boolean) IsNil() bool { return false }
 
+// IsAtom always returns true, because all booleans are atoms.
 func (Boolean) IsAtom() bool { return true }
 
-// IsEql compares two objects for equivalence.
+// IsEql compares the boolean with an object for equivalence.
 func (b Boolean) IsEql(other Object) bool {
 	otherB, ok := other.(Boolean)
 	return ok && b == otherB
 
 }
 
-// IsEqual is the same a IsEqv for strings.
+// IsEqual compares the boolean with an object for equivalence.
 func (b Boolean) IsEqual(other Object) bool {
 	if b {
 		return IsTrue(other)
@@ -101,11 +105,3 @@ func IsTrue(obj Object) bool {
 //
 // A nil object, the False object or an empty string are false values.
 func IsFalse(obj Object) bool { return !IsTrue(obj) }
-
-// Negate returns the negation of the true value of the given object.
-func Negate(obj Object) Boolean {
-	if IsFalse(obj) {
-		return True
-	}
-	return False
-}

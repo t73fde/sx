@@ -37,7 +37,7 @@ type Object interface {
 	Repr() string
 }
 
-// IsNil return true, if the given object is the nil object.
+// IsNil returns true, if the given object is the nil object.
 func IsNil(obj Object) bool { return obj == nil || obj.IsNil() }
 
 // Printable is a object that has is specific representation, which is different to String().

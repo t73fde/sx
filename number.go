@@ -98,7 +98,8 @@ func NumMul(x, y Number) Number {
 	return Int64(int64(x.(Int64)) * int64(y.(Int64)))
 }
 
-// ErrZeroNotAllowed
+// ErrZeroNotAllowed is signalled with an argument must not be zero, e.g.
+// for division.
 var ErrZeroNotAllowed = errors.New("number zero not allowed")
 
 // NumDiv divides the first by the second number.

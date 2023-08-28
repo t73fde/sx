@@ -12,7 +12,6 @@ package sxeval_test
 
 import (
 	"io"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -98,7 +97,7 @@ func TestEval(t *testing.T) {
 		// {name: "err-binding", src: "moin", mustErr: true},
 		// {name: "err-callable", src: "(hello)", mustErr: true},
 	}
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(0)
 	root := createTestEnv(sf)
 	root.Bind(sf.MustMake("quote"), sxeval.MakeSyntax("quote", func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		return sxeval.ObjExpr{Obj: args.Car()}, nil
@@ -113,7 +112,7 @@ var sxEvenOdd = `;;; Indirekt recursive definition of even/odd
 `
 
 func createEngineForTCO() *sxeval.Engine {
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(128)
 	root := sxeval.MakeRootEnvironment(6)
 	engine := sxeval.MakeEngine(sf, root)
 	engine.BindSyntax("define", sxbuiltins.DefineS)
@@ -124,7 +123,7 @@ func createEngineForTCO() *sxeval.Engine {
 	engine.BindBuiltinA("list", sxbuiltins.List)
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxEvenOdd), sxreader.WithSymbolFactory(sf))
-	env := sxeval.MakeChildEnvironment(root, "TCO", 0)
+	env := sxeval.MakeChildEnvironment(root, "TCO", 128)
 	for {
 		obj, err := rd.Read()
 		if err != nil {
@@ -152,26 +151,4 @@ func TestTailCallOptimization(t *testing.T) {
 	}
 	engine := createEngineForTCO()
 	testcases.Run(t, engine)
-}
-
-func BenchmarkEvenTCO(b *testing.B) {
-	testcases := [...]int{1, 2, 4, 16, 64, 256, 1024, 4096, 16384, 65536}
-	engine := createEngineForTCO()
-	root := engine.GetToplevelEnv()
-	evenSym := engine.SymbolFactory().MustMake("even?")
-	b.ResetTimer()
-	for _, tc := range testcases {
-		b.Run(strconv.Itoa(tc), func(b *testing.B) {
-			obj := sx.MakeList(evenSym, sx.Int64(tc))
-			expr, err := engine.Parse(root, obj)
-			if err != nil {
-				panic(err)
-			}
-			expr = engine.Rework(expr)
-			b.ResetTimer()
-			for n := 0; n < b.N; n++ {
-				engine.Execute(root, expr)
-			}
-		})
-	}
 }

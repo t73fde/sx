@@ -78,7 +78,7 @@ func WithDefaultSymbolFactory(rd *Reader) {
 	if rd.symFac != nil {
 		panic("symbol factory already set")
 	}
-	rd.symFac = sx.MakeMappedFactory()
+	rd.symFac = sx.MakeMappedFactory(128)
 }
 
 // WithNestingLimit sets the maximum nesting for a object.
@@ -122,7 +122,7 @@ func MakeReader(r io.Reader, opts ...Option) *Reader {
 		opt(&rd)
 	}
 	if rd.symFac == nil {
-		rd.symFac = sx.MakeMappedFactory()
+		rd.symFac = sx.MakeMappedFactory(128)
 	}
 	return &rd
 }

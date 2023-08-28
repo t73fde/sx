@@ -137,16 +137,14 @@ type mappedSymbolFactory struct {
 }
 
 // MakeMappedFactory creates a new factory.
-func MakeMappedFactory() SymbolFactory {
+func MakeMappedFactory(sizeHint int) SymbolFactory {
+	if sizeHint < 7 {
+		sizeHint = 7
+	}
 	return &mappedSymbolFactory{
-		symbols: make(map[string]*Symbol, MappedFactorySize),
+		symbols: make(map[string]*Symbol, sizeHint),
 	}
 }
-
-// MappedFactorySize is the base size of a new maped symbol factory.
-// If more symbols are entered into the factory, it must be re-sized internally,
-// which will consume some time.
-const MappedFactorySize = 128
 
 // IsValidName returns true if name is a vald symbol name.
 func (*mappedSymbolFactory) IsValidName(s string) bool {
