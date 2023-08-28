@@ -22,35 +22,21 @@ import (
 
 // LetS parses the `(let (binding...) expr...)` syntax.`
 func LetS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	if args == nil {
-		return nil, fmt.Errorf("binding spec and body missing")
-	}
-	bindings, isPair := sx.GetPair(args.Car())
-	if !isPair {
-		return nil, fmt.Errorf("binding spec must be a list, but got: %t/%v", args.Car(), args.Car())
-	}
-	body, isPair := sx.GetPair(args.Cdr())
-	if !isPair {
-		return nil, sx.ErrImproper{Pair: args}
+	bindings, body, err := ScanLet(args)
+	if err != nil {
+		return nil, err
 	}
 	if bindings == nil {
 		return BeginS(pf, body)
 	}
-	letExpr := LetExpr{}
-	letFrame := pf.MakeChildFrame("let-def", 128)
-	for node := bindings; node != nil; {
-		sym, err := GetParameterSymbol(letExpr.Symbols, node.Car())
-		if err != nil {
-			return nil, err
-		}
-		next, isPair2 := sx.GetPair(node.Cdr())
-		if !isPair2 {
-			return nil, sx.ErrImproper{Pair: bindings}
-		}
-		if next == nil {
-			return nil, fmt.Errorf("binding missing for %v", sym)
-		}
-		expr, err := pf.Parse(next.Car())
+	symbols, objs, err := ScanLetBindings(bindings)
+	if err != nil {
+		return nil, err
+	}
+	letExpr := LetExpr{Symbols: symbols}
+	letFrame := pf.MakeLetFrame("let-def", len(symbols))
+	for i, sym := range symbols {
+		expr, err := pf.Parse(objs[i])
 		if err != nil {
 			return nil, err
 		}
@@ -58,21 +44,53 @@ func LetS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if err != nil {
 			return nil, err
 		}
-		letExpr.Symbols = append(letExpr.Symbols, sym)
 		letExpr.Exprs = append(letExpr.Exprs, expr)
-		next, isPair2 = sx.GetPair(next.Cdr())
-		if !isPair2 {
-			return nil, sx.ErrImproper{Pair: bindings}
+	}
+	es, err := ParseExprSeq(letFrame, body)
+	letExpr.ExprSeq = es
+	return &letExpr, err
+}
+
+// ScanLet scans and checks the existence of bindings and body.
+func ScanLet(args *sx.Pair) (bindings, body *sx.Pair, err error) {
+	if args == nil {
+		return nil, nil, fmt.Errorf("binding spec and body missing")
+	}
+	bindings, isPair := sx.GetPair(args.Car())
+	if !isPair {
+		return nil, nil, fmt.Errorf("binding spec must be a list, but got: %t/%v", args.Car(), args.Car())
+	}
+	body, isPair = sx.GetPair(args.Cdr())
+	if !isPair {
+		return nil, nil, sx.ErrImproper{Pair: args}
+	}
+	return bindings, body, nil
+}
+
+// ScanLetBinding scans the bindings and returns the slice of symbols and
+// objects (which have yet to be parsed).
+func ScanLetBindings(bindings *sx.Pair) (symbols []*sx.Symbol, objs []sx.Object, err error) {
+	for node := bindings; node != nil; {
+		sym, err := GetParameterSymbol(symbols, node.Car())
+		if err != nil {
+			return nil, nil, err
+		}
+		next, isPair := sx.GetPair(node.Cdr())
+		if !isPair {
+			return nil, nil, sx.ErrImproper{Pair: bindings}
+		}
+		if next == nil {
+			return nil, nil, fmt.Errorf("binding missing for %v", sym)
+		}
+		symbols = append(symbols, sym)
+		objs = append(objs, next.Car())
+		next, isPair = sx.GetPair(next.Cdr())
+		if !isPair {
+			return nil, nil, sx.ErrImproper{Pair: bindings}
 		}
 		node = next
 	}
-
-	es, err := ParseExprSeq(letFrame, body)
-	if err != nil {
-		return nil, err
-	}
-	letExpr.ExprSeq = es
-	return &letExpr, nil
+	return symbols, objs, nil
 }
 
 // LetExpr stores everything for a (let ...) expression.
@@ -154,14 +172,34 @@ func (le *LetExpr) PrintLet(w io.Writer, init string) (int, error) {
 
 // LetStarS parses the `(let* (binding...) expr...)` syntax.`
 func LetStarS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	expr, err := LetS(pf, args) // TODO: let-def must be build incrementally
+	bindings, body, err := ScanLet(args)
 	if err != nil {
 		return nil, err
 	}
-	if letExpr, isLet := expr.(*LetExpr); isLet {
-		return &LetStarExpr{*letExpr}, nil
+	if bindings == nil {
+		return BeginS(pf, body)
 	}
-	return expr, nil
+	symbols, objs, err := ScanLetBindings(bindings)
+	if err != nil {
+		return nil, err
+	}
+	le := LetExpr{Symbols: symbols}
+	letStarFrame := pf
+	for i, sym := range symbols {
+		expr, err := letStarFrame.Parse(objs[i])
+		if err != nil {
+			return nil, err
+		}
+		letStarFrame = letStarFrame.MakeLetFrame("let*-def", 1)
+		err = letStarFrame.Bind(sym, sx.MakeUndefined())
+		if err != nil {
+			return nil, err
+		}
+		le.Exprs = append(le.Exprs, expr)
+	}
+	es, err := ParseExprSeq(letStarFrame, body)
+	le.ExprSeq = es
+	return &LetStarExpr{le}, err
 }
 
 // LetStarExpr stores everything for a (let* ...) expression.
@@ -169,6 +207,9 @@ type LetStarExpr struct{ LetExpr }
 
 func (lse *LetStarExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	lse.ReworkInPlace(rf)
+	if len(lse.Symbols) <= 1 {
+		return &lse.LetExpr
+	}
 	return lse
 }
 func (lse *LetStarExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
@@ -193,14 +234,35 @@ func (lse *LetStarExpr) Print(w io.Writer) (int, error) {
 
 // LetRecS parses the `(letrec (binding...) expr...)` syntax.`
 func LetRecS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	expr, err := LetS(pf, args) // TODO: let-def must be build upfront.
+	bindings, body, err := ScanLet(args)
 	if err != nil {
 		return nil, err
 	}
-	if letExpr, isLet := expr.(*LetExpr); isLet {
-		return &LetRecExpr{*letExpr}, nil
+	if bindings == nil {
+		return BeginS(pf, body)
 	}
-	return expr, nil
+	symbols, objs, err := ScanLetBindings(bindings)
+	if err != nil {
+		return nil, err
+	}
+	le := LetExpr{Symbols: symbols}
+	letRecFrame := pf.MakeLetFrame("letrec-def", len(symbols))
+	for _, sym := range symbols {
+		err = letRecFrame.Bind(sym, sx.MakeUndefined())
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, obj := range objs {
+		expr, err := letRecFrame.Parse(obj)
+		if err != nil {
+			return nil, err
+		}
+		le.Exprs = append(le.Exprs, expr)
+	}
+	es, err := ParseExprSeq(letRecFrame, body)
+	le.ExprSeq = es
+	return &LetRecExpr{le}, err
 }
 
 // LetRecExpr stores everything for a (letrec ...) expression.
@@ -208,10 +270,13 @@ type LetRecExpr struct{ LetExpr }
 
 func (lre *LetRecExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	lre.ReworkInPlace(rf)
+	if len(lre.Symbols) <= 1 {
+		return &lre.LetExpr
+	}
 	return lre
 }
 func (lre *LetRecExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	letRecFrame := frame.MakeLetFrame("let", len(lre.Symbols)+1) // +1, because env should not freeze
+	letRecFrame := frame.MakeLetFrame("let", len(lre.Symbols))
 	for _, sym := range lre.Symbols {
 		letRecFrame.Bind(sym, sx.MakeUndefined())
 	}

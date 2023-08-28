@@ -286,12 +286,13 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 		fmt.Printf("OBJ %T/%v\n", e.Obj, e.Obj)
 	case *sxbuiltins.LetExpr:
 		fmt.Println("LET")
-		for i, sym := range e.Symbols {
-			fmt.Print(strings.Repeat(" ", (level+1)*2))
-			fmt.Print(sym, ":")
-			printExpr(eng, e.Exprs[i], -(level + 1))
-		}
-		printExprSeq(eng, &e.ExprSeq, level+1)
+		printLet(eng, e, level+1)
+	case *sxbuiltins.LetStarExpr:
+		fmt.Println("LET*")
+		printLet(eng, &e.LetExpr, level+1)
+	case *sxbuiltins.LetRecExpr:
+		fmt.Println("LETREC")
+		printLet(eng, &e.LetExpr, level+1)
 	case *sxbuiltins.AndExpr:
 		fmt.Println("AND")
 		printExprSeq(eng, &e.ExprSeq, level+1)
@@ -341,6 +342,15 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 			fmt.Printf("%T\n", expr)
 		}
 	}
+}
+func printLet(eng *sxeval.Engine, le *sxbuiltins.LetExpr, level int) {
+	for i, sym := range le.Symbols {
+		fmt.Print(strings.Repeat(" ", level*2))
+		fmt.Print(sym, ":")
+		printExpr(eng, le.Exprs[i], -level)
+	}
+	printExprSeq(eng, &le.ExprSeq, level)
+
 }
 func printExprSeq(eng *sxeval.Engine, exs *sxbuiltins.ExprSeq, level int) {
 	for _, ex := range exs.Front {

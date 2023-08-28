@@ -59,6 +59,11 @@ type ErrEnvFrozen struct{ Env Environment }
 
 func (err ErrEnvFrozen) Error() string { return fmt.Sprintf("enviroment is frozen: %v", err.Env) }
 
+// ErrEnvFull is returned when environment has reched its capacity
+type ErrEnvFull struct{ Env Environment }
+
+func (err ErrEnvFull) Error() string { return fmt.Sprintf("enviroment is full: %v", err.Env) }
+
 type mapSymObj = map[*sx.Symbol]sx.Object
 
 // MakeRootEnvironment creates a new root environment.
@@ -107,6 +112,7 @@ func MakeFixedEnvironment(parent Environment, name string, numBindings int) Envi
 			parent: parent,
 			sym:    nil,
 			obj:    nil,
+			frozen: false,
 		}
 	}
 	return &mappedEnvironment{
@@ -169,10 +175,14 @@ func (me *mappedEnvironment) Bind(sym *sx.Symbol, val sx.Object) error {
 	if me.frozen {
 		return ErrEnvFrozen{Env: me}
 	}
-	me.vars[sym] = val
-	if me.maxVars >= 0 && len(me.vars) >= me.maxVars {
-		me.frozen = true
+	if _, found := me.vars[sym]; found {
+		me.vars[sym] = val
+		return nil
 	}
+	if me.maxVars >= 0 && len(me.vars) >= me.maxVars {
+		return ErrEnvFull{Env: me}
+	}
+	me.vars[sym] = val
 	return nil
 }
 func (me *mappedEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
@@ -200,66 +210,67 @@ type singleEnvironment struct {
 	parent Environment
 	sym    *sx.Symbol
 	obj    sx.Object
+	frozen bool
 }
 
-func (me *singleEnvironment) IsNil() bool                { return me == nil }
-func (me *singleEnvironment) IsAtom() bool               { return me == nil }
-func (me *singleEnvironment) IsEql(other sx.Object) bool { return me == other }
-func (me *singleEnvironment) IsEqual(other sx.Object) bool {
-	if me == other {
+func (se *singleEnvironment) IsNil() bool                { return se == nil }
+func (se *singleEnvironment) IsAtom() bool               { return se == nil }
+func (se *singleEnvironment) IsEql(other sx.Object) bool { return se == other }
+func (se *singleEnvironment) IsEqual(other sx.Object) bool {
+	if se == other {
 		return true
 	}
-	if me.IsNil() {
+	if se.IsNil() {
 		return sx.IsNil(other)
 	}
 	if ome, ok := other.(*singleEnvironment); ok {
-		return me.sym.IsEqual(ome.sym) && me.obj.IsEqual(ome.obj)
+		return se.sym.IsEqual(ome.sym) && se.obj.IsEqual(ome.obj)
 	}
 	return false
 }
-func (me *singleEnvironment) Repr() string { return sx.Repr(me) }
-func (me *singleEnvironment) Print(w io.Writer) (int, error) {
-	return sx.WriteStrings(w, "#<env:", me.name, ">")
+func (se *singleEnvironment) Repr() string { return sx.Repr(se) }
+func (se *singleEnvironment) Print(w io.Writer) (int, error) {
+	return sx.WriteStrings(w, "#<env:", se.name, ">")
 }
-func (me *singleEnvironment) String() string { return me.name }
-func (me *singleEnvironment) Parent() Environment {
-	if me == nil {
+func (se *singleEnvironment) String() string { return se.name }
+func (se *singleEnvironment) Parent() Environment {
+	if se == nil {
 		return nil
 	}
-	return me.parent
+	return se.parent
 }
-func (me *singleEnvironment) IsRoot() bool { return false }
-func (me *singleEnvironment) Bind(sym *sx.Symbol, val sx.Object) error {
-	if me.sym != nil {
-		return ErrEnvFrozen{Env: me}
+func (*singleEnvironment) IsRoot() bool { return false }
+func (se *singleEnvironment) Bind(sym *sx.Symbol, val sx.Object) error {
+	if se.frozen {
+		return ErrEnvFrozen{Env: se}
 	}
-	me.sym = sym
-	me.obj = val
+	if se.sym != nil {
+		return ErrEnvFull{Env: se}
+	}
+	se.sym = sym
+	se.obj = val
 	return nil
 }
-func (me *singleEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
-	if me.sym.IsEqual(sym) {
-		return me.obj, true
+func (se *singleEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
+	if se.sym.IsEqual(sym) {
+		return se.obj, true
 	}
 	return sx.Nil(), false
 }
-func (me *singleEnvironment) Bindings() *sx.Pair {
-	if me.sym == nil {
+func (se *singleEnvironment) Bindings() *sx.Pair {
+	if se.sym == nil {
 		return sx.Nil()
 	}
-	return sx.Cons(sx.Cons(me.sym, me.obj), sx.Nil())
+	return sx.Cons(sx.Cons(se.sym, se.obj), sx.Nil())
 }
-func (me *singleEnvironment) Unbind(sym *sx.Symbol) error {
-	if me.sym != nil {
-		return ErrEnvFrozen{Env: me}
+func (se *singleEnvironment) Unbind(sym *sx.Symbol) error {
+	if se.frozen {
+		return ErrEnvFrozen{Env: se}
 	}
+	se.sym = nil
 	return nil
 }
-func (me *singleEnvironment) Freeze() {
-	if me.sym != nil {
-		me.sym = sx.NullSymbol
-	}
-}
+func (se *singleEnvironment) Freeze() { se.frozen = true }
 
 // GetEnvironment returns the object as an environment, if possible.
 func GetEnvironment(obj sx.Object) (Environment, bool) {

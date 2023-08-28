@@ -117,8 +117,8 @@ func parseProcHead(plist *sx.Pair) (params []*sx.Symbol, _ *sx.Symbol, _ error) 
 }
 
 func GetParameterSymbol(params []*sx.Symbol, obj sx.Object) (*sx.Symbol, error) {
-	sym, ok := sx.GetSymbol(obj)
-	if !ok {
+	sym, isSymbol := sx.GetSymbol(obj)
+	if !isSymbol {
 		return nil, fmt.Errorf("symbol in list expected, but got %T/%v", obj, obj)
 	}
 	for _, p := range params {
