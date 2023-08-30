@@ -153,6 +153,7 @@ var builtinsA = []struct {
 	{"list", sxbuiltins.List}, {"list*", sxbuiltins.ListStar},
 	{"append", sxbuiltins.Append}, {"reverse", sxbuiltins.Reverse},
 	{"length", sxbuiltins.Length}, {"assoc", sxbuiltins.Assoc},
+	{"->string", sxbuiltins.ToString}, {"string-append", sxbuiltins.StringAppend},
 	{"callable?", sxbuiltins.CallableP},
 	{"parent-environment", sxbuiltins.ParentEnv},
 	{"environment-bindings", sxbuiltins.EnvBindings},
