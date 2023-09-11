@@ -19,26 +19,28 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-const (
+var (
+	kwSF = sx.MakeMappedFactory(16)
+
 	// keyVoid marks void HTML elements, i.e. w/o end tag.
-	keyVoid = sx.Keyword("sxhtml:isVoid")
+	keyVoid = kwSF.MustMake("sxhtml:isVoid")
 
 	// keyIgnoreEmpty marks HTML tags that may be ignored if empty.
-	keyIgnoreEmpty = sx.Keyword("sxhtml:igEm")
+	keyIgnoreEmpty = kwSF.MustMake("sxhtml:igEm")
 
 	// keyWithNL marks HTML elements that may start with a new-line character
-	keyWithNL = sx.Keyword("sxhtml:nl")
+	keyWithNL = kwSF.MustMake("sxhtml:nl")
 
 	// keyAlwaysNL signals that an new-line character should be emitted if needed.
-	keyAlwaysNL = sx.Keyword("sxhtml:alwaysNL")
+	keyAlwaysNL = kwSF.MustMake("sxhtml:alwaysNL")
 
 	// keyAttr specifies the type of an HTML attribute value.
 	// This controls how attribute values are escaped.
-	keyAttr   = sx.Keyword("sxhtml:attrType")
-	attrPlain = sx.Keyword("sxhtml:plain") // No further escape needed
-	attrURL   = sx.Keyword("sxhtml:url")   // Escape URL
-	attrCSS   = sx.Keyword("sxhtml:css")   // Special CSS escaping
-	attrJS    = sx.Keyword("sxhtml:js")    // Escape JavaScript
+	keyAttr   = kwSF.MustMake("sxhtml:attrType")
+	attrPlain = kwSF.MustMake("sxhtml:plain") // No further escape needed
+	attrURL   = kwSF.MustMake("sxhtml:url")   // Escape URL
+	attrCSS   = kwSF.MustMake("sxhtml:css")   // Special CSS escaping
+	attrJS    = kwSF.MustMake("sxhtml:js")    // Escape JavaScript
 )
 
 // Names for special symbols.
@@ -352,7 +354,7 @@ func getAttributeValue(sym *sx.Symbol, value sx.Object, sf sx.SymbolFactory) str
 	}
 }
 
-func getAttributeType(sym *sx.Symbol, sf sx.SymbolFactory) sx.Keyword {
+func getAttributeType(sym *sx.Symbol, sf sx.SymbolFactory) *sx.Symbol {
 	name := sym.String()
 	if dataName, isData := strings.CutPrefix(name, "data-"); isData {
 		name = dataName
@@ -366,7 +368,7 @@ func getAttributeType(sym *sx.Symbol, sf sx.SymbolFactory) sx.Keyword {
 	}
 
 	if p := sym.Assoc(keyAttr); p != nil {
-		return p.Cdr().(sx.Keyword)
+		return p.Cdr().(*sx.Symbol)
 	}
 
 	// Attribute names starting with "on" (e.g. "onload") are treated as JavaScript values.

@@ -21,12 +21,6 @@ Sx support the following atomic, immutable types:
   Another use case is symbolic computation.
   A symbol allows to store additional values by providing an association list (a-list), a list of pairs.
   Symbols can be compared for equality quite efficients, since they are interned by their associated symbol factory.
-* **Keywords** are sequences of printable / visible Unicode characters, starting with a `&` character.
-  They are somehow in between of strings and symbols.
-  They have a string-like value, but cannot contain special Unicode characters.
-  They are simple enough to be like symbols, but do not contain an a-list, are not interned.
-  They always evaluate to themself.
-  Their use case is to act like a marker, a special value.
 
 Sx supports nested lists.
 A list is delimited by parentheses: `( ... )`.

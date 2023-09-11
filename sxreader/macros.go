@@ -76,15 +76,6 @@ func readSymbol(rd *Reader, firstCh rune) (sx.Object, error) {
 	return sym, nil
 }
 
-func readKeyword(rd *Reader, _ rune) (sx.Object, error) {
-	beginPos := rd.Position()
-	tok, err := rd.ReadToken(0, rd.IsTerminal)
-	if err != nil {
-		return nil, rd.AnnotateError(err, beginPos)
-	}
-	return sx.Keyword(tok), nil
-}
-
 func readString(rd *Reader, _ rune) (sx.Object, error) {
 	beginPos := rd.Position()
 	var sb strings.Builder

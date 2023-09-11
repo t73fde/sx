@@ -67,9 +67,9 @@ the specific context and can automatically select the appropriate escape mode.
 
 SxHTML is relatively lenient about the supported HTML language. However, if in
 doubt, it is targeted for HTML5. All tag and attribute names must be lowercase
-symbols. Do not use strings or keywords to specify a tag or an attribute.
-SxHTML does not check, if a symbol specifies a valid HTML tag or attribute.
-Some tag and attribute symbols have a special meaning.
+symbols. Do not use strings to specify a tag or an attribute. SxHTML does
+not check, if a symbol specifies a valid HTML tag or attribute. Some tag and
+attribute symbols have a special meaning.
 
 <https://html.spec.whatwg.org/multipage/syntax.html#void-elements> specifies
 the list of _void elements_ that does not have and end tag. All other tags will
@@ -100,7 +100,7 @@ SxHTML defines some additional symbols, all starting with "@":
 
 * `@` specifies the attribute list of an HTML tag. If must follow immediately
   the tag symbol and contains a list of pairs, where the first component is a
-  symbol and the second component is a string, a keyword, or a number.
+  symbol and the second component is a string, the nil value, or a number.
 * `@C` marks some content that should be written as `<![CDATA[...]]>`.
 * `@H` specifies some HTML content that must not be escaped. For example,
   `@H "&amp;"` is transformed to `&amp;`, but not `&amp;amp;`.
@@ -113,35 +113,43 @@ SxHTML defines some additional symbols, all starting with "@":
 
 ## Tags
 
-HTML defines some tags as *void elements*.
-A void element has no content, they have a start tag only.
-End tags must not be specified, SxHTML will not generated them.
-Any content except attributes are ignored.
-Void elements are: `area`, `base`, `br`, `col`, `embed`, `hr`, `img`, `input`, `link`, `meta`, `source`, `track`, and `wbr`.
+HTML defines some tags as *void elements*. A void element has no content,
+they have a start tag only. End tags must not be specified, SxHTML will not
+generated them. Any content except attributes are ignored. Void elements are:
+`area`, `base`, `br`, `col`, `embed`, `hr`, `img`, `input`, `link`, `meta`,
+`source`, `track`, and `wbr`.
 
 ## Attributes
 
 Attributes are always in the second position of a list containing a tag symbol.
-For example `(a (@ (href . "https://codeberg.org/t73fde/sxhtml")) "SxHTML)` specifies a link to the page of this library.
-It will be transformed to `<a href="https://codeberg.org/t73fde/sxhtml">SxHTML</a>`.
+For example `(a (@ (href . "https://codeberg.org/t73fde/sxhtml")) "SxHTML)`
+specifies a link to the page of this library. It will be transformed to `<a
+href="https://codeberg.org/t73fde/sxhtml">SxHTML</a>`.
 
 The syntax for attributes is as follows:
 
 * The first element of the attribute list must be the symbol `@`.
-* Remaining elements must be a list, where the first element of the list is a symbol, which names the attribute.
-* If there is no second element in the list, the attribute is an *empty attribute*.
-  For example, `(input (@ (disabled)))` will be transformed to `<input disabled>`.
-* If there is a second element in the list, it must be an atomic value, preferably a string.
-  For example, `(input (@ (disabled "yes")))` will be transformed to `<input disabled="yes">`.
+* Remaining elements must be a list, where the first element of the list is a
+  symbol, which names the attribute.
+* If there is no second element in the list, the attribute is an *empty
+  attribute*. For example, `(input (@ (disabled)))` will be transformed to .
+  `<input disabled>`,
+* If there is a second element in the list, it must be an atomic value,
+  preferably a string. For example, `(input (@ (disabled "yes")))` will be
+  transformed to `<input disabled="yes">`.
 * If the lists contains more elements, they are ignored.
-* if the list is a pair, the second element of the pair must be an atomic value, preferably a string.
-  For example, `(input (@ (disabled . "yes")))` will be transformed to `<input disabled="yes">`.
+* if the list is a pair, the second element of the pair must be an atomic
+  value, preferably a string. For example, `(input (@ (disabled . "yes")))`
+  will be transformed to `<input disabled="yes">`.
 
-Since the attribute list is just a list, there might be duplicate symbols as attribute names.
-Only the first occurrence of the symbol will create an attribute.
-For example, `(input (@ (disabled "no") (disabled . "yes")))` will be transformed to `<input disabled="no">`.
-This allows to extend the list of attributes at the front, if you later want to overwrite the value of an attribute.
+Since the attribute list is just a list, there might be duplicate symbols
+as attribute names. Only the first occurrence of the symbol will create an
+attribute. For example, `(input (@ (disabled "no") (disabled . "yes")))` will
+be transformed to `<input disabled="no">`. This allows to extend the list
+of attributes at the front, if you later want to overwrite the value of an
+attribute.
 
-If you want to prohibit the generation of some attribute while still exntending the list of attributes at the front,
-use the nil value *()* as the value of the attribute.
-For example, `(input (@ (disabled ()) (disabled . "yes")))` will be transformed to `<input>`.
+If you want to prohibit the generation of some attribute while still exntending
+the list of attributes at the front, use the nil value *()* as the value of the
+attribute. For example, `(input (@ (disabled ()) (disabled . "yes")))` will be
+transformed to `<input>`.

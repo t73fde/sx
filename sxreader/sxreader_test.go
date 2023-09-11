@@ -94,16 +94,7 @@ func TestReaderSymbol(t *testing.T) {
 		{name: "NamespaceSymbol", src: "html:body", exp: "html:body"},
 	})
 }
-func TestReaderKeyword(t *testing.T) {
-	performReaderTestCases(t, []readerTestCase{
-		{name: "bang zero", src: "&!0", exp: "&!0"},
-		{name: "Ascii", src: "&moin", exp: "&moin"},
-		{name: "Unicode", src: "&µ☺", exp: "&µ☺"},
-		{name: "Single char", src: "&+", exp: "&+"},
-		{name: "ColonKeyword", src: "&:", exp: "&:"},
-		{name: "NamespaceKeyword", src: "&html:body", exp: "&html:body"},
-	})
-}
+
 func TestReaderString(t *testing.T) {
 	performReaderTestCases(t, []readerTestCase{
 		{name: "Empty", src: `""`, exp: `""`},

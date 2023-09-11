@@ -112,7 +112,6 @@ func MakeReader(r io.Reader, opts ...Option) *Reader {
 			'.': readDot,
 			'(': readList(')'),
 			')': UnmatchedDelimiter,
-			'&': readKeyword,
 			';': ReadComment,
 		},
 		maxDepth:  DefaultNestingLimit,
