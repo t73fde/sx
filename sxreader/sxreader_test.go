@@ -18,7 +18,6 @@ import (
 	"strings"
 	"testing"
 
-	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxreader"
 )
 
@@ -93,8 +92,6 @@ func TestReaderSymbol(t *testing.T) {
 		{name: "Single char", src: "-", exp: "-"},
 		{name: "ColonSymbol", src: "-:", exp: "-:"},
 		{name: "NamespaceSymbol", src: "html:body", exp: "html:body"},
-		{name: "BooleanTrue", src: sx.TrueString, exp: sx.TrueString},
-		{name: "BooleanFalse", src: sx.FalseString, exp: sx.FalseString},
 	})
 }
 func TestReaderKeyword(t *testing.T) {

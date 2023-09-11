@@ -139,7 +139,7 @@ var builtinsA = []struct {
 	fn   sxeval.BuiltinA
 }{
 	{"eq?", sxbuiltins.EqP}, {"eql?", sxbuiltins.EqlP}, {"equal?", sxbuiltins.EqualP},
-	{"boolean?", sxbuiltins.BooleanP}, {"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
+	{"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
 	{"number?", sxbuiltins.NumberP},
 	{"+", sxbuiltins.Add}, {"-", sxbuiltins.Sub}, {"*", sxbuiltins.Mul},
 	{"div", sxbuiltins.Div}, {"mod", sxbuiltins.Mod},
@@ -176,7 +176,7 @@ var objects = []struct {
 	name string
 	obj  sx.Object
 }{
-	{"NIL", sx.Nil()}, {"TRUE", sx.True}, {"FALSE", sx.False},
+	{"NIL", sx.Nil()}, {"TRUE", sx.Int64(1)}, {"FALSE", sx.Nil()},
 	{"ZERO", sx.Int64(0)}, {"ONE", sx.Int64(1)}, {"TWO", sx.Int64(2)},
 
 	{"b", sx.Int64(11)},

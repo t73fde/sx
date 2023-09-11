@@ -19,16 +19,7 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// BooleanP is the boolean that returns true if the argument is a number.
-func BooleanP(args []sx.Object) (sx.Object, error) {
-	if err := CheckArgs(args, 1, 1); err != nil {
-		return nil, err
-	}
-	_, ok := sx.GetBoolean(args[0])
-	return sx.MakeBoolean(ok), nil
-}
-
-// Boolean negates the given value interpreted as a boolean.
+// Boolean returns the given value interpreted as a boolean.
 func Boolean(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
@@ -50,7 +41,7 @@ func AndS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	if ex, ok := es.ParseRework(sxeval.TrueExpr); ok {
+	if ex, ok := es.ParseRework(sxeval.ObjExpr{Obj: sx.MakeBoolean(true)}); ok {
 		return ex, nil
 	}
 	return &AndExpr{es}, nil
@@ -116,7 +107,7 @@ func OrS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	if ex, ok := es.ParseRework(sxeval.FalseExpr); ok {
+	if ex, ok := es.ParseRework(sxeval.NilExpr); ok {
 		return ex, nil
 	}
 	return &OrExpr{es}, nil

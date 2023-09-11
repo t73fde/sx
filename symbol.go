@@ -147,12 +147,7 @@ func MakeMappedFactory(sizeHint int) SymbolFactory {
 }
 
 // IsValidName returns true if name is a vald symbol name.
-func (*mappedSymbolFactory) IsValidName(s string) bool {
-	if s == "" || s == TrueString || s == FalseString {
-		return false
-	}
-	return true
-}
+func (*mappedSymbolFactory) IsValidName(s string) bool { return s != "" }
 
 // Make creates a new symbol.
 func (sf *mappedSymbolFactory) Make(s string) (*Symbol, error) {

@@ -24,9 +24,9 @@ var tcsNumber = tTestCases{
 		exp:     "{[{number?: exactly 1 arguments required, but 0 given: []}]}",
 		withErr: true,
 	},
-	{name: "number?-1", src: "(number? 1)", exp: "True"},
-	{name: "number?-nil", src: "(number? ())", exp: "False"},
-	{name: "number?-sym", src: "(number? 'number?)", exp: "False"},
+	{name: "number?-1", src: "(number? 1)", exp: "1"},
+	{name: "number?-nil", src: "(number? ())", exp: "()"},
+	{name: "number?-sym", src: "(number? 'number?)", exp: "()"},
 
 	{name: "add-0", src: "(+)", exp: "0"},
 	{name: "add-1", src: "(+ 1)", exp: "1"},

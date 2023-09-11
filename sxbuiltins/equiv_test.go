@@ -30,8 +30,8 @@ var tcsEquiv = tTestCases{
 		exp:     "{[{eq?: exactly 2 arguments required, but 1 given: [1]}]}",
 		withErr: true,
 	},
-	{name: "eq?-2-f", src: "(eq? 1 2)", exp: "False"},
-	{name: "eq?-2-t", src: "(eq? 1 1)", exp: "True"},
+	{name: "eq?-2-f", src: "(eq? 1 2)", exp: "()"},
+	{name: "eq?-2-t", src: "(eq? 1 1)", exp: "1"},
 
 	{
 		name:    "err-eql?-0",
@@ -45,8 +45,8 @@ var tcsEquiv = tTestCases{
 		exp:     "{[{eql?: exactly 2 arguments required, but 1 given: [1]}]}",
 		withErr: true,
 	},
-	{name: "eql?-2-f", src: "(eql? 1 2)", exp: "False"},
-	{name: "eql?-2-t", src: "(eql? 1 1)", exp: "True"},
+	{name: "eql?-2-f", src: "(eql? 1 2)", exp: "()"},
+	{name: "eql?-2-t", src: "(eql? 1 1)", exp: "1"},
 
 	{
 		name:    "err-equal?-0",
@@ -60,5 +60,5 @@ var tcsEquiv = tTestCases{
 		exp:     "{[{equal?: exactly 2 arguments required, but 1 given: [1]}]}",
 		withErr: true,
 	},
-	{name: "equal?-2-f", src: "(equal? 1 2)", exp: "False"},
-	{name: "equal?-2-t", src: "(equal? 1 1)", exp: "True"}}
+	{name: "equal?-2-f", src: "(equal? 1 2)", exp: "()"},
+	{name: "equal?-2-t", src: "(equal? 1 1)", exp: "1"}}

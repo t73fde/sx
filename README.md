@@ -21,8 +21,6 @@ Sx support the following atomic, immutable types:
   Another use case is symbolic computation.
   A symbol allows to store additional values by providing an association list (a-list), a list of pairs.
   Symbols can be compared for equality quite efficients, since they are interned by their associated symbol factory.
-* **Boolean** are the symbols `True` and `False`, interpreted as boolean values.
-  Therefore, there are no symbols with this name.
 * **Keywords** are sequences of printable / visible Unicode characters, starting with a `&` character.
   They are somehow in between of strings and symbols.
   They have a string-like value, but cannot contain special Unicode characters.

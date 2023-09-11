@@ -69,9 +69,9 @@ var tcsEnv = tTestCases{
 		exp:     "{[{bound?: argument 1 is not a symbol, but sx.Int64/1}]}",
 		withErr: true,
 	},
-	{name: "bound?-a", src: "(bound? 'a)", exp: "False"},
-	{name: "bound?-b", src: "(bound? 'b)", exp: "True"},
-	{name: "bound?-bound?", src: "(bound? 'bound?)", exp: "True"},
+	{name: "bound?-a", src: "(bound? 'a)", exp: "()"},
+	{name: "bound?-b", src: "(bound? 'b)", exp: "1"},
+	{name: "bound?-bound?", src: "(bound? 'bound?)", exp: "1"},
 
 	{
 		name:    "err-lookup-0",

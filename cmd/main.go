@@ -84,7 +84,7 @@ var builtinsA = []struct {
 	fn   sxeval.BuiltinA
 }{
 	{"eq?", sxbuiltins.EqP}, {"eql?", sxbuiltins.EqlP}, {"equal?", sxbuiltins.EqualP},
-	{"boolean?", sxbuiltins.BooleanP}, {"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
+	{"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
 	{"number?", sxbuiltins.NumberP},
 	{"+", sxbuiltins.Add}, {"-", sxbuiltins.Sub}, {"*", sxbuiltins.Mul},
 	{"div", sxbuiltins.Div}, {"mod", sxbuiltins.Mod},
@@ -335,10 +335,6 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 		switch e {
 		case sxeval.NilExpr:
 			fmt.Println("NIL")
-		case sxeval.TrueExpr:
-			fmt.Println("TRUE")
-		case sxeval.FalseExpr:
-			fmt.Println("FALSE")
 		default:
 			fmt.Printf("%T\n", expr)
 		}

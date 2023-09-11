@@ -58,7 +58,7 @@ func TestSXHTML(t *testing.T) {
 		{name: "SimpleURLAttrNoDOT", src: `(a (@ (href "search?q=%&r=Ä")))`, exp: `<a href="search?q=%25&amp;r=%c3%84"></a>`},
 		{name: "SortedAttr", src: `(p (@ (z . z) (a a)))`, exp: `<p a="a" z="z"></p>`},
 		{name: "DoubleAttr", src: `(p (@ (a . z) (a a)))`, exp: `<p a="z"></p>`},
-		{name: "DeletedAttr", src: `(p (@ (a False) (z z) (a a)))`, exp: `<p z="z"></p>`},
+		{name: "DeletedAttr", src: `(p (@ (a ()) (z z) (a a)))`, exp: `<p z="z"></p>`},
 		{name: "EmptyAttrKey", src: `(p (@ ("" . a)))`, exp: `<p></p>`},
 		{name: "NilAttrKey", src: `(p (@ (() . a)))`, exp: `<p></p>`},
 

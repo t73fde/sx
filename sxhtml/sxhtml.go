@@ -318,7 +318,7 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 			} else {
 				obj = cdr
 			}
-			if sx.False.IsEql(obj) || sx.IsList(obj) {
+			if sx.IsNil(obj) || sx.IsList(obj) {
 				continue
 			}
 			a[key] = strings.TrimSpace(getAttributeValue(sym, obj, sf))

@@ -69,12 +69,6 @@ func readSymbol(rd *Reader, firstCh rune) (sx.Object, error) {
 	if err != nil {
 		return nil, rd.AnnotateError(err, beginPos)
 	}
-	if tok == sx.TrueString {
-		return sx.True, nil
-	}
-	if tok == sx.FalseString {
-		return sx.False, nil
-	}
 	sym, err := rd.symFac.Make(tok)
 	if err != nil {
 		return nil, rd.AnnotateError(err, beginPos)

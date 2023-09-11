@@ -24,10 +24,10 @@ var tcsLambda = tTestCases{
 		exp:     "{[{callable?: exactly 1 arguments required, but 0 given: []}]}",
 		withErr: true,
 	},
-	{name: "callable?-1", src: "(callable? 1)", exp: "False"},
-	{name: "callable?-callable?", src: "(callable? callable?)", exp: "True"},
-	{name: "callable?-map", src: "(callable? map)", exp: "True"},
-	{name: "callable-lambda", src: "(callable? (lambda x 0))", exp: "True"},
+	{name: "callable?-1", src: "(callable? 1)", exp: "()"},
+	{name: "callable?-callable?", src: "(callable? callable?)", exp: "1"},
+	{name: "callable?-map", src: "(callable? map)", exp: "1"},
+	{name: "callable-lambda", src: "(callable? (lambda x 0))", exp: "1"},
 
 	{
 		name:    "err-lambda-0",

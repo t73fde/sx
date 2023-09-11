@@ -50,11 +50,11 @@ func cmpBuiltin(args []sx.Object, cmpFn func(int) bool) (sx.Object, error) {
 		}
 		cmpRes := sx.NumCmp(acc, num)
 		if !cmpFn(cmpRes) {
-			return sx.False, nil
+			return sx.Nil(), nil
 		}
 		acc = num
 	}
-	return sx.True, nil
+	return sx.MakeBoolean(true), nil
 }
 
 // Min implements the minimum finding operation on numbers.

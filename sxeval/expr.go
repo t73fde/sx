@@ -79,28 +79,6 @@ func (nilExpr) IsEqual(other Expr) bool           { return other == NilExpr }
 func (nilExpr) Print(w io.Writer) (int, error)    { return io.WriteString(w, "{NIL}") }
 func (nilExpr) Object() sx.Object                 { return sx.Nil() }
 
-// FalseExpr returns always False
-var FalseExpr = falseExpr{}
-
-type falseExpr struct{}
-
-func (falseExpr) Rework(*ReworkFrame) Expr          { return FalseExpr }
-func (falseExpr) Compute(*Frame) (sx.Object, error) { return sx.False, nil }
-func (falseExpr) IsEqual(other Expr) bool           { return other == FalseExpr }
-func (falseExpr) Print(w io.Writer) (int, error)    { return io.WriteString(w, "{FALSE}") }
-func (falseExpr) Object() sx.Object                 { return sx.False }
-
-// TrueExpr returns always True
-var TrueExpr = trueExpr{}
-
-type trueExpr struct{}
-
-func (trueExpr) Rework(*ReworkFrame) Expr          { return TrueExpr }
-func (trueExpr) Compute(*Frame) (sx.Object, error) { return sx.True, nil }
-func (trueExpr) IsEqual(other Expr) bool           { return other == TrueExpr }
-func (trueExpr) Print(w io.Writer) (int, error)    { return io.WriteString(w, "{TRUE}") }
-func (trueExpr) Object() sx.Object                 { return sx.True }
-
 // ObjExpr returns the stored object.
 type ObjExpr struct {
 	Obj sx.Object
@@ -109,10 +87,6 @@ type ObjExpr struct {
 func (oe ObjExpr) Rework(rf *ReworkFrame) Expr {
 	if obj := oe.Obj; sx.IsNil(obj) {
 		return NilExpr.Rework(rf)
-	} else if obj == sx.False {
-		return FalseExpr.Rework(rf)
-	} else if obj == sx.True {
-		return TrueExpr.Rework(rf)
 	}
 	return oe
 }

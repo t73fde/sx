@@ -40,11 +40,6 @@ restart:
 			goto restart
 		}
 		return nil, err
-	case sx.Boolean:
-		if f == sx.False {
-			return FalseExpr, nil
-		}
-		return TrueExpr, nil
 	}
 	return ObjExpr{Obj: form}, nil
 }

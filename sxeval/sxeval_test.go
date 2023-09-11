@@ -107,8 +107,8 @@ func TestEval(t *testing.T) {
 }
 
 var sxEvenOdd = `;;; Indirekt recursive definition of even/odd
-(define (even? n) (if (= n 0) True (odd? (- n 1))))
-(define (odd? n) (if (= n 0) False (even? (- n 1))))
+(define (even? n) (if (= n 0) 1 (odd? (- n 1))))
+(define (odd? n) (if (= n 0) () (even? (- n 1))))
 `
 
 func createEngineForTCO() *sxeval.Engine {
@@ -143,11 +143,11 @@ func createEngineForTCO() *sxeval.Engine {
 func TestTailCallOptimization(t *testing.T) {
 	t.Parallel()
 	testcases := testCases{
-		{name: "trivial-even", src: "(even? 0)", exp: "True"},
-		{name: "trivial-odd", src: "(odd? 0)", exp: "False"},
-		{name: "trivial-map-even", src: "(map even? (list 0 1 2 3 4 5 6))", exp: "(True False True False True False True)"},
-		{name: "trivial-map-odd", src: "(map odd? (list 0 1 2 3 4 5 6))", exp: "(False True False True False True False)"},
-		{name: "heavy-even", src: "(even? 1000000)", exp: "True"},
+		{name: "trivial-even", src: "(even? 0)", exp: "1"},
+		{name: "trivial-odd", src: "(odd? 0)", exp: "()"},
+		{name: "trivial-map-even", src: "(map even? (list 0 1 2 3 4 5 6))", exp: "(1 () 1 () 1 () 1)"},
+		{name: "trivial-map-odd", src: "(map odd? (list 0 1 2 3 4 5 6))", exp: "(() 1 () 1 () 1 ())"},
+		{name: "heavy-even", src: "(even? 1000000)", exp: "1"},
 	}
 	engine := createEngineForTCO()
 	testcases.Run(t, engine)

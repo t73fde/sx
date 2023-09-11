@@ -43,10 +43,10 @@ var tcsList = tTestCases{
 		exp:     "{[{pair?: exactly 1 arguments required, but 0 given: []}]}",
 		withErr: true,
 	},
-	{name: "pair?-nil", src: "(pair? ())", exp: "False"},
-	{name: "pair?-1", src: "(pair? 1)", exp: "False"},
-	{name: "pair?-cons", src: "(pair? (cons 1 2))", exp: "True"},
-	{name: "pair?-list", src: "(pair? (list 1 2))", exp: "True"},
+	{name: "pair?-nil", src: "(pair? ())", exp: "()"},
+	{name: "pair?-1", src: "(pair? 1)", exp: "()"},
+	{name: "pair?-cons", src: "(pair? (cons 1 2))", exp: "1"},
+	{name: "pair?-list", src: "(pair? (list 1 2))", exp: "1"},
 
 	{
 		name:    "err-null?-0",
@@ -54,9 +54,9 @@ var tcsList = tTestCases{
 		exp:     "{[{null?: exactly 1 arguments required, but 0 given: []}]}",
 		withErr: true,
 	},
-	{name: "null?-1", src: "(null? 1)", exp: "False"},
-	{name: "null?-nil", src: "(null? ())", exp: "True"},
-	{name: "null?-cons", src: "(null? (cons 1 2))", exp: "False"},
+	{name: "null?-1", src: "(null? 1)", exp: "()"},
+	{name: "null?-nil", src: "(null? ())", exp: "1"},
+	{name: "null?-cons", src: "(null? (cons 1 2))", exp: "()"},
 
 	{
 		name:    "err-list?-0",
@@ -64,10 +64,10 @@ var tcsList = tTestCases{
 		exp:     "{[{list?: exactly 1 arguments required, but 0 given: []}]}",
 		withErr: true,
 	},
-	{name: "list?-nil", src: "(list? ())", exp: "True"},
-	{name: "list?-1", src: "(list? 1)", exp: "False"},
-	{name: "list?-cons", src: "(list? (cons 1 2))", exp: "False"},
-	{name: "list?-list", src: "(list? (list 1 2))", exp: "True"},
+	{name: "list?-nil", src: "(list? ())", exp: "1"},
+	{name: "list?-1", src: "(list? 1)", exp: "()"},
+	{name: "list?-cons", src: "(list? (cons 1 2))", exp: "()"},
+	{name: "list?-list", src: "(list? (list 1 2))", exp: "1"},
 
 	{
 		name:    "err-car-0",

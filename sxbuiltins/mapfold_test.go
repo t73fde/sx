@@ -39,11 +39,11 @@ var tcsMapFold = tTestCases{
 	{name: "map-nil", src: "(map not ())", exp: "()"},
 	{
 		name: "map-list",
-		src:  "(map not (list True False \"\" \"1\" 3))",
-		exp:  "(False True True False False)",
+		src:  "(map not (list 1 () \"\" \"1\" 3))",
+		exp:  "(() 1 1 () ())",
 	},
-	{name: "map-cons", src: "(map not (cons True False))", exp: "(False . True)"},
-	{name: "map-list*", src: "(map not (list* False True False))", exp: "(True False . True)"},
+	{name: "map-cons", src: "(map not (cons 1 \"\"))", exp: "(() . 1)"},
+	{name: "map-list*", src: "(map not (list* () 1 \"\"))", exp: "(1 () . 1)"},
 
 	{
 		name:    "err-apply-0",

@@ -39,8 +39,8 @@ reside in a different namespace.
 This repository contains several sub-projects / packages:
 
   *  The package [/dir?ci=tip|Sx] itself contains all relevant data values , such as numbers,
-     symbols, strings, booleans, &hellip;
-  *  [/dir?ci=tip&name=sxreader|SxReader] rovides functions and data structures
+     symbols, strings, &hellip;
+  *  [/dir?ci=tip&name=sxreader|SxReader] provides functions and data structures
      to read a s-expression representation and transforms it into the data
      values.
   *  [/dir?ci=tip&name=sxeval|SxEval] provides a way to interpret s-expressions

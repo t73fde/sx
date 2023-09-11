@@ -143,5 +143,5 @@ For example, `(input (@ (disabled "no") (disabled . "yes")))` will be transforme
 This allows to extend the list of attributes at the front, if you later want to overwrite the value of an attribute.
 
 If you want to prohibit the generation of some attribute while still exntending the list of attributes at the front,
-use the boolean Value *False* as the value of the attribute.
-For example, `(input (@ (disabled False) (disabled . "yes")))` will be transformed to `<input>`.
+use the nil value *()* as the value of the attribute.
+For example, `(input (@ (disabled ()) (disabled . "yes")))` will be transformed to `<input>`.

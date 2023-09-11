@@ -29,7 +29,7 @@ func PairP(args []sx.Object) (sx.Object, error) {
 	}
 	obj := args[0]
 	if sx.IsNil(obj) {
-		return sx.False, nil
+		return sx.Nil(), nil
 	}
 	_, isPair := sx.GetPair(obj)
 	return sx.MakeBoolean(isPair), nil
