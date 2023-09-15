@@ -43,8 +43,6 @@ func (tcs tTestCases) Run(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Helper()
 			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
-			symQuote := sf.MustMake("quote")
-			sxbuiltins.InstallQuoteReader(rd, symQuote, '\'')
 			symQQ, symUQ, symUQS := sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")
 			sxbuiltins.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
 
@@ -92,14 +90,12 @@ func createEngine() *sxeval.Engine {
 	numBuiltins := len(syntaxes) + len(builtinsA) + len(builtinsFA) + len(objects)
 	sf := sx.MakeMappedFactory(numBuiltins + 32)
 	root := sxeval.MakeRootEnvironment(numBuiltins)
-	if err := sxbuiltins.InstallQuoteSyntax(root, sf.MustMake("quote")); err != nil {
-		panic(err)
-	}
 	if err := sxbuiltins.InstallQuasiQuoteSyntax(root, sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")); err != nil {
 		panic(err)
 	}
 
 	engine := sxeval.MakeEngine(sf, root)
+	engine.SetQuote(nil)
 	for _, syntax := range syntaxes {
 		engine.BindSyntax(syntax.name, syntax.fn)
 	}

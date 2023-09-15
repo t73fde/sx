@@ -24,15 +24,16 @@ import (
 
 // Reader consumes characters from a stream and parses them into s-expressions.
 type Reader struct {
-	rr      io.RuneReader
-	err     error
-	name    string
-	buf     []rune
-	line    int
-	col     int
-	prevCol int
-	macros  MacroMap
-	symFac  sx.SymbolFactory
+	rr       io.RuneReader
+	err      error
+	name     string
+	buf      []rune
+	line     int
+	col      int
+	prevCol  int
+	macros   MacroMap
+	symFac   sx.SymbolFactory
+	quoteSym *sx.Symbol
 
 	maxDepth, curDepth uint
 	maxLength          uint
@@ -108,11 +109,12 @@ func MakeReader(r io.Reader, opts ...Option) *Reader {
 		col:     0,
 		prevCol: 0,
 		macros: MacroMap{
-			'"': readString,
-			'.': readDot,
-			'(': readList(')'),
-			')': UnmatchedDelimiter,
-			';': ReadComment,
+			'"':  readString,
+			'\'': readQuote,
+			'(':  readList(')'),
+			')':  UnmatchedDelimiter,
+			'.':  readDot,
+			';':  ReadComment,
 		},
 		maxDepth:  DefaultNestingLimit,
 		maxLength: DefaultListLimit,
@@ -122,6 +124,9 @@ func MakeReader(r io.Reader, opts ...Option) *Reader {
 	}
 	if rd.symFac == nil {
 		rd.symFac = sx.MakeMappedFactory(128)
+	}
+	if rd.quoteSym == nil {
+		rd.quoteSym = rd.symFac.MustMake("quote")
 	}
 	return &rd
 }

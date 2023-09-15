@@ -119,8 +119,6 @@ var builtinsFA = []struct {
 func main() {
 	rd := sxreader.MakeReader(os.Stdin)
 	sf := rd.SymbolFactory()
-	symQuote := sf.MustMake("quote")
-	sxbuiltins.InstallQuoteReader(rd, symQuote, '\'')
 	symQQ, symUQ, symUQS := sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")
 	sxbuiltins.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
 
@@ -133,10 +131,10 @@ func main() {
 		logExecutor:  true,
 	}
 	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment(len(syntaxes)+len(builtinsA)+len(builtinsFA)+16))
+	engine.SetQuote(nil)
 	mpe.origParser = engine.SetParser(&mpe)
 	mpe.origExecutor = engine.SetExecutor(&mpe)
 	root := engine.RootEnvironment()
-	sxbuiltins.InstallQuoteSyntax(root, symQuote)
 	sxbuiltins.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
 	for _, synDef := range syntaxes {
 		engine.BindSyntax(synDef.name, synDef.fn)

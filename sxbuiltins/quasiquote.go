@@ -10,6 +10,9 @@
 
 package sxbuiltins
 
+// Quasiquote implementation is a little bit too simple as it does not support
+// nested quasiquotes.
+
 import (
 	"fmt"
 	"io"
@@ -24,7 +27,17 @@ func InstallQuasiQuoteReader(rd *sxreader.Reader, symQQ *sx.Symbol, chQQ rune, s
 	if sf := rd.SymbolFactory(); sf != symQQ.Factory() || sf != symUQ.Factory() || sf != symUQ.Factory() {
 		panic("reader symbol factory differ from factory of symbols")
 	}
-	rd.SetMacro(chQQ, makeQuotationMacro(symQQ))
+	rd.SetMacro(chQQ, func(rd *sxreader.Reader, _ rune) (sx.Object, error) {
+		obj, err := rd.Read()
+		if err == nil {
+			return sx.Nil().Cons(obj).Cons(symQQ), nil
+		}
+		if err == io.EOF {
+			return obj, sxreader.ErrEOF
+		}
+		return obj, err
+
+	})
 	rd.SetMacro(chUQ, func(rd *sxreader.Reader, _ rune) (sx.Object, error) {
 		ch, err := rd.NextRune()
 		if err != nil {

@@ -149,6 +149,22 @@ func (eng *Engine) SetReworkOptions(ro *ReworkOptions) *ReworkOptions {
 	return eng.reworkOpt
 }
 
+// SetQuote sets the quote symbol. It must be the same as for the reader.
+func (eng *Engine) SetQuote(sym *sx.Symbol) error {
+	if sym == nil {
+		sym = eng.sf.MustMake("quote")
+	}
+	return eng.BindSyntax(sym.Name(), func(_ *ParseFrame, args *sx.Pair) (Expr, error) {
+		if sx.IsNil(args) {
+			return nil, ErrNoArgs
+		}
+		if args.Tail() != nil {
+			return nil, fmt.Errorf("more than one argument: %v", args)
+		}
+		return ObjExpr{Obj: args.Car()}, nil
+	})
+}
+
 // Eval parses the given object and executes it in the environment.
 func (eng *Engine) Eval(env Environment, obj sx.Object) (sx.Object, error) {
 	expr, err := eng.Parse(env, obj)

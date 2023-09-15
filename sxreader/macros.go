@@ -249,3 +249,14 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 	}
 	return sx.MakeList(objs...), nil
 }
+
+func readQuote(rd *Reader, _ rune) (sx.Object, error) {
+	obj, err := rd.Read()
+	if err == nil {
+		return sx.Nil().Cons(obj).Cons(rd.quoteSym), nil
+	}
+	if err == io.EOF {
+		return obj, ErrEOF
+	}
+	return obj, err
+}
