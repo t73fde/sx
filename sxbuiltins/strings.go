@@ -26,13 +26,13 @@ func ToString(args []sx.Object) (sx.Object, error) {
 	if s, isString := sx.GetString(obj); isString {
 		return s, nil
 	}
-	return sx.MakeString(obj.Repr()), nil
+	return sx.String(obj.Repr()), nil
 }
 
 // StringAppend append all its string arguments.
 func StringAppend(args []sx.Object) (sx.Object, error) {
 	if len(args) == 0 {
-		return sx.MakeString(""), nil
+		return sx.String(""), nil
 	}
 	s, err := GetString(nil, args, 0)
 	if err != nil {
@@ -50,5 +50,5 @@ func StringAppend(args []sx.Object) (sx.Object, error) {
 		}
 		sb.WriteString(s.String())
 	}
-	return sx.MakeString(sb.String()), nil
+	return sx.String(sb.String()), nil
 }

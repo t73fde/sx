@@ -45,11 +45,11 @@ func (te *TimeitExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 func (te *TimeitExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	start := time.Now()
 	obj, err := frame.Execute(te.expr)
-	duration := sx.MakeString(time.Since(start).String())
+	duration := sx.String(time.Since(start).String())
 	if err == nil {
 		return sx.MakeList(duration, obj), nil
 	}
-	return sx.MakeList(duration, obj, sx.MakeString(err.Error())), nil
+	return sx.MakeList(duration, obj, sx.String(err.Error())), nil
 }
 func (te *TimeitExpr) IsEqual(other sxeval.Expr) bool {
 	if te == other {

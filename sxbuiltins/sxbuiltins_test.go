@@ -183,5 +183,5 @@ var objects = []struct {
 	{"c", sx.MakeList(sx.Int64(22), sx.Int64(33))},
 	{"d", sx.MakeList(sx.Int64(44), sx.Int64(55))},
 	{"x", sx.Int64(3)}, {"y", sx.Int64(5)},
-	{"lang0", sx.MakeString("")}, {"lang1", sx.MakeString("de-DE")},
+	{"lang0", sx.String("")}, {"lang1", sx.String("de-DE")},
 }

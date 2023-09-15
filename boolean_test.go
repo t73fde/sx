@@ -18,10 +18,10 @@ import (
 
 func TestBoolean(t *testing.T) {
 	t.Parallel()
-	if sx.IsTrue(sx.MakeString("")) {
+	if sx.IsTrue(sx.String("")) {
 		t.Error("Empty string is True")
 	}
-	if !sx.IsFalse(sx.MakeString("")) {
+	if !sx.IsFalse(sx.String("")) {
 		t.Error("Empty string is not False")
 	}
 }

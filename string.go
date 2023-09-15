@@ -19,9 +19,6 @@ import (
 // String represents a string object.
 type String string
 
-// MakeString creates a new string object.
-func MakeString(s string) String { return String(s) }
-
 // IsNil return true, if it is a nil string value.
 func (String) IsNil() bool { return false }
 

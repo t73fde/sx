@@ -58,7 +58,7 @@ func TestGetList(t *testing.T) {
 	} else if res != nil {
 		t.Error("Nil() must be nil")
 	}
-	if _, isPair = sx.GetPair(sx.MakeString("nil")); isPair {
+	if _, isPair = sx.GetPair(sx.String("nil")); isPair {
 		t.Error("A string is not a list")
 	}
 }
