@@ -12,28 +12,23 @@ package sxbuiltins
 
 import "zettelstore.de/sx.fossil"
 
-// Less implements a numeric comparision w.r.t to the less operation.
-func Less(args []sx.Object) (sx.Object, error) {
+// NumLess implements a numeric comparision w.r.t to the less operation.
+func NumLess(args []sx.Object) (sx.Object, error) {
 	return cmpBuiltin(args, func(cmpRes int) bool { return cmpRes < 0 })
 }
 
-// LessEqual implements a numeric comparision w.r.t to the less-equal operation.
-func LessEqual(args []sx.Object) (sx.Object, error) {
+// NumLessEqual implements a numeric comparision w.r.t to the less-equal operation.
+func NumLessEqual(args []sx.Object) (sx.Object, error) {
 	return cmpBuiltin(args, func(cmpRes int) bool { return cmpRes <= 0 })
 }
 
-// Equal implements a numeric comparision w.r.t to the equal operation.
-func Equal(args []sx.Object) (sx.Object, error) {
-	return cmpBuiltin(args, func(cmpRes int) bool { return cmpRes == 0 })
-}
-
-// GreaterEqual implements a numeric comparision w.r.t to the greater-equal operation.
-func GreaterEqual(args []sx.Object) (sx.Object, error) {
+// NumGreaterEqual implements a numeric comparision w.r.t to the greater-equal operation.
+func NumGreaterEqual(args []sx.Object) (sx.Object, error) {
 	return cmpBuiltin(args, func(cmpRes int) bool { return cmpRes >= 0 })
 }
 
-// Greater implements a numeric comparision w.r.t to the greater operation.
-func Greater(args []sx.Object) (sx.Object, error) {
+// NumGreater implements a numeric comparision w.r.t to the greater operation.
+func NumGreater(args []sx.Object) (sx.Object, error) {
 	return cmpBuiltin(args, func(cmpRes int) bool { return cmpRes > 0 })
 }
 

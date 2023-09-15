@@ -138,14 +138,13 @@ var builtinsA = []struct {
 	name string
 	fn   sxeval.BuiltinA
 }{
-	{"eq?", sxbuiltins.EqP}, {"equal?", sxbuiltins.EqualP},
+	{"==", sxbuiltins.Identical}, {"=", sxbuiltins.Equal},
 	{"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
 	{"number?", sxbuiltins.NumberP},
 	{"+", sxbuiltins.Add}, {"-", sxbuiltins.Sub}, {"*", sxbuiltins.Mul},
 	{"div", sxbuiltins.Div}, {"mod", sxbuiltins.Mod},
-	{"=", sxbuiltins.Equal},
-	{"<", sxbuiltins.Less}, {"<=", sxbuiltins.LessEqual},
-	{">=", sxbuiltins.GreaterEqual}, {">", sxbuiltins.Greater},
+	{"<", sxbuiltins.NumLess}, {"<=", sxbuiltins.NumLessEqual},
+	{">=", sxbuiltins.NumGreaterEqual}, {">", sxbuiltins.NumGreater},
 	{"min", sxbuiltins.Min}, {"max", sxbuiltins.Max},
 	{"cons", sxbuiltins.Cons}, {"pair?", sxbuiltins.PairP},
 	{"null?", sxbuiltins.NullP}, {"list?", sxbuiltins.ListP},

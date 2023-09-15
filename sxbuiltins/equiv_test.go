@@ -19,31 +19,31 @@ func TestEquiv(t *testing.T) {
 
 var tcsEquiv = tTestCases{
 	{
-		name:    "err-eq?-0",
-		src:     "(eq?)",
-		exp:     "{[{eq?: exactly 2 arguments required, but 0 given: []}]}",
+		name:    "err-==-0",
+		src:     "(==)",
+		exp:     "{[{==: at least 2 arguments required, but only 0 given: []}]}",
 		withErr: true,
 	},
 	{
-		name:    "err-eq?-1",
-		src:     "(eq? 1)",
-		exp:     "{[{eq?: exactly 2 arguments required, but 1 given: [1]}]}",
+		name:    "err-==-1",
+		src:     "(== 1)",
+		exp:     "{[{==: at least 2 arguments required, but only 1 given: [1]}]}",
 		withErr: true,
 	},
-	{name: "eq?-2-f", src: "(eq? 1 2)", exp: "()"},
-	{name: "eq?-2-t", src: "(eq? 1 1)", exp: "1"},
+	{name: "==-2-f", src: "(== 1 2)", exp: "()"},
+	{name: "==-2-t", src: "(== 1 1)", exp: "1"},
 
 	{
-		name:    "err-equal?-0",
-		src:     "(equal?)",
-		exp:     "{[{equal?: exactly 2 arguments required, but 0 given: []}]}",
+		name:    "err-=-0",
+		src:     "(=)",
+		exp:     "{[{=: at least 2 arguments required, but only 0 given: []}]}",
 		withErr: true,
 	},
 	{
-		name:    "err-equal?-1",
-		src:     "(equal? 1)",
-		exp:     "{[{equal?: exactly 2 arguments required, but 1 given: [1]}]}",
+		name:    "err-=-1",
+		src:     "(= 1)",
+		exp:     "{[{=: at least 2 arguments required, but only 1 given: [1]}]}",
 		withErr: true,
 	},
-	{name: "equal?-2-f", src: "(equal? 1 2)", exp: "()"},
-	{name: "equal?-2-t", src: "(equal? 1 1)", exp: "1"}}
+	{name: "=-2-f", src: "(= 1 2)", exp: "()"},
+	{name: "=-2-t", src: "(= 1 1)", exp: "1"}}

@@ -14,18 +14,29 @@ package sxbuiltins
 
 import "zettelstore.de/sx.fossil"
 
-// EqP returns True iff the two given arguments are identical / the same objects.
-func EqP(args []sx.Object) (sx.Object, error) {
-	if err := CheckArgs(args, 2, 2); err != nil {
+// Identical returns True iff the two given arguments are identical / the same objects.
+func Identical(args []sx.Object) (sx.Object, error) {
+	if err := CheckArgs(args, 2, 0); err != nil {
 		return nil, err
 	}
-	return sx.MakeBoolean(args[0] == args[1]), nil
+	// return sx.MakeBoolean(args[0] == args[1]), nil
+	for i := 1; i < len(args); i++ {
+		if args[0] != args[i] {
+			return sx.Nil(), nil
+		}
+	}
+	return sx.MakeBoolean(true), nil
 }
 
-// EqualP returns True iff the two given arguments have the same value.
-func EqualP(args []sx.Object) (sx.Object, error) {
-	if err := CheckArgs(args, 2, 2); err != nil {
+// Equal returns True iff the two given arguments have the same value.
+func Equal(args []sx.Object) (sx.Object, error) {
+	if err := CheckArgs(args, 2, 0); err != nil {
 		return nil, err
 	}
-	return sx.MakeBoolean(args[0].IsEqual(args[1])), nil
+	for i := 1; i < len(args); i++ {
+		if !args[0].IsEqual(args[i]) {
+			return sx.Nil(), nil
+		}
+	}
+	return sx.MakeBoolean(true), nil
 }

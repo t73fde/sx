@@ -56,12 +56,7 @@ var tcsNumCmp = tTestCases{
 		exp:     "{[{=: at least 2 arguments required, but only 0 given: []}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-equal-nonum",
-		src:     "(= 0 0 ())",
-		exp:     "{[{=: argument 3 is not a number, but *sx.Pair/()}]}",
-		withErr: true,
-	},
+	{name: "equal-nonum", src: "(= 0 0 ())", exp: "()"},
 	{name: "equal-2", src: "(= 3 3)", exp: "1"},
 	{name: "equal-3", src: "(= 3 2 ())", exp: "()"},
 	{name: "equal-5", src: "(= 4 4 4 4 4)", exp: "1"},
