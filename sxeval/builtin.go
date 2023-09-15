@@ -33,10 +33,9 @@ type BuiltinA func([]sx.Object) (sx.Object, error)
 
 func (b BuiltinA) IsNil() bool  { return b == nil }
 func (b BuiltinA) IsAtom() bool { return b == nil }
-func (b BuiltinA) IsEql(other sx.Object) bool {
+func (b BuiltinA) IsEqual(other sx.Object) bool {
 	return reflect.ValueOf(b).Pointer() == reflect.ValueOf(other).Pointer()
 }
-func (b BuiltinA) IsEqual(other sx.Object) bool   { return b.IsEql(other) }
 func (b BuiltinA) String() string                 { return b.Repr() }
 func (b BuiltinA) Repr() string                   { return sx.Repr(b) }
 func (b BuiltinA) Print(w io.Writer) (int, error) { return printBuiltin(w, b) }
@@ -77,10 +76,9 @@ type BuiltinFA func(*Frame, []sx.Object) (sx.Object, error)
 
 func (b BuiltinFA) IsNil() bool  { return b == nil }
 func (b BuiltinFA) IsAtom() bool { return b == nil }
-func (b BuiltinFA) IsEql(other sx.Object) bool {
+func (b BuiltinFA) IsEqual(other sx.Object) bool {
 	return reflect.ValueOf(b).Pointer() == reflect.ValueOf(other).Pointer()
 }
-func (b BuiltinFA) IsEqual(other sx.Object) bool   { return b.IsEql(other) }
 func (b BuiltinFA) String() string                 { return b.Repr() }
 func (b BuiltinFA) Repr() string                   { return sx.Repr(b) }
 func (b BuiltinFA) Print(w io.Writer) (int, error) { return printBuiltin(w, b) }

@@ -27,9 +27,6 @@ type Object interface {
 	// IsAtom returns true iff the object is an object that is not further decomposable.
 	IsAtom() bool
 
-	// IsEql compares two objects for atomic / shallow equality.
-	IsEql(Object) bool
-
 	// IsEqual compare two objects for deep equality.
 	IsEqual(Object) bool
 

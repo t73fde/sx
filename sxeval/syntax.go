@@ -36,7 +36,7 @@ func MakeSyntax(name string, fn SyntaxFn) *Syntax {
 
 func (sy *Syntax) IsNil() bool  { return sy == nil }
 func (sy *Syntax) IsAtom() bool { return sy == nil }
-func (sy *Syntax) IsEql(other sx.Object) bool {
+func (sy *Syntax) IsEqual(other sx.Object) bool {
 	if sy == other {
 		return true
 	}
@@ -51,9 +51,8 @@ func (sy *Syntax) IsEql(other sx.Object) bool {
 	}
 	return false
 }
-func (sy *Syntax) IsEqual(other sx.Object) bool { return sy.IsEql(other) }
-func (sy *Syntax) String() string               { return sy.Repr() }
-func (sy *Syntax) Repr() string                 { return sx.Repr(sy) }
+func (sy *Syntax) String() string { return sy.Repr() }
+func (sy *Syntax) Repr() string   { return sx.Repr(sy) }
 func (sy *Syntax) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<syntax:", sy.name, ">")
 }

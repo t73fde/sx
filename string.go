@@ -24,15 +24,12 @@ func (String) IsNil() bool { return false }
 
 func (String) IsAtom() bool { return true }
 
-// IsEql compares two objects for equivalence.
-func (s String) IsEql(other Object) bool {
+// IsEqual compares two objects for equivalence.
+func (s String) IsEqual(other Object) bool {
 	otherS, ok := other.(String)
 	return ok && string(s) == string(otherS)
 
 }
-
-// IsEqual is the same a IsEqv for strings.
-func (s String) IsEqual(other Object) bool { return s.IsEql(other) }
 
 // String returns the Go string representation.
 func (s String) String() string { return string(s) }

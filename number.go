@@ -42,16 +42,13 @@ func (i Int64) IsNil() bool { return false }
 
 func (Int64) IsAtom() bool { return true }
 
-// IsEql compare two objects.
-func (i Int64) IsEql(other Object) bool {
+// IsEqual compare two objects.
+func (i Int64) IsEqual(other Object) bool {
 	if otherI, ok := other.(Int64); ok {
 		return i == otherI
 	}
 	return false
 }
-
-// IsEqual is currently the same as IsEqv, since we support only integer values.
-func (i Int64) IsEqual(other Object) bool { return i.IsEql(other) }
 
 // String returns the Go string representation.
 func (i Int64) String() string { return strconv.FormatInt(int64(i), 10) }

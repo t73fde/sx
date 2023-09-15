@@ -122,7 +122,7 @@ func GetParameterSymbol(params []*sx.Symbol, obj sx.Object) (*sx.Symbol, error) 
 		return nil, fmt.Errorf("symbol in list expected, but got %T/%v", obj, obj)
 	}
 	for _, p := range params {
-		if sym.IsEql(p) {
+		if sym.IsEqual(p) {
 			return nil, fmt.Errorf("symbol %v already defined", sym)
 		}
 	}
@@ -203,15 +203,6 @@ type Procedure struct {
 
 func (p *Procedure) IsNil() bool  { return p == nil }
 func (p *Procedure) IsAtom() bool { return p == nil }
-func (p *Procedure) IsEql(other sx.Object) bool {
-	if p == other {
-		return true
-	}
-	if p.IsNil() {
-		return sx.IsNil(other)
-	}
-	return false
-}
 func (p *Procedure) IsEqual(other sx.Object) bool {
 	if p == other {
 		return true

@@ -134,9 +134,8 @@ type mappedEnvironment struct {
 	frozen  bool
 }
 
-func (me *mappedEnvironment) IsNil() bool                { return me == nil }
-func (me *mappedEnvironment) IsAtom() bool               { return me == nil }
-func (me *mappedEnvironment) IsEql(other sx.Object) bool { return me == other }
+func (me *mappedEnvironment) IsNil() bool  { return me == nil }
+func (me *mappedEnvironment) IsAtom() bool { return me == nil }
 func (me *mappedEnvironment) IsEqual(other sx.Object) bool {
 	if me == other {
 		return true
@@ -213,9 +212,8 @@ type singleEnvironment struct {
 	frozen bool
 }
 
-func (se *singleEnvironment) IsNil() bool                { return se == nil }
-func (se *singleEnvironment) IsAtom() bool               { return se == nil }
-func (se *singleEnvironment) IsEql(other sx.Object) bool { return se == other }
+func (se *singleEnvironment) IsNil() bool  { return se == nil }
+func (se *singleEnvironment) IsAtom() bool { return se == nil }
 func (se *singleEnvironment) IsEqual(other sx.Object) bool {
 	if se == other {
 		return true

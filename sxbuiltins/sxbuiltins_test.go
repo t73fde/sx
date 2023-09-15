@@ -138,7 +138,7 @@ var builtinsA = []struct {
 	name string
 	fn   sxeval.BuiltinA
 }{
-	{"eq?", sxbuiltins.EqP}, {"eql?", sxbuiltins.EqlP}, {"equal?", sxbuiltins.EqualP},
+	{"eq?", sxbuiltins.EqP}, {"equal?", sxbuiltins.EqualP},
 	{"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
 	{"number?", sxbuiltins.NumberP},
 	{"+", sxbuiltins.Add}, {"-", sxbuiltins.Sub}, {"*", sxbuiltins.Mul},

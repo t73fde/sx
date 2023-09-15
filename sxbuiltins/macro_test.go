@@ -32,12 +32,12 @@ var tcsMacro = tTestCases{
 	},
 	{
 		name: "defmacro-eq-same",
-		src:  "(defmacro inc1 (var) `(set! ,var (+ ,var 1))) (eq? inc1 inc1) (eql? inc1 inc1) (equal? inc1 inc1)",
-		exp:  "#<macro:inc1> 1 1 1",
+		src:  "(defmacro inc1 (var) `(set! ,var (+ ,var 1))) (eq? inc1 inc1) (equal? inc1 inc1)",
+		exp:  "#<macro:inc1> 1 1",
 	},
 	{
 		name: "defmacro-eq",
-		src:  "(defmacro inc1 (var) `(set! ,var (+ ,var 1))) (defmacro inc2 (var) `(set! ,var (+ ,var 1))) (eq? inc1 inc2) (eql? inc1 inc2) (equal? inc1 inc2)",
-		exp:  "#<macro:inc1> #<macro:inc2> () () 1",
+		src:  "(defmacro inc1 (var) `(set! ,var (+ ,var 1))) (defmacro inc2 (var) `(set! ,var (+ ,var 1))) (eq? inc1 inc2) (equal? inc1 inc2)",
+		exp:  "#<macro:inc1> #<macro:inc2> () 1",
 	},
 }

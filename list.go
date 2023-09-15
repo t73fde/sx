@@ -47,15 +47,6 @@ func (pair *Pair) IsNil() bool { return pair == nil }
 
 func (pair *Pair) IsAtom() bool { return pair == nil }
 
-// IsEql compares two objects for equivalence.
-// Two pairs are equivalent iff they are the same pair.
-func (pair *Pair) IsEql(other Object) bool {
-	if pair == nil && IsNil(other) {
-		return true
-	}
-	return pair == other
-}
-
 // IsEqual compare two objects.
 func (pair *Pair) IsEqual(other Object) bool {
 	if pair == other {
@@ -267,12 +258,12 @@ func (pair *Pair) Length() int {
 	return result
 }
 
-// Assoc returns the first pair of a list where the car IsEql to the given
+// Assoc returns the first pair of a list where the car IsEqual to the given
 // object.
 func (pair *Pair) Assoc(obj Object) *Pair {
 	for node := pair; node != nil; node = node.Tail() {
 		if p, ok := node.car.(*Pair); ok {
-			if p.car.IsEql(obj) {
+			if p.car.IsEqual(obj) {
 				return p
 			}
 		}

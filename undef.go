@@ -20,8 +20,7 @@ func MakeUndefined() Undefined { return Undefined{} }
 
 func (Undefined) IsNil() bool                    { return false }
 func (Undefined) IsAtom() bool                   { return false }
-func (udef Undefined) IsEql(other Object) bool   { return IsUndefined(other) }
-func (udef Undefined) IsEqual(other Object) bool { return udef.IsEql(other) }
+func (udef Undefined) IsEqual(other Object) bool { return IsUndefined(other) }
 func (udef Undefined) String() string            { return udef.Repr() }
 func (udef Undefined) Repr() string              { return "#<undefined>" }
 func (udef Undefined) Print(w io.Writer) (int, error) {

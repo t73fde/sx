@@ -34,21 +34,6 @@ var tcsEquiv = tTestCases{
 	{name: "eq?-2-t", src: "(eq? 1 1)", exp: "1"},
 
 	{
-		name:    "err-eql?-0",
-		src:     "(eql?)",
-		exp:     "{[{eql?: exactly 2 arguments required, but 0 given: []}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-eql?-1",
-		src:     "(eql? 1)",
-		exp:     "{[{eql?: exactly 2 arguments required, but 1 given: [1]}]}",
-		withErr: true,
-	},
-	{name: "eql?-2-f", src: "(eql? 1 2)", exp: "()"},
-	{name: "eql?-2-t", src: "(eql? 1 1)", exp: "1"},
-
-	{
 		name:    "err-equal?-0",
 		src:     "(equal?)",
 		exp:     "{[{equal?: exactly 2 arguments required, but 0 given: []}]}",

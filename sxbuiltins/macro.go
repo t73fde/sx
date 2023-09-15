@@ -120,15 +120,6 @@ type Macro struct {
 
 func (m *Macro) IsNil() bool  { return m == nil }
 func (m *Macro) IsAtom() bool { return m == nil }
-func (m *Macro) IsEql(other sx.Object) bool {
-	if m == other {
-		return true
-	}
-	if m.IsNil() {
-		return sx.IsNil(other)
-	}
-	return false
-}
 func (m *Macro) IsEqual(other sx.Object) bool {
 	if m == other {
 		return true

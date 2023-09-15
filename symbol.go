@@ -32,7 +32,7 @@ func (sy *Symbol) IsAtom() bool { return true }
 // IsEqual compare two objects.
 //
 // Two symbols are equal, if the are created by the same factory and have the same same.
-func (sy *Symbol) IsEql(other Object) bool {
+func (sy *Symbol) IsEqual(other Object) bool {
 	if sy == other {
 		return true
 	}
@@ -44,9 +44,6 @@ func (sy *Symbol) IsEql(other Object) bool {
 	}
 	return false
 }
-
-// IsEqual is the same a IsEqv for symbols.
-func (sy *Symbol) IsEqual(other Object) bool { return sy.IsEql(other) }
 
 // String returns the Go string representation.
 func (sy *Symbol) String() string { return sy.cname }
