@@ -21,7 +21,4 @@ func TestBoolean(t *testing.T) {
 	if sx.IsTrue(sx.String("")) {
 		t.Error("Empty string is True")
 	}
-	if !sx.IsFalse(sx.String("")) {
-		t.Error("Empty string is not False")
-	}
 }

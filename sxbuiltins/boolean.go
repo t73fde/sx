@@ -32,7 +32,7 @@ func Not(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
-	return sx.MakeBoolean(sx.IsFalse(args[0])), nil
+	return sx.MakeBoolean(!sx.IsTrue(args[0])), nil
 }
 
 // AndS parses an and statement: (and expr...).
@@ -54,7 +54,7 @@ func (ae *AndExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	for i, expr := range ae.Front {
 		front := expr.Rework(rf)
 		if objectExpr, isObjectExpr := front.(sxeval.ObjectExpr); isObjectExpr {
-			if sx.IsFalse(objectExpr.Object()) {
+			if !sx.IsTrue(objectExpr.Object()) {
 				return front
 			}
 		}
@@ -62,7 +62,7 @@ func (ae *AndExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	}
 	last := ae.Last.Rework(rf)
 	if objectExpr, isObjectExpr := last.(sxeval.ObjectExpr); isObjectExpr {
-		if sx.IsFalse(objectExpr.Object()) {
+		if !sx.IsTrue(objectExpr.Object()) {
 			return last
 		}
 	}
@@ -75,7 +75,7 @@ func (ae *AndExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 		if err != nil {
 			return nil, err
 		}
-		if sx.IsFalse(obj) {
+		if !sx.IsTrue(obj) {
 			return obj, nil
 		}
 	}

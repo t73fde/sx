@@ -20,7 +20,7 @@ func MakeBoolean(b bool) Object {
 
 // IsTrue returns true, if object is a true value.
 //
-// Everything except a nil object, the False object, and the empty string, is a true value.
+// Everything except a nil object and the empty string, is a true value.
 func IsTrue(obj Object) bool {
 	if IsNil(obj) {
 		return false
@@ -30,8 +30,3 @@ func IsTrue(obj Object) bool {
 	}
 	return true
 }
-
-// IsFalse returns true, if object is a false value.
-//
-// A nil object, the False object or an empty string are false values.
-func IsFalse(obj Object) bool { return !IsTrue(obj) }
