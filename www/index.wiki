@@ -1,7 +1,7 @@
 <title>Sx</title>
 
 <b>Sx</b> is a framework, implemented in the Go programming language, to work
-with [[https://en.wikipedia.org/wiki/S-expression|s-expressions]] (symbolic
+with [https://en.wikipedia.org/wiki/S-expression|s-expressions] (symbolic
 expressions). S-expressions are one of the most mature techniques to encode
 data in a portable and interpretable way. It follows a simple guide: every
 value is either an atomic value (like numbers, strings, symbols), or a list of
