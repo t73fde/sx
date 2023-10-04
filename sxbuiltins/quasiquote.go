@@ -409,7 +409,8 @@ func (mle MakeListExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	return mle
 }
 func (mle MakeListExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	elem, err := frame.Execute(mle.Elem)
+	subFrame := frame.MakeCalleeFrame()
+	elem, err := subFrame.Execute(mle.Elem)
 	if err != nil {
 		return nil, err
 	}

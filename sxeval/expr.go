@@ -183,7 +183,8 @@ func (ce *CallExpr) Rework(rf *ReworkFrame) Expr {
 	return ce
 }
 func (ce *CallExpr) Compute(frame *Frame) (sx.Object, error) {
-	val, err := frame.Execute(ce.Proc)
+	subFrame := frame.MakeCalleeFrame()
+	val, err := subFrame.Execute(ce.Proc)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +196,7 @@ func (ce *CallExpr) Compute(frame *Frame) (sx.Object, error) {
 		return nil, NotCallableError{Obj: val}
 	}
 
-	return computeCallable(frame, proc, ce.Args)
+	return computeCallable(subFrame, proc, ce.Args)
 }
 func (ce *CallExpr) IsEqual(other Expr) bool {
 	if ce == other {
@@ -292,7 +293,8 @@ func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 	return ObjExpr{Obj: result}.Rework(rf)
 }
 func (bce *BuiltinCallExpr) Compute(frame *Frame) (sx.Object, error) {
-	return computeCallable(frame, bce.Proc, bce.Args)
+	subFrame := frame.MakeCalleeFrame()
+	return computeCallable(subFrame, bce.Proc, bce.Args)
 }
 func (bce *BuiltinCallExpr) IsEqual(other Expr) bool {
 	if bce == other {

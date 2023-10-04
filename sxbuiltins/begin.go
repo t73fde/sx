@@ -37,7 +37,8 @@ func (be *BeginExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	return be
 }
 func (be *BeginExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	return be.ExprSeq.Compute(frame)
+	subFrame := frame.MakeCalleeFrame()
+	return be.ExprSeq.Compute(subFrame)
 }
 func (be *BeginExpr) IsEqual(other sxeval.Expr) bool {
 	if be == other {

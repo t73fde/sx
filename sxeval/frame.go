@@ -58,15 +58,14 @@ func (frame *Frame) MakeLambdaFrame(pf *ParseFrame, name string, numBindings int
 }
 
 func (frame *Frame) Execute(expr Expr) (sx.Object, error) {
-	execFrame := frame.MakeCalleeFrame()
 	if exec := frame.executor; exec != nil {
 		for {
-			res, err := exec.Execute(execFrame, expr)
+			res, err := exec.Execute(frame, expr)
 			if err == nil {
 				return res, nil
 			}
 			if again, ok := err.(executeAgain); ok {
-				execFrame.env = again.env
+				frame.env = again.env
 				expr = again.expr
 				continue
 			}
@@ -75,12 +74,12 @@ func (frame *Frame) Execute(expr Expr) (sx.Object, error) {
 	}
 
 	for {
-		res, err := expr.Compute(execFrame)
+		res, err := expr.Compute(frame)
 		if err == nil {
 			return res, nil
 		}
 		if again, ok := err.(executeAgain); ok {
-			execFrame.env = again.env
+			frame.env = again.env
 			expr = again.expr
 			continue
 		}

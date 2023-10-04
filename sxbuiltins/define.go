@@ -78,7 +78,8 @@ func (de *DefineExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	return de
 }
 func (de *DefineExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	val, err := frame.Execute(de.Val)
+	subFrame := frame.MakeCalleeFrame()
+	val, err := subFrame.Execute(de.Val)
 	if err == nil {
 		err = frame.Bind(de.Sym, val)
 	}
@@ -150,7 +151,8 @@ func (se *SetXExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	if _, found := frame.Lookup(se.Sym); !found {
 		return nil, frame.MakeNotBoundError(se.Sym)
 	}
-	val, err := frame.Execute(se.Val)
+	subFrame := frame.MakeCalleeFrame()
+	val, err := subFrame.Execute(se.Val)
 	if err == nil {
 		err = frame.Bind(se.Sym, val)
 	}

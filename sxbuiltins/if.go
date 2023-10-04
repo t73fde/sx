@@ -76,12 +76,13 @@ func (ife *If2Expr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	return ife
 }
 func (ife *If2Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	test, err := frame.Execute(ife.Test)
+	subFrame := frame.MakeCalleeFrame()
+	test, err := subFrame.Execute(ife.Test)
 	if err != nil {
 		return nil, err
 	}
 	if sx.IsTrue(test) {
-		return frame.ExecuteTCO(ife.True)
+		return subFrame.ExecuteTCO(ife.True)
 	}
 	return sx.Nil(), nil
 }
@@ -157,14 +158,15 @@ func (ife *If3Expr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	return ife
 }
 func (ife *If3Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	test, err := frame.Execute(ife.Test)
+	subFrame := frame.MakeCalleeFrame()
+	test, err := subFrame.Execute(ife.Test)
 	if err != nil {
 		return nil, err
 	}
 	if sx.IsTrue(test) {
-		return frame.ExecuteTCO(ife.True)
+		return subFrame.ExecuteTCO(ife.True)
 	}
-	return frame.ExecuteTCO(ife.False)
+	return subFrame.ExecuteTCO(ife.False)
 }
 func (ife *If3Expr) IsEqual(other sxeval.Expr) bool {
 	if ife == other {

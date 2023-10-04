@@ -44,7 +44,8 @@ func (te *TimeitExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 }
 func (te *TimeitExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	start := time.Now()
-	obj, err := frame.Execute(te.expr)
+	subFrame := frame.MakeCalleeFrame()
+	obj, err := subFrame.Execute(te.expr)
 	duration := sx.String(time.Since(start).String())
 	if err == nil {
 		return sx.MakeList(duration, obj), nil

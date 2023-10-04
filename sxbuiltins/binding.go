@@ -111,9 +111,10 @@ func (le *LetExpr) ReworkInPlace(rf *sxeval.ReworkFrame) {
 	le.ExprSeq.Rework(rf)
 }
 func (le *LetExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+	subFrame := frame.MakeCalleeFrame()
 	letFrame := frame.MakeLetFrame("let", len(le.Symbols))
 	for i, sym := range le.Symbols {
-		obj, err := frame.Execute(le.Exprs[i])
+		obj, err := subFrame.Execute(le.Exprs[i])
 		if err != nil {
 			return nil, err
 		}
