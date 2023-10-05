@@ -125,7 +125,7 @@ var syntaxes = []struct {
 	{"begin", sxbuiltins.BeginS},
 	{"and", sxbuiltins.AndS}, {"or", sxbuiltins.OrS},
 	{"lambda", sxbuiltins.LambdaS},
-	{"let", sxbuiltins.LetS}, {"let*", sxbuiltins.LetStarS}, {"letrec", sxbuiltins.LetRecS},
+	{"let", sxbuiltins.LetS},
 	{"timeit", sxbuiltins.TimeitS},
 	{"defmacro", sxbuiltins.DefMacroS},
 }

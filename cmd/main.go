@@ -74,7 +74,7 @@ var syntaxes = []struct {
 	{"begin", sxbuiltins.BeginS},
 	{"and", sxbuiltins.AndS}, {"or", sxbuiltins.OrS},
 	{"lambda", sxbuiltins.LambdaS},
-	{"let", sxbuiltins.LetS}, {"let*", sxbuiltins.LetStarS}, {"letrec", sxbuiltins.LetRecS},
+	{"let", sxbuiltins.LetS},
 	{"timeit", sxbuiltins.TimeitS},
 	{"defmacro", sxbuiltins.DefMacroS},
 }
@@ -285,12 +285,6 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 	case *sxbuiltins.LetExpr:
 		fmt.Println("LET")
 		printLet(eng, e, level+1)
-	case *sxbuiltins.LetStarExpr:
-		fmt.Println("LET*")
-		printLet(eng, &e.LetExpr, level+1)
-	case *sxbuiltins.LetRecExpr:
-		fmt.Println("LETREC")
-		printLet(eng, &e.LetExpr, level+1)
 	case *sxbuiltins.AndExpr:
 		fmt.Println("AND")
 		printExprSeq(eng, &e.ExprSeq, level+1)
