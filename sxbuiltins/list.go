@@ -12,7 +12,11 @@ package sxbuiltins
 
 // Contains all list-related builtins
 
-import "zettelstore.de/sx.fossil"
+import (
+	"fmt"
+
+	"zettelstore.de/sx.fossil"
+)
 
 // Cons returns a cons pair of the two arguments.
 func Cons(args []sx.Object) (sx.Object, error) {
@@ -70,6 +74,66 @@ func Cdr(args []sx.Object) (sx.Object, error) {
 	}
 	return pair.Cdr(), nil
 }
+
+func cxr(args []sx.Object, spec string) (result sx.Object, _ error) {
+	err := CheckArgs(args, 1, 1)
+	pair, err := GetPair(err, args, 0)
+	if err != nil {
+		return nil, err
+	}
+	i := len(spec) - 1
+	for {
+		switch spec[i] {
+		case 'a':
+			result = pair.Car()
+		case 'd':
+			result = pair.Cdr()
+		default:
+			panic(spec)
+		}
+		if i <= 0 {
+			break
+		}
+		i--
+		var isPair bool
+		pair, isPair = sx.GetPair(result)
+		if !isPair {
+			return nil, fmt.Errorf("pair expected, but got %T/%v", result, result)
+		}
+	}
+	return result, nil
+}
+
+func Caar(args []sx.Object) (sx.Object, error) { return cxr(args, "aa") }
+func Cadr(args []sx.Object) (sx.Object, error) { return cxr(args, "ad") }
+func Cdar(args []sx.Object) (sx.Object, error) { return cxr(args, "da") }
+func Cddr(args []sx.Object) (sx.Object, error) { return cxr(args, "dd") }
+
+func Caaar(args []sx.Object) (sx.Object, error) { return cxr(args, "aaa") }
+func Caadr(args []sx.Object) (sx.Object, error) { return cxr(args, "aad") }
+func Cadar(args []sx.Object) (sx.Object, error) { return cxr(args, "ada") }
+func Caddr(args []sx.Object) (sx.Object, error) { return cxr(args, "add") }
+func Cdaar(args []sx.Object) (sx.Object, error) { return cxr(args, "daa") }
+func Cdadr(args []sx.Object) (sx.Object, error) { return cxr(args, "dad") }
+func Cddar(args []sx.Object) (sx.Object, error) { return cxr(args, "dda") }
+func Cdddr(args []sx.Object) (sx.Object, error) { return cxr(args, "ddd") }
+
+func Caaaar(args []sx.Object) (sx.Object, error) { return cxr(args, "aaaa") }
+func Caaadr(args []sx.Object) (sx.Object, error) { return cxr(args, "aaad") }
+func Caadar(args []sx.Object) (sx.Object, error) { return cxr(args, "aada") }
+func Caaddr(args []sx.Object) (sx.Object, error) { return cxr(args, "aadd") }
+func Cadaar(args []sx.Object) (sx.Object, error) { return cxr(args, "adaa") }
+func Cadadr(args []sx.Object) (sx.Object, error) { return cxr(args, "adad") }
+func Caddar(args []sx.Object) (sx.Object, error) { return cxr(args, "adda") }
+func Cadddr(args []sx.Object) (sx.Object, error) { return cxr(args, "addd") }
+func Cdaaar(args []sx.Object) (sx.Object, error) { return cxr(args, "daaa") }
+func Cdaadr(args []sx.Object) (sx.Object, error) { return cxr(args, "daad") }
+func Cdadar(args []sx.Object) (sx.Object, error) { return cxr(args, "dada") }
+func Cdaddr(args []sx.Object) (sx.Object, error) { return cxr(args, "dadd") }
+func Cddaar(args []sx.Object) (sx.Object, error) { return cxr(args, "ddaa") }
+func Cddadr(args []sx.Object) (sx.Object, error) { return cxr(args, "ddad") }
+func Cdddar(args []sx.Object) (sx.Object, error) { return cxr(args, "ddda") }
+func Cddddr(args []sx.Object) (sx.Object, error) { return cxr(args, "dddd") }
 
 // Last returns the last element of a list
 func Last(args []sx.Object) (sx.Object, error) {
