@@ -70,8 +70,8 @@ func (ae *AndExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	return ae
 }
 func (ae *AndExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	subFrame := frame.MakeCalleeFrame()
 	for _, e := range ae.Front {
+		subFrame := frame.MakeCalleeFrame()
 		obj, err := subFrame.Execute(e)
 		if err != nil {
 			return nil, err
@@ -80,7 +80,7 @@ func (ae *AndExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 			return obj, nil
 		}
 	}
-	return subFrame.ExecuteTCO(ae.Last)
+	return frame.ExecuteTCO(ae.Last)
 }
 func (ae *AndExpr) IsEqual(other sxeval.Expr) bool {
 	if ae == other {
@@ -137,8 +137,8 @@ func (oe *OrExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	return oe
 }
 func (oe *OrExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	subFrame := frame.MakeCalleeFrame()
 	for _, e := range oe.Front {
+		subFrame := frame.MakeCalleeFrame()
 		obj, err := subFrame.Execute(e)
 		if err != nil {
 			return nil, err
@@ -147,7 +147,7 @@ func (oe *OrExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 			return obj, nil
 		}
 	}
-	return subFrame.ExecuteTCO(oe.Last)
+	return frame.ExecuteTCO(oe.Last)
 }
 func (oe *OrExpr) IsEqual(other sxeval.Expr) bool {
 	if oe == other {

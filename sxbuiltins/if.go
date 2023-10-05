@@ -82,7 +82,7 @@ func (ife *If2Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 		return nil, err
 	}
 	if sx.IsTrue(test) {
-		return subFrame.ExecuteTCO(ife.True)
+		return frame.ExecuteTCO(ife.True)
 	}
 	return sx.Nil(), nil
 }
@@ -164,9 +164,9 @@ func (ife *If3Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 		return nil, err
 	}
 	if sx.IsTrue(test) {
-		return subFrame.ExecuteTCO(ife.True)
+		return frame.ExecuteTCO(ife.True)
 	}
-	return subFrame.ExecuteTCO(ife.False)
+	return frame.ExecuteTCO(ife.False)
 }
 func (ife *If3Expr) IsEqual(other sxeval.Expr) bool {
 	if ife == other {

@@ -196,7 +196,7 @@ func (ce *CallExpr) Compute(frame *Frame) (sx.Object, error) {
 		return nil, NotCallableError{Obj: val}
 	}
 
-	return computeCallable(subFrame, proc, ce.Args)
+	return computeCallable(frame, proc, ce.Args)
 }
 func (ce *CallExpr) IsEqual(other Expr) bool {
 	if ce == other {
@@ -236,7 +236,8 @@ func computeCallable(frame *Frame, proc Callable, args []Expr) (sx.Object, error
 	}
 	objArgs := make([]sx.Object, len(args))
 	for i, exprArg := range args {
-		val, err := frame.Execute(exprArg)
+		subFrame := frame.MakeCalleeFrame()
+		val, err := subFrame.Execute(exprArg)
 		if err != nil {
 			return val, err
 		}

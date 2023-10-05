@@ -69,7 +69,7 @@ func ScanLet(args *sx.Pair) (bindings, body *sx.Pair, err error) {
 
 // ScanLetBinding scans the bindings and returns the slice of symbols and
 // objects (which have yet to be parsed).
-func ScanLetBindings(bindings *sx.Pair) (symbols []*sx.Symbol, objs []sx.Object, err error) {
+func ScanLetBindings(bindings *sx.Pair) (symbols []*sx.Symbol, objs []sx.Object, _ error) {
 	for node := bindings; node != nil; {
 		sym, err := GetParameterSymbol(symbols, node.Car())
 		if err != nil {
@@ -111,9 +111,9 @@ func (le *LetExpr) ReworkInPlace(rf *sxeval.ReworkFrame) {
 	le.ExprSeq.Rework(rf)
 }
 func (le *LetExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	subFrame := frame.MakeCalleeFrame()
 	letFrame := frame.MakeLetFrame("let", len(le.Symbols))
 	for i, sym := range le.Symbols {
+		subFrame := frame.MakeCalleeFrame()
 		obj, err := subFrame.Execute(le.Exprs[i])
 		if err != nil {
 			return nil, err
@@ -216,7 +216,8 @@ func (lse *LetStarExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 func (lse *LetStarExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	letStarFrame := frame
 	for i, sym := range lse.Symbols {
-		obj, err := letStarFrame.Execute(lse.Exprs[i])
+		subFrame := letStarFrame.MakeCalleeFrame()
+		obj, err := subFrame.Execute(lse.Exprs[i])
 		if err != nil {
 			return nil, err
 		}
@@ -282,7 +283,8 @@ func (lre *LetRecExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 		letRecFrame.Bind(sym, sx.MakeUndefined())
 	}
 	for i, sym := range lre.Symbols {
-		obj, err := letRecFrame.Execute(lre.Exprs[i])
+		subFrame := letRecFrame.MakeCalleeFrame()
+		obj, err := subFrame.Execute(lre.Exprs[i])
 		if err != nil {
 			return nil, err
 		}

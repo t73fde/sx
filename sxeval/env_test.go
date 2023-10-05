@@ -65,10 +65,10 @@ func TestBindLookupUnbind(t *testing.T) {
 	}
 
 	t.Run("child", func(t *testing.T) {
-		root := sxeval.MakeRootEnvironment(1)
-		root.Bind(sym1, sym2)
-		child := sxeval.MakeChildEnvironment(root, "assoc", 30)
-		bindLookupUnbind(t, root, child, sym1, sym2)
+		newRoot := sxeval.MakeRootEnvironment(1)
+		newRoot.Bind(sym1, sym2)
+		child := sxeval.MakeChildEnvironment(newRoot, "assoc", 30)
+		bindLookupUnbind(t, newRoot, child, sym1, sym2)
 	})
 }
 

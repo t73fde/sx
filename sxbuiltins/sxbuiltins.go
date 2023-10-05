@@ -189,7 +189,8 @@ func (es *ExprSeq) Rework(rf *sxeval.ReworkFrame) {
 }
 func (es *ExprSeq) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	for _, e := range es.Front {
-		_, err := frame.Execute(e)
+		subFrame := frame.MakeCalleeFrame()
+		_, err := subFrame.Execute(e)
 		if err != nil {
 			return nil, err
 		}
