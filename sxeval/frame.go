@@ -32,6 +32,7 @@ func (frame *Frame) MakeCalleeFrame() *Frame {
 		executor: frame.executor,
 	}
 }
+
 func (frame *Frame) MakeParseFrame() *ParseFrame {
 	return &ParseFrame{
 		engine: frame.engine,
@@ -40,14 +41,6 @@ func (frame *Frame) MakeParseFrame() *ParseFrame {
 	}
 }
 
-func (frame *Frame) MakeLetFrame(name string, numBindings int) *Frame {
-	return &Frame{
-		engine:   frame.engine,
-		env:      MakeFixedEnvironment(frame.env, name, numBindings),
-		caller:   frame,
-		executor: frame.executor,
-	}
-}
 func (frame *Frame) MakeLambdaFrame(pf *ParseFrame, name string, numBindings int) *Frame {
 	return &Frame{
 		engine:   frame.engine,
@@ -94,6 +87,7 @@ func (frame *Frame) ExecuteTCO(expr Expr) (sx.Object, error) {
 	// Just return relevant data for real TCO
 	return nil, executeAgain{env: frame.env, expr: expr}
 }
+
 func (frame *Frame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
 	callFrame := Frame{
 		engine: frame.engine,

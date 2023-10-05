@@ -74,7 +74,6 @@ var syntaxes = []struct {
 	{"begin", sxbuiltins.BeginS},
 	{"and", sxbuiltins.AndS}, {"or", sxbuiltins.OrS},
 	{"lambda", sxbuiltins.LambdaS},
-	{"let", sxbuiltins.LetS},
 	{"timeit", sxbuiltins.TimeitS},
 	{"defmacro", sxbuiltins.DefMacroS},
 }
@@ -290,9 +289,6 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 		fmt.Printf("RESOLVE %v\n", e.Symbol)
 	case sxeval.ObjExpr:
 		fmt.Printf("OBJ %T/%v\n", e.Obj, e.Obj)
-	case *sxbuiltins.LetExpr:
-		fmt.Println("LET")
-		printLet(eng, e, level+1)
 	case *sxbuiltins.AndExpr:
 		fmt.Println("AND")
 		printExprSeq(eng, &e.ExprSeq, level+1)
@@ -338,15 +334,6 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 			fmt.Printf("%T\n", expr)
 		}
 	}
-}
-func printLet(eng *sxeval.Engine, le *sxbuiltins.LetExpr, level int) {
-	for i, sym := range le.Symbols {
-		fmt.Print(strings.Repeat(" ", level*2))
-		fmt.Print(sym, ":")
-		printExpr(eng, le.Exprs[i], -level)
-	}
-	printExprSeq(eng, &le.ExprSeq, level)
-
 }
 func printExprSeq(eng *sxeval.Engine, exs *sxbuiltins.ExprSeq, level int) {
 	for _, ex := range exs.Front {
