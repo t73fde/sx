@@ -19,17 +19,17 @@ import (
 // Frame is a runtime object of the current computing environment.
 type Frame struct {
 	engine   *Engine
+	executor Executor // most of the time: engine.exec, but could be updated for interactive debugging
 	env      Environment
 	caller   *Frame
-	executor Executor
 }
 
 func (frame *Frame) MakeCalleeFrame() *Frame {
 	return &Frame{
 		engine:   frame.engine,
+		executor: frame.executor,
 		env:      frame.env,
 		caller:   frame,
-		executor: frame.executor,
 	}
 }
 
@@ -44,9 +44,9 @@ func (frame *Frame) MakeParseFrame() *ParseFrame {
 func (frame *Frame) MakeLambdaFrame(pf *ParseFrame, name string, numBindings int) *Frame {
 	return &Frame{
 		engine:   frame.engine,
+		executor: frame.executor,
 		env:      MakeFixedEnvironment(pf.env, name, numBindings),
 		caller:   frame,
-		executor: frame.executor,
 	}
 }
 
@@ -90,9 +90,10 @@ func (frame *Frame) ExecuteTCO(expr Expr) (sx.Object, error) {
 
 func (frame *Frame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
 	callFrame := Frame{
-		engine: frame.engine,
-		env:    frame.env,
-		caller: frame,
+		engine:   frame.engine,
+		executor: frame.executor,
+		env:      frame.env,
+		caller:   frame,
 	}
 	res, err := fn.Call(&callFrame, args)
 	if err == nil {
@@ -124,5 +125,4 @@ func (frame *Frame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 func (frame *Frame) MakeNotBoundError(sym *sx.Symbol) NotBoundError {
 	return NotBoundError{Env: frame.env, Sym: sym}
 }
-
 func (frame *Frame) Environment() Environment { return frame.env }

@@ -189,7 +189,12 @@ func (eng *Engine) Rework(expr Expr) Expr {
 
 // Execute the given expression in the given environment.
 func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
-	frame := Frame{engine: eng, env: env, caller: nil, executor: eng.exec}
+	frame := Frame{
+		engine:   eng,
+		executor: eng.exec,
+		env:      env,
+		caller:   nil,
+	}
 	return frame.Execute(expr)
 }
 
@@ -212,7 +217,7 @@ func (eng *Engine) BindSyntax(name string, fn SyntaxFn) error {
 }
 
 // Bind a given object to a symbol of the given name in the engine's root environment.
-func (eng *Engine) Bind(name string, obj sx.Object) (err error) {
+func (eng *Engine) Bind(name string, obj sx.Object) error {
 	return eng.root.Bind(eng.sf.MustMake(name), obj)
 }
 
