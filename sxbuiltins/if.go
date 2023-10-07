@@ -37,9 +37,10 @@ func IfS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	}
 	argFalse := argTrue.Tail()
 	if argFalse == nil {
-		return &If2Expr{
-			Test: testExpr,
-			True: trueExpr,
+		return &IfExpr{
+			Test:  testExpr,
+			True:  trueExpr,
+			False: sxeval.NilExpr,
 		}, nil
 	}
 	if argFalse.Tail() != nil {
@@ -49,7 +50,7 @@ func IfS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &If3Expr{
+	return &IfExpr{
 		Test:  testExpr,
 		True:  trueExpr,
 		False: falseExpr,
@@ -57,78 +58,13 @@ func IfS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 }
 
 // IfExpr represents the if-then-else form.
-type If2Expr struct {
-	Test sxeval.Expr
-	True sxeval.Expr
-}
-
-func (ife *If2Expr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	testExpr := ife.Test.Rework(rf)
-	trueExpr := ife.True.Rework(rf)
-	if objectExpr, isObjectExpr := testExpr.(sxeval.ObjectExpr); isObjectExpr {
-		if sx.IsTrue(objectExpr.Object()) {
-			return trueExpr
-		}
-		return sxeval.NilExpr.Rework(rf)
-	}
-	ife.Test = testExpr
-	ife.True = trueExpr
-	return ife
-}
-func (ife *If2Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	subFrame := frame.MakeCalleeFrame()
-	test, err := subFrame.Execute(ife.Test)
-	if err != nil {
-		return nil, err
-	}
-	if sx.IsTrue(test) {
-		return frame.ExecuteTCO(ife.True)
-	}
-	return sx.Nil(), nil
-}
-func (ife *If2Expr) IsEqual(other sxeval.Expr) bool {
-	if ife == other {
-		return true
-	}
-	if otherI, ok := other.(*If2Expr); ok && otherI != nil {
-		return ife.Test.IsEqual(otherI.Test) && ife.True.IsEqual(otherI.True)
-	}
-	return false
-}
-
-func (ife *If2Expr) Print(w io.Writer) (int, error) {
-	length, err := io.WriteString(w, "{IF2 ")
-	if err != nil {
-		return length, err
-	}
-	l, err := ife.Test.Print(w)
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = io.WriteString(w, " ")
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = ife.True.Print(w)
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = io.WriteString(w, "}")
-	length += l
-	return length, err
-}
-
-// IfExpr represents the if-then-else form.
-type If3Expr struct {
+type IfExpr struct {
 	Test  sxeval.Expr
 	True  sxeval.Expr
 	False sxeval.Expr
 }
 
-func (ife *If3Expr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+func (ife *IfExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	testExpr := ife.Test.Rework(rf)
 	trueExpr := ife.True.Rework(rf)
 	falseExpr := ife.False.Rework(rf)
@@ -141,23 +77,12 @@ func (ife *If3Expr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 		return falseExpr
 	}
 
-	// A nil false expression will result in a If2Expr.
-	if objectExpr, isObjectExpr := falseExpr.(sxeval.ObjectExpr); isObjectExpr {
-		if sx.IsNil(objectExpr.Object()) {
-			if2expr := &If2Expr{
-				Test: testExpr,
-				True: trueExpr,
-			}
-			return if2expr.Rework(rf)
-		}
-	}
-
 	ife.Test = testExpr
 	ife.True = trueExpr
 	ife.False = falseExpr
 	return ife
 }
-func (ife *If3Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+func (ife *IfExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	subFrame := frame.MakeCalleeFrame()
 	test, err := subFrame.Execute(ife.Test)
 	if err != nil {
@@ -168,18 +93,18 @@ func (ife *If3Expr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	}
 	return frame.ExecuteTCO(ife.False)
 }
-func (ife *If3Expr) IsEqual(other sxeval.Expr) bool {
+func (ife *IfExpr) IsEqual(other sxeval.Expr) bool {
 	if ife == other {
 		return true
 	}
-	if otherI, ok := other.(*If3Expr); ok && otherI != nil {
+	if otherI, ok := other.(*IfExpr); ok && otherI != nil {
 		return ife.Test.IsEqual(otherI.Test) && ife.True.IsEqual(otherI.True) && ife.False.IsEqual(otherI.False)
 	}
 	return false
 }
 
-func (ife *If3Expr) Print(w io.Writer) (int, error) {
-	length, err := io.WriteString(w, "{IF3 ")
+func (ife *IfExpr) Print(w io.Writer) (int, error) {
+	length, err := io.WriteString(w, "{IF ")
 	if err != nil {
 		return length, err
 	}

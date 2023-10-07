@@ -71,10 +71,7 @@ var syntaxes = []struct {
 }{
 	{"define", sxbuiltins.DefineS}, {"set!", sxbuiltins.SetXS},
 	{"if", sxbuiltins.IfS},
-	{"begin", sxbuiltins.BeginS},
-	{"and", sxbuiltins.AndS}, {"or", sxbuiltins.OrS},
 	{"lambda", sxbuiltins.LambdaS},
-	{"timeit", sxbuiltins.TimeitS},
 	{"defmacro", sxbuiltins.DefMacroS},
 }
 
@@ -289,12 +286,6 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 		fmt.Printf("RESOLVE %v\n", e.Symbol)
 	case sxeval.ObjExpr:
 		fmt.Printf("OBJ %T/%v\n", e.Obj, e.Obj)
-	case *sxbuiltins.AndExpr:
-		fmt.Println("AND")
-		printExprSeq(eng, &e.ExprSeq, level+1)
-	case *sxbuiltins.OrExpr:
-		fmt.Println("OR")
-		printExprSeq(eng, &e.ExprSeq, level+1)
 	case *sxbuiltins.LambdaExpr:
 		fmt.Printf("LAMBDA %q", e.Name)
 		for _, sym := range e.Params {
@@ -304,16 +295,12 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 			fmt.Printf(" . %v", e.Rest)
 		}
 		fmt.Println()
-		printExprSeq(eng, &e.ExprSeq, level+1)
-	case *sxbuiltins.BeginExpr:
-		fmt.Println("BEGIN")
-		printExprSeq(eng, &e.ExprSeq, level+1)
-	case *sxbuiltins.If2Expr:
-		fmt.Println("IF2")
-		printExpr(eng, e.Test, level+1)
-		printExpr(eng, e.True, level+1)
-	case *sxbuiltins.If3Expr:
-		fmt.Println("IF3")
+		for _, ex := range e.ExprSeq.Front {
+			printExpr(eng, ex, level+1)
+		}
+		printExpr(eng, e.ExprSeq.Last, level+1)
+	case *sxbuiltins.IfExpr:
+		fmt.Println("IF")
 		printExpr(eng, e.Test, level+1)
 		printExpr(eng, e.True, level+1)
 		printExpr(eng, e.False, level+1)
@@ -331,13 +318,7 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 		case sxeval.NilExpr:
 			fmt.Println("NIL")
 		default:
-			fmt.Printf("%T\n", expr)
+			fmt.Printf("%T/%v\n", expr, expr)
 		}
 	}
-}
-func printExprSeq(eng *sxeval.Engine, exs *sxbuiltins.ExprSeq, level int) {
-	for _, ex := range exs.Front {
-		printExpr(eng, ex, level)
-	}
-	printExpr(eng, exs.Last, level)
 }

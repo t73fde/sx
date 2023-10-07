@@ -64,32 +64,4 @@ var tcsBoolean = tTestCases{
 		exp:     "{[{not: exactly 1 arguments required, but 2 given: [2 3]}]}",
 		withErr: true,
 	},
-
-	// For (and ...) and (or ...) bollean values should be variables, so that nothing is optimized
-	{name: "and-0", src: "(and)", exp: "1"},
-	{name: "and-1-T", src: "(and TRUE)", exp: "1"},
-	{name: "and-1-F", src: "(and FALSE)", exp: "()"},
-	{name: "and-2-TF", src: "(and TRUE FALSE)", exp: "()"},
-	{name: "and-2-FT", src: "(and FALSE TRUE)", exp: "()"},
-	{name: "and-2-TF-noopt", src: "(and 1 ())", exp: "()"},
-	{name: "and-2-FT-noopt", src: "(and () 1)", exp: "()"},
-	{name: "and-shotcut", src: "(and FALSE (div ONE ZERO))", exp: "()"},
-	{name: "or-0", src: "(or)", exp: "()"},
-	{name: "or-1-T", src: "(or TRUE)", exp: "1"},
-	{name: "or-1-F", src: "(or FALSE)", exp: "()"},
-	{name: "or-2-TF", src: "(or TRUE FALSE)", exp: "1"},
-	{name: "or-2-FT", src: "(or FALSE TRUE)", exp: "1"},
-	{name: "or-2-TF-noopt", src: "(or 1 ())", exp: "1"},
-	{name: "or-2-FT-noopt", src: "(or () 1)", exp: "1"},
-	{name: "or-shotcut", src: "(or TRUE (div ONE ZERO))", exp: "1"},
-	{
-		name: "",
-		src:  "",
-		exp:  "",
-	},
-	{
-		name: "",
-		src:  "",
-		exp:  "",
-	},
 }

@@ -122,10 +122,7 @@ var syntaxes = []struct {
 }{
 	{"define", sxbuiltins.DefineS}, {"set!", sxbuiltins.SetXS},
 	{"if", sxbuiltins.IfS},
-	{"begin", sxbuiltins.BeginS},
-	{"and", sxbuiltins.AndS}, {"or", sxbuiltins.OrS},
 	{"lambda", sxbuiltins.LambdaS},
-	{"timeit", sxbuiltins.TimeitS},
 	{"defmacro", sxbuiltins.DefMacroS},
 }
 
