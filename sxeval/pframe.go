@@ -61,13 +61,6 @@ func (pf *ParseFrame) MakeChildFrame(name string, baseSize int) *ParseFrame {
 		parser: pf.parser,
 	}
 }
-func (pf *ParseFrame) MakeLetFrame(name string, numBindings int) *ParseFrame {
-	return &ParseFrame{
-		engine: pf.engine,
-		env:    MakeFixedEnvironment(pf.env, name, numBindings),
-		parser: pf.parser,
-	}
-}
 
 func (pf *ParseFrame) Bind(sym *sx.Symbol, obj sx.Object) error { return pf.env.Bind(sym, obj) }
 

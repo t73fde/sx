@@ -45,7 +45,7 @@ func (frame *Frame) MakeLambdaFrame(pf *ParseFrame, name string, numBindings int
 	return &Frame{
 		engine:   frame.engine,
 		executor: frame.executor,
-		env:      MakeFixedEnvironment(pf.env, name, numBindings),
+		env:      MakeChildEnvironment(pf.env, name, numBindings),
 		caller:   frame,
 	}
 }

@@ -22,14 +22,10 @@ func BenchmarkEnv(b *testing.B) {
 	symA, symB, symC := sf.MustMake("a"), sf.MustMake("b"), sf.MustMake("c")
 	root := sxeval.MakeRootEnvironment(0)
 	root.Bind(symA, symB)
-	fixed1 := sxeval.MakeFixedEnvironment(root, "fixed-1", 1)
-	fixed1.Bind(symB, symC)
-	fixed77 := sxeval.MakeFixedEnvironment(root, "fixed-77", 77)
-	fixed77.Bind(symB, symC)
 	child77 := sxeval.MakeChildEnvironment(root, "child-77", 77)
 	child77.Bind(symB, symC)
 
-	uuts := []sxeval.Environment{root, fixed1, fixed77, child77}
+	uuts := []sxeval.Environment{root, child77}
 	b.ResetTimer()
 	for _, uut := range uuts {
 		b.Run("lookupL/"+uut.String(), func(b *testing.B) {
