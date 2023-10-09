@@ -13,7 +13,6 @@ package sxbuiltins
 
 import (
 	"fmt"
-	"io"
 
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
@@ -141,27 +140,20 @@ func GetCallable(err error, args []sx.Object, pos int) (sxeval.Callable, error) 
 	return nil, err
 }
 
-// ExprSeq is a sequence of `Expr`s. The `Last expression` is separated to make
-// `Expr.Rework` and tail call optimization easier.
-type ExprSeq struct {
-	Front []sxeval.Expr // all expressions, but the last
-	Last  sxeval.Expr
-}
-
 // ParseExprSeq parses a sequence of expressions.
-func ParseExprSeq(pf *sxeval.ParseFrame, args *sx.Pair) (ExprSeq, error) {
+func ParseExprSeq(pf *sxeval.ParseFrame, args *sx.Pair) ([]sxeval.Expr, error) {
 	if args == nil {
-		return ExprSeq{}, nil
+		return nil, nil
 	}
 	var front []sxeval.Expr
 	for node := args; ; {
 		ex, err := pf.Parse(node.Car())
 		if err != nil {
-			return ExprSeq{}, err
+			return nil, err
 		}
 		cdr := node.Cdr()
 		if sx.IsNil(cdr) {
-			return ExprSeq{front, ex}, nil
+			return append(front, ex), nil
 		}
 		front = append(front, ex)
 		if next, isPair := sx.GetPair(cdr); isPair {
@@ -170,54 +162,8 @@ func ParseExprSeq(pf *sxeval.ParseFrame, args *sx.Pair) (ExprSeq, error) {
 		}
 		ex, err = pf.Parse(cdr)
 		if err != nil {
-			return ExprSeq{}, err
-		}
-		return ExprSeq{front, ex}, nil
-	}
-}
-func (es *ExprSeq) ParseRework(emptyExpr sxeval.Expr) (sxeval.Expr, bool) {
-	if es.Last == nil {
-		return emptyExpr, true
-	}
-	if len(es.Front) == 0 {
-		return es.Last, true
-	}
-	return nil, false
-}
-func (es *ExprSeq) Rework(rf *sxeval.ReworkFrame) {
-	for i, expr := range es.Front {
-		es.Front[i] = expr.Rework(rf)
-	}
-	es.Last = es.Last.Rework(rf)
-}
-func (es *ExprSeq) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	for _, e := range es.Front {
-		subFrame := frame.MakeCalleeFrame()
-		_, err := subFrame.Execute(e)
-		if err != nil {
 			return nil, err
 		}
+		return append(front, ex), nil
 	}
-	return frame.ExecuteTCO(es.Last)
-}
-func (es *ExprSeq) IsEqual(other *ExprSeq) bool {
-	if es == other {
-		return true
-	}
-	return sxeval.EqualExprSlice(es.Front, other.Front) &&
-		es.Last.IsEqual(other.Last)
-}
-func (es *ExprSeq) Print(w io.Writer) (int, error) {
-	length, err := sxeval.PrintExprs(w, es.Front)
-	if err != nil {
-		return length, err
-	}
-	l, err := es.Last.Print(w)
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = io.WriteString(w, "}")
-	length += l
-	return length, err
 }

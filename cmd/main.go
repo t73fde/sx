@@ -295,10 +295,10 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 			fmt.Printf(" . %v", e.Rest)
 		}
 		fmt.Println()
-		for _, ex := range e.ExprSeq.Front {
+		for _, ex := range e.Front {
 			printExpr(eng, ex, level+1)
 		}
-		printExpr(eng, e.ExprSeq.Last, level+1)
+		printExpr(eng, e.Last, level+1)
 	case *sxbuiltins.IfExpr:
 		fmt.Println("IF")
 		printExpr(eng, e.Test, level+1)
