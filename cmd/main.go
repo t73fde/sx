@@ -11,6 +11,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"os"
@@ -121,19 +122,11 @@ var builtinsFA = []struct {
 }
 
 func main() {
-	rd := sxreader.MakeReader(os.Stdin)
-	sf := rd.SymbolFactory()
-	symQQ, symUQ, symUQS := sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")
-	sxbuiltins.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
+	sf := sx.MakeMappedFactory(1024)
+	rd := sxreader.MakeReader(os.Stdin, sxreader.WithSymbolFactory(sf))
+	symQQ, symUQ, symUQS := installQQ(rd)
 
-	mpe := mainParserExecutor{
-		origParser:   nil,
-		origExecutor: nil,
-		logReader:    true,
-		logParser:    true,
-		logExpr:      false,
-		logExecutor:  true,
-	}
+	mpe := mainParserExecutor{}
 	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment(len(syntaxes)+len(builtinsA)+len(builtinsFA)+16))
 	engine.SetQuote(nil)
 	mpe.origParser = engine.SetParser(&mpe)
@@ -206,10 +199,21 @@ func main() {
 		}
 		panic(args[0])
 	})
+	err := readPrelude(engine)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to read prelude: %v\n", err)
+		os.Exit(17)
+	}
 	root.Freeze()
 	env := sxeval.MakeChildEnvironment(engine.GetToplevelEnv(), "repl", 1024)
 	env.Bind(sf.MustMake("root-env"), root)
 	env.Bind(sf.MustMake("repl-env"), env)
+
+	mpe.logReader = true
+	mpe.logParser = true
+	mpe.logExpr = false
+	mpe.logExecutor = true
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go repl(rd, &mpe, engine, env, &wg)
@@ -319,6 +323,34 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 			fmt.Println("NIL")
 		default:
 			fmt.Printf("%T/%v\n", expr, expr)
+		}
+	}
+}
+
+func installQQ(rd *sxreader.Reader) (*sx.Symbol, *sx.Symbol, *sx.Symbol) {
+	sf := rd.SymbolFactory()
+	symQQ, symUQ, symUQS := sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")
+	sxbuiltins.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
+	return symQQ, symUQ, symUQS
+}
+
+//go:embed prelude.sxn
+var prelude string
+
+func readPrelude(engine *sxeval.Engine) error {
+	rd := sxreader.MakeReader(strings.NewReader(prelude), sxreader.WithSymbolFactory(engine.SymbolFactory()))
+	installQQ(rd)
+	for {
+		form, err := rd.Read()
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+		_, err = engine.Eval(engine.RootEnvironment(), form)
+		if err != nil {
+			return err
 		}
 	}
 }
