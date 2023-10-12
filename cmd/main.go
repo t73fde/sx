@@ -70,9 +70,11 @@ var syntaxes = []struct {
 	name string
 	fn   sxeval.SyntaxFn
 }{
-	{"define", sxbuiltins.DefineS}, {"set!", sxbuiltins.SetXS},
+	{"define", sxbuiltins.DefineS},
+	{"defvar", sxbuiltins.DefVarS},
+	{"set!", sxbuiltins.SetXS},
 	{"if", sxbuiltins.IfS},
-	{"lambda", sxbuiltins.LambdaS},
+	{"defun", sxbuiltins.DefunS}, {"lambda", sxbuiltins.LambdaS},
 	{"defmacro", sxbuiltins.DefMacroS},
 }
 

@@ -11,7 +11,6 @@
 package sxbuiltins
 
 import (
-	"fmt"
 	"io"
 
 	"zettelstore.de/sx.fossil"
@@ -20,18 +19,7 @@ import (
 
 // DefMacroS parses a macro specfication and assigns it to a value.
 func DefMacroS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	if args == nil {
-		return nil, sxeval.ErrNoArgs
-	}
-	sym, isSymbol := sx.GetSymbol(args.Car())
-	if !isSymbol {
-		return nil, fmt.Errorf("not a symbol: %T/%v", args.Car(), args.Car())
-	}
-	args = args.Tail()
-	if args == nil {
-		return nil, fmt.Errorf("parameter spec and body missing")
-	}
-	le, err := ParseProcedure(frame, sx.Repr(sym), args.Car(), args.Cdr())
+	sym, le, err := parseDefProc(frame, args)
 	if err != nil {
 		return nil, err
 	}

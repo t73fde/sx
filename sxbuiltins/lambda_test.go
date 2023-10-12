@@ -29,6 +29,13 @@ var tcsLambda = tTestCases{
 	{name: "callable?-map", src: "(callable? map)", exp: "1"},
 	{name: "callable-lambda", src: "(callable? (lambda x 0))", exp: "1"},
 
+	{name: "err-defun-0", src: "(defun)", exp: "{[{defun: no arguments given}]}", withErr: true},
+	{name: "err-defun-nosym", src: "(defun 1)", exp: "{[{defun: not a symbol: sx.Int64/1}]}", withErr: true},
+	{name: "err-defun-a", src: "(defun a)", exp: "{[{defun: parameter spec and body missing}]}", withErr: true},
+	{name: "defun", src: "(defun a () 1)", exp: "#<lambda:a>"},
+	{name: "defun-eval", src: "((defun a () 1))", exp: "1"},
+	{name: "defun-eval-arg", src: "((defun a (a) a) 1)", exp: "1"},
+
 	{
 		name:    "err-lambda-0",
 		src:     "(lambda)",

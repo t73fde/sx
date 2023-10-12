@@ -45,6 +45,32 @@ var tcsDefine = tTestCases{
 	{name: "define-a-1", src: "(define a 1)", exp: "1"},
 
 	{
+		name:    "err-defvar-0",
+		src:     "(defvar)",
+		exp:     "{[{defvar: need at least two arguments}]}",
+		withErr: true,
+	},
+	{
+		name:    "err-defvar-1",
+		src:     "(defvar 1)",
+		exp:     "{[{defvar: argument 1 must be a symbol, but is: sx.Int64/1}]}",
+		withErr: true,
+	},
+	{
+		name:    "err-defvar-1a",
+		src:     "(defvar a)",
+		exp:     "{[{defvar: argument 2 missing}]}",
+		withErr: true,
+	},
+	{
+		name:    "err-defvar-a-1",
+		src:     "(defvar a . 1)",
+		exp:     "{[{defvar: argument 2 must be a proper list}]}",
+		withErr: true,
+	},
+	{name: "defvar-a-1", src: "(defvar a 1)", exp: "1"},
+
+	{
 		name:    "err-deffn-0",
 		src:     "(define ())",
 		exp:     "{[{define: empty function head}]}",

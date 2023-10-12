@@ -27,6 +27,31 @@ func CallableP(args []sx.Object) (sx.Object, error) {
 	return sx.MakeBoolean(ok), nil
 }
 
+// DefunS parses a procedure/function specfication and assigns it to a value.
+func DefunS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	sym, le, err := parseDefProc(frame, args)
+	if err != nil {
+		return nil, err
+	}
+	return &DefineExpr{Sym: sym, Val: le}, nil
+}
+
+func parseDefProc(frame *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaExpr, error) {
+	if args == nil {
+		return nil, nil, sxeval.ErrNoArgs
+	}
+	sym, isSymbol := sx.GetSymbol(args.Car())
+	if !isSymbol {
+		return nil, nil, fmt.Errorf("not a symbol: %T/%v", args.Car(), args.Car())
+	}
+	args = args.Tail()
+	if args == nil {
+		return nil, nil, fmt.Errorf("parameter spec and body missing")
+	}
+	le, err := ParseProcedure(frame, sx.Repr(sym), args.Car(), args.Cdr())
+	return sym, le, err
+}
+
 // LambdaS parses a procedure specification.
 func LambdaS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {

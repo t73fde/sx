@@ -20,6 +20,36 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
+// DefVarS parses a (defvar name value) form.
+func DefVarS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	sym, val, err := parseSymValue(pf, args)
+	if err != nil {
+		return nil, err
+	}
+	return &DefineExpr{Sym: sym, Val: val}, nil
+}
+
+func parseSymValue(pf *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
+	if args == nil {
+		return nil, nil, fmt.Errorf("need at least two arguments")
+	}
+	car := args.Car()
+	sym, isSymbol := sx.GetSymbol(car)
+	if !isSymbol {
+		return nil, nil, fmt.Errorf("argument 1 must be a symbol, but is: %T/%v", car, car)
+	}
+	cdr := args.Cdr()
+	if sx.IsNil(cdr) {
+		return nil, nil, fmt.Errorf("argument 2 missing")
+	}
+	pair, isPair := sx.GetPair(cdr)
+	if !isPair {
+		return nil, nil, fmt.Errorf("argument 2 must be a proper list")
+	}
+	val, err := pf.Parse(pair.Car())
+	return sym, val, err
+}
+
 // DefineS parses a (define name value) form.
 func DefineS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
