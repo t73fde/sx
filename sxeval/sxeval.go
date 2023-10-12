@@ -201,19 +201,24 @@ func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
 // BindBuiltinA binds a standard builtin function to the given name in the engine's root environment.
 func (eng *Engine) BindBuiltinA(name string, fn BuiltinA) error {
 	eng.bNames[reflect.ValueOf(fn).Pointer()] = name
-	return eng.Bind(name, fn)
+	return eng.BindConst(name, fn)
 }
 
 // BindBuiltinEEA binds a special builtin function to the given name in the engine's root environment.
 func (eng *Engine) BindBuiltinFA(name string, fn BuiltinFA) error {
 	eng.bNames[reflect.ValueOf(fn).Pointer()] = name
-	return eng.Bind(name, fn)
+	return eng.BindConst(name, fn)
 }
 
 // BindSyntax binds a syntax parser to the given name in the engine's root environment.
 // It also binds the parser to the symbol directly.
 func (eng *Engine) BindSyntax(name string, fn SyntaxFn) error {
-	return eng.Bind(name, MakeSyntax(name, fn))
+	return eng.BindConst(name, MakeSyntax(name, fn))
+}
+
+// BindConst a given object to a symbol of the given name as a constant in the engine's root environment.
+func (eng *Engine) BindConst(name string, obj sx.Object) error {
+	return eng.root.BindConst(eng.sf.MustMake(name), obj)
 }
 
 // Bind a given object to a symbol of the given name in the engine's root environment.
