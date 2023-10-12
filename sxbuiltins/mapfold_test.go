@@ -36,14 +36,14 @@ var tcsMapFold = tTestCases{
 		exp:     "{[{map: argument 2 is not a list, but sx.Int64/1}]}",
 		withErr: true,
 	},
-	{name: "map-nil", src: "(map not ())", exp: "()"},
+	{name: "map-nil", src: "(map (lambda (x) (if x () 1)) ())", exp: "()"},
 	{
 		name: "map-list",
-		src:  "(map not (list 1 () \"\" \"1\" 3))",
+		src:  "(map (lambda (x) (if x () 1)) (list 1 () \"\" \"1\" 3))",
 		exp:  "(() 1 1 () ())",
 	},
-	{name: "map-cons", src: "(map not (cons 1 \"\"))", exp: "(() . 1)"},
-	{name: "map-list*", src: "(map not (list* () 1 \"\"))", exp: "(1 () . 1)"},
+	{name: "map-cons", src: "(map (lambda (x) (if x () 1)) (cons 1 \"\"))", exp: "(() . 1)"},
+	{name: "map-list*", src: "(map (lambda (x) (if x () 1)) (list* () 1 \"\"))", exp: "(1 () . 1)"},
 
 	{
 		name:    "err-apply-0",

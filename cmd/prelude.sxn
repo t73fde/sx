@@ -8,6 +8,16 @@
 ;;; obligations under this license.
 ;;;----------------------------------------------------------------------------
 
+;; Constants NIL and T
+(defconst NIL ())
+(defconst T   'T)
+
+;; Functions boolean and not
+(defun boolean (x) (if x T NIL))
+(defconst boolean boolean)
+(defun not (x) (if x NIL T))
+(defconst not not)
+
 ;; let macro
 ;;
 ;; (let (BINDING ...) EXPR ...), where BINDING is a list of two elements
@@ -43,7 +53,7 @@
 ;;
 ;; (and EXPR ...)
 (defmacro and args
-    (cond ((null? args)       (not ()))
+    (cond ((null? args)       T)
           ((null? (cdr args)) (car args))
           (else               `(if ,(car args) (and ,@(cdr args))))))
 
@@ -52,6 +62,6 @@
 ;;
 ;; (or EXPR ...)
 (defmacro or args
-    (cond ((null? args)       ())
+    (cond ((null? args)       NIL)
           ((null? (cdr args)) (car args))
-          (else               `(if ,(car args) ,(not ()) (or ,@(cdr args))))))
+          (else               `(if ,(car args) T (or ,@(cdr args))))))

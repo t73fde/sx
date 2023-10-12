@@ -122,6 +122,7 @@ var syntaxes = []struct {
 }{
 	{"define", sxbuiltins.DefineS},
 	{"defvar", sxbuiltins.DefVarS},
+	{"defconst", sxbuiltins.DefConstS},
 	{"set!", sxbuiltins.SetXS},
 	{"if", sxbuiltins.IfS},
 	{"defun", sxbuiltins.DefunS}, {"lambda", sxbuiltins.LambdaS},
@@ -133,7 +134,6 @@ var builtinsA = []struct {
 	fn   sxeval.BuiltinA
 }{
 	{"==", sxbuiltins.Identical}, {"=", sxbuiltins.Equal},
-	{"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
 	{"number?", sxbuiltins.NumberP},
 	{"+", sxbuiltins.Add}, {"-", sxbuiltins.Sub}, {"*", sxbuiltins.Mul},
 	{"div", sxbuiltins.Div}, {"mod", sxbuiltins.Mod},

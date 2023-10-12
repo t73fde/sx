@@ -171,7 +171,7 @@ func (eng *Engine) Eval(env Environment, obj sx.Object) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	expr = eng.Rework(expr)
+	expr = eng.Rework(env, expr)
 	return eng.Execute(env, expr)
 }
 
@@ -182,8 +182,8 @@ func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
 }
 
 // Rework the given expression with the options stored in the engine.
-func (eng *Engine) Rework(expr Expr) Expr {
-	rf := ReworkFrame{constEnv: eng.reworkOpt.ResolveEnv}
+func (eng *Engine) Rework(env Environment, expr Expr) Expr {
+	rf := ReworkFrame{Env: env, constEnv: eng.reworkOpt.ResolveEnv}
 	return expr.Rework(&rf)
 }
 

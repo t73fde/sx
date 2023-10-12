@@ -26,7 +26,16 @@ func DefVarS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DefineExpr{Sym: sym, Val: val}, nil
+	return &DefineExpr{Sym: sym, Val: val, Const: false}, nil
+}
+
+// DefConstS parses a (defconst name value) form.
+func DefConstS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	sym, val, err := parseSymValue(pf, args)
+	if err != nil {
+		return nil, err
+	}
+	return &DefineExpr{Sym: sym, Val: val, Const: true}, nil
 }
 
 func parseSymValue(pf *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
@@ -61,13 +70,13 @@ func DefineS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if err != nil {
 			return val, err
 		}
-		return &DefineExpr{Sym: car, Val: val}, nil
+		return &DefineExpr{Sym: car, Val: val, Const: false}, nil
 	case *sx.Pair:
 		sym, fun, err := parseProcedureDefinition(pf, car, args)
 		if err != nil {
 			return fun, err
 		}
-		return &DefineExpr{Sym: sym, Val: fun}, nil
+		return &DefineExpr{Sym: sym, Val: fun, Const: false}, nil
 	default:
 		return nil, fmt.Errorf("argument 1 must be a symbol or a list, but is: %T/%v", car, car)
 	}
@@ -99,8 +108,9 @@ func parseProcedureDefinition(pf *sxeval.ParseFrame, head, args *sx.Pair) (*sx.S
 
 // DefineExpr stores data for a define statement.
 type DefineExpr struct {
-	Sym *sx.Symbol
-	Val sxeval.Expr
+	Sym   *sx.Symbol
+	Val   sxeval.Expr
+	Const bool
 }
 
 func (de *DefineExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
@@ -111,7 +121,11 @@ func (de *DefineExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 	subFrame := frame.MakeCalleeFrame()
 	val, err := subFrame.Execute(de.Val)
 	if err == nil {
-		err = frame.Bind(de.Sym, val)
+		if de.Const {
+			err = frame.BindConst(de.Sym, val)
+		} else {
+			err = frame.Bind(de.Sym, val)
+		}
 	}
 	return val, err
 }
@@ -119,8 +133,10 @@ func (de *DefineExpr) IsEqual(other sxeval.Expr) bool {
 	if de == other {
 		return true
 	}
-	if otherM, ok := other.(*DefineExpr); ok && otherM != nil {
-		return de.Sym.IsEqual(otherM.Sym) && de.Val.IsEqual(otherM.Val)
+	if otherD, ok := other.(*DefineExpr); ok && otherD != nil {
+		return de.Sym.IsEqual(otherD.Sym) &&
+			de.Val.IsEqual(otherD.Val) &&
+			de.Const == otherD.Const
 	}
 	return false
 }
@@ -130,7 +146,15 @@ func (de *DefineExpr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
-	l, err := sx.Print(w, de.Sym)
+	var l int
+	if de.Const {
+		l, err = io.WriteString(w, "CONST ")
+		length += l
+		if err != nil {
+			return length, err
+		}
+	}
+	l, err = sx.Print(w, de.Sym)
 	length += l
 	if err != nil {
 		return length, err

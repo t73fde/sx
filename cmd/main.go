@@ -72,6 +72,7 @@ var syntaxes = []struct {
 }{
 	{"define", sxbuiltins.DefineS},
 	{"defvar", sxbuiltins.DefVarS},
+	{"defconst", sxbuiltins.DefConstS},
 	{"set!", sxbuiltins.SetXS},
 	{"if", sxbuiltins.IfS},
 	{"defun", sxbuiltins.DefunS}, {"lambda", sxbuiltins.LambdaS},
@@ -83,7 +84,6 @@ var builtinsA = []struct {
 	fn   sxeval.BuiltinA
 }{
 	{"==", sxbuiltins.Identical}, {"=", sxbuiltins.Equal},
-	{"boolean", sxbuiltins.Boolean}, {"not", sxbuiltins.Not},
 	{"number?", sxbuiltins.NumberP},
 	{"+", sxbuiltins.Add}, {"-", sxbuiltins.Sub}, {"*", sxbuiltins.Mul},
 	{"div", sxbuiltins.Div}, {"mod", sxbuiltins.Mod},
@@ -251,7 +251,7 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env 
 			fmt.Println(";p", err)
 			continue
 		}
-		expr = eng.Rework(expr)
+		expr = eng.Rework(env, expr)
 		if mpe.logExpr {
 			printExpr(eng, expr, 0)
 			continue
@@ -311,7 +311,11 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 		printExpr(eng, e.True, level+1)
 		printExpr(eng, e.False, level+1)
 	case *sxbuiltins.DefineExpr:
-		fmt.Println("DEFINE", e.Sym)
+		if e.Const {
+			fmt.Println("DEFCONST", e.Sym)
+		} else {
+			fmt.Println("DEFVAR", e.Sym)
+		}
 		printExpr(eng, e.Val, level+1)
 	case *sxbuiltins.SetXExpr:
 		fmt.Println("SET!", e.Sym)

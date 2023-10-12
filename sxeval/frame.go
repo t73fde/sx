@@ -117,6 +117,9 @@ type executeAgain struct {
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }
 
 func (frame *Frame) Bind(sym *sx.Symbol, obj sx.Object) error { return frame.env.Bind(sym, obj) }
+func (frame *Frame) BindConst(sym *sx.Symbol, obj sx.Object) error {
+	return frame.env.BindConst(sym, obj)
+}
 func (frame *Frame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return Resolve(frame.env, sym)
 }

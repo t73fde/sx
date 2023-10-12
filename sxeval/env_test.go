@@ -193,3 +193,37 @@ func checkEnvEqual(t *testing.T, env1, env2 sxeval.Environment) {
 		t.Error("equal envs differ")
 	}
 }
+
+func TestConstBinding(t *testing.T) {
+	t.Parallel()
+	sf := sx.MakeMappedFactory(2)
+	env := sxeval.MakeRootEnvironment(2)
+	symVar, symConst := sf.MustMake("sym-var"), sf.MustMake("sym-const")
+	err := env.Bind(symVar, sx.Int64(0))
+	if err != nil {
+		t.Errorf("error in symVar.Bind(1): %v", err)
+		return
+	}
+	if env.IsConst(symVar) {
+		t.Errorf("symbol %v is wrongly seen a constant", symVar)
+		return
+	}
+	err = env.BindConst(symVar, sx.Int64(2))
+	if err != nil {
+		t.Error("symVar was not changed, but should:", err)
+	}
+
+	err = env.BindConst(symConst, sx.Int64(0))
+	if err != nil {
+		t.Errorf("error in symConst.Bind(1): %v", err)
+		return
+	}
+	if !env.IsConst(symConst) {
+		t.Errorf("symbol %v is wrongly seen a variable", symConst)
+		return
+	}
+	err = env.BindConst(symConst, sx.Int64(2))
+	if err == nil {
+		t.Error("symConst was changed, but should not")
+	}
+}

@@ -19,7 +19,7 @@ import (
 )
 
 // Environment maintains a mapping between symbols and values.
-// Form are evaluated within environments.
+// Forms are evaluated within environments.
 type Environment interface {
 	// An environment is an object by itself
 	sx.Object
@@ -36,13 +36,21 @@ type Environment interface {
 	IsRoot() bool
 
 	// Bind creates a local mapping with a given symbol and object.
-	// A previous mapping will be overwritten.
+	//
+	// A previous, non-const mapping will be overwritten.
 	Bind(*sx.Symbol, sx.Object) error
+
+	// BindConst creates a local mapping of the symbol to the object, which
+	// cannot be changed afterwards.
+	BindConst(*sx.Symbol, sx.Object) error
 
 	// Lookup will search for a local binding of the given symbol. If not
 	// found, the search will *not* be continued in the parent environment.
 	// Use the global `Resolve` function, if you want a search up to the parent.
 	Lookup(*sx.Symbol) (sx.Object, bool)
+
+	// IsConst returns true if the binding of the symbol is a constant binding.
+	IsConst(*sx.Symbol) bool
 
 	// Bindings returns all bindings as an a-list in some random order.
 	Bindings() *sx.Pair
@@ -58,6 +66,13 @@ type Environment interface {
 type ErrEnvFrozen struct{ Env Environment }
 
 func (err ErrEnvFrozen) Error() string { return fmt.Sprintf("enviroment is frozen: %v", err.Env) }
+
+// ErrConstBinding is returned when a constant binding should be changed.
+type ErrConstBinding struct{ Sym *sx.Symbol }
+
+func (err ErrConstBinding) Error() string {
+	return fmt.Sprintf("constant bindung for symbol %v", err.Sym.Repr())
+}
 
 type mapSymObj = map[*sx.Symbol]sx.Object
 
@@ -90,6 +105,7 @@ type mappedEnvironment struct {
 	name   string
 	parent Environment
 	vars   mapSymObj
+	consts map[*sx.Symbol]struct{}
 	isRoot bool
 	frozen bool
 }
@@ -134,6 +150,28 @@ func (me *mappedEnvironment) Bind(sym *sx.Symbol, val sx.Object) error {
 	if me.frozen {
 		return ErrEnvFrozen{Env: me}
 	}
+	if me.IsConst(sym) {
+		return ErrConstBinding{Sym: sym}
+	}
+	if _, found := me.vars[sym]; found {
+		me.vars[sym] = val
+		return nil
+	}
+	me.vars[sym] = val
+	return nil
+}
+func (me *mappedEnvironment) BindConst(sym *sx.Symbol, val sx.Object) error {
+	if me.frozen {
+		return ErrEnvFrozen{Env: me}
+	}
+	if me.IsConst(sym) {
+		return ErrConstBinding{Sym: sym}
+	}
+	if me.consts == nil {
+		me.consts = map[*sx.Symbol]struct{}{sym: struct{}{}}
+	} else {
+		me.consts[sym] = struct{}{}
+	}
 	if _, found := me.vars[sym]; found {
 		me.vars[sym] = val
 		return nil
@@ -144,6 +182,13 @@ func (me *mappedEnvironment) Bind(sym *sx.Symbol, val sx.Object) error {
 func (me *mappedEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	obj, found := me.vars[sym]
 	return obj, found
+}
+func (me *mappedEnvironment) IsConst(sym *sx.Symbol) bool {
+	if me == nil || me.consts == nil {
+		return false
+	}
+	_, found := me.consts[sym]
+	return found
 }
 func (me *mappedEnvironment) Bindings() *sx.Pair {
 	result := sx.Nil()
@@ -194,6 +239,19 @@ func Resolve(env Environment, sym *sx.Symbol) (sx.Object, bool) {
 		}
 		currEnv = currEnv.Parent()
 	}
+}
+
+// IsConstBinding returns true if the symbol is defined with a constant
+// binding in the given environment or its parent environments.
+func IsConstantBinding(env Environment, sym *sx.Symbol) bool {
+	currEnv := env
+	for !sx.IsNil(currEnv) {
+		if currEnv.IsConst(sym) {
+			return true
+		}
+		currEnv = currEnv.Parent()
+	}
+	return false
 }
 
 // AllBindings returns an a-list of all bindings in the given environment and its parent environments.
