@@ -113,15 +113,9 @@ var tcsSetX = tTestCases{
 		withErr: true,
 	},
 	{
-		name:    "set!-a-1",
-		src:     "(set! a 1)",
-		exp:     `{[{symbol "a" not bound in environment "set!-a-1"}]}`,
-		withErr: true,
-	},
-	{
-		name:    "set!-b-1",
-		src:     "(set! b 1)",
-		exp:     `{[{symbol "b" not bound in environment "set!-b-1"}]}`,
+		name:    "set!-unknown-1",
+		src:     "(set! unknown 1)",
+		exp:     `{[{symbol "unknown" not bound in environment "set!-unknown-1"}]}`,
 		withErr: true,
 	},
 	{name: "define-set", src: "(define a 1) (set! a 17)", exp: "1 17"},

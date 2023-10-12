@@ -178,13 +178,14 @@ func (se *SetXExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	return se
 }
 func (se *SetXExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	if _, found := frame.Lookup(se.Sym); !found {
+	env := frame.FindBindingEnv(se.Sym)
+	if sx.IsNil(env) {
 		return nil, frame.MakeNotBoundError(se.Sym)
 	}
 	subFrame := frame.MakeCalleeFrame()
 	val, err := subFrame.Execute(se.Val)
 	if err == nil {
-		err = frame.Bind(se.Sym, val)
+		err = env.Bind(se.Sym, val)
 	}
 	return val, err
 }

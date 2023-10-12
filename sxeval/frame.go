@@ -117,10 +117,18 @@ type executeAgain struct {
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }
 
 func (frame *Frame) Bind(sym *sx.Symbol, obj sx.Object) error { return frame.env.Bind(sym, obj) }
-func (frame *Frame) Freeze()                                  { frame.env.Freeze() }
-func (frame *Frame) Lookup(sym *sx.Symbol) (sx.Object, bool)  { return frame.env.Lookup(sym) }
 func (frame *Frame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return Resolve(frame.env, sym)
+}
+func (frame *Frame) FindBindingEnv(sym *sx.Symbol) Environment {
+	env := frame.env
+	for !sx.IsNil(env) {
+		if _, found := env.Lookup(sym); found {
+			return env
+		}
+		env = env.Parent()
+	}
+	return env
 }
 func (frame *Frame) MakeNotBoundError(sym *sx.Symbol) NotBoundError {
 	return NotBoundError{Env: frame.env, Sym: sym}
