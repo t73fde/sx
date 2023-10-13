@@ -184,7 +184,15 @@ func (me *mappedEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	return obj, found
 }
 func (me *mappedEnvironment) IsConst(sym *sx.Symbol) bool {
-	if me == nil || me.consts == nil {
+	if me == nil {
+		return false
+	}
+	if me.frozen {
+		if _, found := me.vars[sym]; found {
+			return true
+		}
+	}
+	if me.consts == nil {
 		return false
 	}
 	_, found := me.consts[sym]

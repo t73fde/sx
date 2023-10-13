@@ -69,25 +69,23 @@ func (*simpleExecutor) Execute(frame *Frame, expr Expr) (sx.Object, error) {
 
 // Engine is the collection of all relevant data element to execute / evaluate an object.
 type Engine struct {
-	sf        sx.SymbolFactory
-	root      Environment
-	toplevel  Environment
-	pars      Parser
-	reworkOpt *ReworkOptions
-	exec      Executor
-	bNames    map[uintptr]string
+	sf       sx.SymbolFactory
+	root     Environment
+	toplevel Environment
+	pars     Parser
+	exec     Executor
+	bNames   map[uintptr]string
 }
 
 // MakeEngine creates a new engine.
 func MakeEngine(sf sx.SymbolFactory, root Environment) *Engine {
 	return &Engine{
-		sf:        sf,
-		root:      root,
-		toplevel:  root,
-		pars:      &myDefaultParser,
-		reworkOpt: &ReworkOptions{ResolveEnv: root},
-		exec:      nil,
-		bNames:    make(map[uintptr]string, 128),
+		sf:       sf,
+		root:     root,
+		toplevel: root,
+		pars:     &myDefaultParser,
+		exec:     nil,
+		bNames:   make(map[uintptr]string, 128),
 	}
 }
 
@@ -131,24 +129,6 @@ func (eng *Engine) SetExecutor(e Executor) Executor {
 	return &mySimpleExecutor
 }
 
-// ReworkOptions controls the behaviour of Expr.Rework.
-type ReworkOptions struct {
-	// The environment where resolve should try to resolve a symbol.
-	ResolveEnv Environment
-}
-
-// SetReworkOptions sets the rework options for this engine and returns the previous value.
-//
-// If nil is given, the current value is unchanged and it is just returned.
-func (eng *Engine) SetReworkOptions(ro *ReworkOptions) *ReworkOptions {
-	if ro != nil {
-		old := eng.reworkOpt
-		eng.reworkOpt = ro
-		return old
-	}
-	return eng.reworkOpt
-}
-
 // SetQuote sets the quote symbol. It must be the same as for the reader.
 func (eng *Engine) SetQuote(sym *sx.Symbol) error {
 	if sym == nil {
@@ -183,7 +163,7 @@ func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
 
 // Rework the given expression with the options stored in the engine.
 func (eng *Engine) Rework(env Environment, expr Expr) Expr {
-	rf := ReworkFrame{Env: env, constEnv: eng.reworkOpt.ResolveEnv}
+	rf := ReworkFrame{Env: env}
 	return expr.Rework(&rf)
 }
 

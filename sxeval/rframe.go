@@ -14,18 +14,14 @@ import "zettelstore.de/sx.fossil"
 
 // ReworkFrame guides the Expr.Rework operation.
 type ReworkFrame struct {
-	Env      Environment // Current environment
-	constEnv Environment // Environment that is seen as constant / freezed.
+	Env Environment // Current environment
 }
 
-// ResolveConst will resolve the symbol in an environment that is assumed not to
-// be changed afterwards.
+// ResolveConst will resolve the symbol in an environment that is assumed not
+// to b echanged afterwards.
 func (rf *ReworkFrame) ResolveConst(sym *sx.Symbol) (sx.Object, bool) {
-	if env := rf.Env; env.IsConst(sym) {
+	if env := rf.Env; IsConstantBinding(env, sym) {
 		return Resolve(env, sym)
-	}
-	if constEnv := rf.constEnv; constEnv != nil {
-		return Resolve(constEnv, sym)
 	}
 	return nil, false
 }
