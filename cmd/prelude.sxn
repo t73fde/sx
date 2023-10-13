@@ -40,7 +40,7 @@
 ;; (cond ((COND EXPR) ...))
 (defmacro cond clauses
     (if (null? clauses)
-        ()
+        NIL
         (let* ((clause (car clauses))
                (the-cond (car clause)))
               (if (== the-cond 'else)

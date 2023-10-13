@@ -163,7 +163,7 @@ func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
 
 // Rework the given expression with the options stored in the engine.
 func (eng *Engine) Rework(env Environment, expr Expr) Expr {
-	rf := ReworkFrame{Env: env}
+	rf := ReworkFrame{env: env}
 	return expr.Rework(&rf)
 }
 

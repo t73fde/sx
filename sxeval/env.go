@@ -257,6 +257,9 @@ func IsConstantBinding(env Environment, sym *sx.Symbol) bool {
 		if currEnv.IsConst(sym) {
 			return true
 		}
+		if _, found := currEnv.Lookup(sym); found {
+			return false
+		}
 		currEnv = currEnv.Parent()
 	}
 	return false

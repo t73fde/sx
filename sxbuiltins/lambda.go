@@ -178,10 +178,22 @@ type LambdaExpr struct {
 }
 
 func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	for i, e := range le.Front {
-		le.Front[i] = e.Rework(rf)
+	envSize := len(le.Params)
+	if le.Rest != nil {
+		envSize++
 	}
-	le.Last = le.Last.Rework(rf)
+	fnFrame := rf.MakeChildFrame(le.Name+"-rework", envSize)
+	for _, sym := range le.Params {
+		fnFrame.Bind(sym)
+	}
+	if rest := le.Rest; rest != nil {
+		fnFrame.Bind(rest)
+	}
+
+	for i, e := range le.Front {
+		le.Front[i] = e.Rework(fnFrame)
+	}
+	le.Last = le.Last.Rework(fnFrame)
 	return le
 }
 func (le *LambdaExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {

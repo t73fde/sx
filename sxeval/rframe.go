@@ -14,14 +14,26 @@ import "zettelstore.de/sx.fossil"
 
 // ReworkFrame guides the Expr.Rework operation.
 type ReworkFrame struct {
-	Env Environment // Current environment
+	env Environment // Current environment
+}
+
+// MakeChildFrame creates a subordinate rework frame with a new environment.
+func (rf *ReworkFrame) MakeChildFrame(name string, baseSize int) *ReworkFrame {
+	return &ReworkFrame{
+		env: MakeChildEnvironment(rf.env, name, baseSize),
+	}
 }
 
 // ResolveConst will resolve the symbol in an environment that is assumed not
 // to b echanged afterwards.
 func (rf *ReworkFrame) ResolveConst(sym *sx.Symbol) (sx.Object, bool) {
-	if env := rf.Env; IsConstantBinding(env, sym) {
+	if env := rf.env; IsConstantBinding(env, sym) {
 		return Resolve(env, sym)
 	}
 	return nil, false
+}
+
+// Bind the undefined value to the symbol in the current environment.
+func (rf *ReworkFrame) Bind(sym *sx.Symbol) error {
+	return rf.env.Bind(sym, sx.MakeUndefined())
 }
