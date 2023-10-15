@@ -18,9 +18,6 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// LetMacro is the text to define a simple let macro.
-const LetMacro = "(defmacro let (bindings . body) `((lambda ,(map car bindings) ,@body) ,@(map cadr bindings)))"
-
 // CheckArgs validates the number of arguments given.
 func CheckArgs(args []sx.Object, minArgs, maxArgs int) error {
 	numArgs := len(args)

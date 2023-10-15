@@ -10,11 +10,7 @@
 
 package sxbuiltins_test
 
-import (
-	"testing"
-
-	"zettelstore.de/sx.fossil/sxbuiltins"
-)
+import "testing"
 
 func TestEnv(t *testing.T) {
 	t.Parallel()
@@ -57,7 +53,7 @@ var tcsEnv = tTestCases{
 	{name: "current-bindings", src: "(environment-bindings (current-environment))", exp: "()"},
 	{
 		name: "let-bindings",
-		src:  sxbuiltins.LetMacro + "(let ((a 3)) (environment-bindings (current-environment)))",
+		src:  letMacro + "(let ((a 3)) (environment-bindings (current-environment)))",
 		exp:  "#<macro:let> ((a . 3))",
 	},
 

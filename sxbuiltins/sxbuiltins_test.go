@@ -24,6 +24,9 @@ import (
 
 // Contains tests of all builtins in sub-packages.
 
+// letMacro is the text to define a simple let macro.
+const letMacro = "(defmacro let (bindings . body) `((lambda ,(map car bindings) ,@body) ,@(map cadr bindings)))"
+
 type (
 	tTestCase struct {
 		name    string
