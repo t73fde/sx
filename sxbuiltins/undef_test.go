@@ -19,21 +19,6 @@ func TestUndefined(t *testing.T) {
 
 var tcsUndefined = tTestCases{
 	{
-		name:    "err-undefined-0",
-		src:     "(undefined?)",
-		exp:     "{[{undefined?: exactly 1 arguments required, but 0 given: []}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-undefined-2",
-		src:     "(undefined? 1 2)",
-		exp:     "{[{undefined?: exactly 1 arguments required, but 2 given: [1 2]}]}",
-		withErr: true,
-	},
-	{name: "undefined-a", src: "(undefined? 'a)", exp: "()"},
-	{name: "undefined-lookup-xyz", src: "(undefined? (environment-lookup 'xyz))", exp: "1"},
-
-	{
 		name:    "err-defined-0",
 		src:     "(defined?)",
 		exp:     "{[{defined?: exactly 1 arguments required, but 0 given: []}]}",

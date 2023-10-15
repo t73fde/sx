@@ -79,11 +79,17 @@ var syntaxes = []struct {
 	{"defmacro", sxbuiltins.DefMacroS},
 }
 
+var builtins = []*sxeval.Builtin{
+	&sxbuiltins.Equal,
+	&sxbuiltins.Identical,
+	// ...
+	&sxbuiltins.Defined,
+}
+
 var builtinsA = []struct {
 	name string
 	fn   sxeval.BuiltinAold
 }{
-	{"==", sxbuiltins.IdenticalOld}, {"=", sxbuiltins.EqualOld},
 	{"number?", sxbuiltins.NumberPold},
 	{"+", sxbuiltins.AddOld}, {"-", sxbuiltins.SubOld}, {"*", sxbuiltins.MulOld},
 	{"div", sxbuiltins.DivOld}, {"mod", sxbuiltins.ModOld},
@@ -108,7 +114,6 @@ var builtinsA = []struct {
 	{"callable?", sxbuiltins.CallablePold},
 	{"parent-environment", sxbuiltins.ParentEnvOld},
 	{"environment-bindings", sxbuiltins.EnvBindingsOld},
-	{"undefined?", sxbuiltins.UndefinedPold}, {"defined?", sxbuiltins.DefinedPold},
 }
 var builtinsFA = []struct {
 	name string
@@ -137,6 +142,9 @@ func main() {
 	sxbuiltins.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
 	for _, synDef := range syntaxes {
 		engine.BindSyntax(synDef.name, synDef.fn)
+	}
+	for _, b := range builtins {
+		engine.BindConst(b.Name, b)
 	}
 	for _, bDef := range builtinsA {
 		engine.BindBuiltinAold(bDef.name, bDef.fn)

@@ -102,6 +102,9 @@ func createEngine() *sxeval.Engine {
 	for _, syntax := range syntaxes {
 		engine.BindSyntax(syntax.name, syntax.fn)
 	}
+	for _, b := range builtins {
+		engine.BindConst(b.Name, b)
+	}
 	for _, builtinA := range builtinsA {
 		engine.BindBuiltinAold(builtinA.name, builtinA.fn)
 	}
@@ -131,12 +134,17 @@ var syntaxes = []struct {
 	{"defun", sxbuiltins.DefunS}, {"lambda", sxbuiltins.LambdaS},
 	{"defmacro", sxbuiltins.DefMacroS},
 }
-
+var builtins = []*sxeval.Builtin{
+	&sxbuiltins.Equal,
+	&sxbuiltins.Identical,
+	// ...
+	&sxbuiltins.Defined,
+}
 var builtinsA = []struct {
 	name string
 	fn   sxeval.BuiltinAold
 }{
-	{"==", sxbuiltins.IdenticalOld}, {"=", sxbuiltins.EqualOld},
+	// {"==", sxbuiltins.IdenticalOld}, {"=", sxbuiltins.EqualOld},
 	{"number?", sxbuiltins.NumberPold},
 	{"+", sxbuiltins.AddOld}, {"-", sxbuiltins.SubOld}, {"*", sxbuiltins.MulOld},
 	{"div", sxbuiltins.DivOld}, {"mod", sxbuiltins.ModOld},
@@ -161,7 +169,6 @@ var builtinsA = []struct {
 	{"callable?", sxbuiltins.CallablePold},
 	{"parent-environment", sxbuiltins.ParentEnvOld},
 	{"environment-bindings", sxbuiltins.EnvBindingsOld},
-	{"undefined?", sxbuiltins.UndefinedPold}, {"defined?", sxbuiltins.DefinedPold},
 }
 var builtinsFA = []struct {
 	name string

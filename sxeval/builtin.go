@@ -20,21 +20,18 @@ import (
 
 // Builtin is the type for normal builtin functions.
 type Builtin struct {
-	// The canonical name of the builtin
-	name string
+	// The canonical Name of the builtin
+	Name string
 
-	// The actual builtin function
-	proc func(*Frame, []sx.Object) (sx.Object, error)
-
-	// Minimum and maximum arity. If maxArity < minArity, maximum arity is unlimited
-	minArity, maxArity int
+	// Minimum and maximum arity. If MaxArity < MinArity, maximum arity is unlimited
+	MinArity, MaxArity int
 
 	// Will a call to the builtin produce some side effect?
-	hasSideEffect bool
-}
+	HasSideEffect bool
 
-// HasSideEffect retruns true, if a call to the builtin may change the environment.
-func (b *Builtin) HasSideEffect() bool { return b != nil && b.hasSideEffect }
+	// The actual builtin function
+	Fn func(*Frame, []sx.Object) (sx.Object, error)
+}
 
 // --- Builtin methods to implement sx.Object
 
@@ -53,7 +50,7 @@ func (b *Builtin) IsEqual(other sx.Object) bool {
 		return sx.IsNil(other)
 	}
 	if otherB, ok := other.(*Builtin); ok {
-		return b.name == otherB.name
+		return b.Name == otherB.Name
 	}
 	return false
 
@@ -66,7 +63,7 @@ func (b *Builtin) Repr() string { return sx.Repr(b) }
 func (b *Builtin) String() string { return b.Repr() }
 
 func (b *Builtin) Print(w io.Writer) (int, error) {
-	return sx.WriteStrings(w, "#<builtin:", b.name, ">")
+	return sx.WriteStrings(w, "#<builtin:", b.Name, ">")
 }
 
 // --- Builtin methods to implement sxeval.Callable
@@ -74,22 +71,25 @@ func (b *Builtin) Print(w io.Writer) (int, error) {
 // Call the builtin function with the given frame and arguments.
 func (b *Builtin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
 	// Check arity
-	numArgs, minArity, maxArity := len(args), b.minArity, b.maxArity
+	numArgs, minArity, maxArity := len(args), b.MinArity, b.MaxArity
 	if minArity == maxArity {
 		if numArgs != minArity {
-			return nil, fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, args)
+			err := fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, args)
+			return nil, CallError{Name: b.Name, Err: err}
 		}
 	} else if minArity > maxArity {
 		if numArgs < minArity {
-			return nil, fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, args)
+			err := fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, args)
+			return nil, CallError{Name: b.Name, Err: err}
 		}
 	} else {
 		if numArgs < minArity || maxArity < numArgs {
-			return nil, fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, args)
+			err := fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, args)
+			return nil, CallError{Name: b.Name, Err: err}
 		}
 	}
 
-	obj, err := b.proc(frame, args)
+	obj, err := b.Fn(frame, args)
 	if err == nil {
 		return obj, nil
 	}
@@ -97,7 +97,7 @@ func (b *Builtin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
 		return obj, err
 	}
 	if _, ok := err.(CallError); !ok {
-		err = CallError{Name: b.name, Err: err}
+		err = CallError{Name: b.Name, Err: err}
 	}
 	return obj, err
 }

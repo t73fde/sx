@@ -12,30 +12,37 @@ package sxbuiltins
 
 // Contains function to test for equivalence of objects.
 
-import "zettelstore.de/sx.fossil"
+import (
+	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxeval"
+)
 
-// IdenticalOld returns True iff the two given arguments are identical / the same objects.
-func IdenticalOld(args []sx.Object) (sx.Object, error) {
-	if err := CheckArgs(args, 2, 0); err != nil {
-		return nil, err
-	}
-	for i := 1; i < len(args); i++ {
-		if args[0] != args[i] {
-			return sx.Nil(), nil
+var Identical = sxeval.Builtin{
+	Name:          "==",
+	MinArity:      2,
+	MaxArity:      0,
+	HasSideEffect: false,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		for i := 1; i < len(args); i++ {
+			if args[0] != args[i] {
+				return sx.Nil(), nil
+			}
 		}
-	}
-	return sx.MakeBoolean(true), nil
+		return sx.MakeBoolean(true), nil
+	},
 }
 
-// EqualOld returns True iff the two given arguments have the same value.
-func EqualOld(args []sx.Object) (sx.Object, error) {
-	if err := CheckArgs(args, 2, 0); err != nil {
-		return nil, err
-	}
-	for i := 1; i < len(args); i++ {
-		if !args[0].IsEqual(args[i]) {
-			return sx.Nil(), nil
+var Equal = sxeval.Builtin{
+	Name:          "=",
+	MinArity:      2,
+	MaxArity:      0,
+	HasSideEffect: false,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		for i := 1; i < len(args); i++ {
+			if !args[0].IsEqual(args[i]) {
+				return sx.Nil(), nil
+			}
 		}
-	}
-	return sx.MakeBoolean(true), nil
+		return sx.MakeBoolean(true), nil
+	},
 }

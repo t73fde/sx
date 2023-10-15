@@ -10,20 +10,17 @@
 
 package sxbuiltins
 
-import "zettelstore.de/sx.fossil"
+import (
+	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxeval"
+)
 
-// UndefinedPold returns true, if the given value is an undefined value.
-func UndefinedPold(args []sx.Object) (sx.Object, error) {
-	if err := CheckArgs(args, 1, 1); err != nil {
-		return nil, err
-	}
-	return sx.MakeBoolean(sx.IsUndefined(args[0])), nil
-}
-
-// DefinedPold returns true, if the given value is not an undefined value.
-func DefinedPold(args []sx.Object) (sx.Object, error) {
-	if err := CheckArgs(args, 1, 1); err != nil {
-		return nil, err
-	}
-	return sx.MakeBoolean(!sx.IsUndefined(args[0])), nil
+var Defined = sxeval.Builtin{
+	Name:          "defined?",
+	MinArity:      1,
+	MaxArity:      1,
+	HasSideEffect: false,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		return sx.MakeBoolean(!sx.IsUndefined(args[0])), nil
+	},
 }
