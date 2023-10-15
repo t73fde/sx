@@ -18,16 +18,16 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// Cons returns a cons pair of the two arguments.
-func Cons(args []sx.Object) (sx.Object, error) {
+// ConsOld returns a cons pair of the two arguments.
+func ConsOld(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 2, 2); err != nil {
 		return nil, err
 	}
 	return sx.Cons(args[0], args[1]), nil
 }
 
-// PairP returns True if the argument is a pair.
-func PairP(args []sx.Object) (sx.Object, error) {
+// PairPold returns True if the argument is a pair.
+func PairPold(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
@@ -39,24 +39,24 @@ func PairP(args []sx.Object) (sx.Object, error) {
 	return sx.MakeBoolean(isPair), nil
 }
 
-// NullP returns True if the argument is nil.
-func NullP(args []sx.Object) (sx.Object, error) {
+// NullPold returns True if the argument is nil.
+func NullPold(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 	return sx.MakeBoolean(sx.IsNil(args[0])), nil
 }
 
-// ListP returns True if the argument is a (proper) list.
-func ListP(args []sx.Object) (sx.Object, error) {
+// ListPold returns True if the argument is a (proper) list.
+func ListPold(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 	return sx.MakeBoolean(sx.IsList(args[0])), nil
 }
 
-// Car returns the car of a pair argument.
-func Car(args []sx.Object) (sx.Object, error) {
+// CarOld returns the car of a pair argument.
+func CarOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	pair, err := GetPair(err, args, 0)
 	if err != nil {
@@ -65,8 +65,8 @@ func Car(args []sx.Object) (sx.Object, error) {
 	return pair.Car(), nil
 }
 
-// Cdr returns the cdr of a pair argument.
-func Cdr(args []sx.Object) (sx.Object, error) {
+// CdrOld returns the cdr of a pair argument.
+func CdrOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	pair, err := GetPair(err, args, 0)
 	if err != nil {
@@ -104,39 +104,39 @@ func cxr(args []sx.Object, spec string) (result sx.Object, _ error) {
 	return result, nil
 }
 
-func Caar(args []sx.Object) (sx.Object, error) { return cxr(args, "aa") }
-func Cadr(args []sx.Object) (sx.Object, error) { return cxr(args, "ad") }
-func Cdar(args []sx.Object) (sx.Object, error) { return cxr(args, "da") }
-func Cddr(args []sx.Object) (sx.Object, error) { return cxr(args, "dd") }
+func CaarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "aa") }
+func CadrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "ad") }
+func CdarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "da") }
+func CddrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "dd") }
 
-func Caaar(args []sx.Object) (sx.Object, error) { return cxr(args, "aaa") }
-func Caadr(args []sx.Object) (sx.Object, error) { return cxr(args, "aad") }
-func Cadar(args []sx.Object) (sx.Object, error) { return cxr(args, "ada") }
-func Caddr(args []sx.Object) (sx.Object, error) { return cxr(args, "add") }
-func Cdaar(args []sx.Object) (sx.Object, error) { return cxr(args, "daa") }
-func Cdadr(args []sx.Object) (sx.Object, error) { return cxr(args, "dad") }
-func Cddar(args []sx.Object) (sx.Object, error) { return cxr(args, "dda") }
-func Cdddr(args []sx.Object) (sx.Object, error) { return cxr(args, "ddd") }
+func CaaarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "aaa") }
+func CaadrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "aad") }
+func CadarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "ada") }
+func CaddrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "add") }
+func CdaarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "daa") }
+func CdadrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "dad") }
+func CddarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "dda") }
+func CdddrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "ddd") }
 
-func Caaaar(args []sx.Object) (sx.Object, error) { return cxr(args, "aaaa") }
-func Caaadr(args []sx.Object) (sx.Object, error) { return cxr(args, "aaad") }
-func Caadar(args []sx.Object) (sx.Object, error) { return cxr(args, "aada") }
-func Caaddr(args []sx.Object) (sx.Object, error) { return cxr(args, "aadd") }
-func Cadaar(args []sx.Object) (sx.Object, error) { return cxr(args, "adaa") }
-func Cadadr(args []sx.Object) (sx.Object, error) { return cxr(args, "adad") }
-func Caddar(args []sx.Object) (sx.Object, error) { return cxr(args, "adda") }
-func Cadddr(args []sx.Object) (sx.Object, error) { return cxr(args, "addd") }
-func Cdaaar(args []sx.Object) (sx.Object, error) { return cxr(args, "daaa") }
-func Cdaadr(args []sx.Object) (sx.Object, error) { return cxr(args, "daad") }
-func Cdadar(args []sx.Object) (sx.Object, error) { return cxr(args, "dada") }
-func Cdaddr(args []sx.Object) (sx.Object, error) { return cxr(args, "dadd") }
-func Cddaar(args []sx.Object) (sx.Object, error) { return cxr(args, "ddaa") }
-func Cddadr(args []sx.Object) (sx.Object, error) { return cxr(args, "ddad") }
-func Cdddar(args []sx.Object) (sx.Object, error) { return cxr(args, "ddda") }
-func Cddddr(args []sx.Object) (sx.Object, error) { return cxr(args, "dddd") }
+func CaaaarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "aaaa") }
+func CaaadrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "aaad") }
+func CaadarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "aada") }
+func CaaddrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "aadd") }
+func CadaarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "adaa") }
+func CadadrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "adad") }
+func CaddarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "adda") }
+func CadddrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "addd") }
+func CdaaarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "daaa") }
+func CdaadrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "daad") }
+func CdadarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "dada") }
+func CdaddrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "dadd") }
+func CddaarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "ddaa") }
+func CddadrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "ddad") }
+func CdddarOld(args []sx.Object) (sx.Object, error) { return cxr(args, "ddda") }
+func CddddrOld(args []sx.Object) (sx.Object, error) { return cxr(args, "dddd") }
 
-// Last returns the last element of a list
-func Last(args []sx.Object) (sx.Object, error) {
+// LastOld returns the last element of a list
+func LastOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	lst, err := GetList(err, args, 0)
 	if err != nil {
@@ -145,11 +145,11 @@ func Last(args []sx.Object) (sx.Object, error) {
 	return lst.Last()
 }
 
-// List returns a list of all arguments.
-func List(args []sx.Object) (sx.Object, error) { return sx.MakeList(args...), nil }
+// ListOld returns a list of all arguments.
+func ListOld(args []sx.Object) (sx.Object, error) { return sx.MakeList(args...), nil }
 
-// ListStar returns a list of all arguments, when the last argument is a cons to the second last.
-func ListStar(args []sx.Object) (sx.Object, error) {
+// ListStarOld returns a list of all arguments, when the last argument is a cons to the second last.
+func ListStarOld(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 1, 0); err != nil {
 		return nil, err
 	}
@@ -165,8 +165,8 @@ func ListStar(args []sx.Object) (sx.Object, error) {
 	return result, nil
 }
 
-// Append returns a list where all list arguments are concatenated.
-func Append(args []sx.Object) (sx.Object, error) {
+// AppendOld returns a list where all list arguments are concatenated.
+func AppendOld(args []sx.Object) (sx.Object, error) {
 	switch len(args) {
 	case 0:
 		return sx.Nil(), nil
@@ -198,8 +198,8 @@ func Append(args []sx.Object) (sx.Object, error) {
 	return sentinel.Cdr(), nil
 }
 
-// Reverse returns a reversed list.
-func Reverse(args []sx.Object) (sx.Object, error) {
+// ReverseOld returns a reversed list.
+func ReverseOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	lst, err := GetList(err, args, 0)
 	if err != nil {
@@ -208,8 +208,8 @@ func Reverse(args []sx.Object) (sx.Object, error) {
 	return lst.Reverse()
 }
 
-// Length returns the length of the given list.
-func Length(args []sx.Object) (sx.Object, error) {
+// LengthOld returns the length of the given list.
+func LengthOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	lst, err := GetList(err, args, 0)
 	if err != nil {
@@ -218,9 +218,9 @@ func Length(args []sx.Object) (sx.Object, error) {
 	return sx.Int64(int64(lst.Length())), nil
 }
 
-// Assoc returns the first pair of the a-list where the second argument is eql?
+// AssocOld returns the first pair of the a-list where the second argument is eql?
 // to the pair's car. Otherwise, nil is returned.
-func Assoc(args []sx.Object) (sx.Object, error) {
+func AssocOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 2, 2)
 	lst, err := GetList(err, args, 0)
 	if err != nil {

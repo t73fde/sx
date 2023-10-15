@@ -169,7 +169,7 @@ func (ce *CallExpr) Rework(rf *ReworkFrame) Expr {
 	proc := ce.Proc.Rework(rf)
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
 		if bi, isBuiltin := objExpr.Obj.(BuiltinOld); isBuiltin {
-			bce := &BuiltinCallExpr{
+			bce := &BuiltinCallExprOld{
 				Proc: bi,
 				Args: ce.Args,
 			}
@@ -256,15 +256,15 @@ func (e NotCallableError) Error() string {
 }
 func (e NotCallableError) String() string { return e.Error() }
 
-// BuiltinCallExpr calls a builtin and returns the resulting object.
+// BuiltinCallExprOld calls a builtin and returns the resulting object.
 // It is an optimization of `CallExpr.`
-type BuiltinCallExpr struct {
+type BuiltinCallExprOld struct {
 	Proc BuiltinOld
 	Args []Expr
 }
 
-func (bce *BuiltinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
-func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
+func (bce *BuiltinCallExprOld) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
+func (bce *BuiltinCallExprOld) Rework(rf *ReworkFrame) Expr {
 	// Rework checks if the Builtin is a simple BuilinA and if all args are
 	// constant sx.Object's. If this is true, it will call the builtin with
 	// the args. If no error was signaled, the result object will be used
@@ -293,15 +293,15 @@ func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 	}
 	return ObjExpr{Obj: result}.Rework(rf)
 }
-func (bce *BuiltinCallExpr) Compute(frame *Frame) (sx.Object, error) {
+func (bce *BuiltinCallExprOld) Compute(frame *Frame) (sx.Object, error) {
 	subFrame := frame.MakeCalleeFrame()
 	return computeCallable(subFrame, bce.Proc, bce.Args)
 }
-func (bce *BuiltinCallExpr) IsEqual(other Expr) bool {
+func (bce *BuiltinCallExprOld) IsEqual(other Expr) bool {
 	if bce == other {
 		return true
 	}
-	if otherB, ok := other.(*BuiltinCallExpr); ok && otherB != nil {
+	if otherB, ok := other.(*BuiltinCallExprOld); ok && otherB != nil {
 		if !bce.Proc.IsEqual(otherB.Proc) {
 			return false
 		}
@@ -309,7 +309,7 @@ func (bce *BuiltinCallExpr) IsEqual(other Expr) bool {
 	}
 	return false
 }
-func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {
+func (bce *BuiltinCallExprOld) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{BCALL ")
 	if err != nil {
 		return length, err

@@ -12,23 +12,23 @@ package sxbuiltins
 
 import "zettelstore.de/sx.fossil"
 
-// NumLess implements a numeric comparision w.r.t to the less operation.
-func NumLess(args []sx.Object) (sx.Object, error) {
+// NumLessOld implements a numeric comparision w.r.t to the less operation.
+func NumLessOld(args []sx.Object) (sx.Object, error) {
 	return cmpBuiltin(args, func(cmpRes int) bool { return cmpRes < 0 })
 }
 
-// NumLessEqual implements a numeric comparision w.r.t to the less-equal operation.
-func NumLessEqual(args []sx.Object) (sx.Object, error) {
+// NumLessEqualOld implements a numeric comparision w.r.t to the less-equal operation.
+func NumLessEqualOld(args []sx.Object) (sx.Object, error) {
 	return cmpBuiltin(args, func(cmpRes int) bool { return cmpRes <= 0 })
 }
 
-// NumGreaterEqual implements a numeric comparision w.r.t to the greater-equal operation.
-func NumGreaterEqual(args []sx.Object) (sx.Object, error) {
+// NumGreaterEqualOld implements a numeric comparision w.r.t to the greater-equal operation.
+func NumGreaterEqualOld(args []sx.Object) (sx.Object, error) {
 	return cmpBuiltin(args, func(cmpRes int) bool { return cmpRes >= 0 })
 }
 
-// NumGreater implements a numeric comparision w.r.t to the greater operation.
-func NumGreater(args []sx.Object) (sx.Object, error) {
+// NumGreaterOld implements a numeric comparision w.r.t to the greater operation.
+func NumGreaterOld(args []sx.Object) (sx.Object, error) {
 	return cmpBuiltin(args, func(cmpRes int) bool { return cmpRes > 0 })
 }
 
@@ -52,13 +52,13 @@ func cmpBuiltin(args []sx.Object, cmpFn func(int) bool) (sx.Object, error) {
 	return sx.MakeBoolean(true), nil
 }
 
-// Min implements the minimum finding operation on numbers.
-func Min(args []sx.Object) (sx.Object, error) {
+// MinOld implements the minimum finding operation on numbers.
+func MinOld(args []sx.Object) (sx.Object, error) {
 	return minmaxBuiltin(args, func(cmpRes int) bool { return cmpRes <= 0 })
 }
 
-// Max implements the maximum finding operation on numbers.
-func Max(args []sx.Object) (sx.Object, error) {
+// MaxOld implements the maximum finding operation on numbers.
+func MaxOld(args []sx.Object) (sx.Object, error) {
 	return minmaxBuiltin(args, func(cmpRes int) bool { return cmpRes >= 0 })
 }
 

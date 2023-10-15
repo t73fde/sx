@@ -15,8 +15,8 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// Map returns a list, where all member are the result of the given function to all original list members.
-func Map(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+// MapOld returns a list, where all member are the result of the given function to all original list members.
+func MapOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 2, 2)
 	fn, err := GetCallable(err, args, 0)
 	lst, err := GetList(err, args, 1)
@@ -57,8 +57,8 @@ func Map(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	return result, nil
 }
 
-// Apply calls the given function with the given arguments.
-func Apply(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+// ApplyOld calls the given function with the given arguments.
+func ApplyOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 2, 2)
 	lst, err := GetList(err, args, 1)
 	if err != nil {
@@ -86,8 +86,8 @@ func Apply(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	}
 }
 
-// Fold will apply the given function pairwise to list of args.
-func Fold(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+// FoldOld will apply the given function pairwise to list of args.
+func FoldOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 3, 3)
 	fn, err := GetCallable(err, args, 0)
 	lst, err := GetList(err, args, 2)
@@ -112,8 +112,8 @@ func Fold(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	return res, nil
 }
 
-// FoldReverse will apply the given function reversed pairwise to reversed list of args.
-func FoldReverse(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+// FoldReverseOld will apply the given function reversed pairwise to reversed list of args.
+func FoldReverseOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 3, 3)
 	fn, err := GetCallable(err, args, 0)
 	lst, err := GetList(err, args, 2)

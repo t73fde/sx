@@ -20,8 +20,8 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// Pretty writes the first argument to stdout.
-func Pretty(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+// PrettyOld writes the first argument to stdout.
+func PrettyOld(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	// Must be a BuiltinFA, because this function has some side effects.
 	err := CheckArgs(args, 0, 1)
 	if err != nil {

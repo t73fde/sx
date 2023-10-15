@@ -83,44 +83,44 @@ var builtinsA = []struct {
 	name string
 	fn   sxeval.BuiltinAold
 }{
-	{"==", sxbuiltins.Identical}, {"=", sxbuiltins.Equal},
-	{"number?", sxbuiltins.NumberP},
-	{"+", sxbuiltins.Add}, {"-", sxbuiltins.Sub}, {"*", sxbuiltins.Mul},
-	{"div", sxbuiltins.Div}, {"mod", sxbuiltins.Mod},
-	{"<", sxbuiltins.NumLess}, {"<=", sxbuiltins.NumLessEqual},
-	{">=", sxbuiltins.NumGreaterEqual}, {">", sxbuiltins.NumGreater},
-	{"min", sxbuiltins.Min}, {"max", sxbuiltins.Max},
-	{"cons", sxbuiltins.Cons}, {"pair?", sxbuiltins.PairP},
-	{"null?", sxbuiltins.NullP}, {"list?", sxbuiltins.ListP},
-	{"car", sxbuiltins.Car}, {"cdr", sxbuiltins.Cdr},
-	{"caar", sxbuiltins.Caar}, {"cadr", sxbuiltins.Cadr}, {"cdar", sxbuiltins.Cdar}, {"cddr", sxbuiltins.Cddr},
-	{"caaar", sxbuiltins.Caaar}, {"caadr", sxbuiltins.Caadr}, {"cadar", sxbuiltins.Cadar}, {"caddr", sxbuiltins.Caddr},
-	{"cdaar", sxbuiltins.Cdaar}, {"cdadr", sxbuiltins.Cdadr}, {"cddar", sxbuiltins.Cddar}, {"cdddr", sxbuiltins.Cdddr},
-	{"caaaar", sxbuiltins.Caaaar}, {"caaadr", sxbuiltins.Caaadr}, {"caadar", sxbuiltins.Caadar}, {"caaddr", sxbuiltins.Caaddr},
-	{"cadaar", sxbuiltins.Cadaar}, {"cadadr", sxbuiltins.Cadadr}, {"caddar", sxbuiltins.Caddar}, {"cadddr", sxbuiltins.Cadddr},
-	{"cdaaar", sxbuiltins.Cdaaar}, {"cdaadr", sxbuiltins.Cdaadr}, {"cdadar", sxbuiltins.Cdadar}, {"cdaddr", sxbuiltins.Cdaddr},
-	{"cddaar", sxbuiltins.Cddaar}, {"cddadr", sxbuiltins.Cddadr}, {"cdddar", sxbuiltins.Cdddar}, {"cddddr", sxbuiltins.Cddddr},
-	{"last", sxbuiltins.Last},
-	{"list", sxbuiltins.List}, {"list*", sxbuiltins.ListStar},
-	{"append", sxbuiltins.Append}, {"reverse", sxbuiltins.Reverse},
-	{"length", sxbuiltins.Length}, {"assoc", sxbuiltins.Assoc},
-	{"->string", sxbuiltins.ToString}, {"string-append", sxbuiltins.StringAppend},
-	{"callable?", sxbuiltins.CallableP},
-	{"parent-environment", sxbuiltins.ParentEnv},
-	{"environment-bindings", sxbuiltins.EnvBindings},
-	{"undefined?", sxbuiltins.UndefinedP}, {"defined?", sxbuiltins.DefinedP},
+	{"==", sxbuiltins.IdenticalOld}, {"=", sxbuiltins.EqualOld},
+	{"number?", sxbuiltins.NumberPold},
+	{"+", sxbuiltins.AddOld}, {"-", sxbuiltins.SubOld}, {"*", sxbuiltins.MulOld},
+	{"div", sxbuiltins.DivOld}, {"mod", sxbuiltins.ModOld},
+	{"<", sxbuiltins.NumLessOld}, {"<=", sxbuiltins.NumLessEqualOld},
+	{">=", sxbuiltins.NumGreaterEqualOld}, {">", sxbuiltins.NumGreaterOld},
+	{"min", sxbuiltins.MinOld}, {"max", sxbuiltins.MaxOld},
+	{"cons", sxbuiltins.ConsOld}, {"pair?", sxbuiltins.PairPold},
+	{"null?", sxbuiltins.NullPold}, {"list?", sxbuiltins.ListPold},
+	{"car", sxbuiltins.CarOld}, {"cdr", sxbuiltins.CdrOld},
+	{"caar", sxbuiltins.CaarOld}, {"cadr", sxbuiltins.CadrOld}, {"cdar", sxbuiltins.CdarOld}, {"cddr", sxbuiltins.CddrOld},
+	{"caaar", sxbuiltins.CaaarOld}, {"caadr", sxbuiltins.CaadrOld}, {"cadar", sxbuiltins.CadarOld}, {"caddr", sxbuiltins.CaddrOld},
+	{"cdaar", sxbuiltins.CdaarOld}, {"cdadr", sxbuiltins.CdadrOld}, {"cddar", sxbuiltins.CddarOld}, {"cdddr", sxbuiltins.CdddrOld},
+	{"caaaar", sxbuiltins.CaaaarOld}, {"caaadr", sxbuiltins.CaaadrOld}, {"caadar", sxbuiltins.CaadarOld}, {"caaddr", sxbuiltins.CaaddrOld},
+	{"cadaar", sxbuiltins.CadaarOld}, {"cadadr", sxbuiltins.CadadrOld}, {"caddar", sxbuiltins.CaddarOld}, {"cadddr", sxbuiltins.CadddrOld},
+	{"cdaaar", sxbuiltins.CdaaarOld}, {"cdaadr", sxbuiltins.CdaadrOld}, {"cdadar", sxbuiltins.CdadarOld}, {"cdaddr", sxbuiltins.CdaddrOld},
+	{"cddaar", sxbuiltins.CddaarOld}, {"cddadr", sxbuiltins.CddadrOld}, {"cdddar", sxbuiltins.CdddarOld}, {"cddddr", sxbuiltins.CddddrOld},
+	{"last", sxbuiltins.LastOld},
+	{"list", sxbuiltins.ListOld}, {"list*", sxbuiltins.ListStarOld},
+	{"append", sxbuiltins.AppendOld}, {"reverse", sxbuiltins.ReverseOld},
+	{"length", sxbuiltins.LengthOld}, {"assoc", sxbuiltins.AssocOld},
+	{"->string", sxbuiltins.ToStringOld}, {"string-append", sxbuiltins.StringAppendOld},
+	{"callable?", sxbuiltins.CallablePold},
+	{"parent-environment", sxbuiltins.ParentEnvOld},
+	{"environment-bindings", sxbuiltins.EnvBindingsOld},
+	{"undefined?", sxbuiltins.UndefinedPold}, {"defined?", sxbuiltins.DefinedPold},
 }
 var builtinsFA = []struct {
 	name string
 	fn   sxeval.BuiltinFAold
 }{
-	{"map", sxbuiltins.Map}, {"apply", sxbuiltins.Apply},
-	{"fold", sxbuiltins.Fold}, {"fold-reverse", sxbuiltins.FoldReverse},
-	{"current-environment", sxbuiltins.CurrentEnv},
-	{"bound?", sxbuiltins.BoundP},
-	{"environment-lookup", sxbuiltins.EnvLookup}, {"environment-resolve", sxbuiltins.EnvResolve},
-	{"macroexpand-0", sxbuiltins.MacroExpand0},
-	{"pp", sxbuiltins.Pretty},
+	{"map", sxbuiltins.MapOld}, {"apply", sxbuiltins.ApplyOld},
+	{"fold", sxbuiltins.FoldOld}, {"fold-reverse", sxbuiltins.FoldReverseOld},
+	{"current-environment", sxbuiltins.CurrentEnvOld},
+	{"bound?", sxbuiltins.BoundPold},
+	{"environment-lookup", sxbuiltins.EnvLookupOld}, {"environment-resolve", sxbuiltins.EnvResolveOld},
+	{"macroexpand-0", sxbuiltins.MacroExpand0old},
+	{"pp", sxbuiltins.PrettyOld},
 }
 
 func main() {
@@ -277,7 +277,7 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 	}
 
 	switch e := expr.(type) {
-	case *sxeval.BuiltinCallExpr:
+	case *sxeval.BuiltinCallExprOld:
 		fmt.Printf("B-CALL %v\n", e.Proc.Name(eng))
 		for _, arg := range e.Args {
 			printExpr(eng, arg, level+1)

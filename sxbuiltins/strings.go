@@ -16,8 +16,8 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// ToString transforms its argument into its string representation.
-func ToString(args []sx.Object) (sx.Object, error) {
+// ToStringOld transforms its argument into its string representation.
+func ToStringOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	if err != nil {
 		return nil, err
@@ -29,8 +29,8 @@ func ToString(args []sx.Object) (sx.Object, error) {
 	return sx.String(obj.Repr()), nil
 }
 
-// StringAppend append all its string arguments.
-func StringAppend(args []sx.Object) (sx.Object, error) {
+// StringAppendOld append all its string arguments.
+func StringAppendOld(args []sx.Object) (sx.Object, error) {
 	if len(args) == 0 {
 		return sx.String(""), nil
 	}

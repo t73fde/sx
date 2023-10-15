@@ -14,8 +14,8 @@ package sxbuiltins
 
 import "zettelstore.de/sx.fossil"
 
-// NumberP is the boolean that returns true if the argument is a number.
-func NumberP(args []sx.Object) (sx.Object, error) {
+// NumberPold is the boolean that returns true if the argument is a number.
+func NumberPold(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
@@ -23,8 +23,8 @@ func NumberP(args []sx.Object) (sx.Object, error) {
 	return sx.MakeBoolean(ok), nil
 }
 
-// Add is the builtin that implements (+ n...)
-func Add(args []sx.Object) (sx.Object, error) {
+// AddOld is the builtin that implements (+ n...)
+func AddOld(args []sx.Object) (sx.Object, error) {
 	acc := sx.Number(sx.Int64(0))
 	if len(args) == 0 {
 		return acc, nil
@@ -40,8 +40,8 @@ func Add(args []sx.Object) (sx.Object, error) {
 	return acc, nil
 }
 
-// Sub is the builtin that implements (- n n...)
-func Sub(args []sx.Object) (sx.Object, error) {
+// SubOld is the builtin that implements (- n n...)
+func SubOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 0)
 	acc, err := GetNumber(err, args, 0)
 	if err != nil {
@@ -60,8 +60,8 @@ func Sub(args []sx.Object) (sx.Object, error) {
 	return acc, nil
 }
 
-// Mul is the builtin that implements (* n...)
-func Mul(args []sx.Object) (sx.Object, error) {
+// MulOld is the builtin that implements (* n...)
+func MulOld(args []sx.Object) (sx.Object, error) {
 	acc := sx.Number(sx.Int64(1))
 	if len(args) == 0 {
 		return acc, nil
@@ -77,8 +77,8 @@ func Mul(args []sx.Object) (sx.Object, error) {
 	return acc, nil
 }
 
-// Div is the builtin that implements (div n m)
-func Div(args []sx.Object) (sx.Object, error) {
+// DivOld is the builtin that implements (div n m)
+func DivOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 2, 2)
 	acc, err := GetNumber(err, args, 0)
 	num, err := GetNumber(err, args, 1)
@@ -88,8 +88,8 @@ func Div(args []sx.Object) (sx.Object, error) {
 	return sx.NumDiv(acc, num)
 }
 
-// Mod is the builtin that implements (mod n m)
-func Mod(args []sx.Object) (sx.Object, error) {
+// ModOld is the builtin that implements (mod n m)
+func ModOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 2, 2)
 	acc, err := GetNumber(err, args, 0)
 	num, err := GetNumber(err, args, 1)

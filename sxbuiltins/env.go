@@ -17,8 +17,8 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// CurrentEnv returns the current environment
-func CurrentEnv(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+// CurrentEnvOld returns the current environment
+func CurrentEnvOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 0, 0)
 	if err != nil {
 		return nil, err
@@ -26,8 +26,8 @@ func CurrentEnv(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	return frame.Environment(), nil
 }
 
-// ParentEnv returns the parent environment of the given environment.
-func ParentEnv(args []sx.Object) (sx.Object, error) {
+// ParentEnvOld returns the parent environment of the given environment.
+func ParentEnvOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	env, err := GetEnvironment(err, args, 0)
 	if err != nil {
@@ -39,8 +39,8 @@ func ParentEnv(args []sx.Object) (sx.Object, error) {
 	return sx.MakeUndefined(), nil
 }
 
-// EnvBindings returns the bindings as a a-list of the given environment.
-func EnvBindings(args []sx.Object) (sx.Object, error) {
+// EnvBindingsOld returns the bindings as a a-list of the given environment.
+func EnvBindingsOld(args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	env, err := GetEnvironment(err, args, 0)
 	if err != nil {
@@ -49,8 +49,8 @@ func EnvBindings(args []sx.Object) (sx.Object, error) {
 	return env.Bindings(), nil
 }
 
-// BoundP returns true, if the given symbol is bound in the given environment.
-func BoundP(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+// BoundPold returns true, if the given symbol is bound in the given environment.
+func BoundPold(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	sym, err := GetSymbol(err, args, 0)
 	if err != nil {
@@ -60,9 +60,9 @@ func BoundP(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	return sx.MakeBoolean(found), nil
 }
 
-// EnvLookup returns the symbol's binding value in the given
+// EnvLookupOld returns the symbol's binding value in the given
 // environment, or Undefined if there is no such value.
-func EnvLookup(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+func EnvLookupOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 2)
 	sym, err := GetSymbol(err, args, 0)
 	var env sxeval.Environment
@@ -80,9 +80,9 @@ func EnvLookup(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	return sx.MakeUndefined(), nil
 }
 
-// EnvResolve returns the symbol's binding value in the given environment
+// EnvResolveOld returns the symbol's binding value in the given environment
 // and all its parent environment, or Undefined if there is no such value.
-func EnvResolve(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+func EnvResolveOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 2)
 	sym, err := GetSymbol(err, args, 0)
 	var env sxeval.Environment

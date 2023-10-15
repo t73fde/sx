@@ -96,10 +96,10 @@ func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 	return m.Frame.MakeCalleeFrame().Call(&proc, macroArgs)
 }
 
-// MacroExpand0 implements one level of macro expansion.
+// MacroExpand0old implements one level of macro expansion.
 //
 // It is mostly used for debugging macros.
-func MacroExpand0(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+func MacroExpand0old(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	err := CheckArgs(args, 1, 1)
 	lst, err := GetList(err, args, 0)
 	if err == nil && lst != nil {

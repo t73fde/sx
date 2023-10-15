@@ -18,8 +18,8 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// CallableP returns True, if the given argument is a callable.
-func CallableP(args []sx.Object) (sx.Object, error) {
+// CallablePold returns True, if the given argument is a callable.
+func CallablePold(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 1, 1); err != nil {
 		return nil, err
 	}

@@ -14,12 +14,11 @@ package sxbuiltins
 
 import "zettelstore.de/sx.fossil"
 
-// Identical returns True iff the two given arguments are identical / the same objects.
-func Identical(args []sx.Object) (sx.Object, error) {
+// IdenticalOld returns True iff the two given arguments are identical / the same objects.
+func IdenticalOld(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 2, 0); err != nil {
 		return nil, err
 	}
-	// return sx.MakeBoolean(args[0] == args[1]), nil
 	for i := 1; i < len(args); i++ {
 		if args[0] != args[i] {
 			return sx.Nil(), nil
@@ -28,8 +27,8 @@ func Identical(args []sx.Object) (sx.Object, error) {
 	return sx.MakeBoolean(true), nil
 }
 
-// Equal returns True iff the two given arguments have the same value.
-func Equal(args []sx.Object) (sx.Object, error) {
+// EqualOld returns True iff the two given arguments have the same value.
+func EqualOld(args []sx.Object) (sx.Object, error) {
 	if err := CheckArgs(args, 2, 0); err != nil {
 		return nil, err
 	}
