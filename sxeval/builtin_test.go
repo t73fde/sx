@@ -19,7 +19,7 @@ import (
 )
 
 func TestBuiltinSimple(t *testing.T) {
-	b := sxeval.BuiltinA(func(args []sx.Object) (sx.Object, error) {
+	b := sxeval.BuiltinAold(func(args []sx.Object) (sx.Object, error) {
 		if len(args) == 0 {
 			return nil, nil
 		}

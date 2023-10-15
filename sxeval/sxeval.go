@@ -178,14 +178,14 @@ func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
 	return frame.Execute(expr)
 }
 
-// BindBuiltinA binds a standard builtin function to the given name in the engine's root environment.
-func (eng *Engine) BindBuiltinA(name string, fn BuiltinA) error {
+// BindBuiltinAold binds a standard builtin function to the given name in the engine's root environment.
+func (eng *Engine) BindBuiltinAold(name string, fn BuiltinAold) error {
 	eng.bNames[reflect.ValueOf(fn).Pointer()] = name
 	return eng.BindConst(name, fn)
 }
 
-// BindBuiltinEEA binds a special builtin function to the given name in the engine's root environment.
-func (eng *Engine) BindBuiltinFA(name string, fn BuiltinFA) error {
+// BindBuiltinFAold binds a special builtin function to the given name in the engine's root environment.
+func (eng *Engine) BindBuiltinFAold(name string, fn BuiltinFAold) error {
 	eng.bNames[reflect.ValueOf(fn).Pointer()] = name
 	return eng.BindConst(name, fn)
 }
@@ -207,7 +207,7 @@ func (eng *Engine) Bind(name string, obj sx.Object) error {
 }
 
 // BuiltinName returns the name of the given Builtin.
-func (eng *Engine) BuiltinName(b Builtin) string {
+func (eng *Engine) BuiltinName(b BuiltinOld) string {
 	ptr := reflect.ValueOf(b).Pointer()
 	if eng == nil {
 		return strconv.FormatUint(uint64(ptr), 16)

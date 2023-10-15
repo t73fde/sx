@@ -168,7 +168,7 @@ func (ce *CallExpr) Rework(rf *ReworkFrame) Expr {
 
 	proc := ce.Proc.Rework(rf)
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
-		if bi, isBuiltin := objExpr.Obj.(Builtin); isBuiltin {
+		if bi, isBuiltin := objExpr.Obj.(BuiltinOld); isBuiltin {
 			bce := &BuiltinCallExpr{
 				Proc: bi,
 				Args: ce.Args,
@@ -259,7 +259,7 @@ func (e NotCallableError) String() string { return e.Error() }
 // BuiltinCallExpr calls a builtin and returns the resulting object.
 // It is an optimization of `CallExpr.`
 type BuiltinCallExpr struct {
-	Proc Builtin
+	Proc BuiltinOld
 	Args []Expr
 }
 
@@ -271,7 +271,7 @@ func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 	// instead the BuiltinCallExpr. This assumes that there is no side effect
 	// when the builtin is called.
 	mayInline := true
-	if _, isBuiltinA := bce.Proc.(BuiltinA); !isBuiltinA {
+	if _, isBuiltinA := bce.Proc.(BuiltinAold); !isBuiltinA {
 		mayInline = false
 	}
 	for i, arg := range bce.Args {
@@ -287,7 +287,7 @@ func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 	for i, arg := range bce.Args {
 		args[i] = arg.(ObjectExpr).Object()
 	}
-	result, err := bce.Proc.(BuiltinA)(args)
+	result, err := bce.Proc.(BuiltinAold)(args)
 	if err != nil {
 		return bce
 	}

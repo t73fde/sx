@@ -81,7 +81,7 @@ var syntaxes = []struct {
 
 var builtinsA = []struct {
 	name string
-	fn   sxeval.BuiltinA
+	fn   sxeval.BuiltinAold
 }{
 	{"==", sxbuiltins.Identical}, {"=", sxbuiltins.Equal},
 	{"number?", sxbuiltins.NumberP},
@@ -112,7 +112,7 @@ var builtinsA = []struct {
 }
 var builtinsFA = []struct {
 	name string
-	fn   sxeval.BuiltinFA
+	fn   sxeval.BuiltinFAold
 }{
 	{"map", sxbuiltins.Map}, {"apply", sxbuiltins.Apply},
 	{"fold", sxbuiltins.Fold}, {"fold-reverse", sxbuiltins.FoldReverse},
@@ -139,13 +139,13 @@ func main() {
 		engine.BindSyntax(synDef.name, synDef.fn)
 	}
 	for _, bDef := range builtinsA {
-		engine.BindBuiltinA(bDef.name, bDef.fn)
+		engine.BindBuiltinAold(bDef.name, bDef.fn)
 	}
 	for _, bDef := range builtinsFA {
-		engine.BindBuiltinFA(bDef.name, bDef.fn)
+		engine.BindBuiltinFAold(bDef.name, bDef.fn)
 	}
 	engine.Bind("UNDEFINED", sx.MakeUndefined())
-	engine.BindBuiltinA("log-reader", func(args []sx.Object) (sx.Object, error) {
+	engine.BindBuiltinAold("log-reader", func(args []sx.Object) (sx.Object, error) {
 		err := sxbuiltins.CheckArgs(args, 0, 0)
 		if err != nil {
 			return nil, err
@@ -154,7 +154,7 @@ func main() {
 		mpe.logReader = !res
 		return sx.MakeBoolean(res), nil
 	})
-	engine.BindBuiltinA("log-parser", func(args []sx.Object) (sx.Object, error) {
+	engine.BindBuiltinAold("log-parser", func(args []sx.Object) (sx.Object, error) {
 		err := sxbuiltins.CheckArgs(args, 0, 0)
 		if err != nil {
 			return nil, err
@@ -163,7 +163,7 @@ func main() {
 		mpe.logParser = !res
 		return sx.MakeBoolean(res), nil
 	})
-	engine.BindBuiltinA("log-expr", func(args []sx.Object) (sx.Object, error) {
+	engine.BindBuiltinAold("log-expr", func(args []sx.Object) (sx.Object, error) {
 		err := sxbuiltins.CheckArgs(args, 0, 0)
 		if err != nil {
 			return nil, err
@@ -172,7 +172,7 @@ func main() {
 		mpe.logExpr = !res
 		return sx.MakeBoolean(res), nil
 	})
-	engine.BindBuiltinA("log-executor", func(args []sx.Object) (sx.Object, error) {
+	engine.BindBuiltinAold("log-executor", func(args []sx.Object) (sx.Object, error) {
 		err := sxbuiltins.CheckArgs(args, 0, 0)
 		if err != nil {
 			return nil, err
@@ -181,7 +181,7 @@ func main() {
 		mpe.logExecutor = !res
 		return sx.MakeBoolean(res), nil
 	})
-	engine.BindBuiltinA("log-off", func(args []sx.Object) (sx.Object, error) {
+	engine.BindBuiltinAold("log-off", func(args []sx.Object) (sx.Object, error) {
 		err := sxbuiltins.CheckArgs(args, 0, 0)
 		if err != nil {
 			return nil, err
@@ -191,7 +191,7 @@ func main() {
 		mpe.logExecutor = false
 		return sx.Nil(), nil
 	})
-	engine.BindBuiltinA("panic", func(args []sx.Object) (sx.Object, error) {
+	engine.BindBuiltinAold("panic", func(args []sx.Object) (sx.Object, error) {
 		err := sxbuiltins.CheckArgs(args, 0, 1)
 		if err != nil {
 			panic(err)

@@ -103,10 +103,10 @@ func createEngine() *sxeval.Engine {
 		engine.BindSyntax(syntax.name, syntax.fn)
 	}
 	for _, builtinA := range builtinsA {
-		engine.BindBuiltinA(builtinA.name, builtinA.fn)
+		engine.BindBuiltinAold(builtinA.name, builtinA.fn)
 	}
 	for _, builtinFA := range builtinsFA {
-		engine.BindBuiltinFA(builtinFA.name, builtinFA.fn)
+		engine.BindBuiltinFAold(builtinFA.name, builtinFA.fn)
 	}
 	root.Freeze()
 	env := sxeval.MakeChildEnvironment(root, "vars", len(objects))
@@ -134,7 +134,7 @@ var syntaxes = []struct {
 
 var builtinsA = []struct {
 	name string
-	fn   sxeval.BuiltinA
+	fn   sxeval.BuiltinAold
 }{
 	{"==", sxbuiltins.Identical}, {"=", sxbuiltins.Equal},
 	{"number?", sxbuiltins.NumberP},
@@ -165,7 +165,7 @@ var builtinsA = []struct {
 }
 var builtinsFA = []struct {
 	name string
-	fn   sxeval.BuiltinFA
+	fn   sxeval.BuiltinFAold
 }{
 	{"map", sxbuiltins.Map}, {"apply", sxbuiltins.Apply},
 	{"fold", sxbuiltins.Fold}, {"fold-reverse", sxbuiltins.FoldReverse},

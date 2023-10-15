@@ -25,7 +25,7 @@ func createTestEnv(sf sx.SymbolFactory) sxeval.Environment {
 	env := sxeval.MakeRootEnvironment(2)
 
 	symCat := sf.MustMake("cat")
-	env.Bind(symCat, sxeval.BuiltinA(func(args []sx.Object) (sx.Object, error) {
+	env.Bind(symCat, sxeval.BuiltinAold(func(args []sx.Object) (sx.Object, error) {
 		var sb strings.Builder
 		for _, val := range args {
 			var s string
@@ -117,10 +117,10 @@ func createEngineForTCO() *sxeval.Engine {
 	engine := sxeval.MakeEngine(sf, root)
 	engine.BindSyntax("define", sxbuiltins.DefineS)
 	engine.BindSyntax("if", sxbuiltins.IfS)
-	engine.BindBuiltinA("=", sxbuiltins.Equal)
-	engine.BindBuiltinA("-", sxbuiltins.Sub)
-	engine.BindBuiltinFA("map", sxbuiltins.Map)
-	engine.BindBuiltinA("list", sxbuiltins.List)
+	engine.BindBuiltinAold("=", sxbuiltins.Equal)
+	engine.BindBuiltinAold("-", sxbuiltins.Sub)
+	engine.BindBuiltinFAold("map", sxbuiltins.Map)
+	engine.BindBuiltinAold("list", sxbuiltins.List)
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxEvenOdd), sxreader.WithSymbolFactory(sf))
 	env := sxeval.MakeChildEnvironment(root, "TCO", 128)
