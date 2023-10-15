@@ -28,7 +28,7 @@ type Builtin interface {
 // BuiltinA is the signature of all normal builtin functions.
 //
 // These functions are not allowed to have a side effect. Otherwise you should
-// us BuiltinEEA instead.
+// us BuiltinFA instead.
 type BuiltinA func([]sx.Object) (sx.Object, error)
 
 func (b BuiltinA) IsNil() bool  { return b == nil }

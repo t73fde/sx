@@ -168,7 +168,7 @@ func (me *mappedEnvironment) BindConst(sym *sx.Symbol, val sx.Object) error {
 		return ErrConstBinding{Sym: sym}
 	}
 	if me.consts == nil {
-		me.consts = map[*sx.Symbol]struct{}{sym: struct{}{}}
+		me.consts = map[*sx.Symbol]struct{}{sym: {}}
 	} else {
 		me.consts[sym] = struct{}{}
 	}
