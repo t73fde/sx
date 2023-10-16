@@ -13,6 +13,7 @@ package sxeval
 import (
 	"fmt"
 	"io"
+	"math"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -22,8 +23,8 @@ type Builtin struct {
 	// The canonical Name of the builtin
 	Name string
 
-	// Minimum and maximum arity. If MaxArity < MinArity, maximum arity is unlimited
-	MinArity, MaxArity int
+	// Minimum and maximum arity. If MaxArity < 0, maximum arity is unlimited
+	MinArity, MaxArity int16
 
 	// Is a call to the builtin independent of the evironment and does not produce some side effect?
 	IsPure bool
@@ -70,22 +71,25 @@ func (b *Builtin) Print(w io.Writer) (int, error) {
 // Call the builtin function with the given frame and arguments.
 func (b *Builtin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
 	// Check arity
-	numArgs, minArity, maxArity := len(args), b.MinArity, b.MaxArity
+	nargs := len(args)
+	if nargs > math.MaxInt16 {
+		err := fmt.Errorf("more than %d arguments are not supported, but %d given", math.MaxInt16, nargs)
+		return nil, CallError{Name: b.Name, Err: err}
+	}
+	numArgs, minArity, maxArity := int16(nargs), b.MinArity, b.MaxArity
 	if minArity == maxArity {
 		if numArgs != minArity {
 			err := fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, args)
 			return nil, CallError{Name: b.Name, Err: err}
 		}
-	} else if minArity > maxArity {
+	} else if maxArity < 0 {
 		if numArgs < minArity {
 			err := fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, args)
 			return nil, CallError{Name: b.Name, Err: err}
 		}
-	} else {
-		if numArgs < minArity || maxArity < numArgs {
-			err := fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, args)
-			return nil, CallError{Name: b.Name, Err: err}
-		}
+	} else if numArgs < minArity || maxArity < numArgs {
+		err := fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, args)
+		return nil, CallError{Name: b.Name, Err: err}
 	}
 
 	obj, err := b.Fn(frame, args)

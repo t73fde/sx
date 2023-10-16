@@ -105,7 +105,7 @@ var Macroexpand0 = sxeval.Builtin{
 	MaxArity: 1,
 	IsPure:   false,
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		lst, err := GetList(nil, args, 0)
+		lst, err := GetList(args, 0)
 		if err == nil && lst != nil {
 			if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
 				if obj, found := frame.Resolve(sym); found {

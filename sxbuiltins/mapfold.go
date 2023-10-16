@@ -23,8 +23,11 @@ var Map = sxeval.Builtin{
 	MaxArity: 2,
 	IsPure:   true,
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		fn, err := GetCallable(nil, args, 0)
-		lst, err := GetList(err, args, 1)
+		fn, err := GetCallable(args, 0)
+		if err != nil {
+			return nil, err
+		}
+		lst, err := GetList(args, 1)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +73,7 @@ var Apply = sxeval.Builtin{
 	MaxArity: 2,
 	IsPure:   true,
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		lst, err := GetList(nil, args, 1)
+		lst, err := GetList(args, 1)
 		if err != nil {
 			return nil, err
 		}
@@ -105,8 +108,11 @@ var Fold = sxeval.Builtin{
 	MaxArity: 3,
 	IsPure:   true,
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		fn, err := GetCallable(nil, args, 0)
-		lst, err := GetList(err, args, 2)
+		fn, err := GetCallable(args, 0)
+		if err != nil {
+			return nil, err
+		}
+		lst, err := GetList(args, 2)
 		if err != nil {
 			return nil, err
 		}
@@ -136,8 +142,11 @@ var FoldReverse = sxeval.Builtin{
 	MaxArity: 3,
 	IsPure:   true,
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		fn, err := GetCallable(nil, args, 0)
-		lst, err := GetList(err, args, 2)
+		fn, err := GetCallable(args, 0)
+		if err != nil {
+			return nil, err
+		}
+		lst, err := GetList(args, 2)
 		if err != nil {
 			return nil, err
 		}

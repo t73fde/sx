@@ -42,7 +42,7 @@ var StringAppend = sxeval.Builtin{
 		if len(args) == 0 {
 			return sx.String(""), nil
 		}
-		s, err := GetString(nil, args, 0)
+		s, err := GetString(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +52,7 @@ var StringAppend = sxeval.Builtin{
 		var sb strings.Builder
 		sb.WriteString(s.String())
 		for i := 1; i < len(args); i++ {
-			s, err = GetString(err, args, i)
+			s, err = GetString(args, i)
 			if err != nil {
 				return nil, err
 			}

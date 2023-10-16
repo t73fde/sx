@@ -75,7 +75,7 @@ var Car = sxeval.Builtin{
 	MaxArity: 1,
 	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		pair, err := GetPair(nil, args, 0)
+		pair, err := GetPair(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -90,7 +90,7 @@ var Cdr = sxeval.Builtin{
 	MaxArity: 1,
 	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		pair, err := GetPair(nil, args, 0)
+		pair, err := GetPair(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +105,7 @@ func makeCxr(spec string) sxeval.Builtin {
 		MaxArity: 1,
 		IsPure:   true,
 		Fn: func(_ *sxeval.Frame, args []sx.Object) (result sx.Object, _ error) {
-			pair, err := GetPair(nil, args, 0)
+			pair, err := GetPair(args, 0)
 			if err != nil {
 				return nil, err
 			}
@@ -174,7 +174,7 @@ var Last = sxeval.Builtin{
 	MaxArity: 1,
 	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		lst, err := GetList(nil, args, 0)
+		lst, err := GetList(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -197,7 +197,7 @@ var List = sxeval.Builtin{
 var ListStar = sxeval.Builtin{
 	Name:     "list*",
 	MinArity: 1,
-	MaxArity: 0,
+	MaxArity: -1,
 	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		if len(args) == 1 {
@@ -229,7 +229,7 @@ var Append = sxeval.Builtin{
 		lastList := len(args) - 1
 		lsts := make([]*sx.Pair, lastList)
 		for i := 0; i < lastList; i++ {
-			lst, err := GetList(nil, args, i)
+			lst, err := GetList(args, i)
 			if err != nil {
 				return nil, err
 			}
@@ -259,7 +259,7 @@ var Reverse = sxeval.Builtin{
 	MaxArity: 1,
 	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		lst, err := GetList(nil, args, 0)
+		lst, err := GetList(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -274,7 +274,7 @@ var Length = sxeval.Builtin{
 	MaxArity: 1,
 	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		lst, err := GetList(nil, args, 0)
+		lst, err := GetList(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -290,7 +290,7 @@ var Assoc = sxeval.Builtin{
 	MaxArity: 2,
 	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		lst, err := GetList(nil, args, 0)
+		lst, err := GetList(args, 0)
 		if err != nil {
 			return nil, err
 		}

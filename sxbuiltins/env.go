@@ -33,7 +33,7 @@ var ParentEnv = sxeval.Builtin{
 	MaxArity: 1,
 	IsPure:   false,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		env, err := GetEnvironment(nil, args, 0)
+		env, err := GetEnvironment(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -50,7 +50,7 @@ var EnvBindings = sxeval.Builtin{
 	MaxArity: 1,
 	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		env, err := GetEnvironment(nil, args, 0)
+		env, err := GetEnvironment(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -65,7 +65,7 @@ var BoundP = sxeval.Builtin{
 	MaxArity: 1,
 	IsPure:   false,
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		sym, err := GetSymbol(nil, args, 0)
+		sym, err := GetSymbol(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -113,10 +113,13 @@ var EnvResolve = sxeval.Builtin{
 }
 
 func envGetSymEnv(frame *sxeval.Frame, args []sx.Object) (*sx.Symbol, sxeval.Environment, error) {
-	sym, err := GetSymbol(nil, args, 0)
+	sym, err := GetSymbol(args, 0)
+	if err != nil {
+		return nil, nil, err
+	}
 	if len(args) == 1 {
 		return sym, frame.Environment(), err
 	}
-	env, err := GetEnvironment(err, args, 1)
+	env, err := GetEnvironment(args, 1)
 	return sym, env, err
 }
