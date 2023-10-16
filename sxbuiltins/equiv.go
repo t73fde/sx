@@ -18,10 +18,10 @@ import (
 )
 
 var Identical = sxeval.Builtin{
-	Name:          "==",
-	MinArity:      2,
-	MaxArity:      0,
-	HasSideEffect: false,
+	Name:     "==",
+	MinArity: 2,
+	MaxArity: 0,
+	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		for i := 1; i < len(args); i++ {
 			if args[0] != args[i] {
@@ -33,10 +33,10 @@ var Identical = sxeval.Builtin{
 }
 
 var Equal = sxeval.Builtin{
-	Name:          "=",
-	MinArity:      2,
-	MaxArity:      0,
-	HasSideEffect: false,
+	Name:     "=",
+	MinArity: 2,
+	MaxArity: 0,
+	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		for i := 1; i < len(args); i++ {
 			if !args[0].IsEqual(args[i]) {

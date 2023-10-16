@@ -16,10 +16,10 @@ import (
 )
 
 var Defined = sxeval.Builtin{
-	Name:          "defined?",
-	MinArity:      1,
-	MaxArity:      1,
-	HasSideEffect: false,
+	Name:     "defined?",
+	MinArity: 1,
+	MaxArity: 1,
+	IsPure:   true,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		return sx.MakeBoolean(!sx.IsUndefined(args[0])), nil
 	},

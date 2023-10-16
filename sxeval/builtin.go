@@ -26,8 +26,8 @@ type Builtin struct {
 	// Minimum and maximum arity. If MaxArity < MinArity, maximum arity is unlimited
 	MinArity, MaxArity int
 
-	// Will a call to the builtin produce some side effect?
-	HasSideEffect bool
+	// Is a call to the builtin independent of the evironment and does not produce some side effect?
+	IsPure bool
 
 	// The actual builtin function
 	Fn func(*Frame, []sx.Object) (sx.Object, error)
