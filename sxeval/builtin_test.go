@@ -19,12 +19,19 @@ import (
 )
 
 func TestBuiltinSimple(t *testing.T) {
-	b := sxeval.BuiltinAold(func(args []sx.Object) (sx.Object, error) {
-		if len(args) == 0 {
-			return nil, nil
-		}
-		return sx.MakeList(args[1:]...), nil
-	})
+	b := &sxeval.Builtin{
+		Name:     "test-builtin",
+		MinArity: 0,
+		MaxArity: -1,
+		IsPure:   true,
+		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+			if len(args) == 0 {
+				return nil, nil
+			}
+			return sx.MakeList(args[1:]...), nil
+		},
+	}
+
 	if sx.IsNil(b) {
 		t.Error("Builtin is wrongly treated as Nil()", b)
 		return

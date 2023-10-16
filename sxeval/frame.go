@@ -41,6 +41,13 @@ func (frame *Frame) MakeParseFrame() *ParseFrame {
 	}
 }
 
+func (frame *Frame) MakeReworkFrame() *ReworkFrame {
+	return &ReworkFrame{
+		env:    frame.env,
+		engine: frame.engine,
+	}
+}
+
 func (frame *Frame) MakeLambdaFrame(pf *ParseFrame, name string, numBindings int) *Frame {
 	return &Frame{
 		engine:   frame.engine,

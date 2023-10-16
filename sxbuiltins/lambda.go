@@ -18,13 +18,16 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// CallablePold returns True, if the given argument is a callable.
-func CallablePold(args []sx.Object) (sx.Object, error) {
-	if err := CheckArgs(args, 1, 1); err != nil {
-		return nil, err
-	}
-	_, ok := sxeval.GetCallable(args[0])
-	return sx.MakeBoolean(ok), nil
+// CallableP returns true, if the given argument is a callable.
+var CallableP = sxeval.Builtin{
+	Name:     "callable?",
+	MinArity: 1,
+	MaxArity: 1,
+	IsPure:   true,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		_, ok := sxeval.GetCallable(args[0])
+		return sx.MakeBoolean(ok), nil
+	},
 }
 
 // DefunS parses a procedure/function specfication and assigns it to a value.

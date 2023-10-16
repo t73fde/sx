@@ -96,20 +96,25 @@ func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 	return m.Frame.MakeCalleeFrame().Call(&proc, macroArgs)
 }
 
-// MacroExpand0old implements one level of macro expansion.
+// MacroExpand0 implements one level of macro expansion.
 //
 // It is mostly used for debugging macros.
-func MacroExpand0old(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := CheckArgs(args, 1, 1)
-	lst, err := GetList(err, args, 0)
-	if err == nil && lst != nil {
-		if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
-			if obj, found := frame.Resolve(sym); found {
-				if macro, isMacro := obj.(*Macro); isMacro {
-					return macro.Expand(frame.MakeParseFrame(), lst.Tail())
+var Macroexpand0 = sxeval.Builtin{
+	Name:     "macroexpand-0",
+	MinArity: 1,
+	MaxArity: 1,
+	IsPure:   false,
+	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		lst, err := GetList(nil, args, 0)
+		if err == nil && lst != nil {
+			if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
+				if obj, found := frame.Resolve(sym); found {
+					if macro, isMacro := obj.(*Macro); isMacro {
+						return macro.Expand(frame.MakeParseFrame(), lst.Tail())
+					}
 				}
 			}
 		}
-	}
-	return lst, err
+		return lst, err
+	},
 }

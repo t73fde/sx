@@ -168,9 +168,9 @@ func (ce *CallExpr) Rework(rf *ReworkFrame) Expr {
 
 	proc := ce.Proc.Rework(rf)
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
-		if bi, isBuiltin := objExpr.Obj.(BuiltinOld); isBuiltin {
-			bce := &BuiltinCallExprOld{
-				Proc: bi,
+		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
+			bce := &BuiltinCallExpr{
+				Proc: b,
 				Args: ce.Args,
 			}
 			return bce.Rework(rf)
@@ -256,29 +256,27 @@ func (e NotCallableError) Error() string {
 }
 func (e NotCallableError) String() string { return e.Error() }
 
-// BuiltinCallExprOld calls a builtin and returns the resulting object.
+// BuiltinCallExpr calls a builtin and returns the resulting object.
 // It is an optimization of `CallExpr.`
-type BuiltinCallExprOld struct {
-	Proc BuiltinOld
+type BuiltinCallExpr struct {
+	Proc *Builtin
 	Args []Expr
 }
 
-func (bce *BuiltinCallExprOld) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
-func (bce *BuiltinCallExprOld) Rework(rf *ReworkFrame) Expr {
-	// Rework checks if the Builtin is a simple BuilinA and if all args are
+func (bce *BuiltinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
+func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
+	// Rework checks if the Builtin is pure and if all args are
 	// constant sx.Object's. If this is true, it will call the builtin with
 	// the args. If no error was signaled, the result object will be used
 	// instead the BuiltinCallExpr. This assumes that there is no side effect
 	// when the builtin is called.
-	mayInline := true
-	if _, isBuiltinA := bce.Proc.(BuiltinAold); !isBuiltinA {
-		mayInline = false
-	}
+	mayInline := bce.Proc.IsPure
 	for i, arg := range bce.Args {
-		bce.Args[i] = arg.Rework(rf)
-		if _, isObjectExpr := bce.Args[i].(ObjectExpr); !isObjectExpr {
+		expr := arg.Rework(rf)
+		if _, isObjectExpr := expr.(ObjectExpr); !isObjectExpr {
 			mayInline = false
 		}
+		bce.Args[i] = expr
 	}
 	if !mayInline {
 		return bce
@@ -287,21 +285,22 @@ func (bce *BuiltinCallExprOld) Rework(rf *ReworkFrame) Expr {
 	for i, arg := range bce.Args {
 		args[i] = arg.(ObjectExpr).Object()
 	}
-	result, err := bce.Proc.(BuiltinAold)(args)
+	frame := rf.MakeFrame()
+	result, err := frame.Call(bce.Proc, args)
 	if err != nil {
 		return bce
 	}
 	return ObjExpr{Obj: result}.Rework(rf)
 }
-func (bce *BuiltinCallExprOld) Compute(frame *Frame) (sx.Object, error) {
+func (bce *BuiltinCallExpr) Compute(frame *Frame) (sx.Object, error) {
 	subFrame := frame.MakeCalleeFrame()
 	return computeCallable(subFrame, bce.Proc, bce.Args)
 }
-func (bce *BuiltinCallExprOld) IsEqual(other Expr) bool {
+func (bce *BuiltinCallExpr) IsEqual(other Expr) bool {
 	if bce == other {
 		return true
 	}
-	if otherB, ok := other.(*BuiltinCallExprOld); ok && otherB != nil {
+	if otherB, ok := other.(*BuiltinCallExpr); ok && otherB != nil {
 		if !bce.Proc.IsEqual(otherB.Proc) {
 			return false
 		}
@@ -309,7 +308,7 @@ func (bce *BuiltinCallExprOld) IsEqual(other Expr) bool {
 	}
 	return false
 }
-func (bce *BuiltinCallExprOld) Print(w io.Writer) (int, error) {
+func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{BCALL ")
 	if err != nil {
 		return length, err

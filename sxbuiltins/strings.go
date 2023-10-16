@@ -14,41 +14,50 @@ import (
 	"strings"
 
 	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// ToStringOld transforms its argument into its string representation.
-func ToStringOld(args []sx.Object) (sx.Object, error) {
-	err := CheckArgs(args, 1, 1)
-	if err != nil {
-		return nil, err
-	}
-	obj := args[0]
-	if s, isString := sx.GetString(obj); isString {
-		return s, nil
-	}
-	return sx.String(obj.Repr()), nil
+// ToString transforms its argument into its string representation.
+var ToString = sxeval.Builtin{
+	Name:     "->string",
+	MinArity: 1,
+	MaxArity: 1,
+	IsPure:   true,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		obj := args[0]
+		if s, isString := sx.GetString(obj); isString {
+			return s, nil
+		}
+		return sx.String(obj.Repr()), nil
+	},
 }
 
-// StringAppendOld append all its string arguments.
-func StringAppendOld(args []sx.Object) (sx.Object, error) {
-	if len(args) == 0 {
-		return sx.String(""), nil
-	}
-	s, err := GetString(nil, args, 0)
-	if err != nil {
-		return nil, err
-	}
-	if len(args) == 1 {
-		return s, nil
-	}
-	var sb strings.Builder
-	sb.WriteString(s.String())
-	for i := 1; i < len(args); i++ {
-		s, err = GetString(err, args, i)
+// StringAppend append all its string arguments.
+var StringAppend = sxeval.Builtin{
+	Name:     "string-append",
+	MinArity: 0,
+	MaxArity: -1,
+	IsPure:   true,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		if len(args) == 0 {
+			return sx.String(""), nil
+		}
+		s, err := GetString(nil, args, 0)
 		if err != nil {
 			return nil, err
 		}
+		if len(args) == 1 {
+			return s, nil
+		}
+		var sb strings.Builder
 		sb.WriteString(s.String())
-	}
-	return sx.String(sb.String()), nil
+		for i := 1; i < len(args); i++ {
+			s, err = GetString(err, args, i)
+			if err != nil {
+				return nil, err
+			}
+			sb.WriteString(s.String())
+		}
+		return sx.String(sb.String()), nil
+	},
 }

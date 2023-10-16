@@ -15,8 +15,6 @@ package sxeval
 
 import (
 	"fmt"
-	"reflect"
-	"strconv"
 	"strings"
 
 	"zettelstore.de/sx.fossil"
@@ -163,7 +161,7 @@ func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
 
 // Rework the given expression with the options stored in the engine.
 func (eng *Engine) Rework(env Environment, expr Expr) Expr {
-	rf := ReworkFrame{env: env}
+	rf := ReworkFrame{env: env, engine: eng}
 	return expr.Rework(&rf)
 }
 
@@ -178,16 +176,10 @@ func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
 	return frame.Execute(expr)
 }
 
-// BindBuiltinAold binds a standard builtin function to the given name in the engine's root environment.
-func (eng *Engine) BindBuiltinAold(name string, fn BuiltinAold) error {
-	eng.bNames[reflect.ValueOf(fn).Pointer()] = name
-	return eng.BindConst(name, fn)
-}
-
-// BindBuiltinFAold binds a special builtin function to the given name in the engine's root environment.
-func (eng *Engine) BindBuiltinFAold(name string, fn BuiltinFAold) error {
-	eng.bNames[reflect.ValueOf(fn).Pointer()] = name
-	return eng.BindConst(name, fn)
+// BindBuiltin binds the given builtin with its given name in the engine's
+// root environment.
+func (eng *Engine) BindBuiltin(b *Builtin) error {
+	return eng.BindConst(b.Name, b)
 }
 
 // BindSyntax binds a syntax parser to the given name in the engine's root environment.
@@ -196,7 +188,8 @@ func (eng *Engine) BindSyntax(name string, fn SyntaxFn) error {
 	return eng.BindConst(name, MakeSyntax(name, fn))
 }
 
-// BindConst a given object to a symbol of the given name as a constant in the engine's root environment.
+// BindConst a given object to a symbol of the given name as a constant in the
+// engine's root environment.
 func (eng *Engine) BindConst(name string, obj sx.Object) error {
 	return eng.root.BindConst(eng.sf.MustMake(name), obj)
 }
@@ -204,16 +197,4 @@ func (eng *Engine) BindConst(name string, obj sx.Object) error {
 // Bind a given object to a symbol of the given name in the engine's root environment.
 func (eng *Engine) Bind(name string, obj sx.Object) error {
 	return eng.root.Bind(eng.sf.MustMake(name), obj)
-}
-
-// BuiltinName returns the name of the given Builtin.
-func (eng *Engine) BuiltinName(b BuiltinOld) string {
-	ptr := reflect.ValueOf(b).Pointer()
-	if eng == nil {
-		return strconv.FormatUint(uint64(ptr), 16)
-	}
-	if name, found := eng.bNames[ptr]; found {
-		return name
-	}
-	return ""
 }

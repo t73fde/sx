@@ -80,52 +80,44 @@ var syntaxes = []struct {
 }
 
 var builtins = []*sxeval.Builtin{
-	&sxbuiltins.Equal,
-	&sxbuiltins.Identical,
-	// ...
-	&sxbuiltins.Defined,
-}
-
-var builtinsA = []struct {
-	name string
-	fn   sxeval.BuiltinAold
-}{
-	{"number?", sxbuiltins.NumberPold},
-	{"+", sxbuiltins.AddOld}, {"-", sxbuiltins.SubOld}, {"*", sxbuiltins.MulOld},
-	{"div", sxbuiltins.DivOld}, {"mod", sxbuiltins.ModOld},
-	{"<", sxbuiltins.NumLessOld}, {"<=", sxbuiltins.NumLessEqualOld},
-	{">=", sxbuiltins.NumGreaterEqualOld}, {">", sxbuiltins.NumGreaterOld},
-	{"min", sxbuiltins.MinOld}, {"max", sxbuiltins.MaxOld},
-	{"cons", sxbuiltins.ConsOld}, {"pair?", sxbuiltins.PairPold},
-	{"null?", sxbuiltins.NullPold}, {"list?", sxbuiltins.ListPold},
-	{"car", sxbuiltins.CarOld}, {"cdr", sxbuiltins.CdrOld},
-	{"caar", sxbuiltins.CaarOld}, {"cadr", sxbuiltins.CadrOld}, {"cdar", sxbuiltins.CdarOld}, {"cddr", sxbuiltins.CddrOld},
-	{"caaar", sxbuiltins.CaaarOld}, {"caadr", sxbuiltins.CaadrOld}, {"cadar", sxbuiltins.CadarOld}, {"caddr", sxbuiltins.CaddrOld},
-	{"cdaar", sxbuiltins.CdaarOld}, {"cdadr", sxbuiltins.CdadrOld}, {"cddar", sxbuiltins.CddarOld}, {"cdddr", sxbuiltins.CdddrOld},
-	{"caaaar", sxbuiltins.CaaaarOld}, {"caaadr", sxbuiltins.CaaadrOld}, {"caadar", sxbuiltins.CaadarOld}, {"caaddr", sxbuiltins.CaaddrOld},
-	{"cadaar", sxbuiltins.CadaarOld}, {"cadadr", sxbuiltins.CadadrOld}, {"caddar", sxbuiltins.CaddarOld}, {"cadddr", sxbuiltins.CadddrOld},
-	{"cdaaar", sxbuiltins.CdaaarOld}, {"cdaadr", sxbuiltins.CdaadrOld}, {"cdadar", sxbuiltins.CdadarOld}, {"cdaddr", sxbuiltins.CdaddrOld},
-	{"cddaar", sxbuiltins.CddaarOld}, {"cddadr", sxbuiltins.CddadrOld}, {"cdddar", sxbuiltins.CdddarOld}, {"cddddr", sxbuiltins.CddddrOld},
-	{"last", sxbuiltins.LastOld},
-	{"list", sxbuiltins.ListOld}, {"list*", sxbuiltins.ListStarOld},
-	{"append", sxbuiltins.AppendOld}, {"reverse", sxbuiltins.ReverseOld},
-	{"length", sxbuiltins.LengthOld}, {"assoc", sxbuiltins.AssocOld},
-	{"->string", sxbuiltins.ToStringOld}, {"string-append", sxbuiltins.StringAppendOld},
-	{"callable?", sxbuiltins.CallablePold},
-	{"parent-environment", sxbuiltins.ParentEnvOld},
-	{"environment-bindings", sxbuiltins.EnvBindingsOld},
-}
-var builtinsFA = []struct {
-	name string
-	fn   sxeval.BuiltinFAold
-}{
-	{"map", sxbuiltins.MapOld}, {"apply", sxbuiltins.ApplyOld},
-	{"fold", sxbuiltins.FoldOld}, {"fold-reverse", sxbuiltins.FoldReverseOld},
-	{"current-environment", sxbuiltins.CurrentEnvOld},
-	{"bound?", sxbuiltins.BoundPold},
-	{"environment-lookup", sxbuiltins.EnvLookupOld}, {"environment-resolve", sxbuiltins.EnvResolveOld},
-	{"macroexpand-0", sxbuiltins.MacroExpand0old},
-	{"pp", sxbuiltins.PrettyOld},
+	&sxbuiltins.Equal,                    // =
+	&sxbuiltins.Identical,                // ==
+	&sxbuiltins.NullP,                    // null?
+	&sxbuiltins.Cons,                     // cons
+	&sxbuiltins.PairP, &sxbuiltins.ListP, // pair?, list?
+	&sxbuiltins.Car, &sxbuiltins.Cdr, // car, cdr
+	&sxbuiltins.Caar, &sxbuiltins.Cadr, &sxbuiltins.Cdar, &sxbuiltins.Cddr,
+	&sxbuiltins.Caaar, &sxbuiltins.Caadr, &sxbuiltins.Cadar, &sxbuiltins.Caddr,
+	&sxbuiltins.Cdaar, &sxbuiltins.Cdadr, &sxbuiltins.Cddar, &sxbuiltins.Cdddr,
+	&sxbuiltins.Caaaar, &sxbuiltins.Caaadr, &sxbuiltins.Caadar, &sxbuiltins.Caaddr,
+	&sxbuiltins.Cadaar, &sxbuiltins.Cadadr, &sxbuiltins.Caddar, &sxbuiltins.Cadddr,
+	&sxbuiltins.Cdaaar, &sxbuiltins.Cdaadr, &sxbuiltins.Cdadar, &sxbuiltins.Cdaddr,
+	&sxbuiltins.Cddaar, &sxbuiltins.Cddadr, &sxbuiltins.Cdddar, &sxbuiltins.Cddddr,
+	&sxbuiltins.Last,                       // last
+	&sxbuiltins.List, &sxbuiltins.ListStar, // list, list*
+	&sxbuiltins.Append,                        // append
+	&sxbuiltins.Reverse,                       // reverse
+	&sxbuiltins.Length,                        // length
+	&sxbuiltins.Assoc,                         // assoc
+	&sxbuiltins.Map,                           // map
+	&sxbuiltins.Apply,                         // apply
+	&sxbuiltins.Fold, &sxbuiltins.FoldReverse, // fold, fold-reverse
+	&sxbuiltins.NumberP,                               // number?
+	&sxbuiltins.Add, &sxbuiltins.Sub, &sxbuiltins.Mul, // +, -, *
+	&sxbuiltins.Div, &sxbuiltins.Mod, // div, mod
+	&sxbuiltins.NumLess, &sxbuiltins.NumLessEqual, // <, <=
+	&sxbuiltins.NumGreater, &sxbuiltins.NumGreaterEqual, // >, >=
+	&sxbuiltins.ToString, &sxbuiltins.StringAppend, // ->string, string-append
+	&sxbuiltins.CallableP,    //callable?
+	&sxbuiltins.Macroexpand0, // macroexpand-0
+	&sxbuiltins.Defined,      // defined?
+	&sxbuiltins.CurrentEnv,   // current-environment
+	&sxbuiltins.ParentEnv,    // parent-environment
+	&sxbuiltins.EnvBindings,  //environment-bindings
+	&sxbuiltins.BoundP,       // bound?
+	&sxbuiltins.EnvLookup,    // environment-lookup
+	&sxbuiltins.EnvResolve,   // environment-resolve
+	&sxbuiltins.Pretty,       // pp
 }
 
 func main() {
@@ -134,7 +126,7 @@ func main() {
 	symQQ, symUQ, symUQS := installQQ(rd)
 
 	mpe := mainParserExecutor{}
-	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment(len(syntaxes)+len(builtinsA)+len(builtinsFA)+16))
+	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment(len(syntaxes)+len(builtins)+16))
 	engine.SetQuote(nil)
 	mpe.origParser = engine.SetParser(&mpe)
 	mpe.origExecutor = engine.SetExecutor(&mpe)
@@ -144,70 +136,76 @@ func main() {
 		engine.BindSyntax(synDef.name, synDef.fn)
 	}
 	for _, b := range builtins {
-		engine.BindConst(b.Name, b)
-	}
-	for _, bDef := range builtinsA {
-		engine.BindBuiltinAold(bDef.name, bDef.fn)
-	}
-	for _, bDef := range builtinsFA {
-		engine.BindBuiltinFAold(bDef.name, bDef.fn)
+		engine.BindBuiltin(b)
 	}
 	engine.Bind("UNDEFINED", sx.MakeUndefined())
-	engine.BindBuiltinAold("log-reader", func(args []sx.Object) (sx.Object, error) {
-		err := sxbuiltins.CheckArgs(args, 0, 0)
-		if err != nil {
-			return nil, err
-		}
-		res := mpe.logReader
-		mpe.logReader = !res
-		return sx.MakeBoolean(res), nil
+	engine.BindBuiltin(&sxeval.Builtin{
+		Name:     "log-reader",
+		MinArity: 0,
+		MaxArity: 0,
+		IsPure:   false,
+		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+			res := mpe.logReader
+			mpe.logReader = !res
+			return sx.MakeBoolean(res), nil
+		},
 	})
-	engine.BindBuiltinAold("log-parser", func(args []sx.Object) (sx.Object, error) {
-		err := sxbuiltins.CheckArgs(args, 0, 0)
-		if err != nil {
-			return nil, err
-		}
-		res := mpe.logParser
-		mpe.logParser = !res
-		return sx.MakeBoolean(res), nil
+	engine.BindBuiltin(&sxeval.Builtin{
+		Name:     "log-parser",
+		MinArity: 0,
+		MaxArity: 0,
+		IsPure:   false,
+		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+			res := mpe.logParser
+			mpe.logParser = !res
+			return sx.MakeBoolean(res), nil
+		},
 	})
-	engine.BindBuiltinAold("log-expr", func(args []sx.Object) (sx.Object, error) {
-		err := sxbuiltins.CheckArgs(args, 0, 0)
-		if err != nil {
-			return nil, err
-		}
-		res := mpe.logExpr
-		mpe.logExpr = !res
-		return sx.MakeBoolean(res), nil
+	engine.BindBuiltin(&sxeval.Builtin{
+		Name:     "log-expr",
+		MinArity: 0,
+		MaxArity: 0,
+		IsPure:   false,
+		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+			res := mpe.logExpr
+			mpe.logExpr = !res
+			return sx.MakeBoolean(res), nil
+		},
 	})
-	engine.BindBuiltinAold("log-executor", func(args []sx.Object) (sx.Object, error) {
-		err := sxbuiltins.CheckArgs(args, 0, 0)
-		if err != nil {
-			return nil, err
-		}
-		res := mpe.logExecutor
-		mpe.logExecutor = !res
-		return sx.MakeBoolean(res), nil
+	engine.BindBuiltin(&sxeval.Builtin{
+		Name:     "log-executor",
+		MinArity: 0,
+		MaxArity: 0,
+		IsPure:   false,
+		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+			res := mpe.logExecutor
+			mpe.logExecutor = !res
+			return sx.MakeBoolean(res), nil
+		},
 	})
-	engine.BindBuiltinAold("log-off", func(args []sx.Object) (sx.Object, error) {
-		err := sxbuiltins.CheckArgs(args, 0, 0)
-		if err != nil {
-			return nil, err
-		}
-		mpe.logReader = false
-		mpe.logParser = false
-		mpe.logExecutor = false
-		return sx.Nil(), nil
+	engine.BindBuiltin(&sxeval.Builtin{
+		Name:     "log-off",
+		MinArity: 0,
+		MaxArity: 0,
+		IsPure:   false,
+		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+			mpe.logReader = false
+			mpe.logParser = false
+			mpe.logExecutor = false
+			return sx.Nil(), nil
+		},
 	})
-	engine.BindBuiltinAold("panic", func(args []sx.Object) (sx.Object, error) {
-		err := sxbuiltins.CheckArgs(args, 0, 1)
-		if err != nil {
-			panic(err)
-		}
-		if len(args) == 0 {
-			panic("common panic")
-		}
-		panic(args[0])
+	engine.BindBuiltin(&sxeval.Builtin{
+		Name:     "panic",
+		MinArity: 0,
+		MaxArity: 1,
+		IsPure:   false,
+		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+			if len(args) == 0 {
+				panic("common panic")
+			}
+			panic(args[0])
+		},
 	})
 	err := readPrelude(engine)
 	if err != nil {
@@ -261,7 +259,7 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env 
 		}
 		expr = eng.Rework(env, expr)
 		if mpe.logExpr {
-			printExpr(eng, expr, 0)
+			printExpr(expr, 0)
 			continue
 		} else if mpe.logReader {
 			fmt.Printf(";= ")
@@ -277,7 +275,7 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env 
 	}
 }
 
-func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
+func printExpr(expr sxeval.Expr, level int) {
 	if level <= 0 {
 		level = -level
 	} else {
@@ -285,16 +283,16 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 	}
 
 	switch e := expr.(type) {
-	case *sxeval.BuiltinCallExprOld:
-		fmt.Printf("B-CALL %v\n", e.Proc.Name(eng))
+	case *sxeval.BuiltinCallExpr:
+		fmt.Printf("B-CALL %v\n", e.Proc.Name)
 		for _, arg := range e.Args {
-			printExpr(eng, arg, level+1)
+			printExpr(arg, level+1)
 		}
 	case *sxeval.CallExpr:
 		fmt.Println("CALL")
-		printExpr(eng, e.Proc, level+1)
+		printExpr(e.Proc, level+1)
 		for _, arg := range e.Args {
-			printExpr(eng, arg, level+1)
+			printExpr(arg, level+1)
 		}
 	case sxeval.ResolveExpr:
 		fmt.Printf("RESOLVE %v\n", e.Symbol)
@@ -310,27 +308,27 @@ func printExpr(eng *sxeval.Engine, expr sxeval.Expr, level int) {
 		}
 		fmt.Println()
 		for _, ex := range e.Front {
-			printExpr(eng, ex, level+1)
+			printExpr(ex, level+1)
 		}
-		printExpr(eng, e.Last, level+1)
+		printExpr(e.Last, level+1)
 	case *sxbuiltins.IfExpr:
 		fmt.Println("IF")
-		printExpr(eng, e.Test, level+1)
-		printExpr(eng, e.True, level+1)
-		printExpr(eng, e.False, level+1)
+		printExpr(e.Test, level+1)
+		printExpr(e.True, level+1)
+		printExpr(e.False, level+1)
 	case *sxbuiltins.DefineExpr:
 		if e.Const {
 			fmt.Println("DEFCONST", e.Sym)
 		} else {
 			fmt.Println("DEFVAR", e.Sym)
 		}
-		printExpr(eng, e.Val, level+1)
+		printExpr(e.Val, level+1)
 	case *sxbuiltins.SetXExpr:
 		fmt.Println("SET!", e.Sym)
-		printExpr(eng, e.Val, level+1)
+		printExpr(e.Val, level+1)
 	case sxbuiltins.MakeListExpr:
 		fmt.Println("MAKELIST")
-		printExpr(eng, e.Elem, level+1)
+		printExpr(e.Elem, level+1)
 	default:
 		switch e {
 		case sxeval.NilExpr:

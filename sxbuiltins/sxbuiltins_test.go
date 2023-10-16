@@ -90,7 +90,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 }
 
 func createEngine() *sxeval.Engine {
-	numBuiltins := len(syntaxes) + len(builtinsA) + len(builtinsFA) + len(objects)
+	numBuiltins := len(syntaxes) + len(builtins) + len(objects)
 	sf := sx.MakeMappedFactory(numBuiltins + 32)
 	root := sxeval.MakeRootEnvironment(numBuiltins)
 	if err := sxbuiltins.InstallQuasiQuoteSyntax(root, sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")); err != nil {
@@ -103,13 +103,7 @@ func createEngine() *sxeval.Engine {
 		engine.BindSyntax(syntax.name, syntax.fn)
 	}
 	for _, b := range builtins {
-		engine.BindConst(b.Name, b)
-	}
-	for _, builtinA := range builtinsA {
-		engine.BindBuiltinAold(builtinA.name, builtinA.fn)
-	}
-	for _, builtinFA := range builtinsFA {
-		engine.BindBuiltinFAold(builtinFA.name, builtinFA.fn)
+		engine.BindBuiltin(b)
 	}
 	root.Freeze()
 	env := sxeval.MakeChildEnvironment(root, "vars", len(objects))
@@ -135,52 +129,44 @@ var syntaxes = []struct {
 	{"defmacro", sxbuiltins.DefMacroS},
 }
 var builtins = []*sxeval.Builtin{
-	&sxbuiltins.Equal,
-	&sxbuiltins.Identical,
-	// ...
-	&sxbuiltins.Defined,
-}
-var builtinsA = []struct {
-	name string
-	fn   sxeval.BuiltinAold
-}{
-	// {"==", sxbuiltins.IdenticalOld}, {"=", sxbuiltins.EqualOld},
-	{"number?", sxbuiltins.NumberPold},
-	{"+", sxbuiltins.AddOld}, {"-", sxbuiltins.SubOld}, {"*", sxbuiltins.MulOld},
-	{"div", sxbuiltins.DivOld}, {"mod", sxbuiltins.ModOld},
-	{"<", sxbuiltins.NumLessOld}, {"<=", sxbuiltins.NumLessEqualOld},
-	{">=", sxbuiltins.NumGreaterEqualOld}, {">", sxbuiltins.NumGreaterOld},
-	{"min", sxbuiltins.MinOld}, {"max", sxbuiltins.MaxOld},
-	{"cons", sxbuiltins.ConsOld}, {"pair?", sxbuiltins.PairPold},
-	{"null?", sxbuiltins.NullPold}, {"list?", sxbuiltins.ListPold},
-	{"car", sxbuiltins.CarOld}, {"cdr", sxbuiltins.CdrOld},
-	{"caar", sxbuiltins.CaarOld}, {"cadr", sxbuiltins.CadrOld}, {"cdar", sxbuiltins.CdarOld}, {"cddr", sxbuiltins.CddrOld},
-	{"caaar", sxbuiltins.CaaarOld}, {"caadr", sxbuiltins.CaadrOld}, {"cadar", sxbuiltins.CadarOld}, {"caddr", sxbuiltins.CaddrOld},
-	{"cdaar", sxbuiltins.CdaarOld}, {"cdadr", sxbuiltins.CdadrOld}, {"cddar", sxbuiltins.CddarOld}, {"cdddr", sxbuiltins.CdddrOld},
-	{"caaaar", sxbuiltins.CaaaarOld}, {"caaadr", sxbuiltins.CaaadrOld}, {"caadar", sxbuiltins.CaadarOld}, {"caaddr", sxbuiltins.CaaddrOld},
-	{"cadaar", sxbuiltins.CadaarOld}, {"cadadr", sxbuiltins.CadadrOld}, {"caddar", sxbuiltins.CaddarOld}, {"cadddr", sxbuiltins.CadddrOld},
-	{"cdaaar", sxbuiltins.CdaaarOld}, {"cdaadr", sxbuiltins.CdaadrOld}, {"cdadar", sxbuiltins.CdadarOld}, {"cdaddr", sxbuiltins.CdaddrOld},
-	{"cddaar", sxbuiltins.CddaarOld}, {"cddadr", sxbuiltins.CddadrOld}, {"cdddar", sxbuiltins.CdddarOld}, {"cddddr", sxbuiltins.CddddrOld},
-	{"last", sxbuiltins.LastOld},
-	{"list", sxbuiltins.ListOld}, {"list*", sxbuiltins.ListStarOld},
-	{"append", sxbuiltins.AppendOld}, {"reverse", sxbuiltins.ReverseOld},
-	{"length", sxbuiltins.LengthOld}, {"assoc", sxbuiltins.AssocOld},
-	{"->string", sxbuiltins.ToStringOld}, {"string-append", sxbuiltins.StringAppendOld},
-	{"callable?", sxbuiltins.CallablePold},
-	{"parent-environment", sxbuiltins.ParentEnvOld},
-	{"environment-bindings", sxbuiltins.EnvBindingsOld},
-}
-var builtinsFA = []struct {
-	name string
-	fn   sxeval.BuiltinFAold
-}{
-	{"map", sxbuiltins.MapOld}, {"apply", sxbuiltins.ApplyOld},
-	{"fold", sxbuiltins.FoldOld}, {"fold-reverse", sxbuiltins.FoldReverseOld},
-	{"current-environment", sxbuiltins.CurrentEnvOld},
-	{"bound?", sxbuiltins.BoundPold},
-	{"environment-lookup", sxbuiltins.EnvLookupOld}, {"environment-resolve", sxbuiltins.EnvResolveOld},
-	{"macroexpand-0", sxbuiltins.MacroExpand0old},
-	{"pp", sxbuiltins.PrettyOld},
+	&sxbuiltins.Equal,                    // =
+	&sxbuiltins.Identical,                // ==
+	&sxbuiltins.NullP,                    // null?
+	&sxbuiltins.Cons,                     // cons
+	&sxbuiltins.PairP, &sxbuiltins.ListP, // pair?, list?
+	&sxbuiltins.Car, &sxbuiltins.Cdr, // car, cdr
+	&sxbuiltins.Caar, &sxbuiltins.Cadr, &sxbuiltins.Cdar, &sxbuiltins.Cddr,
+	&sxbuiltins.Caaar, &sxbuiltins.Caadr, &sxbuiltins.Cadar, &sxbuiltins.Caddr,
+	&sxbuiltins.Cdaar, &sxbuiltins.Cdadr, &sxbuiltins.Cddar, &sxbuiltins.Cdddr,
+	&sxbuiltins.Caaaar, &sxbuiltins.Caaadr, &sxbuiltins.Caadar, &sxbuiltins.Caaddr,
+	&sxbuiltins.Cadaar, &sxbuiltins.Cadadr, &sxbuiltins.Caddar, &sxbuiltins.Cadddr,
+	&sxbuiltins.Cdaaar, &sxbuiltins.Cdaadr, &sxbuiltins.Cdadar, &sxbuiltins.Cdaddr,
+	&sxbuiltins.Cddaar, &sxbuiltins.Cddadr, &sxbuiltins.Cdddar, &sxbuiltins.Cddddr,
+	&sxbuiltins.Last,                       // last
+	&sxbuiltins.List, &sxbuiltins.ListStar, // list, list*
+	&sxbuiltins.Append,                        // append
+	&sxbuiltins.Reverse,                       // reverse
+	&sxbuiltins.Length,                        // length
+	&sxbuiltins.Assoc,                         // assoc
+	&sxbuiltins.Map,                           // map
+	&sxbuiltins.Apply,                         // apply
+	&sxbuiltins.Fold, &sxbuiltins.FoldReverse, // fold, fold-reverse
+	&sxbuiltins.NumberP,                               // number?
+	&sxbuiltins.Add, &sxbuiltins.Sub, &sxbuiltins.Mul, // +, -, *
+	&sxbuiltins.Div, &sxbuiltins.Mod, // div, mod
+	&sxbuiltins.NumLess, &sxbuiltins.NumLessEqual, // <, <=
+	&sxbuiltins.NumGreater, &sxbuiltins.NumGreaterEqual, // >, >=
+	&sxbuiltins.ToString, &sxbuiltins.StringAppend, // ->string, string-append
+	&sxbuiltins.CallableP,    //callable?
+	&sxbuiltins.Macroexpand0, // macroexpand-0
+	&sxbuiltins.Defined,      // defined?
+	&sxbuiltins.CurrentEnv,   // current-environment
+	&sxbuiltins.ParentEnv,    // parent-environment
+	&sxbuiltins.EnvBindings,  //environment-bindings
+	&sxbuiltins.BoundP,       // bound?
+	&sxbuiltins.EnvLookup,    // environment-lookup
+	&sxbuiltins.EnvResolve,   // environment-resolve
+	&sxbuiltins.Pretty,       // pp
 }
 
 var objects = []struct {

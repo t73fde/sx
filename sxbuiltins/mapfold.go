@@ -15,125 +15,147 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// MapOld returns a list, where all member are the result of the given function to all original list members.
-func MapOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := CheckArgs(args, 2, 2)
-	fn, err := GetCallable(err, args, 0)
-	lst, err := GetList(err, args, 1)
-	if err != nil {
-		return nil, err
-	}
-
-	if sx.IsNil(lst) {
-		return sx.Nil(), nil
-	}
-	val, err := frame.Call(fn, []sx.Object{lst.Car()})
-	if err != nil {
-		return sx.Nil(), err
-	}
-	result := sx.Cons(val, sx.Nil())
-	curr := result
-	for {
-		cdr2 := lst.Cdr()
-		if sx.IsNil(cdr2) {
-			break
+// Map returns a list, where all member are the result of the given function
+// to all original list members.
+var Map = sxeval.Builtin{
+	Name:     "map",
+	MinArity: 2,
+	MaxArity: 2,
+	IsPure:   true,
+	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		fn, err := GetCallable(nil, args, 0)
+		lst, err := GetList(err, args, 1)
+		if err != nil {
+			return nil, err
 		}
-		pair, isPair := sx.GetPair(cdr2)
-		if !isPair {
-			val2, err2 := frame.Call(fn, []sx.Object{cdr2})
+
+		if sx.IsNil(lst) {
+			return sx.Nil(), nil
+		}
+		val, err := frame.Call(fn, []sx.Object{lst.Car()})
+		if err != nil {
+			return sx.Nil(), err
+		}
+		result := sx.Cons(val, sx.Nil())
+		curr := result
+		for {
+			cdr2 := lst.Cdr()
+			if sx.IsNil(cdr2) {
+				break
+			}
+			pair, isPair := sx.GetPair(cdr2)
+			if !isPair {
+				val2, err2 := frame.Call(fn, []sx.Object{cdr2})
+				if err2 != nil {
+					return result, err2
+				}
+				curr.SetCdr(val2)
+				break
+			}
+			val2, err2 := frame.Call(fn, []sx.Object{pair.Car()})
 			if err2 != nil {
 				return result, err2
 			}
-			curr.SetCdr(val2)
-			break
+			curr = curr.AppendBang(val2)
+			lst = pair
 		}
-		val2, err2 := frame.Call(fn, []sx.Object{pair.Car()})
-		if err2 != nil {
-			return result, err2
-		}
-		curr = curr.AppendBang(val2)
-		lst = pair
-	}
-	return result, nil
+		return result, nil
+	},
 }
 
-// ApplyOld calls the given function with the given arguments.
-func ApplyOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := CheckArgs(args, 2, 2)
-	lst, err := GetList(err, args, 1)
-	if err != nil {
-		return nil, err
-	}
-	expr := sxeval.CallExpr{
-		Proc: sxeval.ObjExpr{Obj: args[0]},
-		Args: nil,
-	}
-	if lst == nil {
-		return frame.ExecuteTCO(&expr)
-	}
-	expr.Args = append(expr.Args, sxeval.ObjExpr{Obj: lst.Car()})
-	for node := lst; ; {
-		cdr := node.Cdr()
-		if sx.IsNil(cdr) {
-			return frame.ExecuteTCO(&expr)
-		}
-		if next, ok2 := sx.GetPair(cdr); ok2 {
-			node = next
-			expr.Args = append(expr.Args, sxeval.ObjExpr{Obj: node.Car()})
-			continue
-		}
-		return nil, sx.ErrImproper{Pair: lst}
-	}
-}
-
-// FoldOld will apply the given function pairwise to list of args.
-func FoldOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := CheckArgs(args, 3, 3)
-	fn, err := GetCallable(err, args, 0)
-	lst, err := GetList(err, args, 2)
-	if err != nil {
-		return nil, err
-	}
-	res := args[1]
-	params := []sx.Object{res, res}
-	for node := lst; node != nil; {
-		params[0] = node.Car()
-		params[1] = res
-		res, err = frame.Call(fn, params)
+// Apply calls the given function with the given arguments.
+var Apply = sxeval.Builtin{
+	Name:     "apply",
+	MinArity: 2,
+	MaxArity: 2,
+	IsPure:   true,
+	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		lst, err := GetList(nil, args, 1)
 		if err != nil {
 			return nil, err
 		}
-		next, ok := sx.GetPair(node.Cdr())
-		if !ok {
+		callExpr := sxeval.CallExpr{
+			Proc: sxeval.ObjExpr{Obj: args[0]},
+			Args: nil,
+		}
+		if lst == nil {
+			return frame.ExecuteTCO(&callExpr)
+		}
+		callExpr.Args = append(callExpr.Args, sxeval.ObjExpr{Obj: lst.Car()})
+		for node := lst; ; {
+			cdr := node.Cdr()
+			if sx.IsNil(cdr) {
+				expr := callExpr.Rework(frame.MakeReworkFrame())
+				return frame.ExecuteTCO(expr)
+			}
+			if next, ok2 := sx.GetPair(cdr); ok2 {
+				node = next
+				callExpr.Args = append(callExpr.Args, sxeval.ObjExpr{Obj: node.Car()})
+				continue
+			}
 			return nil, sx.ErrImproper{Pair: lst}
 		}
-		node = next
-	}
-	return res, nil
+	},
 }
 
-// FoldReverseOld will apply the given function reversed pairwise to reversed list of args.
-func FoldReverseOld(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	err := CheckArgs(args, 3, 3)
-	fn, err := GetCallable(err, args, 0)
-	lst, err := GetList(err, args, 2)
-	if err != nil {
-		return nil, err
-	}
-	rev, err := lst.Reverse()
-	if err != nil {
-		return nil, err
-	}
-	res := args[1]
-	params := []sx.Object{res, res}
-	for node := rev; node != nil; {
-		params[0] = node.Car()
-		params[1] = res
-		res, err = frame.Call(fn, params)
+// Fold will apply the given function pairwise to list of args.
+var Fold = sxeval.Builtin{
+	Name:     "fold",
+	MinArity: 3,
+	MaxArity: 3,
+	IsPure:   true,
+	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		fn, err := GetCallable(nil, args, 0)
+		lst, err := GetList(err, args, 2)
 		if err != nil {
 			return nil, err
 		}
-		node, _ = sx.GetPair(node.Cdr())
-	}
-	return res, nil
+		res := args[1]
+		params := []sx.Object{res, res}
+		for node := lst; node != nil; {
+			params[0] = node.Car()
+			params[1] = res
+			res, err = frame.Call(fn, params)
+			if err != nil {
+				return nil, err
+			}
+			next, ok := sx.GetPair(node.Cdr())
+			if !ok {
+				return nil, sx.ErrImproper{Pair: lst}
+			}
+			node = next
+		}
+		return res, nil
+	},
+}
+
+// FoldReverse will apply the given function reversed pairwise to reversed list of args.
+var FoldReverse = sxeval.Builtin{
+	Name:     "fold-reverse",
+	MinArity: 3,
+	MaxArity: 3,
+	IsPure:   true,
+	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		fn, err := GetCallable(nil, args, 0)
+		lst, err := GetList(err, args, 2)
+		if err != nil {
+			return nil, err
+		}
+		rev, err := lst.Reverse()
+		if err != nil {
+			return nil, err
+		}
+		res := args[1]
+		params := []sx.Object{res, res}
+		for node := rev; node != nil; {
+			params[0] = node.Car()
+			params[1] = res
+			res, err = frame.Call(fn, params)
+			if err != nil {
+				return nil, err
+			}
+			node, _ = sx.GetPair(node.Cdr())
+		}
+		return res, nil
+	},
 }

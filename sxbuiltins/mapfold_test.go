@@ -44,6 +44,7 @@ var tcsMapFold = tTestCases{
 	},
 	{name: "map-cons", src: "(map (lambda (x) (if x () 1)) (cons 1 \"\"))", exp: "(() . 1)"},
 	{name: "map-list*", src: "(map (lambda (x) (if x () 1)) (list* () 1 \"\"))", exp: "(1 () . 1)"},
+	{name: "map-bcall", src: "(map list '(1 2 3 4))", exp: "((1) (2) (3) (4))"},
 
 	{
 		name:    "err-apply-0",
@@ -58,6 +59,7 @@ var tcsMapFold = tTestCases{
 		exp:     "{[{apply: improper list: (1 . 2)}]}",
 		withErr: true,
 	},
+	{name: "apply-bcall", src: "(apply + '(1 2 3 4))", exp: "10"},
 
 	{
 		name:    "err-fold-0",

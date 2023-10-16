@@ -20,17 +20,19 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// PrettyOld writes the first argument to stdout.
-func PrettyOld(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-	// Must be a BuiltinFA, because this function has some side effects.
-	err := CheckArgs(args, 0, 1)
-	if err != nil {
+// Pretty writes the first argument to stdout.
+var Pretty = sxeval.Builtin{
+	Name:     "pp",
+	MinArity: 0,
+	MaxArity: 1,
+	IsPure:   false,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		if len(args) == 0 {
 			return sx.Nil(), nil
 		}
-		_, err = Print(os.Stdout, args[0])
-	}
-	return sx.Nil(), err
+		_, err := Print(os.Stdout, args[0])
+		return sx.Nil(), err
+	},
 }
 
 // Print object to given writer in a pretty way.

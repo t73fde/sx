@@ -25,23 +25,29 @@ func createTestEnv(sf sx.SymbolFactory) sxeval.Environment {
 	env := sxeval.MakeRootEnvironment(2)
 
 	symCat := sf.MustMake("cat")
-	env.Bind(symCat, sxeval.BuiltinAold(func(args []sx.Object) (sx.Object, error) {
-		var sb strings.Builder
-		for _, val := range args {
-			var s string
-			if sv, ok := val.(sx.String); ok {
-				s = string(sv)
-			} else {
-				s = val.String()
-			}
+	env.Bind(symCat, &sxeval.Builtin{
+		Name:     "cat",
+		MinArity: 0,
+		MaxArity: -1,
+		IsPure:   true,
+		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+			var sb strings.Builder
+			for _, val := range args {
+				var s string
+				if sv, ok := val.(sx.String); ok {
+					s = string(sv)
+				} else {
+					s = val.String()
+				}
 
-			_, err := sb.WriteString(s)
-			if err != nil {
-				return nil, err
+				_, err := sb.WriteString(s)
+				if err != nil {
+					return nil, err
+				}
 			}
-		}
-		return sx.String(sb.String()), nil
-	}))
+			return sx.String(sb.String()), nil
+		},
+	})
 
 	symHello := sf.MustMake("hello")
 	env.Bind(symHello, sx.String("Hello, World"))
@@ -117,11 +123,10 @@ func createEngineForTCO() *sxeval.Engine {
 	engine := sxeval.MakeEngine(sf, root)
 	engine.BindSyntax("define", sxbuiltins.DefineS)
 	engine.BindSyntax("if", sxbuiltins.IfS)
-	// engine.BindBuiltinAold("=", sxbuiltins.EqualOld)
-	engine.BindConst(sxbuiltins.Equal.Name, &sxbuiltins.Equal)
-	engine.BindBuiltinAold("-", sxbuiltins.SubOld)
-	engine.BindBuiltinFAold("map", sxbuiltins.MapOld)
-	engine.BindBuiltinAold("list", sxbuiltins.ListOld)
+	engine.BindBuiltin(&sxbuiltins.Equal)
+	engine.BindBuiltin(&sxbuiltins.Sub)
+	engine.BindBuiltin(&sxbuiltins.Map)
+	engine.BindBuiltin(&sxbuiltins.List)
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxEvenOdd), sxreader.WithSymbolFactory(sf))
 	env := sxeval.MakeChildEnvironment(root, "TCO", 128)

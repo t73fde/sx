@@ -93,38 +93,4 @@ var tcsNumCmp = tTestCases{
 	{name: "greater-2", src: "(> 2 1)", exp: "1"},
 	{name: "greater-5", src: "(> 6 4 3 1 1)", exp: "()"},
 	{name: "greater-6", src: "(> 6 4 3 0 1 0)", exp: "()"},
-
-	{
-		name:    "err-min-0",
-		src:     "(min)",
-		exp:     "{[{min: at least 1 arguments required, but only 0 given: []}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-min-nonum",
-		src:     "(min 0 1 ())",
-		exp:     "{[{min: argument 3 is not a number, but *sx.Pair/()}]}",
-		withErr: true,
-	},
-	{name: "min-1", src: "(min 1)", exp: "1"},
-	{name: "min-2", src: "(min 1 2)", exp: "1"},
-	{name: "min-5", src: "(min 1 1 3 4 4)", exp: "1"},
-	{name: "min-6", src: "(min 1 2 3 4 0 6)", exp: "0"},
-
-	{
-		name:    "err-max-0",
-		src:     "(max)",
-		exp:     "{[{max: at least 1 arguments required, but only 0 given: []}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-max-nonum",
-		src:     "(max 0 1 ())",
-		exp:     "{[{max: argument 3 is not a number, but *sx.Pair/()}]}",
-		withErr: true,
-	},
-	{name: "max-1", src: "(max 1)", exp: "1"},
-	{name: "max-2", src: "(max 1 2)", exp: "2"},
-	{name: "max-5", src: "(max 1 1 3 4 4)", exp: "4"},
-	{name: "max-6", src: "(max 1 2 3 4 0 6)", exp: "6"},
 }

@@ -12,89 +12,118 @@ package sxbuiltins
 
 // Contains builtins to work with numbers.
 
-import "zettelstore.de/sx.fossil"
+import (
+	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxeval"
+)
 
-// NumberPold is the boolean that returns true if the argument is a number.
-func NumberPold(args []sx.Object) (sx.Object, error) {
-	if err := CheckArgs(args, 1, 1); err != nil {
-		return nil, err
-	}
-	_, ok := sx.GetNumber(args[0])
-	return sx.MakeBoolean(ok), nil
+// NumberP returns true if the argument is a number.
+var NumberP = sxeval.Builtin{
+	Name:     "number?",
+	MinArity: 1,
+	MaxArity: 1,
+	IsPure:   true,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		_, ok := sx.GetNumber(args[0])
+		return sx.MakeBoolean(ok), nil
+	},
 }
 
-// AddOld is the builtin that implements (+ n...)
-func AddOld(args []sx.Object) (sx.Object, error) {
-	acc := sx.Number(sx.Int64(0))
-	if len(args) == 0 {
-		return acc, nil
-	}
+// Add is the builtin that implements (+ n...)
+var Add = sxeval.Builtin{
+	Name:     "+",
+	MinArity: 0,
+	MaxArity: -1,
+	IsPure:   true,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		acc := sx.Number(sx.Int64(0))
+		if len(args) == 0 {
+			return acc, nil
+		}
 
-	for i := 0; i < len(args); i++ {
-		num, err := GetNumber(nil, args, i)
+		for i := 0; i < len(args); i++ {
+			num, err := GetNumber(nil, args, i)
+			if err != nil {
+				return nil, err
+			}
+			acc = sx.NumAdd(acc, num)
+		}
+		return acc, nil
+	},
+}
+
+// Sub is the builtin that implements (- n n...)
+var Sub = sxeval.Builtin{
+	Name:     "-",
+	MinArity: 1,
+	MaxArity: 0,
+	IsPure:   true,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		acc, err := GetNumber(nil, args, 0)
 		if err != nil {
 			return nil, err
 		}
-		acc = sx.NumAdd(acc, num)
-	}
-	return acc, nil
-}
-
-// SubOld is the builtin that implements (- n n...)
-func SubOld(args []sx.Object) (sx.Object, error) {
-	err := CheckArgs(args, 1, 0)
-	acc, err := GetNumber(err, args, 0)
-	if err != nil {
-		return nil, err
-	}
-	if len(args) == 1 {
-		return sx.NumNeg(acc), nil
-	}
-	for i := 1; i < len(args); i++ {
-		num, err2 := GetNumber(nil, args, i)
-		if err2 != nil {
-			return nil, err2
+		if len(args) == 1 {
+			return sx.NumNeg(acc), nil
 		}
-		acc = sx.NumSub(acc, num)
-	}
-	return acc, nil
+		for i := 1; i < len(args); i++ {
+			num, err2 := GetNumber(nil, args, i)
+			if err2 != nil {
+				return nil, err2
+			}
+			acc = sx.NumSub(acc, num)
+		}
+		return acc, nil
+	},
 }
 
-// MulOld is the builtin that implements (* n...)
-func MulOld(args []sx.Object) (sx.Object, error) {
-	acc := sx.Number(sx.Int64(1))
-	if len(args) == 0 {
+// Mul is the builtin that implements (* n...)
+var Mul = sxeval.Builtin{
+	Name:     "*",
+	MinArity: 0,
+	MaxArity: -1,
+	IsPure:   false,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		acc := sx.Number(sx.Int64(1))
+		for i := 0; i < len(args); i++ {
+			num, err := GetNumber(nil, args, i)
+			if err != nil {
+				return nil, err
+			}
+			acc = sx.NumMul(acc, num)
+		}
 		return acc, nil
-	}
+	},
+}
 
-	for i := 0; i < len(args); i++ {
-		num, err := GetNumber(nil, args, i)
+// Div is the builtin that implements (div n m).
+var Div = sxeval.Builtin{
+	Name:     "div",
+	MinArity: 2,
+	MaxArity: 2,
+	IsPure:   false,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		acc, err := GetNumber(nil, args, 0)
+		num, err := GetNumber(err, args, 1)
 		if err != nil {
 			return nil, err
 		}
-		acc = sx.NumMul(acc, num)
-	}
-	return acc, nil
+		return sx.NumDiv(acc, num)
+	},
 }
 
-// DivOld is the builtin that implements (div n m)
-func DivOld(args []sx.Object) (sx.Object, error) {
-	err := CheckArgs(args, 2, 2)
-	acc, err := GetNumber(err, args, 0)
-	num, err := GetNumber(err, args, 1)
-	if err != nil {
-		return nil, err
-	}
-	return sx.NumDiv(acc, num)
-}
-
-// ModOld is the builtin that implements (mod n m)
-func ModOld(args []sx.Object) (sx.Object, error) {
-	err := CheckArgs(args, 2, 2)
-	acc, err := GetNumber(err, args, 0)
-	num, err := GetNumber(err, args, 1)
-	if err != nil {
-		return nil, err
-	}
-	return sx.NumMod(acc, num)
+// Mod is the builtin that implements (mod n m)
+var Mod = sxeval.Builtin{
+	Name:     "mod",
+	MinArity: 2,
+	MaxArity: 2,
+	IsPure:   false,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		acc, err := GetNumber(nil, args, 0)
+		num, err := GetNumber(err, args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return sx.NumMod(acc, num)
+	},
 }
