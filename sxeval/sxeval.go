@@ -132,14 +132,17 @@ func (eng *Engine) SetQuote(sym *sx.Symbol) error {
 	if sym == nil {
 		sym = eng.sf.MustMake("quote")
 	}
-	return eng.BindSyntax(sym.Name(), func(_ *ParseFrame, args *sx.Pair) (Expr, error) {
-		if sx.IsNil(args) {
-			return nil, ErrNoArgs
-		}
-		if args.Tail() != nil {
-			return nil, fmt.Errorf("more than one argument: %v", args)
-		}
-		return ObjExpr{Obj: args.Car()}, nil
+	return eng.BindSyntax(&Syntax{
+		Name: sym.Name(),
+		Fn: func(_ *ParseFrame, args *sx.Pair) (Expr, error) {
+			if sx.IsNil(args) {
+				return nil, ErrNoArgs
+			}
+			if args.Tail() != nil {
+				return nil, fmt.Errorf("more than one argument: %v", args)
+			}
+			return ObjExpr{Obj: args.Car()}, nil
+		},
 	})
 }
 
@@ -176,16 +179,15 @@ func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
 	return frame.Execute(expr)
 }
 
+// BindSyntax binds a syntax parser to the its name in the engine's root environment.
+func (eng *Engine) BindSyntax(syn *Syntax) error {
+	return eng.BindConst(syn.Name, syn)
+}
+
 // BindBuiltin binds the given builtin with its given name in the engine's
 // root environment.
 func (eng *Engine) BindBuiltin(b *Builtin) error {
 	return eng.BindConst(b.Name, b)
-}
-
-// BindSyntax binds a syntax parser to the given name in the engine's root environment.
-// It also binds the parser to the symbol directly.
-func (eng *Engine) BindSyntax(name string, fn SyntaxFn) error {
-	return eng.BindConst(name, MakeSyntax(name, fn))
 }
 
 // BindConst a given object to a symbol of the given name as a constant in the

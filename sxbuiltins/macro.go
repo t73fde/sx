@@ -17,14 +17,17 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// DefMacroS parses a macro specfication and assigns it to a value.
-func DefMacroS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	sym, le, err := parseDefProc(frame, args)
-	if err != nil {
-		return nil, err
-	}
-	le.IsMacro = true
-	return &DefineExpr{Sym: sym, Val: le}, nil
+// DefMacroS parses a macro specfication.
+var DefMacroS = sxeval.Syntax{
+	Name: "defmacro",
+	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+		sym, le, err := parseDefProc(pf, args)
+		if err != nil {
+			return nil, err
+		}
+		le.IsMacro = true
+		return &DefineExpr{Sym: sym, Val: le}, nil
+	},
 }
 
 // Macro represents the macro definition form.

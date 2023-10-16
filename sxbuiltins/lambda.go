@@ -30,13 +30,16 @@ var CallableP = sxeval.Builtin{
 	},
 }
 
-// DefunS parses a procedure/function specfication and assigns it to a value.
-func DefunS(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	sym, le, err := parseDefProc(frame, args)
-	if err != nil {
-		return nil, err
-	}
-	return &DefineExpr{Sym: sym, Val: le}, nil
+// DefunS parses a procedure/function specfication.
+var DefunS = sxeval.Syntax{
+	Name: "defun",
+	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+		sym, le, err := parseDefProc(pf, args)
+		if err != nil {
+			return nil, err
+		}
+		return &DefineExpr{Sym: sym, Val: le}, nil
+	},
 }
 
 func parseDefProc(frame *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaExpr, error) {
@@ -56,12 +59,15 @@ func parseDefProc(frame *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaE
 }
 
 // LambdaS parses a procedure specification.
-func LambdaS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	if args == nil {
-		return nil, fmt.Errorf("parameter spec and body missing")
-	}
-	car := args.Car()
-	return ParseProcedure(pf, sx.Repr(car), car, args.Cdr())
+var LambdaS = sxeval.Syntax{
+	Name: "lambda",
+	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+		if args == nil {
+			return nil, fmt.Errorf("parameter spec and body missing")
+		}
+		car := args.Car()
+		return ParseProcedure(pf, sx.Repr(car), car, args.Cdr())
+	},
 }
 
 // ParseProcedure parses a procedure definition, where some parsing is already done.

@@ -19,42 +19,45 @@ import (
 )
 
 // IfS parses an if-statement: (if cond then else). If else is missing, a nil is assumed.
-func IfS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	if args == nil {
-		return nil, fmt.Errorf("requires 2 or 3 arguments, got none")
-	}
-	testExpr, err := pf.Parse(args.Car())
-	if err != nil {
-		return nil, err
-	}
-	argTrue := args.Tail()
-	if argTrue == nil {
-		return nil, fmt.Errorf("requires 2 or 3 arguments, got one")
-	}
-	trueExpr, err := pf.Parse(argTrue.Car())
-	if err != nil {
-		return nil, err
-	}
-	argFalse := argTrue.Tail()
-	if argFalse == nil {
+var IfS = sxeval.Syntax{
+	Name: "if",
+	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+		if args == nil {
+			return nil, fmt.Errorf("requires 2 or 3 arguments, got none")
+		}
+		testExpr, err := pf.Parse(args.Car())
+		if err != nil {
+			return nil, err
+		}
+		argTrue := args.Tail()
+		if argTrue == nil {
+			return nil, fmt.Errorf("requires 2 or 3 arguments, got one")
+		}
+		trueExpr, err := pf.Parse(argTrue.Car())
+		if err != nil {
+			return nil, err
+		}
+		argFalse := argTrue.Tail()
+		if argFalse == nil {
+			return &IfExpr{
+				Test:  testExpr,
+				True:  trueExpr,
+				False: sxeval.NilExpr,
+			}, nil
+		}
+		if argFalse.Tail() != nil {
+			return nil, fmt.Errorf("requires 2 or 3 arguments, got more")
+		}
+		falseExpr, err := pf.Parse(argFalse.Car())
+		if err != nil {
+			return nil, err
+		}
 		return &IfExpr{
 			Test:  testExpr,
 			True:  trueExpr,
-			False: sxeval.NilExpr,
+			False: falseExpr,
 		}, nil
-	}
-	if argFalse.Tail() != nil {
-		return nil, fmt.Errorf("requires 2 or 3 arguments, got more")
-	}
-	falseExpr, err := pf.Parse(argFalse.Car())
-	if err != nil {
-		return nil, err
-	}
-	return &IfExpr{
-		Test:  testExpr,
-		True:  trueExpr,
-		False: falseExpr,
-	}, nil
+	},
 }
 
 // IfExpr represents the if-then-else form.

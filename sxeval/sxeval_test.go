@@ -105,10 +105,13 @@ func TestEval(t *testing.T) {
 	}
 	sf := sx.MakeMappedFactory(0)
 	root := createTestEnv(sf)
-	root.Bind(sf.MustMake("quote"), sxeval.MakeSyntax("quote", func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-		return sxeval.ObjExpr{Obj: args.Car()}, nil
-	}))
 	engine := sxeval.MakeEngine(sf, root)
+	engine.BindSyntax(&sxeval.Syntax{
+		Name: "quote",
+		Fn: func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+			return sxeval.ObjExpr{Obj: args.Car()}, nil
+		},
+	})
 	testcases.Run(t, engine)
 }
 
@@ -121,8 +124,8 @@ func createEngineForTCO() *sxeval.Engine {
 	sf := sx.MakeMappedFactory(128)
 	root := sxeval.MakeRootEnvironment(6)
 	engine := sxeval.MakeEngine(sf, root)
-	engine.BindSyntax("define", sxbuiltins.DefineS)
-	engine.BindSyntax("if", sxbuiltins.IfS)
+	engine.BindSyntax(&sxbuiltins.DefineS)
+	engine.BindSyntax(&sxbuiltins.IfS)
 	engine.BindBuiltin(&sxbuiltins.Equal)
 	engine.BindBuiltin(&sxbuiltins.Sub)
 	engine.BindBuiltin(&sxbuiltins.Map)

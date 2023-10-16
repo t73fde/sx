@@ -100,7 +100,7 @@ func createEngine() *sxeval.Engine {
 	engine := sxeval.MakeEngine(sf, root)
 	engine.SetQuote(nil)
 	for _, syntax := range syntaxes {
-		engine.BindSyntax(syntax.name, syntax.fn)
+		engine.BindSyntax(syntax)
 	}
 	for _, b := range builtins {
 		engine.BindBuiltin(b)
@@ -116,17 +116,13 @@ func createEngine() *sxeval.Engine {
 	return engine
 }
 
-var syntaxes = []struct {
-	name string
-	fn   sxeval.SyntaxFn
-}{
-	{"define", sxbuiltins.DefineS},
-	{"defvar", sxbuiltins.DefVarS},
-	{"defconst", sxbuiltins.DefConstS},
-	{"set!", sxbuiltins.SetXS},
-	{"if", sxbuiltins.IfS},
-	{"defun", sxbuiltins.DefunS}, {"lambda", sxbuiltins.LambdaS},
-	{"defmacro", sxbuiltins.DefMacroS},
+var syntaxes = []*sxeval.Syntax{
+	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
+	&sxbuiltins.SetXS,                       // set!
+	&sxbuiltins.DefineS,                     // define (DEPRECATED)
+	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
+	&sxbuiltins.IfS,       // if
+	&sxbuiltins.DefMacroS, // defmacro
 }
 var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Equal,                    // =

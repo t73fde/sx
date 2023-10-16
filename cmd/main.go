@@ -66,17 +66,13 @@ func (mpe *mainParserExecutor) Execute(frame *sxeval.Frame, expr sxeval.Expr) (s
 	return obj, nil
 }
 
-var syntaxes = []struct {
-	name string
-	fn   sxeval.SyntaxFn
-}{
-	{"define", sxbuiltins.DefineS},
-	{"defvar", sxbuiltins.DefVarS},
-	{"defconst", sxbuiltins.DefConstS},
-	{"set!", sxbuiltins.SetXS},
-	{"if", sxbuiltins.IfS},
-	{"defun", sxbuiltins.DefunS}, {"lambda", sxbuiltins.LambdaS},
-	{"defmacro", sxbuiltins.DefMacroS},
+var syntaxes = []*sxeval.Syntax{
+	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
+	&sxbuiltins.SetXS,                       // set!
+	&sxbuiltins.DefineS,                     // define (DEPRECATED)
+	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
+	&sxbuiltins.IfS,       // if
+	&sxbuiltins.DefMacroS, // defmacro
 }
 
 var builtins = []*sxeval.Builtin{
@@ -133,7 +129,7 @@ func main() {
 	root := engine.RootEnvironment()
 	sxbuiltins.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
 	for _, synDef := range syntaxes {
-		engine.BindSyntax(synDef.name, synDef.fn)
+		engine.BindSyntax(synDef)
 	}
 	for _, b := range builtins {
 		engine.BindBuiltin(b)

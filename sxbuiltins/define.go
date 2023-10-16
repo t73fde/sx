@@ -21,21 +21,27 @@ import (
 )
 
 // DefVarS parses a (defvar name value) form.
-func DefVarS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	sym, val, err := parseSymValue(pf, args)
-	if err != nil {
-		return nil, err
-	}
-	return &DefineExpr{Sym: sym, Val: val, Const: false}, nil
+var DefVarS = sxeval.Syntax{
+	Name: "defvar",
+	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+		sym, val, err := parseSymValue(pf, args)
+		if err != nil {
+			return nil, err
+		}
+		return &DefineExpr{Sym: sym, Val: val, Const: false}, nil
+	},
 }
 
 // DefConstS parses a (defconst name value) form.
-func DefConstS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	sym, val, err := parseSymValue(pf, args)
-	if err != nil {
-		return nil, err
-	}
-	return &DefineExpr{Sym: sym, Val: val, Const: true}, nil
+var DefConstS = sxeval.Syntax{
+	Name: "defconst",
+	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+		sym, val, err := parseSymValue(pf, args)
+		if err != nil {
+			return nil, err
+		}
+		return &DefineExpr{Sym: sym, Val: val, Const: true}, nil
+	},
 }
 
 func parseSymValue(pf *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
@@ -59,27 +65,30 @@ func parseSymValue(pf *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, sxeval.Exp
 	return sym, val, err
 }
 
-// DefineS parses a (define name value) form.
-func DefineS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	if args == nil {
-		return nil, fmt.Errorf("need at least two arguments")
-	}
-	switch car := args.Car().(type) {
-	case *sx.Symbol:
-		val, err := parseValueDefinition(pf, args)
-		if err != nil {
-			return val, err
+// DefineS parses a (define name value) form. It is deprecated.
+var DefineS = sxeval.Syntax{
+	Name: "define",
+	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+		if args == nil {
+			return nil, fmt.Errorf("need at least two arguments")
 		}
-		return &DefineExpr{Sym: car, Val: val, Const: false}, nil
-	case *sx.Pair:
-		sym, fun, err := parseProcedureDefinition(pf, car, args)
-		if err != nil {
-			return fun, err
+		switch car := args.Car().(type) {
+		case *sx.Symbol:
+			val, err := parseValueDefinition(pf, args)
+			if err != nil {
+				return val, err
+			}
+			return &DefineExpr{Sym: car, Val: val, Const: false}, nil
+		case *sx.Pair:
+			sym, fun, err := parseProcedureDefinition(pf, car, args)
+			if err != nil {
+				return fun, err
+			}
+			return &DefineExpr{Sym: sym, Val: fun, Const: false}, nil
+		default:
+			return nil, fmt.Errorf("argument 1 must be a symbol or a list, but is: %T/%v", car, car)
 		}
-		return &DefineExpr{Sym: sym, Val: fun, Const: false}, nil
-	default:
-		return nil, fmt.Errorf("argument 1 must be a symbol or a list, but is: %T/%v", car, car)
-	}
+	},
 }
 
 func parseValueDefinition(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
@@ -175,20 +184,23 @@ func (de *DefineExpr) Print(w io.Writer) (int, error) {
 }
 
 // SetXS parses a (set! name value) form.
-func SetXS(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	if args == nil {
-		return nil, fmt.Errorf("need at least two arguments")
-	}
-	car := args.Car()
-	sym, ok := sx.GetSymbol(car)
-	if !ok {
-		return nil, fmt.Errorf("argument 1 must be a symbol, but is: %T/%v", car, car)
-	}
-	val, err := parseValueDefinition(pf, args)
-	if err != nil {
-		return val, err
-	}
-	return &SetXExpr{Sym: sym, Val: val}, nil
+var SetXS = sxeval.Syntax{
+	Name: "set!",
+	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+		if args == nil {
+			return nil, fmt.Errorf("need at least two arguments")
+		}
+		car := args.Car()
+		sym, ok := sx.GetSymbol(car)
+		if !ok {
+			return nil, fmt.Errorf("argument 1 must be a symbol, but is: %T/%v", car, car)
+		}
+		val, err := parseValueDefinition(pf, args)
+		if err != nil {
+			return val, err
+		}
+		return &SetXExpr{Sym: sym, Val: val}, nil
+	},
 }
 
 // SetXExpr stores data for a set! statement.

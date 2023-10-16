@@ -22,16 +22,8 @@ type SyntaxFn func(*ParseFrame, *sx.Pair) (Expr, error)
 
 // Syntax represents all syntax constructing functions implemented in Go.
 type Syntax struct {
-	name string
-	fn   SyntaxFn
-}
-
-// MakeSyntax creates a new special function.
-func MakeSyntax(name string, fn SyntaxFn) *Syntax {
-	return &Syntax{
-		name: name,
-		fn:   fn,
-	}
+	Name string
+	Fn   SyntaxFn
 }
 
 func (sy *Syntax) IsNil() bool  { return sy == nil }
@@ -44,25 +36,25 @@ func (sy *Syntax) IsEqual(other sx.Object) bool {
 		return sx.IsNil(other)
 	}
 	if otherSy, ok := other.(*Syntax); ok {
-		if sy.fn == nil {
-			return otherSy.fn == nil
+		if sy.Fn == nil {
+			return otherSy.Fn == nil
 		}
-		return sy.name == otherSy.name
+		return sy.Name == otherSy.Name
 	}
 	return false
 }
 func (sy *Syntax) String() string { return sy.Repr() }
 func (sy *Syntax) Repr() string   { return sx.Repr(sy) }
 func (sy *Syntax) Print(w io.Writer) (int, error) {
-	return sx.WriteStrings(w, "#<syntax:", sy.name, ">")
+	return sx.WriteStrings(w, "#<syntax:", sy.Name, ">")
 }
 
 // Parse the args by calling the syntax function.
 func (sy *Syntax) Parse(pf *ParseFrame, args *sx.Pair) (Expr, error) {
-	res, err := sy.fn(pf, args)
+	res, err := sy.Fn(pf, args)
 	if err != nil {
 		if _, ok := err.(CallError); !ok {
-			err = CallError{Name: sy.name, Err: err}
+			err = CallError{Name: sy.Name, Err: err}
 		}
 	}
 	return res, err
