@@ -31,7 +31,7 @@ type Reader struct {
 	line    int
 	col     int
 	prevCol int
-	macros  MacroMap
+	macros  macroMap
 	symFac  sx.SymbolFactory
 
 	quoteSym, quasiquoteSym, unquoteSym, unquoteSplicingSym *sx.Symbol
@@ -40,11 +40,11 @@ type Reader struct {
 	maxLength          uint
 }
 
-// Macro is a function that reads accoring to its on syntax.
-type Macro func(*Reader, rune) (sx.Object, error)
+// macroFn is a function that reads according to its own syntax.
+type macroFn func(*Reader, rune) (sx.Object, error)
 
-// MacroMap maps rune to read macros.
-type MacroMap map[rune]Macro
+// macroMap maps rune to read macros.
+type macroMap map[rune]macroFn
 
 // Position stores the positional information about a value within the reader.
 type Position struct {
@@ -109,14 +109,14 @@ func MakeReader(r io.Reader, opts ...Option) *Reader {
 		line:    0,
 		col:     0,
 		prevCol: 0,
-		macros: MacroMap{
+		macros: macroMap{
 			'"':  readString,
 			'\'': readQuote,
 			'(':  readList(')'),
-			')':  UnmatchedDelimiter,
+			')':  unmatchedDelimiter,
 			',':  readUnquote,
 			'.':  readDot,
-			';':  ReadComment,
+			';':  readComment,
 			'`':  readQuasiquote,
 		},
 		maxDepth:  DefaultNestingLimit,
@@ -153,8 +153,8 @@ func (rd *Reader) Name() string { return rd.name }
 // SymbolFactory returns the symbol factory that is used in the reader.
 func (rd *Reader) SymbolFactory() sx.SymbolFactory { return rd.symFac }
 
-// NextRune returns the next rune from the reader and advances the reader.
-func (rd *Reader) NextRune() (rune, error) {
+// nextRune returns the next rune from the reader and advances the reader.
+func (rd *Reader) nextRune() (rune, error) {
 	if rd.err != nil {
 		return -1, rd.err
 	}
@@ -185,8 +185,8 @@ func (rd *Reader) NextRune() (rune, error) {
 	return ch, nil
 }
 
-// Unread returns runes consumed from the reader back to it.
-func (rd *Reader) Unread(chs ...rune) {
+// unreadRunes returns runes consumed from the reader back to it.
+func (rd *Reader) unreadRunes(chs ...rune) {
 	hasNewline := false
 	for _, ch := range chs {
 		if ch == '\n' {
@@ -212,26 +212,26 @@ func (rd *Reader) Position() Position {
 	}
 }
 
-// SkipSpace skips all space rune from the reader and return the first non-space rune.
-func (rd *Reader) SkipSpace() (rune, error) {
+// skipSpace skips all space rune from the reader and return the first non-space rune.
+func (rd *Reader) skipSpace() (rune, error) {
 	for {
-		ch, err := rd.NextRune()
+		ch, err := rd.nextRune()
 		if err != nil {
 			return -1, err
 		}
-		if !rd.IsSpace(ch) {
+		if !isSpace(ch) {
 			return ch, nil
 		}
 	}
 }
 
-// IsSpace returns true, if the rune is a space character.
-func (*Reader) IsSpace(ch rune) bool {
+// isSpace returns true, if the rune is a space character.
+func isSpace(ch rune) bool {
 	return (ch <= ' ' && ch >= 0) || unicode.IsSpace(ch)
 }
 
-// IsTerminal returns true, if rune terminates the current token, according to the given read macro map.
-func (rd *Reader) IsTerminal(ch rune) bool {
+// isTerminal returns true, if rune terminates the current token, according to the given read macro map.
+func (rd *Reader) isTerminal(ch rune) bool {
 	_, found := rd.macros[ch]
 	return found || unicode.In(ch, unicode.C, unicode.Z) // C=Control, Z=Separator
 }
@@ -276,7 +276,7 @@ var ErrTooDeeplyNested = errors.New("too deeply nested")
 var ErrListTooLong = errors.New("list too long")
 
 func (rd *Reader) readValue() (sx.Object, error) {
-	ch, err := rd.SkipSpace()
+	ch, err := rd.skipSpace()
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func (rd *Reader) readValue() (sx.Object, error) {
 		return readNumber(rd, ch)
 	}
 	if ch == '+' {
-		ch2, err2 := rd.NextRune()
+		ch2, err2 := rd.nextRune()
 		if err2 != io.EOF {
 			if err2 != nil {
 				return nil, err2
@@ -292,15 +292,15 @@ func (rd *Reader) readValue() (sx.Object, error) {
 			if isNumber(ch2) {
 				return readNumber(rd, ch2)
 			}
-			rd.Unread(ch2)
+			rd.unreadRunes(ch2)
 		}
 	} else if ch == '-' {
-		ch2, err2 := rd.NextRune()
+		ch2, err2 := rd.nextRune()
 		if err2 != io.EOF {
 			if err2 != nil {
 				return nil, err2
 			}
-			rd.Unread(ch2)
+			rd.unreadRunes(ch2)
 			if isNumber(ch2) {
 				return readNumber(rd, ch)
 			}
@@ -315,15 +315,15 @@ func (rd *Reader) readValue() (sx.Object, error) {
 
 func isNumber(ch rune) bool { return '0' <= ch && ch <= '9' }
 
-// ReadToken reads a sequence of non-terminal runes from the reader.
+// readToken reads a sequence of non-terminal runes from the reader.
 // if initCh > ' ', it is included as the first char.
-func (rd *Reader) ReadToken(firstCh rune, isTerminal func(rune) bool) (string, error) {
+func (rd *Reader) readToken(firstCh rune, isTerminal func(rune) bool) (string, error) {
 	var sb strings.Builder
 	if firstCh > ' ' {
 		sb.WriteRune(firstCh)
 	}
 	for {
-		ch, err := rd.NextRune()
+		ch, err := rd.nextRune()
 		if err != nil {
 			if err == io.EOF {
 				return sb.String(), nil
@@ -332,7 +332,7 @@ func (rd *Reader) ReadToken(firstCh rune, isTerminal func(rune) bool) (string, e
 		}
 
 		if isTerminal(ch) {
-			rd.Unread(ch)
+			rd.unreadRunes(ch)
 			return sb.String(), nil
 		}
 
@@ -340,8 +340,8 @@ func (rd *Reader) ReadToken(firstCh rune, isTerminal func(rune) bool) (string, e
 	}
 }
 
-// AnnotateError adds error information (reader.Name, position) to the given error.
-func (rd *Reader) AnnotateError(err error, begin Position) error {
+// annotateError adds error information (reader.Name, position) to the given error.
+func (rd *Reader) annotateError(err error, begin Position) error {
 	if err == io.EOF || err == ErrSkip {
 		return err
 	}

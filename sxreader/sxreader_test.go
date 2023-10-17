@@ -40,24 +40,24 @@ func TestReaderName(t *testing.T) {
 	}
 }
 
-func TestReaderNext(t *testing.T) {
-	content := "98765EDCBA43210"
-	rd := sxreader.MakeReader(strings.NewReader(content))
-	for i := 0; ; i++ {
-		r, err := rd.NextRune()
-		if err != nil {
-			if err != io.EOF {
-				t.Errorf("Unexpected error %v", err)
-			} else if r != -1 {
-				t.Errorf("On EOF rune must be -1, but got %v", r)
-			}
-			break
-		}
-		if exp := rune(content[i]); r != exp {
-			t.Errorf("Position: %d, exptected rune %v, but got %v", i, exp, r)
-		}
-	}
-}
+// func TestReaderNext(t *testing.T) {
+// 	content := "98765EDCBA43210"
+// 	rd := sxreader.MakeReader(strings.NewReader(content))
+// 	for i := 0; ; i++ {
+// 		r, err := rd.NextRune()
+// 		if err != nil {
+// 			if err != io.EOF {
+// 				t.Errorf("Unexpected error %v", err)
+// 			} else if r != -1 {
+// 				t.Errorf("On EOF rune must be -1, but got %v", r)
+// 			}
+// 			break
+// 		}
+// 		if exp := rune(content[i]); r != exp {
+// 			t.Errorf("Position: %d, exptected rune %v, but got %v", i, exp, r)
+// 		}
+// 	}
+// }
 
 type readerTestCase struct {
 	name    string

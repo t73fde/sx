@@ -18,19 +18,19 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// UnmatchedDelimiter is a reader macro that signals the error of an
+// unmatchedDelimiter is a reader macro that signals the error of an
 // unmatched delimiter, e.g. a closing parenthesis.
-func UnmatchedDelimiter(rd *Reader, firstCh rune) (sx.Object, error) {
-	return nil, rd.AnnotateError(delimiterError(firstCh), rd.Position())
+func unmatchedDelimiter(rd *Reader, firstCh rune) (sx.Object, error) {
+	return nil, rd.annotateError(delimiterError(firstCh), rd.Position())
 }
 
-// ReadComment is a reader macro that ignores everything until EOL.
-func ReadComment(rd *Reader, _ rune) (sx.Object, error) {
+// readComment is a reader macro that ignores everything until EOL.
+func readComment(rd *Reader, _ rune) (sx.Object, error) {
 	beginPos := rd.Position()
 	for {
-		ch, err := rd.NextRune()
+		ch, err := rd.nextRune()
 		if err != nil {
-			return nil, rd.AnnotateError(err, beginPos)
+			return nil, rd.annotateError(err, beginPos)
 		}
 		if ch == '\n' {
 			return nil, ErrSkip
@@ -40,9 +40,9 @@ func ReadComment(rd *Reader, _ rune) (sx.Object, error) {
 
 func readNumber(rd *Reader, firstCh rune) (sx.Object, error) {
 	beginPos := rd.Position()
-	tok, err := rd.ReadToken(firstCh, rd.IsTerminal)
+	tok, err := rd.readToken(firstCh, rd.isTerminal)
 	if err != nil {
-		return nil, rd.AnnotateError(err, beginPos)
+		return nil, rd.annotateError(err, beginPos)
 	}
 	num, err := sx.ParseInteger(tok)
 	if err == nil {
@@ -50,14 +50,14 @@ func readNumber(rd *Reader, firstCh rune) (sx.Object, error) {
 	}
 	sym, err := rd.symFac.Make(tok)
 	if err != nil {
-		return nil, rd.AnnotateError(err, beginPos)
+		return nil, rd.annotateError(err, beginPos)
 	}
 	return sym, nil
 }
 
 func readDot(rd *Reader, _ rune) (sx.Object, error) {
 	beginPos := rd.Position()
-	return nil, rd.AnnotateError(fmt.Errorf("'.' not allowed here"), beginPos)
+	return nil, rd.annotateError(fmt.Errorf("'.' not allowed here"), beginPos)
 }
 
 func readSymbol(rd *Reader, firstCh rune) (sx.Object, error) {
@@ -65,13 +65,13 @@ func readSymbol(rd *Reader, firstCh rune) (sx.Object, error) {
 		return sx.Nil(), fmt.Errorf("symbol factory of reader not set")
 	}
 	beginPos := rd.Position()
-	tok, err := rd.ReadToken(firstCh, rd.IsTerminal)
+	tok, err := rd.readToken(firstCh, rd.isTerminal)
 	if err != nil {
-		return nil, rd.AnnotateError(err, beginPos)
+		return nil, rd.annotateError(err, beginPos)
 	}
 	sym, err := rd.symFac.Make(tok)
 	if err != nil {
-		return nil, rd.AnnotateError(err, beginPos)
+		return nil, rd.annotateError(err, beginPos)
 	}
 	return sym, nil
 }
@@ -80,21 +80,21 @@ func readString(rd *Reader, _ rune) (sx.Object, error) {
 	beginPos := rd.Position()
 	var sb strings.Builder
 	for {
-		ch, err := rd.NextRune()
+		ch, err := rd.nextRune()
 		if err != nil {
 			if err == io.EOF {
 				err = ErrEOF
 			}
-			return nil, rd.AnnotateError(err, beginPos)
+			return nil, rd.annotateError(err, beginPos)
 		}
 
 		if ch == '\\' {
-			ch, err = rd.NextRune()
+			ch, err = rd.nextRune()
 			if err != nil {
 				if err == io.EOF {
 					err = ErrEOF
 				}
-				return nil, rd.AnnotateError(err, beginPos)
+				return nil, rd.annotateError(err, beginPos)
 			}
 			switch ch {
 			case '"':
@@ -116,7 +116,7 @@ func readString(rd *Reader, _ rune) (sx.Object, error) {
 				if err == io.EOF {
 					err = ErrEOF
 				}
-				return nil, rd.AnnotateError(err, beginPos)
+				return nil, rd.annotateError(err, beginPos)
 			}
 		} else if ch == '"' {
 			return sx.String(sb.String()), nil
@@ -129,7 +129,7 @@ func readString(rd *Reader, _ rune) (sx.Object, error) {
 func readRune(rd *Reader, numDigits int) (rune, error) {
 	result := rune(0)
 	for i := 0; i < numDigits; i++ {
-		ch, err := rd.NextRune()
+		ch, err := rd.nextRune()
 		if err != nil {
 			return result, err
 		}
@@ -173,12 +173,12 @@ func readRune(rd *Reader, numDigits int) (rune, error) {
 	return result, nil
 }
 
-func readList(endCh rune) Macro {
+func readList(endCh rune) macroFn {
 	return func(rd *Reader, _ rune) (sx.Object, error) {
 		beginPos := rd.Position()
 		result, err := rd.readList(endCh)
 		if err != nil {
-			return nil, rd.AnnotateError(err, beginPos)
+			return nil, rd.annotateError(err, beginPos)
 		}
 		return result, nil
 	}
@@ -196,7 +196,7 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 			return nil, ErrListTooLong
 		}
 		curLength++
-		ch, err := rd.SkipSpace()
+		ch, err := rd.skipSpace()
 		if err != nil {
 			if err == io.EOF {
 				return nil, ErrEOF
@@ -208,14 +208,14 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 			break
 		}
 		if ch == '.' {
-			ch2, err2 := rd.NextRune()
-			if err2 == nil && rd.IsSpace(ch2) {
+			ch2, err2 := rd.nextRune()
+			if err2 == nil && isSpace(ch2) {
 				dotObj, err2 = rd.Read()
 				if err2 != nil {
 					return nil, err2
 				}
 				hasDotObj = true
-				ch3, err3 := rd.SkipSpace()
+				ch3, err3 := rd.skipSpace()
 				if err3 != nil {
 					return nil, err
 				}
@@ -224,9 +224,9 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 				}
 				break
 			}
-			rd.Unread(ch2)
+			rd.unreadRunes(ch2)
 		}
-		rd.Unread(ch)
+		rd.unreadRunes(ch)
 
 		val, err := rd.Read()
 		if err != nil {
@@ -260,6 +260,7 @@ func readQuote(rd *Reader, _ rune) (sx.Object, error) {
 	}
 	return obj, err
 }
+
 func readQuasiquote(rd *Reader, _ rune) (sx.Object, error) {
 	obj, err := rd.Read()
 	if err == nil {
@@ -270,14 +271,15 @@ func readQuasiquote(rd *Reader, _ rune) (sx.Object, error) {
 	}
 	return obj, err
 }
+
 func readUnquote(rd *Reader, _ rune) (sx.Object, error) {
-	ch, err := rd.NextRune()
+	ch, err := rd.nextRune()
 	if err != nil {
 		return nil, err
 	}
 	sym := rd.unquoteSplicingSym
 	if ch != '@' {
-		rd.Unread(ch)
+		rd.unreadRunes(ch)
 		sym = rd.unquoteSym
 	}
 	obj, err := rd.Read()
