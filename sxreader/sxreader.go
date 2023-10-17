@@ -24,16 +24,17 @@ import (
 
 // Reader consumes characters from a stream and parses them into s-expressions.
 type Reader struct {
-	rr       io.RuneReader
-	err      error
-	name     string
-	buf      []rune
-	line     int
-	col      int
-	prevCol  int
-	macros   MacroMap
-	symFac   sx.SymbolFactory
-	quoteSym *sx.Symbol
+	rr      io.RuneReader
+	err     error
+	name    string
+	buf     []rune
+	line    int
+	col     int
+	prevCol int
+	macros  MacroMap
+	symFac  sx.SymbolFactory
+
+	quoteSym, quasiquoteSym, unquoteSym, unquoteSplicingSym *sx.Symbol
 
 	maxDepth, curDepth uint
 	maxLength          uint
@@ -113,8 +114,10 @@ func MakeReader(r io.Reader, opts ...Option) *Reader {
 			'\'': readQuote,
 			'(':  readList(')'),
 			')':  UnmatchedDelimiter,
+			',':  readUnquote,
 			'.':  readDot,
 			';':  ReadComment,
+			'`':  readQuasiquote,
 		},
 		maxDepth:  DefaultNestingLimit,
 		maxLength: DefaultListLimit,
@@ -125,9 +128,12 @@ func MakeReader(r io.Reader, opts ...Option) *Reader {
 	if rd.symFac == nil {
 		rd.symFac = sx.MakeMappedFactory(128)
 	}
-	if rd.quoteSym == nil {
-		rd.quoteSym = rd.symFac.MustMake("quote")
-	}
+
+	rd.quoteSym = rd.symFac.MustMake(sx.QuoteName)
+	rd.quasiquoteSym = rd.symFac.MustMake(sx.QuasiquoteName)
+	rd.unquoteSym = rd.symFac.MustMake(sx.UnquoteName)
+	rd.unquoteSplicingSym = rd.symFac.MustMake(sx.UnquoteSplicingName)
+
 	return &rd
 }
 func inferReaderName(r io.Reader) string {
@@ -228,16 +234,6 @@ func (*Reader) IsSpace(ch rune) bool {
 func (rd *Reader) IsTerminal(ch rune) bool {
 	_, found := rd.macros[ch]
 	return found || unicode.In(ch, unicode.C, unicode.Z) // C=Control, Z=Separator
-}
-
-// SetMacro sets the given read macro for the given initial character.
-// If macro is nil, the initial character will not start a read macro.
-func (rd *Reader) SetMacro(initCh rune, macro Macro) {
-	if macro == nil {
-		delete(rd.macros, initCh)
-	} else {
-		rd.macros[initCh] = macro
-	}
 }
 
 // Read one s-expression and return it.

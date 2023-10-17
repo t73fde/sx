@@ -67,6 +67,8 @@ func (mpe *mainParserExecutor) Execute(frame *sxeval.Frame, expr sxeval.Expr) (s
 }
 
 var syntaxes = []*sxeval.Syntax{
+	&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
+	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
 	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
 	&sxbuiltins.SetXS,                       // set!
 	&sxbuiltins.DefineS,                     // define (DEPRECATED)
@@ -119,15 +121,12 @@ var builtins = []*sxeval.Builtin{
 func main() {
 	sf := sx.MakeMappedFactory(1024)
 	rd := sxreader.MakeReader(os.Stdin, sxreader.WithSymbolFactory(sf))
-	symQQ, symUQ, symUQS := installQQ(rd)
 
 	mpe := mainParserExecutor{}
 	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment(len(syntaxes)+len(builtins)+16))
-	engine.SetQuote(nil)
 	mpe.origParser = engine.SetParser(&mpe)
 	mpe.origExecutor = engine.SetExecutor(&mpe)
 	root := engine.RootEnvironment()
-	sxbuiltins.InstallQuasiQuoteSyntax(root, symQQ, symUQ, symUQS)
 	for _, synDef := range syntaxes {
 		engine.BindSyntax(synDef)
 	}
@@ -335,19 +334,11 @@ func printExpr(expr sxeval.Expr, level int) {
 	}
 }
 
-func installQQ(rd *sxreader.Reader) (*sx.Symbol, *sx.Symbol, *sx.Symbol) {
-	sf := rd.SymbolFactory()
-	symQQ, symUQ, symUQS := sf.MustMake("quasiquote"), sf.MustMake("unquote"), sf.MustMake("unquote-splicing")
-	sxbuiltins.InstallQuasiQuoteReader(rd, symQQ, '`', symUQ, ',', symUQS, '@')
-	return symQQ, symUQ, symUQS
-}
-
 //go:embed prelude.sxn
 var prelude string
 
 func readPrelude(engine *sxeval.Engine) error {
 	rd := sxreader.MakeReader(strings.NewReader(prelude), sxreader.WithSymbolFactory(engine.SymbolFactory()))
-	installQQ(rd)
 	for {
 		form, err := rd.Read()
 		if err != nil {

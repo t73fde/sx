@@ -260,3 +260,29 @@ func readQuote(rd *Reader, _ rune) (sx.Object, error) {
 	}
 	return obj, err
 }
+func readQuasiquote(rd *Reader, _ rune) (sx.Object, error) {
+	obj, err := rd.Read()
+	if err == nil {
+		return sx.Nil().Cons(obj).Cons(rd.quasiquoteSym), nil
+	}
+	if err == io.EOF {
+		return obj, ErrEOF
+	}
+	return obj, err
+}
+func readUnquote(rd *Reader, _ rune) (sx.Object, error) {
+	ch, err := rd.NextRune()
+	if err != nil {
+		return nil, err
+	}
+	sym := rd.unquoteSplicingSym
+	if ch != '@' {
+		rd.Unread(ch)
+		sym = rd.unquoteSym
+	}
+	obj, err := rd.Read()
+	if err == nil {
+		return sx.Nil().Cons(obj).Cons(sym), nil
+	}
+	return obj, err
+}

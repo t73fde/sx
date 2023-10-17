@@ -62,6 +62,8 @@ func (pf *ParseFrame) MakeChildFrame(name string, baseSize int) *ParseFrame {
 	}
 }
 
+func (pf *ParseFrame) SymbolFactory() sx.SymbolFactory { return pf.engine.SymbolFactory() }
+
 func (pf *ParseFrame) Bind(sym *sx.Symbol, obj sx.Object) error { return pf.env.Bind(sym, obj) }
 
 func (pf *ParseFrame) Resolve(sym *sx.Symbol) (sx.Object, bool) {

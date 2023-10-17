@@ -184,7 +184,7 @@ var Last = sxeval.Builtin{
 
 // List returns a list of all arguments.
 var List = sxeval.Builtin{
-	Name:     "list",
+	Name:     sx.ListName,
 	MinArity: 0,
 	MaxArity: -1,
 	IsPure:   true,

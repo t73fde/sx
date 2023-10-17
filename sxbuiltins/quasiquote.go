@@ -19,78 +19,59 @@ import (
 
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
-	"zettelstore.de/sx.fossil/sxreader"
 )
 
-// InstallQuasiQuoteReader sets the reader macros to support quasi quotation.
-func InstallQuasiQuoteReader(rd *sxreader.Reader, symQQ *sx.Symbol, chQQ rune, symUQ *sx.Symbol, chUQ rune, symUQS *sx.Symbol, chUQS rune) {
-	if sf := rd.SymbolFactory(); sf != symQQ.Factory() || sf != symUQ.Factory() || sf != symUQ.Factory() {
-		panic("reader symbol factory differ from factory of symbols")
-	}
-	rd.SetMacro(chQQ, func(rd *sxreader.Reader, _ rune) (sx.Object, error) {
-		obj, err := rd.Read()
-		if err == nil {
-			return sx.Nil().Cons(obj).Cons(symQQ), nil
+// QuoteS parses the quote syntax.
+var QuoteS = sxeval.Syntax{
+	Name: sx.QuoteName,
+	Fn: func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+		if sx.IsNil(args) {
+			return nil, sxeval.ErrNoArgs
 		}
-		if err == io.EOF {
-			return obj, sxreader.ErrEOF
+		if args.Tail() != nil {
+			return nil, fmt.Errorf("more than one argument: %v", args)
 		}
-		return obj, err
-
-	})
-	rd.SetMacro(chUQ, func(rd *sxreader.Reader, _ rune) (sx.Object, error) {
-		ch, err := rd.NextRune()
-		if err != nil {
-			return nil, err
-		}
-		sym := symUQS
-		if ch != chUQS {
-			rd.Unread(ch)
-			sym = symUQ
-		}
-		obj, err := rd.Read()
-		if err == nil {
-			return sx.Nil().Cons(obj).Cons(sym), nil
-		}
-		return obj, err
-	})
-
+		return sxeval.ObjExpr{Obj: args.Car()}, nil
+	},
 }
 
-func InstallQuasiQuoteSyntax(env sxeval.Environment, symQQ, symUQ, symUQS *sx.Symbol) error {
-	err := env.Bind(symQQ, &sxeval.Syntax{Name: symQQ.Name(), Fn: makeQuasiQuoteSyntax(symQQ, symUQ, symUQS)})
-	if err != nil {
-		return err
-	}
-	err = env.Bind(symUQ, &sxeval.Syntax{Name: symUQ.Name(), Fn: makeUnquoteSyntax(symQQ)})
-	if err != nil {
-		return err
-	}
-	return env.Bind(symUQS, &sxeval.Syntax{Name: symUQS.Name(), Fn: makeUnquoteSyntax(symQQ)})
-}
-
-func makeUnquoteSyntax(symQQ *sx.Symbol) sxeval.SyntaxFn {
-	return func(*sxeval.ParseFrame, *sx.Pair) (sxeval.Expr, error) {
-		return nil, fmt.Errorf("not allowed outside %s", symQQ.Name())
-	}
-}
-
-func makeQuasiQuoteSyntax(symQQ, symUQ, symUQS *sx.Symbol) sxeval.SyntaxFn {
-	return func(frame *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+// QuasiquoteS parses a form that is quasi-quotated
+var QuasiquoteS = sxeval.Syntax{
+	Name: sx.QuasiquoteName,
+	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs
 		}
 		if !sx.IsNil(args.Cdr()) {
 			return nil, fmt.Errorf("more than one argument: %v", args)
 		}
+		sf := pf.SymbolFactory()
 		qqp := qqParser{
-			frame:              frame,
-			symQuasiQuote:      symQQ,
-			symUnquote:         symUQ,
-			symUnquoteSplicing: symUQS,
+			frame:              pf,
+			symQuasiQuote:      sf.MustMake(sx.QuasiquoteName),
+			symUnquote:         sf.MustMake(sx.UnquoteName),
+			symUnquoteSplicing: sf.MustMake(sx.UnquoteSplicingName),
 		}
 		return qqp.parseQQ(args.Car())
-	}
+	},
+}
+
+// UnquoteS parses the unquote symbol (and returns an error, because it is
+// not allowed outside a quasiquote).
+var UnquoteS = sxeval.Syntax{
+	Name: sx.UnquoteName,
+	Fn: func(*sxeval.ParseFrame, *sx.Pair) (sxeval.Expr, error) {
+		return nil, fmt.Errorf("not allowed outside %s", sx.QuasiquoteName)
+	},
+}
+
+// UnquoteSplicingS parses the unquote-splicing symbol (and returns an error,
+// because it is not allowed outside a quasiquote).
+var UnquoteSplicingS = sxeval.Syntax{
+	Name: sx.UnquoteSplicingName,
+	Fn: func(*sxeval.ParseFrame, *sx.Pair) (sxeval.Expr, error) {
+		return nil, fmt.Errorf("not allowed outside %s", sx.QuasiquoteName)
+	},
 }
 
 type qqParser struct {
