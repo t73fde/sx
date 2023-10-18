@@ -21,20 +21,6 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-// QuoteS parses the quote syntax.
-var QuoteS = sxeval.Syntax{
-	Name: sx.QuoteName,
-	Fn: func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-		if sx.IsNil(args) {
-			return nil, sxeval.ErrNoArgs
-		}
-		if args.Tail() != nil {
-			return nil, fmt.Errorf("more than one argument: %v", args)
-		}
-		return sxeval.ObjExpr{Obj: args.Car()}, nil
-	},
-}
-
 // QuasiquoteS parses a form that is quasi-quotated
 var QuasiquoteS = sxeval.Syntax{
 	Name: sx.QuasiquoteName,
