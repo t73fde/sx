@@ -14,6 +14,7 @@ package sxbuiltins
 // nested quasiquotes.
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -47,7 +48,7 @@ var QuasiquoteS = sxeval.Syntax{
 var UnquoteS = sxeval.Syntax{
 	Name: sx.UnquoteName,
 	Fn: func(*sxeval.ParseFrame, *sx.Pair) (sxeval.Expr, error) {
-		return nil, fmt.Errorf("not allowed outside %s", sx.QuasiquoteName)
+		return nil, errNotAllowedOutsideQQ
 	},
 }
 
@@ -56,9 +57,11 @@ var UnquoteS = sxeval.Syntax{
 var UnquoteSplicingS = sxeval.Syntax{
 	Name: sx.UnquoteSplicingName,
 	Fn: func(*sxeval.ParseFrame, *sx.Pair) (sxeval.Expr, error) {
-		return nil, fmt.Errorf("not allowed outside %s", sx.QuasiquoteName)
+		return nil, errNotAllowedOutsideQQ
 	},
 }
+
+var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.QuasiquoteName)
 
 type qqParser struct {
 	frame              *sxeval.ParseFrame
@@ -67,9 +70,7 @@ type qqParser struct {
 	symUnquoteSplicing *sx.Symbol
 }
 
-func (qqp *qqParser) parse(obj sx.Object) (sxeval.Expr, error) {
-	return qqp.frame.Parse(obj)
-}
+func (qqp *qqParser) parse(obj sx.Object) (sxeval.Expr, error) { return qqp.frame.Parse(obj) }
 
 func (qqp *qqParser) parseQQ(obj sx.Object) (sxeval.Expr, error) {
 	pair, isPair := sx.GetPair(obj)
@@ -102,7 +103,7 @@ func (qqp *qqParser) parseQQ(obj sx.Object) (sxeval.Expr, error) {
 		}
 		if qqp.symUnquoteSplicing.IsEqual(sym) {
 			// `,@form has undefined consequences.
-			return nil, fmt.Errorf("(%v %v) is not allowed", qqp.symQuasiQuote.Name(), obj)
+			return nil, fmt.Errorf("(%v %v) is not allowed", sx.QuasiquoteName, obj)
 		}
 	}
 	args, err := qqp.parseList(pair)
