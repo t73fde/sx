@@ -152,6 +152,12 @@ func TestReadComment(t *testing.T) {
 	})
 }
 
+func TestReadHash(t *testing.T) {
+	performReaderTestCases(t, []readerTestCase{
+		{name: "hash only", src: "#", exp: "ReaderError 1-1: '#' not allowed here", mustErr: true},
+	})
+}
+
 func performReaderTestCases(t *testing.T, testcases []readerTestCase) {
 	t.Parallel()
 	for _, tc := range testcases {

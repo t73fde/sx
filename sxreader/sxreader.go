@@ -111,6 +111,7 @@ func MakeReader(r io.Reader, opts ...Option) *Reader {
 		prevCol: 0,
 		macros: macroMap{
 			'"':  readString,
+			'#':  readHash,
 			'\'': readQuote,
 			'(':  readList(')'),
 			')':  unmatchedDelimiter,

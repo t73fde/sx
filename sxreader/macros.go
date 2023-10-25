@@ -55,6 +55,11 @@ func readNumber(rd *Reader, firstCh rune) (sx.Object, error) {
 	return sym, nil
 }
 
+func readHash(rd *Reader, _ rune) (sx.Object, error) {
+	beginPos := rd.Position()
+	return nil, rd.annotateError(fmt.Errorf("'#' not allowed here"), beginPos)
+}
+
 func readDot(rd *Reader, _ rune) (sx.Object, error) {
 	beginPos := rd.Position()
 	return nil, rd.annotateError(fmt.Errorf("'.' not allowed here"), beginPos)
