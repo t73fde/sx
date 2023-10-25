@@ -21,4 +21,7 @@ func TestBoolean(t *testing.T) {
 	if sx.IsTrue(sx.String("")) {
 		t.Error("Empty string is True")
 	}
+	if sx.IsTrue(sx.MakeUndefined()) {
+		t.Error("Undefined is True")
+	}
 }

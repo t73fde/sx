@@ -28,5 +28,5 @@ func IsTrue(obj Object) bool {
 	if s, ok := GetString(obj); ok && s.String() == "" {
 		return false
 	}
-	return true
+	return !IsUndefined(obj)
 }
