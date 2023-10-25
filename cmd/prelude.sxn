@@ -41,7 +41,7 @@
 (defmacro and args
     (cond ((null? args)       T)
           ((null? (cdr args)) (car args))
-          (else               `(if ,(car args) (and ,@(cdr args))))))
+          (T                  `(if ,(car args) (and ,@(cdr args))))))
 
 
 ;; or macro
@@ -50,4 +50,4 @@
 (defmacro or args
     (cond ((null? args)       NIL)
           ((null? (cdr args)) (car args))
-          (else               `(if ,(car args) T (or ,@(cdr args))))))
+          (T                  `(if ,(car args) T (or ,@(cdr args))))))
