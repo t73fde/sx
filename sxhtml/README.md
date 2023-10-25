@@ -122,9 +122,9 @@ generated them. Any content except attributes are ignored. Void elements are:
 ## Attributes
 
 Attributes are always in the second position of a list containing a tag symbol.
-For example `(a (@ (href . "https://codeberg.org/t73fde/sxhtml")) "SxHTML)`
+For example `(a (@ (href . "https://zettelstore.de/sx/")) "SxHTML)`
 specifies a link to the page of this library. It will be transformed to `<a
-href="https://codeberg.org/t73fde/sxhtml">SxHTML</a>`.
+href="https://zettelstore.de/sx/">SxHTML</a>`.
 
 The syntax for attributes is as follows:
 

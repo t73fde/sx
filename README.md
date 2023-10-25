@@ -37,3 +37,11 @@ Since the second part may reference any value, even earlier elements of a list, 
 Single pairs are denoted as `(X . Y)`, where the car references S and the cdr references Y (Y is not a list).
 
 All other types supported by Sx cannot be specified via the reader.
+
+* **Undefined** contains just the _undefined_ value.
+  It is signalled by some functions that should not abort with an error.
+
+There is no special boolean value.
+The empty list `()`, the empty string `""`, and the undefined value are considered as a "false" value.
+All other values are treated as a "true" value.
+Most functions that return a boolean value currently return the empty list to signal a "false" value or return either the number `1` or the symbol `T` as a "true" value. 
