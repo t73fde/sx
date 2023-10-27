@@ -166,17 +166,6 @@ func GetParameterSymbol(params []*sx.Symbol, obj sx.Object) (*sx.Symbol, error) 
 	return sym, nil
 }
 
-func splitToFrontLast(seq []sxeval.Expr) (front []sxeval.Expr, last sxeval.Expr) {
-	switch l := len(seq); l {
-	case 0:
-		return nil, nil
-	case 1:
-		return nil, seq[0]
-	default:
-		return seq[0 : l-1], seq[l-1]
-	}
-}
-
 type LambdaExpr struct {
 	Name    string
 	Params  []*sx.Symbol

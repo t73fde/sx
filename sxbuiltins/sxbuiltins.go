@@ -85,31 +85,3 @@ func GetCallable(args []sx.Object, pos int) (sxeval.Callable, error) {
 	}
 	return nil, fmt.Errorf("argument %d is not a function, but %T/%v", pos+1, obj, obj)
 }
-
-// ParseExprSeq parses a sequence of expressions.
-func ParseExprSeq(pf *sxeval.ParseFrame, args *sx.Pair) ([]sxeval.Expr, error) {
-	if args == nil {
-		return nil, nil
-	}
-	var front []sxeval.Expr
-	for node := args; ; {
-		ex, err := pf.Parse(node.Car())
-		if err != nil {
-			return nil, err
-		}
-		cdr := node.Cdr()
-		if sx.IsNil(cdr) {
-			return append(front, ex), nil
-		}
-		front = append(front, ex)
-		if next, isPair := sx.GetPair(cdr); isPair {
-			node = next
-			continue
-		}
-		ex, err = pf.Parse(cdr)
-		if err != nil {
-			return nil, err
-		}
-		return append(front, ex), nil
-	}
-}
