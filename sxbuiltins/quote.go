@@ -21,7 +21,7 @@ import (
 )
 
 // QuoteS parses the quote syntax.
-var QuoteS = sxeval.Syntax{
+var QuoteS = sxeval.Special{
 	Name: sx.QuoteName,
 	Fn: func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if sx.IsNil(args) {

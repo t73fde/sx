@@ -17,25 +17,39 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// SyntaxFn is the signature of all syntax constructing functions.
-type SyntaxFn func(*ParseFrame, *sx.Pair) (Expr, error)
-
-// Syntax represents all syntax constructing functions implemented in Go.
-type Syntax struct {
-	Name string
-	Fn   SyntaxFn
+// Syntax is a form that produces an expression by parsing.
+//
+// It is not the same as interface `Parser`, because the second parameter is a pair.
+type Syntax interface {
+	// Parse the args.
+	Parse(pf *ParseFrame, args *sx.Pair) (Expr, error)
 }
 
-func (sy *Syntax) IsNil() bool  { return sy == nil }
-func (sy *Syntax) IsAtom() bool { return sy == nil }
-func (sy *Syntax) IsEqual(other sx.Object) bool {
+// GetSyntax returns the object as a syntax value, if possible.
+func GetSyntax(obj sx.Object) (Syntax, bool) {
+	if sx.IsNil(obj) {
+		return nil, false
+	}
+	sp, ok := obj.(Syntax)
+	return sp, ok
+}
+
+// Special represents all predefined syntax constructing functions implemented in Go.
+type Special struct {
+	Name string
+	Fn   func(*ParseFrame, *sx.Pair) (Expr, error)
+}
+
+func (sy *Special) IsNil() bool  { return sy == nil }
+func (sy *Special) IsAtom() bool { return sy == nil }
+func (sy *Special) IsEqual(other sx.Object) bool {
 	if sy == other {
 		return true
 	}
 	if sy.IsNil() {
 		return sx.IsNil(other)
 	}
-	if otherSy, ok := other.(*Syntax); ok {
+	if otherSy, ok := other.(*Special); ok {
 		if sy.Fn == nil {
 			return otherSy.Fn == nil
 		}
@@ -43,14 +57,14 @@ func (sy *Syntax) IsEqual(other sx.Object) bool {
 	}
 	return false
 }
-func (sy *Syntax) String() string { return sy.Repr() }
-func (sy *Syntax) Repr() string   { return sx.Repr(sy) }
-func (sy *Syntax) Print(w io.Writer) (int, error) {
+func (sy *Special) String() string { return sy.Repr() }
+func (sy *Special) Repr() string   { return sx.Repr(sy) }
+func (sy *Special) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<syntax:", sy.Name, ">")
 }
 
 // Parse the args by calling the syntax function.
-func (sy *Syntax) Parse(pf *ParseFrame, args *sx.Pair) (Expr, error) {
+func (sy *Special) Parse(pf *ParseFrame, args *sx.Pair) (Expr, error) {
 	res, err := sy.Fn(pf, args)
 	if err != nil {
 		if _, ok := err.(CallError); !ok {
@@ -60,31 +74,5 @@ func (sy *Syntax) Parse(pf *ParseFrame, args *sx.Pair) (Expr, error) {
 	return res, err
 }
 
-// GetSyntax returns the object as a syntax value if possible.
-func GetSyntax(obj sx.Object) (*Syntax, bool) {
-	if sx.IsNil(obj) {
-		return nil, false
-	}
-	syn, ok := obj.(*Syntax)
-	return syn, ok
-}
-
-// Special is a special form that produces an expression by parsing.
-//
-// It is not the same as interface `Parser`, because the second parameter is a pair.
-type Special interface {
-	// Parse the args.
-	Parse(pf *ParseFrame, args *sx.Pair) (Expr, error)
-}
-
-// GetSpecial returns the object as a special value if possible.
-func GetSpecial(obj sx.Object) (Special, bool) {
-	if sx.IsNil(obj) {
-		return nil, false
-	}
-	sp, ok := obj.(Special)
-	return sp, ok
-}
-
-// ErrNoArgs signals that no arguments were given
+// ErrNoArgs signals that no arguments were given.
 var ErrNoArgs = errors.New("no arguments given")

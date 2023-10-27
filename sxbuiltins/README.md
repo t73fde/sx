@@ -6,7 +6,7 @@ This package provides a collections of functions that can be used when symbolic 
 Callable functions allow to compute with objects.
 All arguments are evaluated before the function is called with these evaluated values as arguments.
 
-For example, `(+ 2 5 7)` calculated the sum of these three number, resulting in the number value `14`.
+For example, `(+ 2 5 7)` calculates the sum of these three numbers, resulting in the number value `14`.
 Similar, `*` is the symbol that evaluates to the multiplication function, while the symbol `/` evaluates to the division function.
 `(= a b)` returns a boolean "true" value, if the symbols `a` and `b` evaluate to equal values.
 

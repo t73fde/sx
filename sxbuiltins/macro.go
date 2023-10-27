@@ -18,7 +18,7 @@ import (
 )
 
 // DefMacroS parses a macro specfication.
-var DefMacroS = sxeval.Syntax{
+var DefMacroS = sxeval.Special{
 	Name: "defmacro",
 	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		sym, le, err := parseDefProc(pf, args)

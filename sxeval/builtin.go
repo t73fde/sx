@@ -18,7 +18,7 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// Builtin is the type for normal builtin functions.
+// Builtin is the type for normal predefined functions.
 type Builtin struct {
 	// The canonical Name of the builtin
 	Name string

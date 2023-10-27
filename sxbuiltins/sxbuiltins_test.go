@@ -88,13 +88,13 @@ func (tcs tTestCases) Run(t *testing.T) {
 }
 
 func createEngine() *sxeval.Engine {
-	numBuiltins := len(syntaxes) + len(builtins) + len(objects)
+	numBuiltins := len(specials) + len(builtins) + len(objects)
 	sf := sx.MakeMappedFactory(numBuiltins + 32)
 	root := sxeval.MakeRootEnvironment(numBuiltins)
 
 	engine := sxeval.MakeEngine(sf, root)
-	for _, syntax := range syntaxes {
-		engine.BindSyntax(syntax)
+	for _, syntax := range specials {
+		engine.BindSpecial(syntax)
 	}
 	for _, b := range builtins {
 		engine.BindBuiltin(b)
@@ -110,7 +110,7 @@ func createEngine() *sxeval.Engine {
 	return engine
 }
 
-var syntaxes = []*sxeval.Syntax{
+var specials = []*sxeval.Special{
 	&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
 	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst

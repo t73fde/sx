@@ -22,7 +22,7 @@ import (
 
 // CondS parses a cond form: `(cond CLAUSE ...)`, where CLAUSE is
 // `(EXPR EXPR ...)`.
-var CondS = sxeval.Syntax{
+var CondS = sxeval.Special{
 	Name: "cond",
 	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {

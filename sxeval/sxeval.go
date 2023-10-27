@@ -160,8 +160,8 @@ func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
 	return frame.Execute(expr)
 }
 
-// BindSyntax binds a syntax parser to the its name in the engine's root environment.
-func (eng *Engine) BindSyntax(syn *Syntax) error {
+// BindSpecial binds a syntax parser to the its name in the engine's root environment.
+func (eng *Engine) BindSpecial(syn *Special) error {
 	return eng.BindConst(syn.Name, syn)
 }
 

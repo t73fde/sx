@@ -21,7 +21,7 @@ import (
 )
 
 // DefVarS parses a (defvar name value) form.
-var DefVarS = sxeval.Syntax{
+var DefVarS = sxeval.Special{
 	Name: "defvar",
 	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		sym, val, err := parseSymValue(pf, args)
@@ -33,7 +33,7 @@ var DefVarS = sxeval.Syntax{
 }
 
 // DefConstS parses a (defconst name value) form.
-var DefConstS = sxeval.Syntax{
+var DefConstS = sxeval.Special{
 	Name: "defconst",
 	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		sym, val, err := parseSymValue(pf, args)
@@ -134,7 +134,7 @@ func (de *DefineExpr) Print(w io.Writer) (int, error) {
 }
 
 // SetXS parses a (set! name value) form.
-var SetXS = sxeval.Syntax{
+var SetXS = sxeval.Special{
 	Name: "set!",
 	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {

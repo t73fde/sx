@@ -31,7 +31,7 @@ var CallableP = sxeval.Builtin{
 }
 
 // DefunS parses a procedure/function specfication.
-var DefunS = sxeval.Syntax{
+var DefunS = sxeval.Special{
 	Name: "defun",
 	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		sym, le, err := parseDefProc(pf, args)
@@ -59,7 +59,7 @@ func parseDefProc(frame *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaE
 }
 
 // LambdaS parses a procedure specification.
-var LambdaS = sxeval.Syntax{
+var LambdaS = sxeval.Special{
 	Name: "lambda",
 	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {

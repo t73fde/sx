@@ -66,7 +66,7 @@ func (mpe *mainParserExecutor) Execute(frame *sxeval.Frame, expr sxeval.Expr) (s
 	return obj, nil
 }
 
-var syntaxes = []*sxeval.Syntax{
+var specials = []*sxeval.Special{
 	&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
 	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
@@ -123,12 +123,12 @@ func main() {
 	rd := sxreader.MakeReader(os.Stdin, sxreader.WithSymbolFactory(sf))
 
 	mpe := mainParserExecutor{}
-	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment(len(syntaxes)+len(builtins)+16))
+	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment(len(specials)+len(builtins)+16))
 	mpe.origParser = engine.SetParser(&mpe)
 	mpe.origExecutor = engine.SetExecutor(&mpe)
 	root := engine.RootEnvironment()
-	for _, synDef := range syntaxes {
-		engine.BindSyntax(synDef)
+	for _, synDef := range specials {
+		engine.BindSpecial(synDef)
 	}
 	for _, b := range builtins {
 		engine.BindBuiltin(b)

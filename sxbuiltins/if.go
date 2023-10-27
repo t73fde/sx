@@ -19,7 +19,7 @@ import (
 )
 
 // IfS parses an if-statement: (if cond then else). If else is missing, a nil is assumed.
-var IfS = sxeval.Syntax{
+var IfS = sxeval.Special{
 	Name: "if",
 	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {
