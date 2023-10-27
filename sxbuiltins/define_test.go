@@ -19,32 +19,6 @@ func TestDefine(t *testing.T) {
 
 var tcsDefine = tTestCases{
 	{
-		name:    "err-define-0",
-		src:     "(define)",
-		exp:     "{[{define: need at least two arguments}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-define-1",
-		src:     "(define 1)",
-		exp:     "{[{define: argument 1 must be a symbol or a list, but is: sx.Int64/1}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-define-1a",
-		src:     "(define a)",
-		exp:     "{[{define: argument 2 missing}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-define-a-1",
-		src:     "(define a . 1)",
-		exp:     "{[{define: argument 2 must be a proper list}]}",
-		withErr: true,
-	},
-	{name: "define-a-1", src: "(define a 1)", exp: "1"},
-
-	{
 		name:    "err-defvar-0",
 		src:     "(defvar)",
 		exp:     "{[{defvar: need at least two arguments}]}",
@@ -95,22 +69,6 @@ var tcsDefine = tTestCases{
 		withErr: true,
 	},
 	{name: "defconst-a-1", src: "(defconst a 1)", exp: "1"},
-
-	{
-		name:    "err-deffn-0",
-		src:     "(define ())",
-		exp:     "{[{define: empty function head}]}",
-		withErr: true,
-	},
-	{name: "err-deffn-1", src: "(define (a))", exp: "{[{define: missing body}]}", withErr: true},
-	{
-		name:    "err-deffn-1-nosym",
-		src:     "(define (1))",
-		exp:     "{[{define: first element in function head is not a symbol, but: sx.Int64/1}]}",
-		withErr: true,
-	},
-	{name: "deffn", src: "(define (a) 1)", exp: "#<lambda:a>"},
-	{name: "deffn-eval", src: "((define (a) 1))", exp: "1"},
 }
 
 func TestSetX(t *testing.T) {
@@ -135,7 +93,7 @@ var tcsSetX = tTestCases{
 	{
 		name:    "err-set!-a-1",
 		src:     "(set! a . 1)",
-		exp:     "{[{set!: argument 2 must be a proper list}]}",
+		exp:     "{[{set!: argument 2 must be a proper list, but is: sx.Int64/1}]}",
 		withErr: true,
 	},
 	{
@@ -144,5 +102,5 @@ var tcsSetX = tTestCases{
 		exp:     `{[{symbol "unknown" not bound in environment "set!-unknown-1"}]}`,
 		withErr: true,
 	},
-	{name: "define-set", src: "(define a 1) (set! a 17)", exp: "1 17"},
+	{name: "define-set", src: "(defvar a 1) (set! a 17)", exp: "1 17"},
 }

@@ -116,15 +116,15 @@ func TestEval(t *testing.T) {
 }
 
 var sxEvenOdd = `;;; Indirekt recursive definition of even/odd
-(define (even? n) (if (= n 0) 1 (odd? (- n 1))))
-(define (odd? n) (if (= n 0) () (even? (- n 1))))
+(defun even? (n) (if (= n 0) 1 (odd? (- n 1))))
+(defun odd? (n) (if (= n 0) () (even? (- n 1))))
 `
 
 func createEngineForTCO() *sxeval.Engine {
 	sf := sx.MakeMappedFactory(128)
 	root := sxeval.MakeRootEnvironment(6)
 	engine := sxeval.MakeEngine(sf, root)
-	engine.BindSyntax(&sxbuiltins.DefineS)
+	engine.BindSyntax(&sxbuiltins.DefunS)
 	engine.BindSyntax(&sxbuiltins.IfS)
 	engine.BindBuiltin(&sxbuiltins.Equal)
 	engine.BindBuiltin(&sxbuiltins.Sub)

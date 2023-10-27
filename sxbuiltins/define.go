@@ -65,56 +65,6 @@ func parseSymValue(pf *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, sxeval.Exp
 	return sym, val, err
 }
 
-// DefineS parses a (define name value) form. It is deprecated.
-var DefineS = sxeval.Syntax{
-	Name: "define",
-	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-		if args == nil {
-			return nil, fmt.Errorf("need at least two arguments")
-		}
-		switch car := args.Car().(type) {
-		case *sx.Symbol:
-			val, err := parseValueDefinition(pf, args)
-			if err != nil {
-				return val, err
-			}
-			return &DefineExpr{Sym: car, Val: val, Const: false}, nil
-		case *sx.Pair:
-			sym, fun, err := parseProcedureDefinition(pf, car, args)
-			if err != nil {
-				return fun, err
-			}
-			return &DefineExpr{Sym: sym, Val: fun, Const: false}, nil
-		default:
-			return nil, fmt.Errorf("argument 1 must be a symbol or a list, but is: %T/%v", car, car)
-		}
-	},
-}
-
-func parseValueDefinition(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-	cdr := args.Cdr()
-	if sx.IsNil(cdr) {
-		return nil, fmt.Errorf("argument 2 missing")
-	}
-	pair, isPair := sx.GetPair(cdr)
-	if !isPair {
-		return nil, fmt.Errorf("argument 2 must be a proper list")
-	}
-	return pf.Parse(pair.Car())
-}
-
-func parseProcedureDefinition(pf *sxeval.ParseFrame, head, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
-	if head == nil {
-		return nil, nil, fmt.Errorf("empty function head")
-	}
-	sym, ok := sx.GetSymbol(head.Car())
-	if !ok {
-		return nil, nil, fmt.Errorf("first element in function head is not a symbol, but: %T/%v", head.Car(), head.Car())
-	}
-	expr, err := ParseProcedure(pf, sym.Name(), head.Cdr(), args.Cdr())
-	return sym, expr, err
-}
-
 // DefineExpr stores data for a define statement.
 type DefineExpr struct {
 	Sym   *sx.Symbol
@@ -195,7 +145,15 @@ var SetXS = sxeval.Syntax{
 		if !ok {
 			return nil, fmt.Errorf("argument 1 must be a symbol, but is: %T/%v", car, car)
 		}
-		val, err := parseValueDefinition(pf, args)
+		cdr := args.Cdr()
+		if sx.IsNil(cdr) {
+			return nil, fmt.Errorf("argument 2 missing")
+		}
+		pair, isPair := sx.GetPair(cdr)
+		if !isPair {
+			return nil, fmt.Errorf("argument 2 must be a proper list, but is: %T/%v", cdr, cdr)
+		}
+		val, err := pf.Parse(pair.Car())
 		if err != nil {
 			return val, err
 		}

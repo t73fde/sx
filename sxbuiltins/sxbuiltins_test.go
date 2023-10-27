@@ -114,9 +114,8 @@ var syntaxes = []*sxeval.Syntax{
 	&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
 	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
-	&sxbuiltins.SetXS,                       // set!
-	&sxbuiltins.DefineS,                     // define (DEPRECATED)
 	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
+	&sxbuiltins.SetXS,     // set!
 	&sxbuiltins.CondS,     // cond
 	&sxbuiltins.IfS,       // if
 	&sxbuiltins.DefMacroS, // defmacro

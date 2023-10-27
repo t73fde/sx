@@ -22,7 +22,7 @@ var tcsMacro = tTestCases{
 	{name: "err-defmacro-a", src: "(defmacro a)", exp: "{[{defmacro: parameter spec and body missing}]}", withErr: true},
 	{
 		name: "defmacro-inc",
-		src:  "(defmacro inc (var) `(set! ,var (+ ,var 1))) (define a 0) (inc a) (inc a)",
+		src:  "(defmacro inc (var) `(set! ,var (+ ,var 1))) (defvar a 0) (inc a) (inc a)",
 		exp:  "#<macro:inc> 0 1 2",
 	},
 	{
