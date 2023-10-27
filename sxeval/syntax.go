@@ -30,8 +30,8 @@ func GetSyntax(obj sx.Object) (Syntax, bool) {
 	if sx.IsNil(obj) {
 		return nil, false
 	}
-	sp, ok := obj.(Syntax)
-	return sp, ok
+	sy, ok := obj.(Syntax)
+	return sy, ok
 }
 
 // Special represents all predefined syntax constructing functions implemented in Go.
@@ -40,35 +40,35 @@ type Special struct {
 	Fn   func(*ParseFrame, *sx.Pair) (Expr, error)
 }
 
-func (sy *Special) IsNil() bool  { return sy == nil }
-func (sy *Special) IsAtom() bool { return sy == nil }
-func (sy *Special) IsEqual(other sx.Object) bool {
-	if sy == other {
+func (sp *Special) IsNil() bool  { return sp == nil }
+func (sp *Special) IsAtom() bool { return sp == nil }
+func (sp *Special) IsEqual(other sx.Object) bool {
+	if sp == other {
 		return true
 	}
-	if sy.IsNil() {
+	if sp.IsNil() {
 		return sx.IsNil(other)
 	}
-	if otherSy, ok := other.(*Special); ok {
-		if sy.Fn == nil {
-			return otherSy.Fn == nil
+	if otherSp, ok := other.(*Special); ok {
+		if sp.Fn == nil {
+			return otherSp.Fn == nil
 		}
-		return sy.Name == otherSy.Name
+		return sp.Name == otherSp.Name
 	}
 	return false
 }
-func (sy *Special) String() string { return sy.Repr() }
-func (sy *Special) Repr() string   { return sx.Repr(sy) }
-func (sy *Special) Print(w io.Writer) (int, error) {
-	return sx.WriteStrings(w, "#<syntax:", sy.Name, ">")
+func (sp *Special) String() string { return sp.Repr() }
+func (sp *Special) Repr() string   { return sx.Repr(sp) }
+func (sp *Special) Print(w io.Writer) (int, error) {
+	return sx.WriteStrings(w, "#<special:", sp.Name, ">")
 }
 
 // Parse the args by calling the syntax function.
-func (sy *Special) Parse(pf *ParseFrame, args *sx.Pair) (Expr, error) {
-	res, err := sy.Fn(pf, args)
+func (sp *Special) Parse(pf *ParseFrame, args *sx.Pair) (Expr, error) {
+	res, err := sp.Fn(pf, args)
 	if err != nil {
 		if _, ok := err.(CallError); !ok {
-			err = CallError{Name: sy.Name, Err: err}
+			err = CallError{Name: sp.Name, Err: err}
 		}
 	}
 	return res, err

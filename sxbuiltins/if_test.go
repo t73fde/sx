@@ -18,7 +18,7 @@ func TestIf(t *testing.T) {
 }
 
 var tcsIf = tTestCases{
-	{name: "if-symbol", src: "if", exp: "#<syntax:if>"},
+	{name: "if-symbol", src: "if", exp: "#<special:if>"},
 	{name: "if-0", src: "(if)", exp: "{[{if: requires 2 or 3 arguments, got none}]}", withErr: true},
 	{name: "if-1", src: "(if 1)", exp: "{[{if: requires 2 or 3 arguments, got one}]}", withErr: true},
 	{name: "if-4", src: "(if 1 2 3 4)", exp: "{[{if: requires 2 or 3 arguments, got more}]}", withErr: true},

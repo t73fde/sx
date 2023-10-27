@@ -92,10 +92,6 @@ func TestEval(t *testing.T) {
 	testcases := testCases{
 		{name: "nil", src: `()`, exp: "()"},
 		{name: "zero", src: "0", exp: "0"},
-		{name: "quote-sym", src: "quote", exp: "#<syntax:quote>"},
-		{name: "quote-zero", src: "(quote 0)", exp: "0"},
-		{name: "quote-nil", src: "(quote ())", exp: "()"},
-		{name: "quote-list", src: "(quote (1 2 3))", exp: "(1 2 3)"},
 		{name: "hello", src: "hello", exp: `"Hello, World"`},
 		{name: "cat-empty", src: `(cat)`, exp: `""`},
 		{name: "cat-123", src: "(cat 1 2 3)", exp: `"123"`},

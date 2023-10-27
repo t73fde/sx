@@ -18,7 +18,7 @@ func TestQuasiQuote(t *testing.T) {
 }
 
 var tcsQuasiQuote = tTestCases{
-	{name: "simple-quasiquote-sym", src: "quasiquote", exp: "#<syntax:quasiquote>"},
+	{name: "simple-quasiquote-sym", src: "quasiquote", exp: "#<special:quasiquote>"},
 	{name: "simple-quasiquote-zero", src: "(quasiquote 0)", exp: "0"},
 	{name: "simple-quasiquote-nil", src: "(quasiquote ())", exp: "()"},
 	{name: "simple-quasiquote-list", src: "(quasiquote (1 2 3))", exp: "(1 2 3)"},

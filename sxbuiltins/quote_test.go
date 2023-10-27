@@ -18,7 +18,7 @@ func TestQuote(t *testing.T) {
 }
 
 var tcsQuote = tTestCases{
-	{name: "quote-sym", src: "quote", exp: "#<syntax:quote>"},
+	{name: "quote-sym", src: "quote", exp: "#<special:quote>"},
 	{name: "quote-zero", src: "(quote 0)", exp: "0"},
 	{name: "quote-nil", src: "(quote ())", exp: "()"},
 	{name: "quote-list", src: "(quote (1 2 3))", exp: "(1 2 3)"},
