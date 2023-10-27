@@ -21,7 +21,7 @@ import (
 // Contains all syntaxes for generic condition handling.
 
 // CondS parses a cond form: `(cond CLAUSE ...)`, where CLAUSE is
-// `(EXPR EXPR ...)`.
+// `(TEST EXPR ...)`.
 var CondS = sxeval.Special{
 	Name: "cond",
 	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
@@ -35,19 +35,27 @@ var CondS = sxeval.Special{
 			if !isPair {
 				return nil, fmt.Errorf("clause must be a list, but got %T/%v", obj, obj)
 			}
-			seq, err := ParseExprSeq(pf, clause)
-			if err != nil {
-				return nil, err
-			}
-			if l := len(seq); l > 1 {
-				var front []sxeval.Expr
-				if l == 2 {
-					front = nil
-				} else {
-					front = make([]sxeval.Expr, l-2)
-					copy(front, seq[1:l-1])
+			if !clause.IsNil() {
+				test, err := pf.Parse(clause.Car())
+				if err != nil {
+					return nil, err
 				}
-				caseList = append(caseList, CondCase{Test: seq[0], Front: front, Last: seq[l-1]})
+				cdr := clause.Cdr()
+				if cdr.IsNil() {
+					// Only a test. If true returns ().
+					caseList = append(caseList, CondCase{test, sxeval.NilExpr})
+				} else {
+					var expr sxeval.Expr
+					if seq, isSeq := sx.GetPair(cdr); !isSeq {
+						expr, err = pf.Parse(seq)
+					} else {
+						expr, err = ParseExprSeq(pf, seq)
+					}
+					if err != nil {
+						return nil, err
+					}
+					caseList = append(caseList, CondCase{test, expr})
+				}
 			}
 
 			obj = node.Cdr()
@@ -71,18 +79,14 @@ type CondExpr struct {
 	Cases []CondCase
 }
 type CondCase struct {
-	Test  sxeval.Expr
-	Front []sxeval.Expr
-	Last  sxeval.Expr
+	Test sxeval.Expr
+	Expr sxeval.Expr
 }
 
 func (ce *CondExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	missing := 0
 	for i, cas := range ce.Cases {
-		for j, expr := range cas.Front {
-			cas.Front[j] = expr.Rework(rf)
-		}
-		ce.Cases[i].Last = cas.Last.Rework(rf)
+		ce.Cases[i].Expr = cas.Expr.Rework(rf)
 		test := cas.Test.Rework(rf)
 		if objExpr, isObjExpr := test.(sxeval.ObjectExpr); isObjExpr {
 			if sx.IsTrue(objExpr.Object()) {
@@ -127,13 +131,7 @@ func (ce *CondExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 			found = sx.IsTrue(test)
 		}
 		if found {
-			for _, expr := range cas.Front {
-				_, err := subFrame.Execute(expr)
-				if err != nil {
-					return nil, err
-				}
-			}
-			return frame.ExecuteTCO(cas.Last)
+			return frame.ExecuteTCO(cas.Expr)
 		}
 	}
 	return sx.Nil(), nil
@@ -146,8 +144,7 @@ func (ce *CondExpr) IsEqual(other sxeval.Expr) bool {
 		if c1, c2 := ce.Cases, otherC.Cases; len(c1) == len(c2) {
 			for i, cas1 := range c1 {
 				cas2 := c2[i]
-				if !cas1.Test.IsEqual(cas2.Test) || !cas1.Last.IsEqual(cas2.Last) ||
-					sxeval.EqualExprSlice(cas1.Front, cas2.Front) {
+				if !cas1.Test.IsEqual(cas2.Test) || !cas1.Expr.IsEqual(cas2.Expr) {
 					return false
 				}
 			}
@@ -177,17 +174,12 @@ func (ce *CondExpr) Print(w io.Writer) (int, error) {
 		if err != nil {
 			return length, err
 		}
-		l, err = sxeval.PrintExprs(w, cas.Front)
-		length += l
-		if err != nil {
-			return length, err
-		}
 		l, err = io.WriteString(w, " ")
 		length += l
 		if err != nil {
 			return length, err
 		}
-		l, err = cas.Last.Print(w)
+		l, err = cas.Expr.Print(w)
 		length += l
 		if err != nil {
 			return length, err

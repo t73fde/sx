@@ -303,10 +303,13 @@ func printExpr(expr sxeval.Expr, level int) {
 			fmt.Printf(" . %v", e.Rest)
 		}
 		fmt.Println()
-		for _, ex := range e.Front {
-			printExpr(ex, level+1)
+		printExpr(e.Expr, level+1)
+	case *sxbuiltins.CondExpr:
+		fmt.Println("COND")
+		for _, clause := range e.Cases {
+			printExpr(clause.Test, level+1)
+			printExpr(clause.Expr, level+1)
 		}
-		printExpr(e.Last, level+1)
 	case *sxbuiltins.IfExpr:
 		fmt.Println("IF")
 		printExpr(e.Test, level+1)

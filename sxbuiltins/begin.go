@@ -20,28 +20,16 @@ import (
 // BeginS parses a sequence of expressions.
 var BeginS = sxeval.Special{
 	Name: "begin",
-	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
-		es, err := ParseExprSeq(pf, args)
-		if err != nil {
-			return nil, err
-		}
-		front, last := splitToFrontLast(es)
-		if last == nil {
-			return sxeval.NilExpr, nil
-		}
-		if len(front) == 0 {
-			return last, nil
-		}
-		return &BeginExpr{Front: front, Last: last}, nil
-	},
+	Fn:   ParseExprSeq,
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func ParseExprSeq(pf *sxeval.ParseFrame, args *sx.Pair) ([]sxeval.Expr, error) {
+func ParseExprSeq(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
-		return nil, nil
+		return sxeval.NilExpr, nil
 	}
 	var front []sxeval.Expr
+	var last sxeval.Expr
 	for node := args; ; {
 		ex, err := pf.Parse(node.Car())
 		if err != nil {
@@ -49,7 +37,8 @@ func ParseExprSeq(pf *sxeval.ParseFrame, args *sx.Pair) ([]sxeval.Expr, error) {
 		}
 		cdr := node.Cdr()
 		if sx.IsNil(cdr) {
-			return append(front, ex), nil
+			last = ex
+			break
 		}
 		front = append(front, ex)
 		if next, isPair := sx.GetPair(cdr); isPair {
@@ -60,19 +49,13 @@ func ParseExprSeq(pf *sxeval.ParseFrame, args *sx.Pair) ([]sxeval.Expr, error) {
 		if err != nil {
 			return nil, err
 		}
-		return append(front, ex), nil
+		last = ex
+		break
 	}
-}
-
-func splitToFrontLast(seq []sxeval.Expr) (front []sxeval.Expr, last sxeval.Expr) {
-	switch l := len(seq); l {
-	case 0:
-		return nil, nil
-	case 1:
-		return nil, seq[0]
-	default:
-		return seq[0 : l-1], seq[l-1]
+	if len(front) == 0 {
+		return last, nil
 	}
+	return &BeginExpr{Front: front, Last: last}, nil
 }
 
 // BeginExpr represents the begin form.
@@ -115,10 +98,18 @@ func (be *BeginExpr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
-	l, err := sxeval.PrintExprs(w, be.Front)
-	length += l
-	if err != nil {
-		return length, err
+	var l int
+	for _, expr := range be.Front {
+		l, err = io.WriteString(w, " ")
+		length += l
+		if err != nil {
+			return length, err
+		}
+		l, err = expr.Print(w)
+		length += l
+		if err != nil {
+			return length, err
+		}
 	}
 	l, err = be.Last.Print(w)
 	length += l

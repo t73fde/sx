@@ -37,8 +37,7 @@ type Macro struct {
 	Name   string
 	Params []*sx.Symbol
 	Rest   *sx.Symbol
-	Front  []sxeval.Expr
-	Last   sxeval.Expr
+	Expr   sxeval.Expr
 }
 
 func (m *Macro) IsNil() bool  { return m == nil }
@@ -55,8 +54,7 @@ func (m *Macro) IsEqual(other sx.Object) bool {
 		return m.PFrame.IsEqual(otherM.PFrame) &&
 			sxeval.EqualSymbolSlice(m.Params, otherM.Params) &&
 			m.Rest.IsEqual(otherM.Rest) &&
-			sxeval.EqualExprSlice(m.Front, otherM.Front) &&
-			m.Last.IsEqual(otherM.Last)
+			m.Expr.IsEqual(otherM.Expr)
 	}
 	return false
 }
@@ -93,8 +91,7 @@ func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 		Name:   m.Name,
 		Params: m.Params,
 		Rest:   m.Rest,
-		Front:  m.Front,
-		Last:   m.Last,
+		Expr:   m.Expr,
 	}
 	return m.Frame.MakeCalleeFrame().Call(&proc, macroArgs)
 }
