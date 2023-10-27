@@ -65,10 +65,30 @@ type BeginExpr struct {
 }
 
 func (be *BeginExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	for i, e := range be.Front {
-		be.Front[i] = e.Rework(rf)
+	last := be.Last.Rework(rf)
+	frontLen := len(be.Front)
+	if frontLen == 0 {
+		return last
 	}
-	be.Last = be.Last.Rework(rf)
+	seq := make([]sxeval.Expr, 0, frontLen)
+	for _, expr := range be.Front {
+		re := expr.Rework(rf)
+		if _, isObj := re.(sxeval.ObjectExpr); isObj {
+			// An object has no side effect, there it can be ignored in the sequence
+			continue
+		}
+		seq = append(seq, re)
+	}
+	if seqLen := len(seq); seqLen == 0 {
+		return last
+	} else if seqLen == cap(be.Front) {
+		copy(be.Front, seq)
+	} else {
+		newFront := make([]sxeval.Expr, seqLen)
+		copy(newFront, seq)
+		be.Front = newFront
+	}
+	be.Last = last
 	return be
 }
 

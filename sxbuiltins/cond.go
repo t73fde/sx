@@ -90,6 +90,10 @@ func (ce *CondExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 		test := cas.Test.Rework(rf)
 		if objExpr, isObjExpr := test.(sxeval.ObjectExpr); isObjExpr {
 			if sx.IsTrue(objExpr.Object()) {
+				if i == missing {
+					// Only False tests in front, this is definitely the first one that is True
+					return ce.Cases[i].Expr
+				}
 				ce.Cases[i].Test = nil
 				newCases := make([]CondCase, i+1)
 				for j := 0; j <= i; j++ {

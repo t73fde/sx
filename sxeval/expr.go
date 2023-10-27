@@ -63,7 +63,7 @@ func PrintExprs(w io.Writer, exprs []Expr) (int, error) {
 	return length, nil
 }
 
-// ObjectExpr is an Expr that results in a specific sx.Object.
+// ObjectExpr is an Expr that results in a specific, constant sx.Object.
 type ObjectExpr interface {
 	Object() sx.Object
 }
