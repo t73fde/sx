@@ -64,7 +64,7 @@ var CondS = sxeval.Special{
 			}
 			rest, isPair := sx.GetPair(obj)
 			if !isPair {
-				return nil, fmt.Errorf("improper clause list: %v", args)
+				return nil, sx.ErrImproper{Pair: args}
 			}
 			node = rest
 		}
