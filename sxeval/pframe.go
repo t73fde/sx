@@ -18,7 +18,7 @@ import (
 
 // ParseFrame is a parsing environment.
 type ParseFrame struct {
-	engine *Engine
+	sf     sx.SymbolFactory
 	env    Environment
 	parser Parser
 }
@@ -30,7 +30,7 @@ func (frame *ParseFrame) IsEqual(other *ParseFrame) bool {
 	if frame == nil || other == nil {
 		return false
 	}
-	if frame.engine != other.engine {
+	if frame.sf != other.sf {
 		return false
 	}
 	return frame.env.IsEqual(other.env)
@@ -56,13 +56,13 @@ func (e errParseAgain) Error() string { return fmt.Sprintf("Again: %T/%v", e.for
 
 func (pf *ParseFrame) MakeChildFrame(name string, baseSize int) *ParseFrame {
 	return &ParseFrame{
-		engine: pf.engine,
+		sf:     pf.sf,
 		env:    MakeChildEnvironment(pf.env, name, baseSize),
 		parser: pf.parser,
 	}
 }
 
-func (pf *ParseFrame) SymbolFactory() sx.SymbolFactory { return pf.engine.SymbolFactory() }
+func (pf *ParseFrame) SymbolFactory() sx.SymbolFactory { return pf.sf }
 
 func (pf *ParseFrame) Bind(sym *sx.Symbol, obj sx.Object) error { return pf.env.Bind(sym, obj) }
 

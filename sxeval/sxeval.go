@@ -137,7 +137,7 @@ func (eng *Engine) Eval(env Environment, obj sx.Object) (sx.Object, error) {
 
 // Parse the given object in the given environment.
 func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
-	pf := ParseFrame{engine: eng, env: env, parser: eng.pars}
+	pf := ParseFrame{sf: eng.sf, env: env, parser: eng.pars}
 	return pf.Parse(obj)
 }
 

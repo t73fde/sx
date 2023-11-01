@@ -35,7 +35,7 @@ func (frame *Frame) MakeCalleeFrame() *Frame {
 
 func (frame *Frame) MakeParseFrame() *ParseFrame {
 	return &ParseFrame{
-		engine: frame.engine,
+		sf:     frame.engine.SymbolFactory(),
 		env:    frame.env,
 		parser: frame.engine.pars,
 	}
