@@ -16,6 +16,7 @@ package sxeval
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -56,126 +57,59 @@ type Executor interface {
 	Execute(*Frame, Expr) (sx.Object, error)
 }
 
-type simpleExecutor struct{}
+// SimpleExecutor just computes an expression.
+type SimpleExecutor struct{}
 
-var mySimpleExecutor simpleExecutor
-
-// Execute the given expression in the given environment of the given engine.
-func (*simpleExecutor) Execute(frame *Frame, expr Expr) (sx.Object, error) {
+// Execute the given expression in the given frame.
+func (*SimpleExecutor) Execute(frame *Frame, expr Expr) (sx.Object, error) {
 	return expr.Compute(frame)
 }
 
-// Engine is the collection of all relevant data element to execute / evaluate an object.
-type Engine struct {
-	sf       sx.SymbolFactory
-	root     Environment
-	toplevel Environment
-	pars     Parser
-	exec     Executor
+// limitExecutor computes just some steps and/or for a given time limit.
+type limitExecutor struct {
+	stepCount   uint
+	maxSteps    uint
+	deadline    time.Time
+	maxDuration time.Duration
 }
 
-// MakeEngine creates a new engine.
-func MakeEngine(sf sx.SymbolFactory, root Environment) *Engine {
-	return &Engine{
-		sf:       sf,
-		root:     root,
-		toplevel: root,
-		pars:     &myDefaultParser,
-		exec:     nil,
+// MakeLimitExecutor creates a new Executor with the given limits.
+func MakeLimitExecutor(maxDuration time.Duration, maxSteps uint) Executor {
+	if maxDuration <= 0 && maxSteps == 0 {
+		return &SimpleExecutor{}
+	}
+	return &limitExecutor{
+		stepCount:   0,
+		maxSteps:    maxSteps,
+		deadline:    time.Now().Add(maxDuration),
+		maxDuration: maxDuration,
 	}
 }
 
-// SymbolFactory returns the symbol factory of the engine.
-func (eng *Engine) SymbolFactory() sx.SymbolFactory { return eng.sf }
-
-// RootEnvironment returns the root environment of the engine.
-func (eng *Engine) RootEnvironment() Environment { return eng.root }
-
-// SetToplevelEnv sets the given environment as the top-level environment.
-// It must be the root environment or a child of it.
-func (eng *Engine) SetToplevelEnv(env Environment) error {
-	root := RootEnv(env)
-	if root != eng.root {
-		return fmt.Errorf("root of %v is not root of engine %v: %v", env, eng.root, root)
+// Execute the given expression in the given frame within the limits of this executor.
+func (lex *limitExecutor) Execute(frame *Frame, expr Expr) (sx.Object, error) {
+	stepCount := lex.stepCount
+	stepCount++
+	if stepCount > lex.maxSteps {
+		return nil, &LimitError{MaxSteps: lex.maxSteps, MaxDuration: 0}
 	}
-	eng.toplevel = env
-	return nil
-}
-
-// GetToplevelEnv returns the current top-level environment.
-func (eng *Engine) GetToplevelEnv() Environment { return eng.toplevel }
-
-// SetParser updates the current s-expression parser of the engine.
-func (eng *Engine) SetParser(p Parser) Parser {
-	orig := eng.pars
-	if p == nil {
-		p = &myDefaultParser
+	if stepCount%1000 == 0 && time.Now().After(lex.deadline) {
+		return nil, &LimitError{MaxSteps: 0, MaxDuration: lex.maxDuration}
 	}
-	eng.pars = p
-	return orig
+	lex.stepCount = stepCount
+	return expr.Compute(frame)
 }
 
-// SetExecutor updates the executor pf parsed s-expressions.
-func (eng *Engine) SetExecutor(e Executor) Executor {
-	orig := eng.exec
-	eng.exec = e
-	if orig != nil {
-		return orig
+// LimitError is signaled when execution limits are exceeded.
+type LimitError struct {
+	MaxSteps    uint
+	MaxDuration time.Duration
+}
+
+// Error returns a string representation of this error.
+func (limErr *LimitError) Error() string {
+	if maxSteps := limErr.MaxSteps; maxSteps > 0 {
+		return fmt.Sprintf("execution limit of %v steps exceeded", maxSteps)
 	}
-	return &mySimpleExecutor
-}
-
-// Eval parses the given object and executes it in the environment.
-func (eng *Engine) Eval(env Environment, obj sx.Object) (sx.Object, error) {
-	expr, err := eng.Parse(env, obj)
-	if err != nil {
-		return nil, err
-	}
-	expr = eng.Rework(env, expr)
-	return eng.Execute(env, expr)
-}
-
-// Parse the given object in the given environment.
-func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
-	pf := ParseFrame{sf: eng.sf, env: env, parser: eng.pars}
-	return pf.Parse(obj)
-}
-
-// Rework the given expression with the options stored in the engine.
-func (eng *Engine) Rework(env Environment, expr Expr) Expr {
-	rf := ReworkFrame{env: env, engine: eng}
-	return expr.Rework(&rf)
-}
-
-// Execute the given expression in the given environment.
-func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
-	frame := Frame{
-		engine:   eng,
-		executor: eng.exec,
-		env:      env,
-		caller:   nil,
-	}
-	return frame.Execute(expr)
-}
-
-// BindSpecial binds a syntax parser to the its name in the engine's root environment.
-func (eng *Engine) BindSpecial(syn *Special) error {
-	return eng.BindConst(syn.Name, syn)
-}
-
-// BindBuiltin binds the given builtin with its given name in the engine's
-// root environment.
-func (eng *Engine) BindBuiltin(b *Builtin) error {
-	return eng.BindConst(b.Name, b)
-}
-
-// BindConst a given object to a symbol of the given name as a constant in the
-// engine's root environment.
-func (eng *Engine) BindConst(name string, obj sx.Object) error {
-	return eng.root.BindConst(eng.sf.MustMake(name), obj)
-}
-
-// Bind a given object to a symbol of the given name in the engine's root environment.
-func (eng *Engine) Bind(name string, obj sx.Object) error {
-	return eng.root.Bind(eng.sf.MustMake(name), obj)
+	return fmt.Sprintf("execution time limit of %v exceeded", limErr.MaxDuration)
 }
