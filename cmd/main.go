@@ -50,6 +50,8 @@ func (mpe *mainParserExecutor) Parse(pf *sxeval.ParseFrame, form sx.Object) (sxe
 	return expr, nil
 }
 
+func (*mainParserExecutor) Reset() {}
+
 func (mpe *mainParserExecutor) Execute(frame *sxeval.Frame, expr sxeval.Expr) (sx.Object, error) {
 	if !mpe.logExecutor {
 		return mpe.origExecutor.Execute(frame, expr)
@@ -248,12 +250,12 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env 
 		if mpe.logReader {
 			fmt.Println(";<", obj)
 		}
-		expr, err := eng.Parse(env, obj)
+		expr, err := eng.Parse(obj, env)
 		if err != nil {
 			fmt.Println(";p", err)
 			continue
 		}
-		expr = eng.Rework(env, expr)
+		expr = eng.Rework(expr, env)
 		if mpe.logExpr {
 			printExpr(expr, 0)
 			continue
@@ -262,7 +264,7 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env 
 			expr.Print(os.Stdout)
 			fmt.Println()
 		}
-		res, err := eng.Execute(env, expr)
+		res, err := eng.Execute(expr, env)
 		if err != nil {
 			fmt.Println(";e", err)
 			continue
@@ -351,7 +353,7 @@ func readPrelude(engine *sxeval.Engine) error {
 			}
 			return err
 		}
-		_, err = engine.Eval(engine.RootEnvironment(), form)
+		_, err = engine.Eval(form, engine.RootEnvironment())
 		if err != nil {
 			return err
 		}

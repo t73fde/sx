@@ -62,7 +62,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 					t.Errorf("Error %v while reading %s", err, tc.src)
 					return
 				}
-				res, err := engine.Eval(env, val)
+				res, err := engine.Eval(val, env)
 				if err != nil {
 					if tc.withErr {
 						sb.WriteString(fmt.Errorf("{[{%w}]}", err).Error())

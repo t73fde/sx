@@ -26,14 +26,14 @@ func BenchmarkEvenTCO(b *testing.B) {
 	for _, tc := range testcases {
 		b.Run(strconv.Itoa(tc), func(b *testing.B) {
 			obj := sx.MakeList(evenSym, sx.Int64(tc))
-			expr, err := engine.Parse(root, obj)
+			expr, err := engine.Parse(obj, root)
 			if err != nil {
 				panic(err)
 			}
-			expr = engine.Rework(root, expr)
+			expr = engine.Rework(expr, root)
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				engine.Execute(root, expr)
+				engine.Execute(expr, root)
 			}
 		})
 	}

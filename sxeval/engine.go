@@ -89,32 +89,36 @@ func (eng *Engine) SetExecutor(e Executor) Executor {
 }
 
 // Eval parses the given object and executes it in the environment.
-func (eng *Engine) Eval(env Environment, obj sx.Object) (sx.Object, error) {
-	expr, err := eng.Parse(env, obj)
+func (eng *Engine) Eval(obj sx.Object, env Environment) (sx.Object, error) {
+	expr, err := eng.Parse(obj, env)
 	if err != nil {
 		return nil, err
 	}
-	expr = eng.Rework(env, expr)
-	return eng.Execute(env, expr)
+	expr = eng.Rework(expr, env)
+	return eng.Execute(expr, env)
 }
 
 // Parse the given object in the given environment.
-func (eng *Engine) Parse(env Environment, obj sx.Object) (Expr, error) {
+func (eng *Engine) Parse(obj sx.Object, env Environment) (Expr, error) {
 	pf := ParseFrame{sf: eng.sf, env: env, parser: eng.pars}
 	return pf.Parse(obj)
 }
 
 // Rework the given expression with the options stored in the engine.
-func (eng *Engine) Rework(env Environment, expr Expr) Expr {
+func (eng *Engine) Rework(expr Expr, env Environment) Expr {
 	rf := ReworkFrame{env: env, engine: eng}
 	return expr.Rework(&rf)
 }
 
 // Execute the given expression in the given environment.
-func (eng *Engine) Execute(env Environment, expr Expr) (sx.Object, error) {
+func (eng *Engine) Execute(expr Expr, env Environment) (sx.Object, error) {
+	exec := eng.exec
+	if exec != nil {
+		exec.Reset()
+	}
 	frame := Frame{
 		engine:   eng,
-		executor: eng.exec,
+		executor: exec,
 		env:      env,
 		caller:   nil,
 	}

@@ -51,6 +51,10 @@ func (e CallError) Error() string {
 // Executor is about controlling the execution of expressions.
 // Do not call the method `Expr.Execute` directly, call the executor to do this.
 type Executor interface {
+	// Reset prepares for a new execution cylcle. It is typically call by the
+	// engine.
+	Reset()
+
 	// Execute the expression in a frame and return the result.
 	// It may have side-effects, on the given frame, or on the
 	// general environment of the system.
@@ -59,6 +63,9 @@ type Executor interface {
 
 // SimpleExecutor just computes an expression.
 type SimpleExecutor struct{}
+
+// Reset the simple executor.
+func (*SimpleExecutor) Reset() {}
 
 // Execute the given expression in the given frame.
 func (*SimpleExecutor) Execute(frame *Frame, expr Expr) (sx.Object, error) {
@@ -84,6 +91,12 @@ func MakeLimitExecutor(maxDuration time.Duration, maxSteps uint) Executor {
 		deadline:    time.Now().Add(maxDuration),
 		maxDuration: maxDuration,
 	}
+}
+
+// Reset all current execution statistics.
+func (lex *limitExecutor) Reset() {
+	lex.stepCount = 0
+	lex.deadline = time.Now().Add(lex.maxDuration)
 }
 
 // Execute the given expression in the given frame within the limits of this executor.
