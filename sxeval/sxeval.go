@@ -72,7 +72,6 @@ type Engine struct {
 	toplevel Environment
 	pars     Parser
 	exec     Executor
-	bNames   map[uintptr]string
 }
 
 // MakeEngine creates a new engine.
@@ -83,7 +82,6 @@ func MakeEngine(sf sx.SymbolFactory, root Environment) *Engine {
 		toplevel: root,
 		pars:     &myDefaultParser,
 		exec:     nil,
-		bNames:   make(map[uintptr]string, 128),
 	}
 }
 
