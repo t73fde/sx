@@ -14,15 +14,17 @@ import "zettelstore.de/sx.fossil"
 
 // ReworkFrame guides the Expr.Rework operation.
 type ReworkFrame struct {
-	env    Environment // Current environment
-	engine *Engine
+	env      Environment // Current environment
+	engine   *Engine
+	executor Executor
 }
 
 // MakeChildFrame creates a subordinate rework frame with a new environment.
 func (rf *ReworkFrame) MakeChildFrame(name string, baseSize int) *ReworkFrame {
 	return &ReworkFrame{
-		env:    MakeChildEnvironment(rf.env, name, baseSize),
-		engine: rf.engine,
+		env:      MakeChildEnvironment(rf.env, name, baseSize),
+		engine:   rf.engine,
+		executor: rf.executor,
 	}
 }
 
@@ -30,7 +32,7 @@ func (rf *ReworkFrame) MakeChildFrame(name string, baseSize int) *ReworkFrame {
 func (rf *ReworkFrame) MakeFrame() *Frame {
 	return &Frame{
 		engine:   rf.engine,
-		executor: rf.engine.exec,
+		executor: rf.executor,
 		env:      rf.env,
 		caller:   nil,
 	}

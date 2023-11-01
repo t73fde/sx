@@ -30,10 +30,10 @@ func BenchmarkEvenTCO(b *testing.B) {
 			if err != nil {
 				panic(err)
 			}
-			expr = engine.Rework(expr, root)
+			expr = engine.Rework(expr, root, nil)
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				engine.Execute(expr, root)
+				engine.Execute(expr, root, nil)
 			}
 		})
 	}

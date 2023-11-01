@@ -43,8 +43,9 @@ func (frame *Frame) MakeParseFrame() *ParseFrame {
 
 func (frame *Frame) MakeReworkFrame() *ReworkFrame {
 	return &ReworkFrame{
-		env:    frame.env,
-		engine: frame.engine,
+		env:      frame.env,
+		engine:   frame.engine,
+		executor: frame.executor,
 	}
 }
 

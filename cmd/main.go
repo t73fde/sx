@@ -26,8 +26,8 @@ import (
 )
 
 type mainParserExecutor struct {
+	baseExecutor sxeval.Executor
 	origParser   sxeval.Parser
-	origExecutor sxeval.Executor
 	logReader    bool
 	logParser    bool
 	logExpr      bool
@@ -50,17 +50,17 @@ func (mpe *mainParserExecutor) Parse(pf *sxeval.ParseFrame, form sx.Object) (sxe
 	return expr, nil
 }
 
-func (*mainParserExecutor) Reset() {}
+func (mpe *mainParserExecutor) Reset() { mpe.baseExecutor.Reset() }
 
 func (mpe *mainParserExecutor) Execute(frame *sxeval.Frame, expr sxeval.Expr) (sx.Object, error) {
 	if !mpe.logExecutor {
-		return mpe.origExecutor.Execute(frame, expr)
+		return mpe.baseExecutor.Execute(frame, expr)
 	}
 	env := frame.Environment()
 	fmt.Printf(";X %v<-%v ", env, env.Parent())
 	expr.Print(os.Stdout)
 	fmt.Println()
-	obj, err := mpe.origExecutor.Execute(frame, expr)
+	obj, err := mpe.baseExecutor.Execute(frame, expr)
 	if err != nil {
 		return nil, err
 	}
@@ -125,10 +125,9 @@ func main() {
 	sf := sx.MakeMappedFactory(1024)
 	rd := sxreader.MakeReader(os.Stdin, sxreader.WithSymbolFactory(sf))
 
-	mpe := mainParserExecutor{}
+	mpe := mainParserExecutor{baseExecutor: &sxeval.SimpleExecutor{}}
 	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment(len(specials)+len(builtins)+16))
 	mpe.origParser = engine.SetParser(&mpe)
-	mpe.origExecutor = engine.SetExecutor(&mpe)
 	root := engine.RootEnvironment()
 	for _, synDef := range specials {
 		engine.BindSpecial(synDef)
@@ -255,7 +254,7 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env 
 			fmt.Println(";p", err)
 			continue
 		}
-		expr = eng.Rework(expr, env)
+		expr = eng.Rework(expr, env, mpe)
 		if mpe.logExpr {
 			printExpr(expr, 0)
 			continue
@@ -264,7 +263,7 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env 
 			expr.Print(os.Stdout)
 			fmt.Println()
 		}
-		res, err := eng.Execute(expr, env)
+		res, err := eng.Execute(expr, env, mpe)
 		if err != nil {
 			fmt.Println(";e", err)
 			continue
@@ -353,7 +352,7 @@ func readPrelude(engine *sxeval.Engine) error {
 			}
 			return err
 		}
-		_, err = engine.Eval(form, engine.RootEnvironment())
+		_, err = engine.Eval(form, engine.RootEnvironment(), nil)
 		if err != nil {
 			return err
 		}

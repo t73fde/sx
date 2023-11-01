@@ -74,7 +74,7 @@ func (testcases testCases) Run(t *testing.T, engine *sxeval.Engine) {
 				return
 			}
 			env := sxeval.MakeChildEnvironment(root, tc.name, 0)
-			res, err := engine.Eval(val, env)
+			res, err := engine.Eval(val, env, nil)
 			if err != nil {
 				t.Error(err) // TODO: temp
 				return
@@ -137,7 +137,7 @@ func createEngineForTCO() *sxeval.Engine {
 			}
 			panic(err)
 		}
-		_, err = engine.Eval(obj, env)
+		_, err = engine.Eval(obj, env, nil)
 		if err != nil {
 			panic(err)
 		}

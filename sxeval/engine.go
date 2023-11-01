@@ -25,7 +25,6 @@ type Engine struct {
 	root     Environment
 	toplevel Environment
 	pars     Parser
-	exec     Executor
 }
 
 // MakeEngine creates a new engine.
@@ -35,7 +34,6 @@ func MakeEngine(sf sx.SymbolFactory, root Environment) *Engine {
 		root:     root,
 		toplevel: root,
 		pars:     &myDefaultParser,
-		exec:     nil,
 	}
 }
 
@@ -78,24 +76,14 @@ func (eng *Engine) SetParser(p Parser) Parser {
 	return orig
 }
 
-// SetExecutor updates the executor of parsed s-expressions.
-func (eng *Engine) SetExecutor(e Executor) Executor {
-	orig := eng.exec
-	eng.exec = e
-	if orig != nil {
-		return orig
-	}
-	return &SimpleExecutor{}
-}
-
 // Eval parses the given object and executes it in the environment.
-func (eng *Engine) Eval(obj sx.Object, env Environment) (sx.Object, error) {
+func (eng *Engine) Eval(obj sx.Object, env Environment, exec Executor) (sx.Object, error) {
 	expr, err := eng.Parse(obj, env)
 	if err != nil {
 		return nil, err
 	}
-	expr = eng.Rework(expr, env)
-	return eng.Execute(expr, env)
+	expr = eng.Rework(expr, env, exec)
+	return eng.Execute(expr, env, exec)
 }
 
 // Parse the given object in the given environment.
@@ -105,14 +93,13 @@ func (eng *Engine) Parse(obj sx.Object, env Environment) (Expr, error) {
 }
 
 // Rework the given expression with the options stored in the engine.
-func (eng *Engine) Rework(expr Expr, env Environment) Expr {
-	rf := ReworkFrame{env: env, engine: eng}
+func (eng *Engine) Rework(expr Expr, env Environment, executor Executor) Expr {
+	rf := ReworkFrame{env: env, engine: eng, executor: executor}
 	return expr.Rework(&rf)
 }
 
 // Execute the given expression in the given environment.
-func (eng *Engine) Execute(expr Expr, env Environment) (sx.Object, error) {
-	exec := eng.exec
+func (eng *Engine) Execute(expr Expr, env Environment, exec Executor) (sx.Object, error) {
 	if exec != nil {
 		exec.Reset()
 	}
