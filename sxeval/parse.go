@@ -49,7 +49,7 @@ func (*defaultParser) parsePair(pf *ParseFrame, pair *sx.Pair) (Expr, error) {
 	first := pair.Car()
 	if sym, isSymbol := sx.GetSymbol(first); isSymbol {
 		if val, found := pf.Resolve(sym); found {
-			if sp, isSpecial := GetSyntax(val); isSpecial {
+			if sp, isSyntax := GetSyntax(val); isSyntax {
 				return sp.Parse(pf, pair.Tail())
 			}
 		}
