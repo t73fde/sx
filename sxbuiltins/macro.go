@@ -93,7 +93,7 @@ func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 		Rest:   m.Rest,
 		Expr:   m.Expr,
 	}
-	return m.Frame.MakeCalleeFrame().Call(&proc, macroArgs)
+	return m.Frame.Call(&proc, macroArgs)
 }
 
 // MacroExpand0 implements one level of macro expansion.
