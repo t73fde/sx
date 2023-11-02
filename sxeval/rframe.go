@@ -14,27 +14,13 @@ import "zettelstore.de/sx.fossil"
 
 // ReworkFrame guides the Expr.Rework operation.
 type ReworkFrame struct {
-	env      Environment // Current environment
-	engine   *Engine
-	executor Executor
+	env Environment // Current environment
 }
 
 // MakeChildFrame creates a subordinate rework frame with a new environment.
 func (rf *ReworkFrame) MakeChildFrame(name string, baseSize int) *ReworkFrame {
 	return &ReworkFrame{
-		env:      MakeChildEnvironment(rf.env, name, baseSize),
-		engine:   rf.engine,
-		executor: rf.executor,
-	}
-}
-
-// MakeFrame constructs a frame for calling external functions.
-func (rf *ReworkFrame) MakeFrame() *Frame {
-	return &Frame{
-		engine:   rf.engine,
-		executor: rf.executor,
-		env:      rf.env,
-		caller:   nil,
+		env: MakeChildEnvironment(rf.env, name, baseSize),
 	}
 }
 
@@ -50,4 +36,17 @@ func (rf *ReworkFrame) ResolveConst(sym *sx.Symbol) (sx.Object, bool) {
 // Bind the undefined value to the symbol in the current environment.
 func (rf *ReworkFrame) Bind(sym *sx.Symbol) error {
 	return rf.env.Bind(sym, sx.MakeUndefined())
+}
+
+// Call a function for constant folding.
+//
+// It is only called, if no full Frame is needed, only an environment.
+func (rf *ReworkFrame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
+	frame := Frame{
+		engine:   nil,
+		executor: nil,
+		env:      rf.env,
+		caller:   nil,
+	}
+	return fn.Call(&frame, args)
 }

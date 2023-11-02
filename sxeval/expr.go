@@ -284,8 +284,7 @@ func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 	if !mayInline || !bce.Proc.IsPure(args) {
 		return bce
 	}
-	frame := rf.MakeFrame()
-	result, err := frame.Call(bce.Proc, args)
+	result, err := rf.Call(bce.Proc, args)
 	if err != nil {
 		return bce
 	}
