@@ -26,12 +26,15 @@ type Builtin struct {
 	// Minimum and maximum arity. If MaxArity < 0, maximum arity is unlimited
 	MinArity, MaxArity int16
 
-	// Is a call to the builtin independent of the evironment and does not produce some side effect?
-	IsPure bool
+	// Test builtin to be independent of the environment and does not produce some side effect
+	TestPure func([]sx.Object) bool
 
 	// The actual builtin function
 	Fn func(*Frame, []sx.Object) (sx.Object, error)
 }
+
+// AssertPure is a TestPure function that alsways returns true.
+func AssertPure([]sx.Object) bool { return true }
 
 // --- Builtin methods to implement sx.Object
 
@@ -67,6 +70,14 @@ func (b *Builtin) Print(w io.Writer) (int, error) {
 }
 
 // --- Builtin methods to implement sxeval.Callable
+
+// IsPure returns true if builtin is a pure function.
+func (b *Builtin) IsPure(objs []sx.Object) bool {
+	if testPure := b.TestPure; testPure != nil {
+		return testPure(objs)
+	}
+	return false
+}
 
 // Call the builtin function with the given frame and arguments.
 func (b *Builtin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {

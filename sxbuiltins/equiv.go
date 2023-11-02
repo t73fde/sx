@@ -21,7 +21,7 @@ var Identical = sxeval.Builtin{
 	Name:     "==",
 	MinArity: 2,
 	MaxArity: -1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		for i := 1; i < len(args); i++ {
 			if args[0] != args[i] {
@@ -36,7 +36,7 @@ var Equal = sxeval.Builtin{
 	Name:     "=",
 	MinArity: 2,
 	MaxArity: -1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		for i := 1; i < len(args); i++ {
 			if !args[0].IsEqual(args[i]) {

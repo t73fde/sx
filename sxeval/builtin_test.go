@@ -23,7 +23,7 @@ func TestBuiltinSimple(t *testing.T) {
 		Name:     "test-builtin",
 		MinArity: 0,
 		MaxArity: -1,
-		IsPure:   true,
+		TestPure: sxeval.AssertPure,
 		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 			if len(args) == 0 {
 				return nil, nil

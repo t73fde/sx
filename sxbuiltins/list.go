@@ -24,7 +24,7 @@ var Cons = sxeval.Builtin{
 	Name:     "cons",
 	MinArity: 2,
 	MaxArity: 2,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		return sx.Cons(args[0], args[1]), nil
 	},
@@ -35,7 +35,7 @@ var PairP = sxeval.Builtin{
 	Name:     "pair?",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		obj := args[0]
 		if sx.IsNil(obj) {
@@ -51,7 +51,7 @@ var NullP = sxeval.Builtin{
 	Name:     "null?",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		return sx.MakeBoolean(sx.IsNil(args[0])), nil
 	},
@@ -62,7 +62,7 @@ var ListP = sxeval.Builtin{
 	Name:     "list?",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		return sx.MakeBoolean(sx.IsList(args[0])), nil
 	},
@@ -73,7 +73,7 @@ var Car = sxeval.Builtin{
 	Name:     "car",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		pair, err := GetPair(args, 0)
 		if err != nil {
@@ -88,7 +88,7 @@ var Cdr = sxeval.Builtin{
 	Name:     "cdr",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		pair, err := GetPair(args, 0)
 		if err != nil {
@@ -103,7 +103,7 @@ func makeCxr(spec string) sxeval.Builtin {
 		Name:     "c" + spec + "r",
 		MinArity: 1,
 		MaxArity: 1,
-		IsPure:   true,
+		TestPure: sxeval.AssertPure,
 		Fn: func(_ *sxeval.Frame, args []sx.Object) (result sx.Object, _ error) {
 			pair, err := GetPair(args, 0)
 			if err != nil {
@@ -172,7 +172,7 @@ var Last = sxeval.Builtin{
 	Name:     "last",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		lst, err := GetList(args, 0)
 		if err != nil {
@@ -187,7 +187,7 @@ var List = sxeval.Builtin{
 	Name:     sx.ListName,
 	MinArity: 0,
 	MaxArity: -1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		return sx.MakeList(args...), nil
 	},
@@ -198,7 +198,7 @@ var ListStar = sxeval.Builtin{
 	Name:     "list*",
 	MinArity: 1,
 	MaxArity: -1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		if len(args) == 1 {
 			return args[0], nil
@@ -218,7 +218,7 @@ var Append = sxeval.Builtin{
 	Name:     "append",
 	MinArity: 0,
 	MaxArity: -1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		switch len(args) {
 		case 0:
@@ -257,7 +257,7 @@ var Reverse = sxeval.Builtin{
 	Name:     "reverse",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		lst, err := GetList(args, 0)
 		if err != nil {
@@ -272,7 +272,7 @@ var Length = sxeval.Builtin{
 	Name:     "length",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		lst, err := GetList(args, 0)
 		if err != nil {
@@ -288,7 +288,7 @@ var Assoc = sxeval.Builtin{
 	Name:     "assoc",
 	MinArity: 2,
 	MaxArity: 2,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		lst, err := GetList(args, 0)
 		if err != nil {

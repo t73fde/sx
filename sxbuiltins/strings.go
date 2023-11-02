@@ -22,7 +22,7 @@ var ToString = sxeval.Builtin{
 	Name:     "->string",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		obj := args[0]
 		if s, isString := sx.GetString(obj); isString {
@@ -37,7 +37,7 @@ var StringAppend = sxeval.Builtin{
 	Name:     "string-append",
 	MinArity: 0,
 	MaxArity: -1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		if len(args) == 0 {
 			return sx.String(""), nil

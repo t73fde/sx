@@ -23,6 +23,10 @@ import (
 
 // Callable is a value that can be called for evaluation.
 type Callable interface {
+	// IsPure checks if the callable is independent of a Frame and does not
+	// produce any side effects.
+	IsPure([]sx.Object) bool
+
 	// Call the value with the given args and frame.
 	Call(*Frame, []sx.Object) (sx.Object, error)
 }

@@ -23,7 +23,7 @@ var CallableP = sxeval.Builtin{
 	Name:     "callable?",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   true,
+	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		_, ok := sxeval.GetCallable(args[0])
 		return sx.MakeBoolean(ok), nil
@@ -288,6 +288,13 @@ func (p *Procedure) Repr() string   { return sx.Repr(p) }
 func (p *Procedure) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<lambda:", p.Name, ">")
 }
+
+// --- Builtin methods to implement sxeval.Callable
+
+// IsPure tests if the Procedure needs a Frame value and does not produce any other side effects.
+func (p *Procedure) IsPure([]sx.Object) bool { return false }
+
+// Call the Procedure.
 func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 	numParams := len(p.Params)
 	if len(args) < numParams {

@@ -25,7 +25,7 @@ var Pretty = sxeval.Builtin{
 	Name:     "pp",
 	MinArity: 0,
 	MaxArity: 1,
-	IsPure:   false,
+	TestPure: nil,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		if len(args) == 0 {
 			return sx.Nil(), nil

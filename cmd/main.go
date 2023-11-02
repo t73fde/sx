@@ -140,7 +140,7 @@ func main() {
 		Name:     "log-reader",
 		MinArity: 0,
 		MaxArity: 0,
-		IsPure:   false,
+		TestPure: nil,
 		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
 			res := mpe.logReader
 			mpe.logReader = !res
@@ -151,7 +151,7 @@ func main() {
 		Name:     "log-parser",
 		MinArity: 0,
 		MaxArity: 0,
-		IsPure:   false,
+		TestPure: nil,
 		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
 			res := mpe.logParser
 			mpe.logParser = !res
@@ -162,7 +162,7 @@ func main() {
 		Name:     "log-expr",
 		MinArity: 0,
 		MaxArity: 0,
-		IsPure:   false,
+		TestPure: nil,
 		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
 			res := mpe.logExpr
 			mpe.logExpr = !res
@@ -173,7 +173,7 @@ func main() {
 		Name:     "log-executor",
 		MinArity: 0,
 		MaxArity: 0,
-		IsPure:   false,
+		TestPure: nil,
 		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
 			res := mpe.logExecutor
 			mpe.logExecutor = !res
@@ -184,7 +184,7 @@ func main() {
 		Name:     "log-off",
 		MinArity: 0,
 		MaxArity: 0,
-		IsPure:   false,
+		TestPure: nil,
 		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
 			mpe.logReader = false
 			mpe.logParser = false
@@ -196,7 +196,7 @@ func main() {
 		Name:     "panic",
 		MinArity: 0,
 		MaxArity: 1,
-		IsPure:   false,
+		TestPure: nil,
 		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 			if len(args) == 0 {
 				panic("common panic")

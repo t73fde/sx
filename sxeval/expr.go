@@ -270,20 +270,19 @@ func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 	// the args. If no error was signaled, the result object will be used
 	// instead the BuiltinCallExpr. This assumes that there is no side effect
 	// when the builtin is called.
-	mayInline := bce.Proc.IsPure
+	mayInline := true
+	args := make([]sx.Object, len(bce.Args))
 	for i, arg := range bce.Args {
 		expr := arg.Rework(rf)
-		if _, isObjectExpr := expr.(ObjectExpr); !isObjectExpr {
+		if objExpr, isObjectExpr := expr.(ObjectExpr); isObjectExpr {
+			args[i] = objExpr.Object()
+		} else {
 			mayInline = false
 		}
 		bce.Args[i] = expr
 	}
-	if !mayInline {
+	if !mayInline || !bce.Proc.IsPure(args) {
 		return bce
-	}
-	args := make([]sx.Object, len(bce.Args))
-	for i, arg := range bce.Args {
-		args[i] = arg.(ObjectExpr).Object()
 	}
 	frame := rf.MakeFrame()
 	result, err := frame.Call(bce.Proc, args)

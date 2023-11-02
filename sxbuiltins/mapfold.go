@@ -21,8 +21,42 @@ var Map = sxeval.Builtin{
 	Name:     "map",
 	MinArity: 2,
 	MaxArity: 2,
-	IsPure:   true,
+	TestPure: func(args []sx.Object) bool {
+		if len(args) < 2 {
+			return false
+		}
+		// fn must be checked first, because it is an error, if argument 0 is
+		// not a callable, even if the list is empty and fn will never be called.
+		fn, err := GetCallable(args, 0)
+		if err != nil {
+			return false
+		}
+		lst, err := GetList(args, 1)
+		if err != nil {
+			return false
+		}
+		if sx.IsNil(lst) {
+			return true
+		}
+
+		for {
+			if !fn.IsPure([]sx.Object{lst.Car()}) {
+				return false
+			}
+			cdr := lst.Cdr()
+			if sx.IsNil(cdr) {
+				return true
+			}
+			pair, isPair := sx.GetPair(cdr)
+			if !isPair {
+				return fn.IsPure([]sx.Object{cdr})
+			}
+			lst = pair
+		}
+	},
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		// fn must be checked first, because it is an error, if argument 0 is
+		// not a callable, even if the list is empty and fn will never be called.
 		fn, err := GetCallable(args, 0)
 		if err != nil {
 			return nil, err
@@ -31,10 +65,10 @@ var Map = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-
 		if sx.IsNil(lst) {
 			return sx.Nil(), nil
 		}
+
 		val, err := frame.Call(fn, []sx.Object{lst.Car()})
 		if err != nil {
 			return sx.Nil(), err
@@ -71,7 +105,7 @@ var Apply = sxeval.Builtin{
 	Name:     "apply",
 	MinArity: 2,
 	MaxArity: 2,
-	IsPure:   true,
+	TestPure: nil, // Might be changed in the future
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		lst, err := GetList(args, 1)
 		if err != nil {
@@ -106,7 +140,7 @@ var Fold = sxeval.Builtin{
 	Name:     "fold",
 	MinArity: 3,
 	MaxArity: 3,
-	IsPure:   true,
+	TestPure: nil, // Might be changed in the future
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		fn, err := GetCallable(args, 0)
 		if err != nil {
@@ -140,7 +174,7 @@ var FoldReverse = sxeval.Builtin{
 	Name:     "fold-reverse",
 	MinArity: 3,
 	MaxArity: 3,
-	IsPure:   true,
+	TestPure: nil, // Might be changed in the future
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		fn, err := GetCallable(args, 0)
 		if err != nil {

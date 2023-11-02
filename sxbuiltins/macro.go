@@ -103,7 +103,7 @@ var Macroexpand0 = sxeval.Builtin{
 	Name:     "macroexpand-0",
 	MinArity: 1,
 	MaxArity: 1,
-	IsPure:   false,
+	TestPure: nil,
 	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 		lst, err := GetList(args, 0)
 		if err == nil && lst != nil {
