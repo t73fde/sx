@@ -48,6 +48,7 @@ const (
 	NameSymAttr          = "@"
 	NameSymCDATA         = "@C"
 	NameSymNoEscape      = "@H"
+	NameSymList          = "@L"
 	NameSymInlineComment = "@@"
 	NameSymBlockComment  = "@@@"
 	NameSymDoctype       = "@@@@"
@@ -181,6 +182,8 @@ func (enc *myEncoder) generate(obj sx.Object) {
 					enc.writeComment(tail)
 				case NameSymBlockComment:
 					enc.writeCommentML(tail)
+				case NameSymList:
+					enc.generateList(tail)
 				case NameSymDoctype:
 					enc.writeDoctype(tail)
 				default:

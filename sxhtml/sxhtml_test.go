@@ -66,6 +66,8 @@ func TestSXHTML(t *testing.T) {
 		{name: "IgnoreTagWithEmptyString", src: `(div "")`, exp: ``},
 		{name: "IgnoreTagWithEmptyString2", src: `(div "" "")`, exp: ``},
 		{name: "NoIgnoreTagWithTagAfterEmptySpace", src: `(div "" (p "A"))`, exp: `<div><p>A</p></div>`},
+
+		{name: "JustAList", src: `(@L "a" "b")`, exp: `ab`},
 	}
 	checkTestcases(t, testcases, func(sf sx.SymbolFactory) *sxhtml.Generator { return sxhtml.NewGenerator(sf) })
 }
