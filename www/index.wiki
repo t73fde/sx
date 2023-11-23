@@ -1,6 +1,6 @@
 <title>Sx</title>
 
-<h>1Sx</h1>
+<h1>Sx</h1>
 
 <b>Sx</b> is a framework, implemented in the Go programming language, to work
 with [https://en.wikipedia.org/wiki/S-expression|s-expressions] (symbolic
