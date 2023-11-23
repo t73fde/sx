@@ -1,5 +1,7 @@
 <title>Sx</title>
 
+<h>1Sx</h1>
+
 <b>Sx</b> is a framework, implemented in the Go programming language, to work
 with [https://en.wikipedia.org/wiki/S-expression|s-expressions] (symbolic
 expressions). S-expressions are one of the most mature techniques to encode
@@ -53,3 +55,27 @@ This repository contains several sub-projects / packages:
   *  Package [/dir?ci=tip&name=cmd|cmd] contains a simple command line tool to
      work interactively with s-expressions. It combines all previous packages
      and also serves as an example to use them.
+
+<h2>Use instructions</h2>
+
+If you want to import this library into your own [https://go.dev/|Go] software,
+you must execute a <code>go get</code> command. Since Go treats non-standard
+software and non-standard platforms quite badly, you must use some non-standard
+commands.
+
+First, you must install the version control system
+[https://fossil-scm.org|Fossil], which is a superior solution compared to Git,
+in too many use cases. It is just a single executable, nothing more. Make sure,
+it is in your search path for commands.
+
+How you can execute the following Go command to retrieve a given version of
+this library:
+
+<code>GOVCS=zettelstore.de:fossil go get -x
+zettelstore.de/sx.fossil@HASH</code>
+
+where <code>HASH</code> is the hash value of the commit you want to use.
+
+Go currently seems not to support software versions when the software is
+managed by Fossil. This explains the need for the hash value. However, this
+methods works and you can use the client software to access a Zettelstore.
