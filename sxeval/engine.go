@@ -52,23 +52,36 @@ type simpleBuiltin func(*Frame, []sx.Object) (sx.Object, error)
 
 func (sb simpleBuiltin) IsNil() bool  { return sb == nil }
 func (sb simpleBuiltin) IsAtom() bool { return sb == nil }
-func (sb simpleBuiltin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
-	return sb(frame, args)
-}
 func (sb simpleBuiltin) IsEqual(other sx.Object) bool {
 	if sb == nil {
 		return sx.IsNil(other)
 	}
 	return false
 }
-func (sb simpleBuiltin) Repr() string   { return sx.Repr(sb) }
-func (sb simpleBuiltin) String() string { return "simple-builtin" }
+func (sb simpleBuiltin) Repr() string            { return "#<simple-builtin>" }
+func (sb simpleBuiltin) String() string          { return "simple-builtin" }
+func (sb simpleBuiltin) IsPure([]sx.Object) bool { return false }
+func (sb simpleBuiltin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
+	return sb(frame, args)
+}
 
 func resolveNotBound(frame *Frame, args []sx.Object) (sx.Object, error) {
-	if sym, isSymbol := sx.GetSymbol(args[0]); isSymbol {
-		return nil, frame.MakeNotBoundError(sym)
+	if len(args) == 0 {
+		return nil, fmt.Errorf("at least one argument expected, but none given")
 	}
-	return nil, fmt.Errorf("argument 1 is not a symbol, but %T/%v", args[0], args[0])
+	sym, isSymbol := sx.GetSymbol(args[0])
+	if !isSymbol {
+		return nil, fmt.Errorf("argument 1 is not a symbol, but %T/%v", args[0], args[0])
+	}
+	env := frame.env
+	if len(args) > 1 {
+		argEnv, isEnv := GetEnvironment(args[1])
+		if !isEnv {
+			return nil, fmt.Errorf("argument 1 is not an environment, but %T/%v", args[1], args[1])
+		}
+		env = argEnv
+	}
+	return nil, NotBoundError{Env: env, Sym: sym}
 }
 
 // Copy creates a shallow copy of the given engine.
