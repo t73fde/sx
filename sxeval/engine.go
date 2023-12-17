@@ -21,20 +21,54 @@ import (
 
 // Engine is the collection of all relevant data element to execute / evaluate an object.
 type Engine struct {
-	sf       sx.SymbolFactory
-	root     Environment
-	toplevel Environment
-	pars     Parser
+	sf         sx.SymbolFactory
+	root       Environment
+	toplevel   Environment
+	pars       Parser
+	symResSym  *sx.Symbol
+	symResCall *sx.Symbol
 }
 
 // MakeEngine creates a new engine.
 func MakeEngine(sf sx.SymbolFactory, root Environment) *Engine {
+	symResSym := sf.MustMake(resolveSymbolName)
+	root.Bind(symResSym, simpleBuiltin(resolveNotBound))
+	symResCall := sf.MustMake(resolveCallableName)
+	root.Bind(symResCall, simpleBuiltin(resolveNotBound))
 	return &Engine{
-		sf:       sf,
-		root:     root,
-		toplevel: root,
-		pars:     &myDefaultParser,
+		sf:         sf,
+		root:       root,
+		toplevel:   root,
+		pars:       &myDefaultParser,
+		symResSym:  symResSym,
+		symResCall: symResCall,
 	}
+}
+
+const resolveSymbolName = "*RESOLVE-SYMBOL*"
+const resolveCallableName = "*RESOLVE-CALLABLE*"
+
+type simpleBuiltin func(*Frame, []sx.Object) (sx.Object, error)
+
+func (sb simpleBuiltin) IsNil() bool  { return sb == nil }
+func (sb simpleBuiltin) IsAtom() bool { return sb == nil }
+func (sb simpleBuiltin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
+	return sb(frame, args)
+}
+func (sb simpleBuiltin) IsEqual(other sx.Object) bool {
+	if sb == nil {
+		return sx.IsNil(other)
+	}
+	return false
+}
+func (sb simpleBuiltin) Repr() string   { return sx.Repr(sb) }
+func (sb simpleBuiltin) String() string { return "simple-builtin" }
+
+func resolveNotBound(frame *Frame, args []sx.Object) (sx.Object, error) {
+	if sym, isSymbol := sx.GetSymbol(args[0]); isSymbol {
+		return nil, frame.MakeNotBoundError(sym)
+	}
+	return nil, fmt.Errorf("argument 1 is not a symbol, but %T/%v", args[0], args[0])
 }
 
 // Copy creates a shallow copy of the given engine.

@@ -29,7 +29,7 @@ restart:
 	}
 	switch f := form.(type) {
 	case *sx.Symbol:
-		return ResolveExpr{Symbol: f}, nil
+		return ResolveSymbolExpr{Symbol: f}, nil
 	case *sx.Pair:
 		expr, err := dp.parsePair(pf, f)
 		if err == nil {
@@ -53,7 +53,7 @@ func (*defaultParser) parsePair(pf *ParseFrame, pair *sx.Pair) (Expr, error) {
 				return sp.Parse(pf, pair.Tail())
 			}
 		}
-		proc = ResolveExpr{Symbol: sym}
+		proc = ResolveProcSymbolExpr{Symbol: sym}
 	} else {
 		p, err := pf.Parse(first)
 		if err != nil {

@@ -110,7 +110,6 @@ func (frame *Frame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
 		return callFrame.Execute(again.expr)
 	}
 	return nil, err
-
 }
 
 // executeAgain is a non-error error signalling that the given expression should be
@@ -121,6 +120,21 @@ type executeAgain struct {
 }
 
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }
+
+func (frame *Frame) CallResolveSymbol(sym *sx.Symbol) (sx.Object, error) {
+	return frame.callResolve(sym, frame.engine.symResSym)
+}
+func (frame *Frame) CallResolveCallable(sym *sx.Symbol) (sx.Object, error) {
+	return frame.callResolve(sym, frame.engine.symResCall)
+}
+func (frame *Frame) callResolve(sym *sx.Symbol, defSym *sx.Symbol) (sx.Object, error) {
+	if obj, found := frame.Resolve(defSym); found {
+		if fn, isCallable := obj.(Callable); isCallable {
+			return frame.Call(fn, []sx.Object{sym, frame.env})
+		}
+	}
+	return nil, frame.MakeNotBoundError(sym)
+}
 
 func (frame *Frame) Bind(sym *sx.Symbol, obj sx.Object) error { return frame.env.Bind(sym, obj) }
 func (frame *Frame) BindConst(sym *sx.Symbol, obj sx.Object) error {
@@ -141,5 +155,15 @@ func (frame *Frame) FindBindingEnv(sym *sx.Symbol) Environment {
 }
 func (frame *Frame) MakeNotBoundError(sym *sx.Symbol) NotBoundError {
 	return NotBoundError{Env: frame.env, Sym: sym}
+}
+
+// NotBoundError signals that a symbol was not found in an environment.
+type NotBoundError struct {
+	Env Environment
+	Sym *sx.Symbol
+}
+
+func (e NotBoundError) Error() string {
+	return fmt.Sprintf("symbol %q not bound in environment %q", e.Sym.Name(), e.Env.String())
 }
 func (frame *Frame) Environment() Environment { return frame.env }

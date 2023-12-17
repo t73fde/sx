@@ -116,44 +116,65 @@ func (oe ObjExpr) Print(w io.Writer) (int, error) {
 }
 func (oe ObjExpr) Object() sx.Object { return oe.Obj }
 
-// ResolveExpr resolves the given symbol in an environment and returns the value.
-type ResolveExpr struct {
+// ResolveSymbolExpr resolves the given symbol in an environment and returns the value.
+type ResolveSymbolExpr struct {
 	Symbol *sx.Symbol
 }
 
-func (re ResolveExpr) Rework(rf *ReworkFrame) Expr {
+func (re ResolveSymbolExpr) Rework(rf *ReworkFrame) Expr {
 	if obj, found := rf.ResolveConst(re.Symbol); found {
 		return ObjExpr{Obj: obj}.Rework(rf)
 	}
 	return re
 }
-func (re ResolveExpr) Compute(frame *Frame) (sx.Object, error) {
+func (re ResolveSymbolExpr) Compute(frame *Frame) (sx.Object, error) {
 	if obj, found := frame.Resolve(re.Symbol); found {
 		return obj, nil
 	}
-	return nil, NotBoundError{Env: frame.env, Sym: re.Symbol}
+	return frame.CallResolveSymbol(re.Symbol)
 }
-func (re ResolveExpr) IsEqual(other Expr) bool {
+func (re ResolveSymbolExpr) IsEqual(other Expr) bool {
 	if re == other {
 		return true
 	}
-	if otherR, ok := other.(ResolveExpr); ok {
+	if otherR, ok := other.(ResolveSymbolExpr); ok {
 		return re.Symbol.IsEqual(otherR.Symbol)
 	}
 	return false
 }
-func (re ResolveExpr) Print(w io.Writer) (int, error) {
+func (re ResolveSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{RESOLVE %v}", re.Symbol)
 }
 
-// NotBoundError signals that a symbol was not found in an environment.
-type NotBoundError struct {
-	Env Environment
-	Sym *sx.Symbol
+// ResolveProcSymbolExpr resolves the given symbol in an environment and returns the value.
+// The symbol must resolve to a Callable, but this is not enforced by this expression.
+type ResolveProcSymbolExpr struct {
+	Symbol *sx.Symbol
 }
 
-func (e NotBoundError) Error() string {
-	return fmt.Sprintf("symbol %q not bound in environment %q", e.Sym.Name(), e.Env.String())
+func (re ResolveProcSymbolExpr) Rework(rf *ReworkFrame) Expr {
+	if obj, found := rf.ResolveConst(re.Symbol); found {
+		return ObjExpr{Obj: obj}.Rework(rf)
+	}
+	return re
+}
+func (re ResolveProcSymbolExpr) Compute(frame *Frame) (sx.Object, error) {
+	if obj, found := frame.Resolve(re.Symbol); found {
+		return obj, nil
+	}
+	return frame.CallResolveCallable(re.Symbol)
+}
+func (re ResolveProcSymbolExpr) IsEqual(other Expr) bool {
+	if re == other {
+		return true
+	}
+	if otherR, ok := other.(ResolveProcSymbolExpr); ok {
+		return re.Symbol.IsEqual(otherR.Symbol)
+	}
+	return false
+}
+func (re ResolveProcSymbolExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{RESOLVE-PROC %v}", re.Symbol)
 }
 
 // CallExpr calls a procedure and returns the resulting objects.

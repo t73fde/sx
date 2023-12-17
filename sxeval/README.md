@@ -4,8 +4,8 @@ Symbolic expressions may be interpreted, i.e. evaluated.
 
 Most `sx.Object`s evaluate to themselves.
 
-`sx.Symbol`s are resolved in an `sxeval.Environment` to a bound value. It is an
-error, if a symbol's value is not stored in the environment.
+`sx.Symbol`s are resolved in an `sxeval.Environment` to a bound value. If no
+bound value is found, some actions are taken. See below for details.
 
 A non-empty list is treated differently: its first object must evaluate to a
 "callable" object, i.e. a function. The other objects of the list are evaluated
@@ -55,3 +55,14 @@ resolved in the parent environment.
 Of course, there is an environment that does not have a parent environment: the
 *root environment*. If a `sx.Symbol` is not bound in the root environment, the
 lookup operation fails.
+
+If a symbol cannot be resolved w.r.t an environment, one of two predefined
+symbols are resolved to a callable that takes the symbol and the appropriate
+environment as arguments. The result of a call to the callable is the resolved
+value.
+
+* `*RESOLVE-CALLABLE` is called to resolve a symbol that was used as the
+  first object of a list.
+* `*RESOLVE-SYMBOL` is called to resolve other unbound symbols.
+
+The default callables for both symbols will produce an error.
