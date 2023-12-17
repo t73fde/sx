@@ -137,15 +137,6 @@ func GetPair(obj Object) (*Pair, bool) {
 	return nil, false
 }
 
-// IsPair returns true, if the object is a pair.
-func IsPair(obj Object) bool {
-	if IsNil(obj) {
-		return true
-	}
-	_, ok := obj.(*Pair)
-	return ok
-}
-
 // IsList returns true, if the object is a list, not just a pair.
 // A list must have a nil value at the last cdr.
 func IsList(obj Object) bool {
