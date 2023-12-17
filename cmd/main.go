@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package main
@@ -109,16 +112,18 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.NumLess, &sxbuiltins.NumLessEqual, // <, <=
 	&sxbuiltins.NumGreater, &sxbuiltins.NumGreaterEqual, // >, >=
 	&sxbuiltins.ToString, &sxbuiltins.StringAppend, // ->string, string-append
-	&sxbuiltins.CallableP,    //callable?
-	&sxbuiltins.Macroexpand0, // macroexpand-0
-	&sxbuiltins.Defined,      // defined?
-	&sxbuiltins.CurrentEnv,   // current-environment
-	&sxbuiltins.ParentEnv,    // parent-environment
-	&sxbuiltins.EnvBindings,  //environment-bindings
-	&sxbuiltins.BoundP,       // bound?
-	&sxbuiltins.EnvLookup,    // environment-lookup
-	&sxbuiltins.EnvResolve,   // environment-resolve
-	&sxbuiltins.Pretty,       // pp
+	&sxbuiltins.CallableP,     // callable?
+	&sxbuiltins.Macroexpand0,  // macroexpand-0
+	&sxbuiltins.Defined,       // defined?
+	&sxbuiltins.CurrentEnv,    // current-environment
+	&sxbuiltins.ParentEnv,     // parent-environment
+	&sxbuiltins.EnvBindings,   // environment-bindings
+	&sxbuiltins.BoundP,        // bound?
+	&sxbuiltins.EnvLookup,     // environment-lookup
+	&sxbuiltins.EnvResolve,    // environment-resolve
+	&sxbuiltins.Pretty,        // pp
+	&sxbuiltins.Error,         // error
+	&sxbuiltins.NotBoundError, // not-bound-error
 }
 
 func main() {

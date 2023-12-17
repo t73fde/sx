@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxeval
@@ -31,6 +34,9 @@ type Builtin struct {
 
 	// The actual builtin function
 	Fn func(*Frame, []sx.Object) (sx.Object, error)
+
+	// Do not add a CallError
+	NoCallError bool
 }
 
 // AssertPure is a TestPure function that alsways returns true.
@@ -107,11 +113,13 @@ func (b *Builtin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
 	if err == nil {
 		return obj, nil
 	}
-	if _, ok := (err).(executeAgain); ok {
-		return obj, err
-	}
-	if _, ok := err.(CallError); !ok {
-		err = CallError{Name: b.Name, Err: err}
+	if !b.NoCallError {
+		if _, ok := (err).(executeAgain); ok {
+			return obj, err
+		}
+		if _, ok := err.(CallError); !ok {
+			err = CallError{Name: b.Name, Err: err}
+		}
 	}
 	return obj, err
 }
