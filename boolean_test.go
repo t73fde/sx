@@ -16,12 +16,28 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-func TestBoolean(t *testing.T) {
+func TestIsTrue(t *testing.T) {
 	t.Parallel()
+	if sx.IsTrue(sx.Nil()) {
+		t.Error("Nil is True")
+	}
 	if sx.IsTrue(sx.String("")) {
 		t.Error("Empty string is True")
 	}
 	if sx.IsTrue(sx.MakeUndefined()) {
+		t.Error("Undefined is True")
+	}
+}
+
+func TestIsFalse(t *testing.T) {
+	t.Parallel()
+	if !sx.IsFalse(sx.Nil()) {
+		t.Error("Nil is True")
+	}
+	if !sx.IsFalse(sx.String("")) {
+		t.Error("Empty string is True")
+	}
+	if !sx.IsFalse(sx.MakeUndefined()) {
 		t.Error("Undefined is True")
 	}
 }

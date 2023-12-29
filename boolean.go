@@ -30,3 +30,14 @@ func IsTrue(obj Object) bool {
 	}
 	return !IsUndefined(obj)
 }
+
+// IsFalse returns true, if the object is a false value.
+func IsFalse(obj Object) bool {
+	if IsNil(obj) {
+		return true
+	}
+	if s, ok := GetString(obj); ok && s.String() == "" {
+		return true
+	}
+	return IsUndefined(obj)
+}
