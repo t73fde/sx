@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxreader_test
@@ -162,7 +165,7 @@ func performReaderTestCases(t *testing.T, testcases []readerTestCase) {
 	t.Parallel()
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			rd := sxreader.MakeReader(strings.NewReader(tc.src))
+			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithDefaultSymbolFactory)
 			val, err := rd.Read()
 			if err != nil {
 				got := err.Error()
@@ -185,31 +188,55 @@ func performReaderTestCases(t *testing.T, testcases []readerTestCase) {
 	}
 }
 
+func TestReadAll(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		src string
+		exp string
+	}{
+		{"", "[]"},
+		{"1", "[1]"},
+		{"1 2", "[1 2]"},
+		{"(1 2 3) a (x y z)", "[(1 2 3) a (x y z)]"},
+	}
+	for i, tc := range testcases {
+		rd := sxreader.MakeReader(strings.NewReader(tc.src))
+		objs, err := rd.ReadAll()
+		if err != nil {
+			t.Errorf("%d: error while reading: %v", i, err)
+			continue
+		}
+		if got := fmt.Sprintf("%v", objs); got != tc.exp {
+			t.Errorf("%d: %q expected, but got %q", i, tc.exp, got)
+		}
+	}
+}
+
 func TestReaderLimits(t *testing.T) {
 	t.Parallel()
-	err := checkNested(sxreader.DefaultNestingLimit)
+	err := checkNested(sxreader.DefaultNestingLimit, sxreader.DefaultNestingLimit)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = checkNested(sxreader.DefaultNestingLimit + 1)
+	err = checkNested(sxreader.DefaultNestingLimit, sxreader.DefaultNestingLimit+1)
 	if !errors.Is(err, sxreader.ErrTooDeeplyNested) {
 		t.Errorf("%v, but got %v", sxreader.ErrTooDeeplyNested, err)
 	}
-	err = checkLength(sxreader.DefaultListLimit)
+	err = checkLength(sxreader.DefaultListLimit, sxreader.DefaultListLimit)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	err = checkLength(sxreader.DefaultListLimit + 1)
+	err = checkLength(sxreader.DefaultListLimit, sxreader.DefaultListLimit+1)
 	if !errors.Is(err, sxreader.ErrListTooLong) {
 		t.Errorf("%v, but got %v", sxreader.ErrListTooLong, err)
 	}
 }
 
-func checkNested(depth int) error {
+func checkNested(maxDepth, depth int) error {
 	inp := strings.Repeat("(", depth) + "1" + strings.Repeat(")", depth)
-	rd := sxreader.MakeReader(strings.NewReader(inp))
+	rd := sxreader.MakeReader(strings.NewReader(inp), sxreader.WithNestingLimit(uint(maxDepth)))
 	if _, err := rd.Read(); err != nil {
 		return err
 	}
@@ -219,9 +246,9 @@ func checkNested(depth int) error {
 	return nil
 }
 
-func checkLength(length int) error {
+func checkLength(maxLength, length int) error {
 	inp := "(" + strings.Repeat(" 7", length) + " )"
-	rd := sxreader.MakeReader(strings.NewReader(inp))
+	rd := sxreader.MakeReader(strings.NewReader(inp), sxreader.WithListLimit(uint(maxLength)))
 	if _, err := rd.Read(); err != nil {
 		return err
 	}
