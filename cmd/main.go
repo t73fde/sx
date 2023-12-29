@@ -99,10 +99,11 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Cddaar, &sxbuiltins.Cddadr, &sxbuiltins.Cdddar, &sxbuiltins.Cddddr,
 	&sxbuiltins.Last,                       // last
 	&sxbuiltins.List, &sxbuiltins.ListStar, // list, list*
-	&sxbuiltins.Append,                        // append
-	&sxbuiltins.Reverse,                       // reverse
-	&sxbuiltins.Length,                        // length
-	&sxbuiltins.Assoc,                         // assoc
+	&sxbuiltins.Append,               // append
+	&sxbuiltins.Reverse,              // reverse
+	&sxbuiltins.Length,               // length
+	&sxbuiltins.Assoc,                // assoc
+	&sxbuiltins.All, &sxbuiltins.Any, // all, any
 	&sxbuiltins.Map,                           // map
 	&sxbuiltins.Apply,                         // apply
 	&sxbuiltins.Fold, &sxbuiltins.FoldReverse, // fold, fold-reverse

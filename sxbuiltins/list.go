@@ -297,3 +297,47 @@ var Assoc = sxeval.Builtin{
 		return lst.Assoc(args[1]), nil
 	},
 }
+
+// All returns a true value, if all elements of the list evaluate to true.
+// Otherwise it returns a false value.
+var All = sxeval.Builtin{
+	Name:     "all",
+	MinArity: 1,
+	MaxArity: 1,
+	TestPure: sxeval.AssertPure,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		return anyAll(args, sx.IsFalse, false)
+	},
+}
+
+// All returns a true value, if any element of the list evaluate to true.
+// Otherwise it returns a false value.
+var Any = sxeval.Builtin{
+	Name:     "any",
+	MinArity: 1,
+	MaxArity: 1,
+	TestPure: sxeval.AssertPure,
+	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		return anyAll(args, sx.IsTrue, true)
+	},
+}
+
+// anyAll is a helper function for builtins any and all.
+func anyAll(args []sx.Object, pred func(sx.Object) bool, found bool) (sx.Object, error) {
+	lst, err := GetList(args, 0)
+	if err != nil {
+		return nil, err
+	}
+	for node := lst; node != nil; {
+		if pred(node.Car()) {
+			return sx.MakeBoolean(found), nil
+		}
+		cdr := node.Cdr()
+		next, isPair := sx.GetPair(cdr)
+		if !isPair {
+			return sx.MakeBoolean(pred(cdr) == found), nil
+		}
+		node = next
+	}
+	return sx.MakeBoolean(!found), nil
+}
