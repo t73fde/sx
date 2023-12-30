@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 // Package sxbuiltins contains functions that help to build builtin functions.
@@ -68,13 +71,13 @@ func GetPair(args []sx.Object, pos int) (*sx.Pair, error) {
 	return nil, fmt.Errorf("argument %d is not a pair, but %T/%v", pos+1, obj, obj)
 }
 
-// GetEnvironment returns the given argument as an environment, and checks for errors.
-func GetEnvironment(args []sx.Object, pos int) (sxeval.Environment, error) {
+// GetBinding returns the given argument as a binding, and checks for errors.
+func GetBinding(args []sx.Object, pos int) (sxeval.Binding, error) {
 	obj := args[pos]
-	if env, ok := sxeval.GetEnvironment(obj); ok {
-		return env, nil
+	if bind, ok := sxeval.GetBinding(obj); ok {
+		return bind, nil
 	}
-	return nil, fmt.Errorf("argument %d is not an environment, but %T/%v", pos+1, obj, obj)
+	return nil, fmt.Errorf("argument %d is not a binding, but %T/%v", pos+1, obj, obj)
 }
 
 // GetCallable returns the given argument as a callable, and checks for errors.

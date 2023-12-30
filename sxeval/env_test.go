@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxeval_test
@@ -17,36 +20,36 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-func TestGetEnvironment(t *testing.T) {
-	if _, ok := sxeval.GetEnvironment(nil); ok {
-		t.Error("nil is not an environment")
+func TestGetBinding(t *testing.T) {
+	if _, ok := sxeval.GetBinding(nil); ok {
+		t.Error("nil is not a binding")
 	}
-	if _, ok := sxeval.GetEnvironment(sxeval.Environment(nil)); ok {
-		t.Error("nil environment is not an environment")
+	if _, ok := sxeval.GetBinding(sxeval.Binding(nil)); ok {
+		t.Error("nil binding is not a binding")
 	}
-	if _, ok := sxeval.GetEnvironment(sx.Nil()); ok {
-		t.Error("Nil() is not an environment")
+	if _, ok := sxeval.GetBinding(sx.Nil()); ok {
+		t.Error("Nil() is a binding")
 	}
-	var o sx.Object = sxeval.MakeRootEnvironment(0)
-	res, ok := sxeval.GetEnvironment(o)
+	var o sx.Object = sxeval.MakeRootBinding(0)
+	res, ok := sxeval.GetBinding(o)
 	if !ok {
-		t.Error("is an environment:", o)
+		t.Error("is a binding:", o)
 	} else if !o.IsEqual(res) {
-		t.Error("Different environments, expected:", o, "but got", res)
+		t.Error("Different bindings, expected:", o, "but got", res)
 	}
 }
 
-func TestEnvRoot(t *testing.T) {
+func TestBindingRoot(t *testing.T) {
 	t.Parallel()
-	root := sxeval.MakeRootEnvironment(0)
+	root := sxeval.MakeRootBinding(0)
 	if got := root.Parent(); got != nil {
-		t.Error("root env has a parent", got)
+		t.Error("root binding has a parent", got)
 	}
-	child := sxeval.MakeChildEnvironment(root, "child", 0)
+	child := sxeval.MakeChildBinding(root, "child", 0)
 	if got := child.Parent(); got != root {
 		t.Error("root child parent is not root", got)
 	}
-	grandchild := sxeval.MakeChildEnvironment(child, "grandchild", 0)
+	grandchild := sxeval.MakeChildBinding(child, "grandchild", 0)
 	if got := grandchild.Parent(); got != child {
 		t.Error("grandchild parent is not child", got)
 	}
@@ -57,7 +60,7 @@ func TestBindLookupUnbind(t *testing.T) {
 	sf := sx.MakeMappedFactory(2)
 	sym1 := sf.MustMake("sym1")
 	sym2 := sf.MustMake("sym2")
-	root := sxeval.MakeRootEnvironment(1)
+	root := sxeval.MakeRootBinding(1)
 	root.Bind(sym1, sym2)
 
 	if val, found := root.Lookup(sym2); found {
@@ -65,14 +68,14 @@ func TestBindLookupUnbind(t *testing.T) {
 	}
 
 	t.Run("child", func(t *testing.T) {
-		newRoot := sxeval.MakeRootEnvironment(1)
+		newRoot := sxeval.MakeRootBinding(1)
 		newRoot.Bind(sym1, sym2)
-		child := sxeval.MakeChildEnvironment(newRoot, "assoc", 30)
+		child := sxeval.MakeChildBinding(newRoot, "assoc", 30)
 		bindLookupUnbind(t, newRoot, child, sym1, sym2)
 	})
 }
 
-func bindLookupUnbind(t *testing.T, root, child sxeval.Environment, sym1, sym2 *sx.Symbol) {
+func bindLookupUnbind(t *testing.T, root, child sxeval.Binding, sym1, sym2 *sx.Symbol) {
 	child.Bind(sym2, sym1)
 
 	if _, found := child.Lookup(sym1); found {
@@ -122,15 +125,15 @@ func bindLookupUnbind(t *testing.T, root, child sxeval.Environment, sym1, sym2 *
 func TestAlist(t *testing.T) {
 	t.Parallel()
 	sf := sx.MakeMappedFactory(7)
-	env := sxeval.MakeRootEnvironment(7)
-	env.Bind(sf.MustMake("sym1"), sx.String("sym1"))
-	env.Bind(sf.MustMake("sym2"), sx.String("sym2"))
-	env.Bind(sf.MustMake("sym3"), sx.String("sym3"))
-	env.Bind(sf.MustMake("sym4"), sx.String("sym4"))
-	env.Bind(sf.MustMake("sym5"), sx.String("sym5"))
-	env.Bind(sf.MustMake("sym6"), sx.String("sym6"))
-	env.Bind(sf.MustMake("sym7"), sx.String("sym7"))
-	alist := env.Bindings()
+	bind := sxeval.MakeRootBinding(7)
+	bind.Bind(sf.MustMake("sym1"), sx.String("sym1"))
+	bind.Bind(sf.MustMake("sym2"), sx.String("sym2"))
+	bind.Bind(sf.MustMake("sym3"), sx.String("sym3"))
+	bind.Bind(sf.MustMake("sym4"), sx.String("sym4"))
+	bind.Bind(sf.MustMake("sym5"), sx.String("sym5"))
+	bind.Bind(sf.MustMake("sym6"), sx.String("sym6"))
+	bind.Bind(sf.MustMake("sym7"), sx.String("sym7"))
+	alist := bind.Bindings()
 	if alist.Length() != 7 {
 		t.Error("Not 7 elements:", alist)
 		return
@@ -150,79 +153,79 @@ func TestAlist(t *testing.T) {
 	}
 }
 
-func TestRootEnvEqual(t *testing.T) {
+func TestRootBindingEqual(t *testing.T) {
 	t.Parallel()
-	root1 := sxeval.MakeRootEnvironment(0)
-	root2 := sxeval.MakeRootEnvironment(7)
-	checkEnvEqual(t, root1, root2)
+	root1 := sxeval.MakeRootBinding(0)
+	root2 := sxeval.MakeRootBinding(7)
+	checkBindingEqual(t, root1, root2)
 
-	root := sxeval.MakeRootEnvironment(3)
-	child1 := sxeval.MakeChildEnvironment(root, "child1", 17)
-	child2 := sxeval.MakeChildEnvironment(root, "child22", 11)
-	checkEnvEqual(t, child1, child2)
+	root := sxeval.MakeRootBinding(3)
+	child1 := sxeval.MakeChildBinding(root, "child1", 17)
+	child2 := sxeval.MakeChildBinding(root, "child22", 11)
+	checkBindingEqual(t, child1, child2)
 }
 
-func checkEnvEqual(t *testing.T, env1, env2 sxeval.Environment) {
+func checkBindingEqual(t *testing.T, bind1, bind2 sxeval.Binding) {
 	t.Helper()
-	if !env1.IsEqual(env2) {
-		t.Error("empty", env1, "is not equal to empty", env2)
+	if !bind1.IsEqual(bind2) {
+		t.Error("empty", bind1, "is not equal to empty", bind2)
 		return
 	}
 	sf := sx.MakeMappedFactory(2)
 	sym1 := sf.MustMake("sym1")
-	env1.Bind(sym1, sym1)
-	if env1.IsEqual(env2) {
-		t.Error("after adding sym1 just to", env1, "both envs are equal")
+	bind1.Bind(sym1, sym1)
+	if bind1.IsEqual(bind2) {
+		t.Error("after adding sym1 just to", bind1, "both bindings are equal")
 		return
 	}
 	sym2 := sf.MustMake("sym2")
-	env2.Bind(sym2, sym2)
-	if env1.IsEqual(env2) {
-		t.Error("after adding sym2 just to", env2, "both envs are equal")
+	bind2.Bind(sym2, sym2)
+	if bind1.IsEqual(bind2) {
+		t.Error("after adding sym2 just to", bind2, "both bindings are equal")
 		return
 	}
-	env1.Bind(sym2, sym1)
-	env2.Bind(sym1, sym2)
-	if env1.IsEqual(env2) {
-		t.Error("envs are equal, but bindings differ")
+	bind1.Bind(sym2, sym1)
+	bind2.Bind(sym1, sym2)
+	if bind1.IsEqual(bind2) {
+		t.Error("bindings are equal, but bindings differ")
 		return
 	}
-	env1.Bind(sym2, sym2)
-	env2.Bind(sym1, sym1)
-	if !env1.IsEqual(env2) {
-		t.Error("equal envs differ")
+	bind1.Bind(sym2, sym2)
+	bind2.Bind(sym1, sym1)
+	if !bind1.IsEqual(bind2) {
+		t.Error("equal bindings differ")
 	}
 }
 
 func TestConstBinding(t *testing.T) {
 	t.Parallel()
 	sf := sx.MakeMappedFactory(2)
-	env := sxeval.MakeRootEnvironment(2)
+	bind := sxeval.MakeRootBinding(2)
 	symVar, symConst := sf.MustMake("sym-var"), sf.MustMake("sym-const")
-	err := env.Bind(symVar, sx.Int64(0))
+	err := bind.Bind(symVar, sx.Int64(0))
 	if err != nil {
 		t.Errorf("error in symVar.Bind(1): %v", err)
 		return
 	}
-	if env.IsConst(symVar) {
+	if bind.IsConst(symVar) {
 		t.Errorf("symbol %v is wrongly seen a constant", symVar)
 		return
 	}
-	err = env.BindConst(symVar, sx.Int64(2))
+	err = bind.BindConst(symVar, sx.Int64(2))
 	if err != nil {
 		t.Error("symVar was not changed, but should:", err)
 	}
 
-	err = env.BindConst(symConst, sx.Int64(0))
+	err = bind.BindConst(symConst, sx.Int64(0))
 	if err != nil {
 		t.Errorf("error in symConst.Bind(1): %v", err)
 		return
 	}
-	if !env.IsConst(symConst) {
+	if !bind.IsConst(symConst) {
 		t.Errorf("symbol %v is wrongly seen a variable", symConst)
 		return
 	}
-	err = env.BindConst(symConst, sx.Int64(2))
+	err = bind.BindConst(symConst, sx.Int64(2))
 	if err == nil {
 		t.Error("symConst was changed, but should not")
 	}

@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -95,11 +98,11 @@ func ParseProcedure(pf *sxeval.ParseFrame, name string, paramSpec, bodySpec sx.O
 	if !isPair {
 		return nil, fmt.Errorf("body must not be a dotted pair")
 	}
-	envSize := len(params)
+	bindSize := len(params)
 	if rest != nil {
-		envSize++
+		bindSize++
 	}
-	fnFrame := pf.MakeChildFrame(name+"-def", envSize)
+	fnFrame := pf.MakeChildFrame(name+"-def", bindSize)
 	for _, p := range params {
 		err := fnFrame.Bind(p, sx.MakeUndefined())
 		if err != nil {
@@ -173,11 +176,11 @@ type LambdaExpr struct {
 }
 
 func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	envSize := len(le.Params)
+	bindSize := len(le.Params)
 	if le.Rest != nil {
-		envSize++
+		bindSize++
 	}
-	fnFrame := rf.MakeChildFrame(le.Name+"-rework", envSize)
+	fnFrame := rf.MakeChildFrame(le.Name+"-rework", bindSize)
 	for _, sym := range le.Params {
 		fnFrame.Bind(sym)
 	}
@@ -300,11 +303,11 @@ func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, erro
 	if len(args) < numParams {
 		return nil, fmt.Errorf("%s: missing arguments: %v", p.Name, p.Params[len(args):])
 	}
-	envSize := numParams
+	bindSize := numParams
 	if p.Rest != nil {
-		envSize++
+		bindSize++
 	}
-	lambdaFrame := frame.MakeLambdaFrame(p.PFrame, p.Name, envSize)
+	lambdaFrame := frame.MakeLambdaFrame(p.PFrame, p.Name, bindSize)
 	for i, p := range p.Params {
 		err := lambdaFrame.Bind(p, args[i])
 		if err != nil {

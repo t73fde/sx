@@ -44,14 +44,14 @@ func (tcs tTestCases) Run(t *testing.T) {
 	t.Helper()
 	engine := createEngine()
 	sf := engine.SymbolFactory()
-	root := engine.GetToplevelEnv()
+	root := engine.GetToplevelBinding()
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Helper()
 			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
 
 			var sb strings.Builder
-			env := sxeval.MakeChildEnvironment(root, tc.name, 0)
+			env := sxeval.MakeChildBinding(root, tc.name, 0)
 			for {
 				val, err := rd.Read()
 				if err != nil {
@@ -93,7 +93,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 func createEngine() *sxeval.Engine {
 	numBuiltins := len(specials) + len(builtins) + len(objects)
 	sf := sx.MakeMappedFactory(numBuiltins + 32)
-	root := sxeval.MakeRootEnvironment(numBuiltins)
+	root := sxeval.MakeRootBinding(numBuiltins)
 
 	engine := sxeval.MakeEngine(sf, root)
 	for _, syntax := range specials {
@@ -103,13 +103,13 @@ func createEngine() *sxeval.Engine {
 		engine.BindBuiltin(b)
 	}
 	root.Freeze()
-	env := sxeval.MakeChildEnvironment(root, "vars", len(objects))
+	env := sxeval.MakeChildBinding(root, "vars", len(objects))
 	for _, obj := range objects {
 		if err := env.Bind(sf.MustMake(obj.name), obj.obj); err != nil {
 			panic(err)
 		}
 	}
-	engine.SetToplevelEnv(env)
+	engine.SetToplevelBinding(env)
 	return engine
 }
 

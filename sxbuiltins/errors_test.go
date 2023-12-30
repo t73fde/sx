@@ -40,25 +40,25 @@ var tcsError = tTestCases{
 	{
 		name:    "not-bound-error-sym",
 		src:     "(not-bound-error 'sym)",
-		exp:     "{[{symbol \"sym\" not bound in environment \"not-bound-error-sym\"}]}",
+		exp:     "{[{symbol \"sym\" not bound in \"not-bound-error-sym\"}]}",
 		withErr: true,
 	},
 	{
-		name:    "not-bound-error-sym-noenv",
+		name:    "not-bound-error-sym-nobinding",
 		src:     "(not-bound-error 'sym 1)",
-		exp:     "{[{argument 2 is not an environment, but sx.Int64/1}]}",
+		exp:     "{[{argument 2 is not a binding, but sx.Int64/1}]}",
 		withErr: true,
 	},
 	{
-		name:    "not-bound-error-sym-env",
+		name:    "not-bound-error-sym-binding",
 		src:     "(not-bound-error 'sym (current-environment))",
-		exp:     "{[{symbol \"sym\" not bound in environment \"not-bound-error-sym-env\"}]}",
+		exp:     "{[{symbol \"sym\" not bound in \"not-bound-error-sym-binding\"}]}",
 		withErr: true,
 	},
 	{
 		name:    "not-bound-error-sym-env-parent",
 		src:     "(not-bound-error 'sym (parent-environment (current-environment)))",
-		exp:     "{[{symbol \"sym\" not bound in environment \"vars\"}]}",
+		exp:     "{[{symbol \"sym\" not bound in \"vars\"}]}",
 		withErr: true,
 	},
 }

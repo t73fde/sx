@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 // -----------------------------------------------------------------------------
 
 package sxeval
@@ -20,7 +23,7 @@ import (
 type Frame struct {
 	engine   *Engine
 	executor Executor // most of the time: engine.exec, but could be updated for interactive debugging
-	env      Environment
+	binding  Binding
 	caller   *Frame
 }
 
@@ -28,22 +31,22 @@ func (frame *Frame) MakeCalleeFrame() *Frame {
 	return &Frame{
 		engine:   frame.engine,
 		executor: frame.executor,
-		env:      frame.env,
+		binding:  frame.binding,
 		caller:   frame,
 	}
 }
 
 func (frame *Frame) MakeParseFrame() *ParseFrame {
 	return &ParseFrame{
-		sf:     frame.engine.SymbolFactory(),
-		env:    frame.env,
-		parser: frame.engine.pars,
+		sf:      frame.engine.SymbolFactory(),
+		binding: frame.binding,
+		parser:  frame.engine.pars,
 	}
 }
 
 func (frame *Frame) MakeReworkFrame() *ReworkFrame {
 	return &ReworkFrame{
-		env: frame.env,
+		binding: frame.binding,
 	}
 }
 
@@ -51,7 +54,7 @@ func (frame *Frame) MakeLambdaFrame(pf *ParseFrame, name string, numBindings int
 	return &Frame{
 		engine:   frame.engine,
 		executor: frame.executor,
-		env:      MakeChildEnvironment(pf.env, name, numBindings),
+		binding:  MakeChildBinding(pf.binding, name, numBindings),
 		caller:   frame,
 	}
 }
@@ -64,7 +67,7 @@ func (frame *Frame) Execute(expr Expr) (sx.Object, error) {
 				return res, nil
 			}
 			if again, ok := err.(executeAgain); ok {
-				frame.env = again.env
+				frame.binding = again.binding
 				expr = again.expr
 				continue
 			}
@@ -78,7 +81,7 @@ func (frame *Frame) Execute(expr Expr) (sx.Object, error) {
 			return res, nil
 		}
 		if again, ok := err.(executeAgain); ok {
-			frame.env = again.env
+			frame.binding = again.binding
 			expr = again.expr
 			continue
 		}
@@ -91,14 +94,14 @@ func (frame *Frame) ExecuteTCO(expr Expr) (sx.Object, error) {
 	// return subFrame.Execute(expr)
 
 	// Just return relevant data for real TCO
-	return nil, executeAgain{env: frame.env, expr: expr}
+	return nil, executeAgain{binding: frame.binding, expr: expr}
 }
 
 func (frame *Frame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
 	callFrame := Frame{
 		engine:   frame.engine,
 		executor: frame.executor,
-		env:      frame.env,
+		binding:  frame.binding,
 		caller:   frame,
 	}
 	res, err := fn.Call(&callFrame, args)
@@ -106,17 +109,17 @@ func (frame *Frame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
 		return res, nil
 	}
 	if again, ok := err.(executeAgain); ok {
-		callFrame.env = again.env
+		callFrame.binding = again.binding
 		return callFrame.Execute(again.expr)
 	}
 	return nil, err
 }
 
 // executeAgain is a non-error error signalling that the given expression should be
-// executed again in the given environment.
+// executed again in the given binding.
 type executeAgain struct {
-	env  Environment
-	expr Expr
+	binding Binding
+	expr    Expr
 }
 
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }
@@ -130,40 +133,40 @@ func (frame *Frame) CallResolveCallable(sym *sx.Symbol) (sx.Object, error) {
 func (frame *Frame) callResolve(sym *sx.Symbol, defSym *sx.Symbol) (sx.Object, error) {
 	if obj, found := frame.Resolve(defSym); found {
 		if fn, isCallable := obj.(Callable); isCallable {
-			return frame.Call(fn, []sx.Object{sym, frame.env})
+			return frame.Call(fn, []sx.Object{sym, frame.binding})
 		}
 	}
 	return nil, frame.MakeNotBoundError(sym)
 }
 
-func (frame *Frame) Bind(sym *sx.Symbol, obj sx.Object) error { return frame.env.Bind(sym, obj) }
+func (frame *Frame) Bind(sym *sx.Symbol, obj sx.Object) error { return frame.binding.Bind(sym, obj) }
 func (frame *Frame) BindConst(sym *sx.Symbol, obj sx.Object) error {
-	return frame.env.BindConst(sym, obj)
+	return frame.binding.BindConst(sym, obj)
 }
 func (frame *Frame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
-	return Resolve(frame.env, sym)
+	return Resolve(frame.binding, sym)
 }
-func (frame *Frame) FindBindingEnv(sym *sx.Symbol) Environment {
-	env := frame.env
-	for !sx.IsNil(env) {
-		if _, found := env.Lookup(sym); found {
-			return env
+func (frame *Frame) FindBinding(sym *sx.Symbol) Binding {
+	bind := frame.binding
+	for !sx.IsNil(bind) {
+		if _, found := bind.Lookup(sym); found {
+			return bind
 		}
-		env = env.Parent()
+		bind = bind.Parent()
 	}
-	return env
+	return bind
 }
 func (frame *Frame) MakeNotBoundError(sym *sx.Symbol) NotBoundError {
-	return NotBoundError{Env: frame.env, Sym: sym}
+	return NotBoundError{Binding: frame.binding, Sym: sym}
 }
 
-// NotBoundError signals that a symbol was not found in an environment.
+// NotBoundError signals that a symbol was not found in a binding.
 type NotBoundError struct {
-	Env Environment
-	Sym *sx.Symbol
+	Binding Binding
+	Sym     *sx.Symbol
 }
 
 func (e NotBoundError) Error() string {
-	return fmt.Sprintf("symbol %q not bound in environment %q", e.Sym.Name(), e.Env.String())
+	return fmt.Sprintf("symbol %q not bound in %q", e.Sym.Name(), e.Binding.String())
 }
-func (frame *Frame) Environment() Environment { return frame.env }
+func (frame *Frame) Binding() Binding { return frame.binding }

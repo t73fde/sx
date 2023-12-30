@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -23,7 +26,7 @@ var CurrentEnv = sxeval.Builtin{
 	MaxArity: 0,
 	TestPure: nil,
 	Fn: func(frame *sxeval.Frame, _ []sx.Object) (sx.Object, error) {
-		return frame.Environment(), nil
+		return frame.Binding(), nil
 	},
 }
 
@@ -33,7 +36,7 @@ var ParentEnv = sxeval.Builtin{
 	MaxArity: 1,
 	TestPure: nil,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		env, err := GetEnvironment(args, 0)
+		env, err := GetBinding(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -50,7 +53,7 @@ var EnvBindings = sxeval.Builtin{
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		env, err := GetEnvironment(args, 0)
+		env, err := GetBinding(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -112,14 +115,14 @@ var EnvResolve = sxeval.Builtin{
 	},
 }
 
-func envGetSymEnv(frame *sxeval.Frame, args []sx.Object) (*sx.Symbol, sxeval.Environment, error) {
+func envGetSymEnv(frame *sxeval.Frame, args []sx.Object) (*sx.Symbol, sxeval.Binding, error) {
 	sym, err := GetSymbol(args, 0)
 	if err != nil {
 		return nil, nil, err
 	}
 	if len(args) == 1 {
-		return sym, frame.Environment(), err
+		return sym, frame.Binding(), err
 	}
-	env, err := GetEnvironment(args, 1)
+	env, err := GetBinding(args, 1)
 	return sym, env, err
 }

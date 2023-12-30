@@ -48,7 +48,7 @@ var Error = sxeval.Builtin{
 	NoCallError: true,
 }
 
-// NotBoundError returns an error signalling that a symbol was not bound in an environment.
+// NotBoundError returns an error signalling that a symbol was not bound.
 var NotBoundError = sxeval.Builtin{
 	Name:     "not-bound-error",
 	MinArity: 1,
@@ -59,14 +59,14 @@ var NotBoundError = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		env := frame.Environment()
+		bind := frame.Binding()
 		if len(args) == 2 {
-			env, err = GetEnvironment(args, 1)
+			bind, err = GetBinding(args, 1)
 			if err != nil {
 				return nil, err
 			}
 		}
-		return nil, sxeval.NotBoundError{Env: env, Sym: sym}
+		return nil, sxeval.NotBoundError{Binding: bind, Sym: sym}
 	},
 	NoCallError: true,
 }

@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins_test
@@ -99,7 +102,7 @@ var tcsSetX = tTestCases{
 	{
 		name:    "set!-unknown-1",
 		src:     "(set! unknown 1)",
-		exp:     `{[{symbol "unknown" not bound in environment "set!-unknown-1"}]}`,
+		exp:     `{[{symbol "unknown" not bound in "set!-unknown-1"}]}`,
 		withErr: true,
 	},
 	{name: "define-set", src: "(defvar a 1) (set! a 17)", exp: "1 17"},

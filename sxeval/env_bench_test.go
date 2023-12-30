@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxeval_test
@@ -17,15 +20,15 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-func BenchmarkEnv(b *testing.B) {
+func BenchmarkBinding(b *testing.B) {
 	sf := sx.MakeMappedFactory(3)
 	symA, symB, symC := sf.MustMake("a"), sf.MustMake("b"), sf.MustMake("c")
-	root := sxeval.MakeRootEnvironment(0)
+	root := sxeval.MakeRootBinding(0)
 	root.Bind(symA, symB)
-	child77 := sxeval.MakeChildEnvironment(root, "child-77", 77)
+	child77 := sxeval.MakeChildBinding(root, "child-77", 77)
 	child77.Bind(symB, symC)
 
-	uuts := []sxeval.Environment{root, child77}
+	uuts := []sxeval.Binding{root, child77}
 	b.ResetTimer()
 	for _, uut := range uuts {
 		b.Run("lookupL/"+uut.String(), func(b *testing.B) {

@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins_test
@@ -34,7 +37,7 @@ var tcsEnv = tTestCases{
 	{
 		name:    "err-parent-environment-1-noenv",
 		src:     "(parent-environment 1)",
-		exp:     "{[{parent-environment: argument 1 is not an environment, but sx.Int64/1}]}",
+		exp:     "{[{parent-environment: argument 1 is not a binding, but sx.Int64/1}]}",
 		withErr: true,
 	},
 
@@ -47,7 +50,7 @@ var tcsEnv = tTestCases{
 	{
 		name:    "err-bindings-1-noenv",
 		src:     "(environment-bindings 1)",
-		exp:     "{[{environment-bindings: argument 1 is not an environment, but sx.Int64/1}]}",
+		exp:     "{[{environment-bindings: argument 1 is not a binding, but sx.Int64/1}]}",
 		withErr: true,
 	},
 	{name: "current-bindings", src: "(environment-bindings (current-environment))", exp: "()"},
@@ -88,7 +91,7 @@ var tcsEnv = tTestCases{
 	{
 		name:    "err-lookup-2-noenv",
 		src:     "(environment-lookup 'a 1)",
-		exp:     "{[{environment-lookup: argument 2 is not an environment, but sx.Int64/1}]}",
+		exp:     "{[{environment-lookup: argument 2 is not a binding, but sx.Int64/1}]}",
 		withErr: true,
 	},
 	{
@@ -119,7 +122,7 @@ var tcsEnv = tTestCases{
 	{
 		name:    "err-resolve-2-noenv",
 		src:     "(environment-resolve 'a 1)",
-		exp:     "{[{environment-resolve: argument 2 is not an environment, but sx.Int64/1}]}",
+		exp:     "{[{environment-resolve: argument 2 is not a binding, but sx.Int64/1}]}",
 		withErr: true,
 	},
 	{

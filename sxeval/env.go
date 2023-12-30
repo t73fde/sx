@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxeval
@@ -18,21 +21,20 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// Environment maintains a mapping between symbols and values.
-// Forms are evaluated within environments.
-type Environment interface {
-	// An environment is an object by itself
+// Binding maintains a mapping between symbols and values.
+type Binding interface {
+	// A binding is an object by itself
 	sx.Object
 
-	// String returns the local name of this environment.
+	// String returns the local name of this binding.
 	String() string
 
-	// Parent allows to retrieve the parent environment. Environment is the root
-	// environment, nil is returned. Lookups that cannot be satisfied in an
-	// environment are delegated to the parent envrionment.
-	Parent() Environment
+	// Parent allows to retrieve the parent binding. If the binding is the root
+	// binding, nil is returned. Lookups that cannot be satisfied in an
+	// binding are often delegated to the parent binding.
+	Parent() Binding
 
-	// IsRoot returns true for the root environment.
+	// IsRoot returns true for the root binding.
 	IsRoot() bool
 
 	// Bind creates a local mapping with a given symbol and object.
@@ -45,7 +47,7 @@ type Environment interface {
 	BindConst(*sx.Symbol, sx.Object) error
 
 	// Lookup will search for a local binding of the given symbol. If not
-	// found, the search will *not* be continued in the parent environment.
+	// found, the search will *not* be continued in the parent binding.
 	// Use the global `Resolve` function, if you want a search up to the parent.
 	Lookup(*sx.Symbol) (sx.Object, bool)
 
@@ -58,14 +60,14 @@ type Environment interface {
 	// Unbind removes the mapping of the given symbol to an object.
 	Unbind(*sx.Symbol) error
 
-	// Freeze sets the environment in a read-only state.
+	// Freeze sets the binding in a read-only state.
 	Freeze()
 }
 
-// ErrEnvFrozen is returned when trying to update a frozen environment.
-type ErrEnvFrozen struct{ Env Environment }
+// ErrBindingFrozen is returned when trying to update a frozen binding.
+type ErrBindingFrozen struct{ Binding Binding }
 
-func (err ErrEnvFrozen) Error() string { return fmt.Sprintf("enviroment is frozen: %v", err.Env) }
+func (err ErrBindingFrozen) Error() string { return fmt.Sprintf("binding is frozen: %v", err.Binding) }
 
 // ErrConstBinding is returned when a constant binding should be changed.
 type ErrConstBinding struct{ Sym *sx.Symbol }
@@ -76,9 +78,9 @@ func (err ErrConstBinding) Error() string {
 
 type mapSymObj = map[*sx.Symbol]sx.Object
 
-// MakeRootEnvironment creates a new root environment.
-func MakeRootEnvironment(sizeHint int) Environment {
-	return &mappedEnvironment{
+// MakeRootBinding creates a new root binding.
+func MakeRootBinding(sizeHint int) Binding {
+	return &mappedBinding{
 		name:   "root",
 		parent: nil,
 		vars:   make(mapSymObj, sizeHint),
@@ -87,12 +89,12 @@ func MakeRootEnvironment(sizeHint int) Environment {
 	}
 }
 
-// MakeChildEnvironment creates a new environment with a given parent.
-func MakeChildEnvironment(parent Environment, name string, sizeHint int) Environment {
+// MakeChildBinding creates a new binding with a given parent.
+func MakeChildBinding(parent Binding, name string, sizeHint int) Binding {
 	if sizeHint <= 0 {
 		sizeHint = 3
 	}
-	return &mappedEnvironment{
+	return &mappedBinding{
 		name:   name,
 		parent: parent,
 		vars:   make(mapSymObj, sizeHint),
@@ -101,26 +103,26 @@ func MakeChildEnvironment(parent Environment, name string, sizeHint int) Environ
 	}
 }
 
-type mappedEnvironment struct {
+type mappedBinding struct {
 	name   string
-	parent Environment
+	parent Binding
 	vars   mapSymObj
 	consts map[*sx.Symbol]struct{}
 	isRoot bool
 	frozen bool
 }
 
-func (me *mappedEnvironment) IsNil() bool  { return me == nil }
-func (me *mappedEnvironment) IsAtom() bool { return me == nil }
-func (me *mappedEnvironment) IsEqual(other sx.Object) bool {
-	if me == other {
+func (mb *mappedBinding) IsNil() bool  { return mb == nil }
+func (mb *mappedBinding) IsAtom() bool { return mb == nil }
+func (mb *mappedBinding) IsEqual(other sx.Object) bool {
+	if mb == other {
 		return true
 	}
-	if me.IsNil() {
+	if mb.IsNil() {
 		return sx.IsNil(other)
 	}
-	if ome, ok := other.(*mappedEnvironment); ok {
-		mvars, ovars := me.vars, ome.vars
+	if omb, ok := other.(*mappedBinding); ok {
+		mvars, ovars := mb.vars, omb.vars
 		if len(mvars) != len(ovars) {
 			return false
 		}
@@ -134,141 +136,141 @@ func (me *mappedEnvironment) IsEqual(other sx.Object) bool {
 	}
 	return false
 }
-func (me *mappedEnvironment) Repr() string { return sx.Repr(me) }
-func (me *mappedEnvironment) Print(w io.Writer) (int, error) {
-	return sx.WriteStrings(w, "#<env:", me.name, "/", strconv.Itoa(len(me.vars)), ">")
+func (mb *mappedBinding) Repr() string { return sx.Repr(mb) }
+func (mb *mappedBinding) Print(w io.Writer) (int, error) {
+	return sx.WriteStrings(w, "#<binding:", mb.name, "/", strconv.Itoa(len(mb.vars)), ">")
 }
-func (me *mappedEnvironment) String() string { return me.name }
-func (me *mappedEnvironment) Parent() Environment {
-	if me == nil {
+func (mb *mappedBinding) String() string { return mb.name }
+func (mb *mappedBinding) Parent() Binding {
+	if mb == nil {
 		return nil
 	}
-	return me.parent
+	return mb.parent
 }
-func (me *mappedEnvironment) IsRoot() bool { return me == nil || me.isRoot }
-func (me *mappedEnvironment) Bind(sym *sx.Symbol, val sx.Object) error {
-	if me.frozen {
-		return ErrEnvFrozen{Env: me}
+func (mb *mappedBinding) IsRoot() bool { return mb == nil || mb.isRoot }
+func (mb *mappedBinding) Bind(sym *sx.Symbol, val sx.Object) error {
+	if mb.frozen {
+		return ErrBindingFrozen{Binding: mb}
 	}
-	if me.IsConst(sym) {
+	if mb.IsConst(sym) {
 		return ErrConstBinding{Sym: sym}
 	}
-	if _, found := me.vars[sym]; found {
-		me.vars[sym] = val
+	if _, found := mb.vars[sym]; found {
+		mb.vars[sym] = val
 		return nil
 	}
-	me.vars[sym] = val
+	mb.vars[sym] = val
 	return nil
 }
-func (me *mappedEnvironment) BindConst(sym *sx.Symbol, val sx.Object) error {
-	if me.frozen {
-		return ErrEnvFrozen{Env: me}
+func (mb *mappedBinding) BindConst(sym *sx.Symbol, val sx.Object) error {
+	if mb.frozen {
+		return ErrBindingFrozen{Binding: mb}
 	}
-	if me.IsConst(sym) {
+	if mb.IsConst(sym) {
 		return ErrConstBinding{Sym: sym}
 	}
-	if me.consts == nil {
-		me.consts = map[*sx.Symbol]struct{}{sym: {}}
+	if mb.consts == nil {
+		mb.consts = map[*sx.Symbol]struct{}{sym: {}}
 	} else {
-		me.consts[sym] = struct{}{}
+		mb.consts[sym] = struct{}{}
 	}
-	if _, found := me.vars[sym]; found {
-		me.vars[sym] = val
+	if _, found := mb.vars[sym]; found {
+		mb.vars[sym] = val
 		return nil
 	}
-	me.vars[sym] = val
+	mb.vars[sym] = val
 	return nil
 }
-func (me *mappedEnvironment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
-	obj, found := me.vars[sym]
+func (mb *mappedBinding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
+	obj, found := mb.vars[sym]
 	return obj, found
 }
-func (me *mappedEnvironment) IsConst(sym *sx.Symbol) bool {
-	if me == nil {
+func (mb *mappedBinding) IsConst(sym *sx.Symbol) bool {
+	if mb == nil {
 		return false
 	}
-	if me.frozen {
-		if _, found := me.vars[sym]; found {
+	if mb.frozen {
+		if _, found := mb.vars[sym]; found {
 			return true
 		}
 	}
-	if me.consts == nil {
+	if mb.consts == nil {
 		return false
 	}
-	_, found := me.consts[sym]
+	_, found := mb.consts[sym]
 	return found
 }
-func (me *mappedEnvironment) Bindings() *sx.Pair {
+func (mb *mappedBinding) Bindings() *sx.Pair {
 	result := sx.Nil()
-	for k, v := range me.vars {
+	for k, v := range mb.vars {
 		result = result.Cons(sx.Cons(k, v))
 	}
 	return result
 }
-func (me *mappedEnvironment) Unbind(sym *sx.Symbol) error {
-	if me.frozen {
-		return ErrEnvFrozen{Env: me}
+func (mb *mappedBinding) Unbind(sym *sx.Symbol) error {
+	if mb.frozen {
+		return ErrBindingFrozen{Binding: mb}
 	}
-	delete(me.vars, sym)
+	delete(mb.vars, sym)
 	return nil
 }
-func (me *mappedEnvironment) Freeze() { me.frozen = true }
+func (mb *mappedBinding) Freeze() { mb.frozen = true }
 
-// GetEnvironment returns the object as an environment, if possible.
-func GetEnvironment(obj sx.Object) (Environment, bool) {
+// GetBinding returns the object as a binding, if possible.
+func GetBinding(obj sx.Object) (Binding, bool) {
 	if sx.IsNil(obj) {
 		return nil, false
 	}
-	env, ok := obj.(Environment)
-	return env, ok
+	bind, ok := obj.(Binding)
+	return bind, ok
 }
 
-// RootEnv returns the root environment of the given environment.
-func RootEnv(env Environment) Environment {
-	currEnv := env
+// RootBinding returns the root binding of the given binding.
+func RootBinding(bind Binding) Binding {
+	currBind := bind
 	for {
-		if currEnv.IsRoot() {
-			return currEnv
+		if currBind.IsRoot() {
+			return currBind
 		}
-		currEnv = currEnv.Parent()
+		currBind = currBind.Parent()
 	}
 }
 
-// Resolve a symbol is an environment and all of its parent environment.
-func Resolve(env Environment, sym *sx.Symbol) (sx.Object, bool) {
-	currEnv := env
+// Resolve a symbol is a binding and all of its parent bindings.
+func Resolve(bind Binding, sym *sx.Symbol) (sx.Object, bool) {
+	currBind := bind
 	for {
-		obj, found := currEnv.Lookup(sym)
+		obj, found := currBind.Lookup(sym)
 		if found {
 			return obj, true
 		}
-		if currEnv.IsRoot() {
+		if currBind.IsRoot() {
 			return sx.Nil(), false
 		}
-		currEnv = currEnv.Parent()
+		currBind = currBind.Parent()
 	}
 }
 
 // IsConstBinding returns true if the symbol is defined with a constant
-// binding in the given environment or its parent environments.
-func IsConstantBinding(env Environment, sym *sx.Symbol) bool {
-	currEnv := env
-	for !sx.IsNil(currEnv) {
-		if currEnv.IsConst(sym) {
+// binding in the given binding or its parent bindings.
+func IsConstantBind(bind Binding, sym *sx.Symbol) bool {
+	currBind := bind
+	for !sx.IsNil(currBind) {
+		if currBind.IsConst(sym) {
 			return true
 		}
-		if _, found := currEnv.Lookup(sym); found {
+		if _, found := currBind.Lookup(sym); found {
 			return false
 		}
-		currEnv = currEnv.Parent()
+		currBind = currBind.Parent()
 	}
 	return false
 }
 
-// AllBindings returns an a-list of all bindings in the given environment and its parent environments.
-func AllBindings(env Environment) *sx.Pair {
-	currEnv := env
-	result := currEnv.Bindings()
+// AllBindings returns an a-list of all bindings in the given binding and its parent bindinga.
+func AllBindings(bind Binding) *sx.Pair {
+	currBind := bind
+	result := currBind.Bindings()
 	currResult := result
 	if currResult != nil {
 		for currResult.Tail() != nil {
@@ -276,14 +278,14 @@ func AllBindings(env Environment) *sx.Pair {
 		}
 	}
 	for {
-		if currEnv.IsRoot() {
+		if currBind.IsRoot() {
 			return result
 		}
-		currEnv = currEnv.Parent()
-		if currEnv == nil {
+		currBind = currBind.Parent()
+		if currBind == nil {
 			return result
 		}
-		res := currEnv.Bindings()
+		res := currBind.Bindings()
 		if result == nil {
 			result = res
 			currResult = result

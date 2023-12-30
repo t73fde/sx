@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 // Package sxeval allows to evaluate s-expressions. Evaluation is splitted into
@@ -22,15 +25,15 @@ import (
 // Engine is the collection of all relevant data element to execute / evaluate an object.
 type Engine struct {
 	sf         sx.SymbolFactory
-	root       Environment
-	toplevel   Environment
+	root       Binding
+	toplevel   Binding
 	pars       Parser
 	symResSym  *sx.Symbol
 	symResCall *sx.Symbol
 }
 
 // MakeEngine creates a new engine.
-func MakeEngine(sf sx.SymbolFactory, root Environment) *Engine {
+func MakeEngine(sf sx.SymbolFactory, root Binding) *Engine {
 	symResSym := sf.MustMake(resolveSymbolName)
 	root.Bind(symResSym, simpleBuiltin(resolveNotBound))
 	symResCall := sf.MustMake(resolveCallableName)
@@ -73,15 +76,15 @@ func resolveNotBound(frame *Frame, args []sx.Object) (sx.Object, error) {
 	if !isSymbol {
 		return nil, fmt.Errorf("argument 1 is not a symbol, but %T/%v", args[0], args[0])
 	}
-	env := frame.env
+	bind := frame.binding
 	if len(args) > 1 {
-		argEnv, isEnv := GetEnvironment(args[1])
-		if !isEnv {
-			return nil, fmt.Errorf("argument 1 is not an environment, but %T/%v", args[1], args[1])
+		argBind, isBind := GetBinding(args[1])
+		if !isBind {
+			return nil, fmt.Errorf("argument 1 is not a binding, but %T/%v", args[1], args[1])
 		}
-		env = argEnv
+		bind = argBind
 	}
-	return nil, NotBoundError{Env: env, Sym: sym}
+	return nil, NotBoundError{Binding: bind, Sym: sym}
 }
 
 // Copy creates a shallow copy of the given engine.
@@ -96,22 +99,22 @@ func (eng *Engine) Copy() *Engine {
 // SymbolFactory returns the symbol factory of the engine.
 func (eng *Engine) SymbolFactory() sx.SymbolFactory { return eng.sf }
 
-// RootEnvironment returns the root environment of the engine.
-func (eng *Engine) RootEnvironment() Environment { return eng.root }
+// RootBinding returns the root binding of the engine.
+func (eng *Engine) RootBinding() Binding { return eng.root }
 
-// SetToplevelEnv sets the given environment as the top-level environment.
-// It must be the root environment or a child of it.
-func (eng *Engine) SetToplevelEnv(env Environment) error {
-	root := RootEnv(env)
+// SetToplevelBinding sets the given binding as the top-level binding.
+// It must be the root binding or a child of it.
+func (eng *Engine) SetToplevelBinding(bind Binding) error {
+	root := RootBinding(bind)
 	if root != eng.root {
-		return fmt.Errorf("root of %v is not root of engine %v: %v", env, eng.root, root)
+		return fmt.Errorf("root of %v is not root of engine %v: %v", bind, eng.root, root)
 	}
-	eng.toplevel = env
+	eng.toplevel = bind
 	return nil
 }
 
-// GetToplevelEnv returns the current top-level environment.
-func (eng *Engine) GetToplevelEnv() Environment { return eng.toplevel }
+// GetToplevelBinding returns the current top-level binding.
+func (eng *Engine) GetToplevelBinding() Binding { return eng.toplevel }
 
 // SetParser updates the current s-expression parser of the engine.
 func (eng *Engine) SetParser(p Parser) Parser {
@@ -123,60 +126,60 @@ func (eng *Engine) SetParser(p Parser) Parser {
 	return orig
 }
 
-// Eval parses the given object and executes it in the environment.
-func (eng *Engine) Eval(obj sx.Object, env Environment, exec Executor) (sx.Object, error) {
-	expr, err := eng.Parse(obj, env)
+// Eval parses the given object and executes it in the binding.
+func (eng *Engine) Eval(obj sx.Object, bind Binding, exec Executor) (sx.Object, error) {
+	expr, err := eng.Parse(obj, bind)
 	if err != nil {
 		return nil, err
 	}
-	expr = eng.Rework(expr, env)
-	return eng.Execute(expr, env, exec)
+	expr = eng.Rework(expr, bind)
+	return eng.Execute(expr, bind, exec)
 }
 
-// Parse the given object in the given environment.
-func (eng *Engine) Parse(obj sx.Object, env Environment) (Expr, error) {
-	pf := ParseFrame{sf: eng.sf, env: env, parser: eng.pars}
+// Parse the given object in the given binding.
+func (eng *Engine) Parse(obj sx.Object, bind Binding) (Expr, error) {
+	pf := ParseFrame{sf: eng.sf, binding: bind, parser: eng.pars}
 	return pf.Parse(obj)
 }
 
 // Rework the given expression with the options stored in the engine.
-func (eng *Engine) Rework(expr Expr, env Environment) Expr {
-	rf := ReworkFrame{env: env}
+func (eng *Engine) Rework(expr Expr, bind Binding) Expr {
+	rf := ReworkFrame{binding: bind}
 	return expr.Rework(&rf)
 }
 
-// Execute the given expression in the given environment.
-func (eng *Engine) Execute(expr Expr, env Environment, exec Executor) (sx.Object, error) {
+// Execute the given expression in the given binding.
+func (eng *Engine) Execute(expr Expr, bind Binding, exec Executor) (sx.Object, error) {
 	if exec != nil {
 		exec.Reset()
 	}
 	frame := Frame{
 		engine:   eng,
 		executor: exec,
-		env:      env,
+		binding:  bind,
 		caller:   nil,
 	}
 	return frame.Execute(expr)
 }
 
-// BindSpecial binds a syntax parser to the its name in the engine's root environment.
+// BindSpecial binds a syntax parser to the its name in the engine's root binding.
 func (eng *Engine) BindSpecial(syn *Special) error {
 	return eng.BindConst(syn.Name, syn)
 }
 
 // BindBuiltin binds the given builtin with its given name in the engine's
-// root environment.
+// root binding.
 func (eng *Engine) BindBuiltin(b *Builtin) error {
 	return eng.BindConst(b.Name, b)
 }
 
 // BindConst a given object to a symbol of the given name as a constant in the
-// engine's root environment.
+// engine's root binding.
 func (eng *Engine) BindConst(name string, obj sx.Object) error {
 	return eng.root.BindConst(eng.sf.MustMake(name), obj)
 }
 
-// Bind a given object to a symbol of the given name in the engine's root environment.
+// Bind a given object to a symbol of the given name in the engine's root binding.
 func (eng *Engine) Bind(name string, obj sx.Object) error {
 	return eng.root.Bind(eng.sf.MustMake(name), obj)
 }
