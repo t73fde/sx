@@ -28,6 +28,7 @@ type Environment struct {
 	executor Executor // most of the time: engine.exec, but could be updated for interactive debugging
 	binding  *Binding
 	caller   *Environment // the dynamic call stack
+	name     string
 }
 
 // MakeExecutionEnvironment creates an environment for later execution of an expression.
@@ -42,6 +43,7 @@ func MakeExecutionEnvironment(eng *Engine, exec Executor, bind *Binding) Environ
 		executor: exec,
 		binding:  bind,
 		caller:   nil,
+		name:     bind.name,
 	}
 }
 
@@ -56,6 +58,7 @@ func createLexicalEnvs(eng *Engine, exec Executor, bind *Binding) *Environment {
 		executor: exec,
 		binding:  bind,
 		caller:   nil,
+		name:     bind.name,
 	}
 }
 
@@ -72,25 +75,30 @@ func (env *Environment) IsEqual(other sx.Object) bool {
 		return env.engine == oenv.engine &&
 			env.executor == oenv.executor &&
 			env.binding.IsEqual(oenv.binding) &&
-			env.caller == oenv.caller
+			env.caller == oenv.caller &&
+			env.name == oenv.name
 	}
 	return false
 }
 func (env *Environment) Repr() string { return sx.Repr(env) }
 func (env *Environment) Print(w io.Writer) (int, error) {
-	return sx.WriteStrings(w, "#<environment:", env.binding.name, "/", strconv.Itoa(len(env.binding.vars)), ">")
+	return sx.WriteStrings(w, "#<environment:", env.name, "/", strconv.Itoa(len(env.binding.vars)), ">")
 }
 
 // String returns the local name of this binding.
-func (env *Environment) String() string { return env.binding.name }
+func (env *Environment) String() string { return env.name }
 
 // Parent returns the lexical parent environment.
+//
+// Please note that env.binding.parent may be different to env.parent.binding.
+// This is because of the use of a parse frame binding in NewLexicalEnvironment
+//
+// Because of this, the builtin (parent-environment) is broken!
+//
+// We should probably merge Environment and ParseFrame somehow.
 func (env *Environment) Parent() *Environment {
 	if env == nil {
 		return nil
-	}
-	if env.binding.parent != env.parent.binding {
-		panic("err lexical")
 	}
 	return env.parent
 }
@@ -111,6 +119,7 @@ func (env *Environment) NewDynamicEnvironment() *Environment {
 		executor: env.executor,
 		binding:  env.binding,
 		caller:   env,
+		name:     env.name,
 	}
 }
 
@@ -135,6 +144,7 @@ func (env *Environment) NewLexicalEnvironment(pf *ParseFrame, name string, numBi
 		executor: env.executor,
 		binding:  MakeChildBinding(pf.binding, name, numBindings),
 		caller:   env,
+		name:     name,
 	}
 }
 
@@ -182,6 +192,7 @@ func (env *Environment) Call(fn Callable, args []sx.Object) (sx.Object, error) {
 		executor: env.executor,
 		binding:  env.binding,
 		caller:   env,
+		name:     env.name,
 	}
 	res, err := fn.Call(&dynamicEnv, args)
 	if err == nil {
@@ -231,26 +242,24 @@ func (env *Environment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return resolve(env.binding, sym)
 }
 func (env *Environment) FindBinding(sym *sx.Symbol) *Binding {
-	bind := env.binding
-	for bind != nil {
-		if _, found := bind.Lookup(sym); found {
-			return bind
+	for curr := env.binding; curr != nil; curr = curr.parent {
+		if _, found := curr.Lookup(sym); found {
+			return curr
 		}
-		bind = bind.parent
 	}
-	return bind
+	return nil
 }
 func (env *Environment) MakeNotBoundError(sym *sx.Symbol) NotBoundError {
-	return NotBoundError{Binding: env.binding, Sym: sym}
+	return NotBoundError{Env: env, Sym: sym}
 }
 
 // NotBoundError signals that a symbol was not found in a binding.
 type NotBoundError struct {
-	Binding *Binding
-	Sym     *sx.Symbol
+	Env *Environment
+	Sym *sx.Symbol
 }
 
 func (e NotBoundError) Error() string {
-	return fmt.Sprintf("symbol %q not bound in %q", e.Sym.Name(), e.Binding.String())
+	return fmt.Sprintf("symbol %q not bound in %q", e.Sym.Name(), e.Env.String())
 }
-func (env *Environment) Binding() *Binding { return env.binding }
+func (env *Environment) Bindings() *sx.Pair { return env.binding.Bindings() }

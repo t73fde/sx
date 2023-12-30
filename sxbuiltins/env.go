@@ -55,7 +55,7 @@ var EnvBindings = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		return env.Binding().Bindings(), nil
+		return env.Bindings(), nil
 	},
 }
 

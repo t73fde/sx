@@ -201,17 +201,12 @@ func rootBinding(bind *Binding) *Binding {
 
 // resolve a symbol in a binding and all of its parent bindings.
 func resolve(bind *Binding, sym *sx.Symbol) (sx.Object, bool) {
-	currBind := bind
-	for {
-		obj, found := currBind.Lookup(sym)
-		if found {
+	for curr := bind; curr != nil; curr = curr.parent {
+		if obj, found := curr.Lookup(sym); found {
 			return obj, true
 		}
-		if currBind.parent == nil {
-			return sx.Nil(), false
-		}
-		currBind = currBind.parent
 	}
+	return nil, false
 }
 
 // isConstBinding returns true if the symbol is defined with a constant

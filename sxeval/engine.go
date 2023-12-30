@@ -83,7 +83,7 @@ func resolveNotBound(env *Environment, args []sx.Object) (sx.Object, error) {
 		}
 		env = argEnv
 	}
-	return nil, NotBoundError{Binding: env.binding, Sym: sym}
+	return nil, NotBoundError{Env: env, Sym: sym}
 }
 
 // Copy creates a shallow copy of the given engine.

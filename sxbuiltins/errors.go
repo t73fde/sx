@@ -65,7 +65,7 @@ var NotBoundError = sxeval.Builtin{
 				return nil, err
 			}
 		}
-		return nil, sxeval.NotBoundError{Binding: env.Binding(), Sym: sym}
+		return nil, sxeval.NotBoundError{Env: env, Sym: sym}
 	},
 	NoCallError: true,
 }
