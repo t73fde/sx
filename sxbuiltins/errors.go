@@ -59,14 +59,13 @@ var NotBoundError = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		bind := env.Binding()
 		if len(args) == 2 {
-			bind, err = GetBinding(args, 1)
+			env, err = GetEnvironment(args, 1)
 			if err != nil {
 				return nil, err
 			}
 		}
-		return nil, sxeval.NotBoundError{Binding: bind, Sym: sym}
+		return nil, sxeval.NotBoundError{Binding: env.Binding(), Sym: sym}
 	},
 	NoCallError: true,
 }

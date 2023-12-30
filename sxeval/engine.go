@@ -76,15 +76,14 @@ func resolveNotBound(env *Environment, args []sx.Object) (sx.Object, error) {
 	if !isSymbol {
 		return nil, fmt.Errorf("argument 1 is not a symbol, but %T/%v", args[0], args[0])
 	}
-	bind := env.binding
 	if len(args) > 1 {
-		argBind, isBind := GetBinding(args[1])
+		argEnv, isBind := GetEnvironment(args[1])
 		if !isBind {
-			return nil, fmt.Errorf("argument 1 is not a binding, but %T/%v", args[1], args[1])
+			return nil, fmt.Errorf("argument 1 is not an environment, but %T/%v", args[1], args[1])
 		}
-		bind = argBind
+		env = argEnv
 	}
-	return nil, NotBoundError{Binding: bind, Sym: sym}
+	return nil, NotBoundError{Binding: env.binding, Sym: sym}
 }
 
 // Copy creates a shallow copy of the given engine.
@@ -105,7 +104,7 @@ func (eng *Engine) RootBinding() *Binding { return eng.root }
 // SetToplevelBinding sets the given binding as the top-level binding.
 // It must be the root binding or a child of it.
 func (eng *Engine) SetToplevelBinding(bind *Binding) error {
-	root := RootBinding(bind)
+	root := rootBinding(bind)
 	if root != eng.root {
 		return fmt.Errorf("root of %v is not root of engine %v: %v", bind, eng.root, root)
 	}
@@ -150,15 +149,7 @@ func (eng *Engine) Rework(expr Expr, bind *Binding) Expr {
 
 // Execute the given expression in the given binding.
 func (eng *Engine) Execute(expr Expr, bind *Binding, exec Executor) (sx.Object, error) {
-	if exec != nil {
-		exec.Reset()
-	}
-	env := Environment{
-		engine:   eng,
-		executor: exec,
-		binding:  bind,
-		caller:   nil,
-	}
+	env := MakeExecutionEnvironment(eng, exec, bind)
 	return env.Execute(expr)
 }
 

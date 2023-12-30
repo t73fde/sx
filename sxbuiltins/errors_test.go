@@ -44,15 +44,15 @@ var tcsError = tTestCases{
 		withErr: true,
 	},
 	{
-		name:    "not-bound-error-sym-nobinding",
+		name:    "not-bound-error-sym-noenv",
 		src:     "(not-bound-error 'sym 1)",
-		exp:     "{[{argument 2 is not a binding, but sx.Int64/1}]}",
+		exp:     "{[{argument 2 is not an environment, but sx.Int64/1}]}",
 		withErr: true,
 	},
 	{
-		name:    "not-bound-error-sym-binding",
+		name:    "not-bound-error-sym-env",
 		src:     "(not-bound-error 'sym (current-environment))",
-		exp:     "{[{symbol \"sym\" not bound in \"not-bound-error-sym-binding\"}]}",
+		exp:     "{[{symbol \"sym\" not bound in \"not-bound-error-sym-env\"}]}",
 		withErr: true,
 	},
 	{

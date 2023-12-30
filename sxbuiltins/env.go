@@ -25,9 +25,7 @@ var CurrentEnv = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: 0,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, _ []sx.Object) (sx.Object, error) {
-		return env.Binding(), nil
-	},
+	Fn:       func(env *sxeval.Environment, _ []sx.Object) (sx.Object, error) { return env, nil },
 }
 
 var ParentEnv = sxeval.Builtin{
@@ -36,7 +34,7 @@ var ParentEnv = sxeval.Builtin{
 	MaxArity: 1,
 	TestPure: nil,
 	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
-		env, err := GetBinding(args, 0)
+		env, err := GetEnvironment(args, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -53,11 +51,11 @@ var EnvBindings = sxeval.Builtin{
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
-		env, err := GetBinding(args, 0)
+		env, err := GetEnvironment(args, 0)
 		if err != nil {
 			return nil, err
 		}
-		return env.Bindings(), nil
+		return env.Binding().Bindings(), nil
 	},
 }
 
@@ -85,11 +83,11 @@ var EnvLookup = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil,
 	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
-		sym, bind, err := envGetSymBinding(env, args)
+		sym, env, err := envGetSymBinding(env, args)
 		if err != nil {
 			return nil, err
 		}
-		if obj, found := bind.Lookup(sym); found {
+		if obj, found := env.Lookup(sym); found {
 			return obj, nil
 		}
 		return sx.MakeUndefined(), nil
@@ -104,25 +102,25 @@ var EnvResolve = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil,
 	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
-		sym, bind, err := envGetSymBinding(env, args)
+		sym, env, err := envGetSymBinding(env, args)
 		if err != nil {
 			return nil, err
 		}
-		if obj, found := sxeval.Resolve(bind, sym); found {
+		if obj, found := env.Resolve(sym); found {
 			return obj, nil
 		}
 		return sx.MakeUndefined(), nil
 	},
 }
 
-func envGetSymBinding(env *sxeval.Environment, args []sx.Object) (*sx.Symbol, *sxeval.Binding, error) {
+func envGetSymBinding(env *sxeval.Environment, args []sx.Object) (*sx.Symbol, *sxeval.Environment, error) {
 	sym, err := GetSymbol(args, 0)
 	if err != nil {
 		return nil, nil, err
 	}
 	if len(args) == 1 {
-		return sym, env.Binding(), err
+		return sym, env, err
 	}
-	bind, err := GetBinding(args, 1)
-	return sym, bind, err
+	argEnv, err := GetEnvironment(args, 1)
+	return sym, argEnv, err
 }

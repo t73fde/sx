@@ -30,8 +30,8 @@ func (rf *ReworkFrame) MakeChildFrame(name string, baseSize int) *ReworkFrame {
 // ResolveConst will resolve the symbol in an environment that is assumed not
 // to be exchanged afterwards.
 func (rf *ReworkFrame) ResolveConst(sym *sx.Symbol) (sx.Object, bool) {
-	if bind := rf.binding; IsConstantBind(bind, sym) {
-		return Resolve(bind, sym)
+	if bind := rf.binding; isConstantBind(bind, sym) {
+		return resolve(bind, sym)
 	}
 	return nil, false
 }
@@ -45,11 +45,6 @@ func (rf *ReworkFrame) Bind(sym *sx.Symbol) error {
 //
 // It is only called, if no full environment is needed, only a binding.
 func (rf *ReworkFrame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
-	env := Environment{
-		engine:   nil,
-		executor: nil,
-		binding:  rf.binding,
-		caller:   nil,
-	}
+	env := MakeExecutionEnvironment(nil, nil, rf.binding)
 	return fn.Call(&env, args)
 }

@@ -15,20 +15,98 @@ package sxeval
 
 import (
 	"fmt"
+	"io"
+	"strconv"
 
 	"zettelstore.de/sx.fossil"
 )
 
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
+	parent   *Environment // the lexical parent environment
 	engine   *Engine
 	executor Executor // most of the time: engine.exec, but could be updated for interactive debugging
 	binding  *Binding
-	caller   *Environment
+	caller   *Environment // the dynamic call stack
+}
+
+// MakeExecutionEnvironment creates an environment for later execution of an expression.
+func MakeExecutionEnvironment(eng *Engine, exec Executor, bind *Binding) Environment {
+	if exec != nil {
+		exec.Reset()
+	}
+	parent := createLexicalEnvs(eng, exec, bind.parent)
+	return Environment{
+		parent:   parent,
+		engine:   eng,
+		executor: exec,
+		binding:  bind,
+		caller:   nil,
+	}
+}
+
+func createLexicalEnvs(eng *Engine, exec Executor, bind *Binding) *Environment {
+	if bind == nil {
+		return nil
+	}
+	parent := createLexicalEnvs(eng, exec, bind.parent)
+	return &Environment{
+		parent:   parent,
+		engine:   eng,
+		executor: exec,
+		binding:  bind,
+		caller:   nil,
+	}
+}
+
+func (env *Environment) IsNil() bool  { return env == nil }
+func (env *Environment) IsAtom() bool { return env == nil }
+func (env *Environment) IsEqual(other sx.Object) bool {
+	if env == other {
+		return true
+	}
+	if env.IsNil() {
+		return sx.IsNil(other)
+	}
+	if oenv, ok := other.(*Environment); ok {
+		return env.engine == oenv.engine &&
+			env.executor == oenv.executor &&
+			env.binding.IsEqual(oenv.binding) &&
+			env.caller == oenv.caller
+	}
+	return false
+}
+func (env *Environment) Repr() string { return sx.Repr(env) }
+func (env *Environment) Print(w io.Writer) (int, error) {
+	return sx.WriteStrings(w, "#<environment:", env.binding.name, "/", strconv.Itoa(len(env.binding.vars)), ">")
+}
+
+// String returns the local name of this binding.
+func (env *Environment) String() string { return env.binding.name }
+
+// Parent returns the lexical parent environment.
+func (env *Environment) Parent() *Environment {
+	if env == nil {
+		return nil
+	}
+	if env.binding.parent != env.parent.binding {
+		panic("err lexical")
+	}
+	return env.parent
+}
+
+// GetEnvironment returns the object as an environment, if possible.
+func GetEnvironment(obj sx.Object) (*Environment, bool) {
+	if sx.IsNil(obj) {
+		return nil, false
+	}
+	env, ok := obj.(*Environment)
+	return env, ok
 }
 
 func (env *Environment) NewDynamicEnvironment() *Environment {
 	return &Environment{
+		parent:   env.parent,
 		engine:   env.engine,
 		executor: env.executor,
 		binding:  env.binding,
@@ -52,6 +130,7 @@ func (env *Environment) MakeReworkFrame() *ReworkFrame {
 
 func (env *Environment) NewLexicalEnvironment(pf *ParseFrame, name string, numBindings int) *Environment {
 	return &Environment{
+		parent:   env,
 		engine:   env.engine,
 		executor: env.executor,
 		binding:  MakeChildBinding(pf.binding, name, numBindings),
@@ -133,7 +212,7 @@ func (env *Environment) CallResolveCallable(sym *sx.Symbol) (sx.Object, error) {
 func (env *Environment) callResolve(sym *sx.Symbol, defSym *sx.Symbol) (sx.Object, error) {
 	if obj, found := env.Resolve(defSym); found {
 		if fn, isCallable := obj.(Callable); isCallable {
-			return env.Call(fn, []sx.Object{sym, env.binding})
+			return env.Call(fn, []sx.Object{sym, env})
 		}
 	}
 	return nil, env.MakeNotBoundError(sym)
@@ -145,16 +224,19 @@ func (env *Environment) Bind(sym *sx.Symbol, obj sx.Object) error {
 func (env *Environment) BindConst(sym *sx.Symbol, obj sx.Object) error {
 	return env.binding.BindConst(sym, obj)
 }
+func (env *Environment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
+	return env.binding.Lookup(sym)
+}
 func (env *Environment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
-	return Resolve(env.binding, sym)
+	return resolve(env.binding, sym)
 }
 func (env *Environment) FindBinding(sym *sx.Symbol) *Binding {
 	bind := env.binding
-	for !sx.IsNil(bind) {
+	for bind != nil {
 		if _, found := bind.Lookup(sym); found {
 			return bind
 		}
-		bind = bind.Parent()
+		bind = bind.parent
 	}
 	return bind
 }

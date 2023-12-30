@@ -176,7 +176,7 @@ func (se *SetXExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 }
 func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	bind := env.FindBinding(se.Sym)
-	if sx.IsNil(bind) {
+	if bind == nil {
 		return nil, env.MakeNotBoundError(se.Sym)
 	}
 	subEnv := env.NewDynamicEnvironment()

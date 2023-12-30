@@ -41,8 +41,7 @@ func (mpe *mainParserExecutor) Parse(pf *sxeval.ParseFrame, form sx.Object) (sxe
 	if !mpe.logParser {
 		return mpe.origParser.Parse(pf, form)
 	}
-	bind := pf.Binding()
-	fmt.Printf(";P %v<-%v %T %v\n", bind, bind.Parent(), form, form)
+	fmt.Printf(";P %v %T %v\n", pf, form, form)
 	expr, err := mpe.origParser.Parse(pf, form)
 	if err != nil {
 		return nil, err
@@ -59,8 +58,7 @@ func (mpe *mainParserExecutor) Execute(env *sxeval.Environment, expr sxeval.Expr
 	if !mpe.logExecutor {
 		return mpe.baseExecutor.Execute(env, expr)
 	}
-	bind := env.Binding()
-	fmt.Printf(";X %v<-%v ", bind, bind.Parent())
+	fmt.Printf(";X %v<-%v ", env, env.Parent())
 	expr.Print(os.Stdout)
 	fmt.Println()
 	obj, err := mpe.baseExecutor.Execute(env, expr)

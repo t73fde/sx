@@ -20,41 +20,6 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-func TestGetBinding(t *testing.T) {
-	if _, ok := sxeval.GetBinding(nil); ok {
-		t.Error("nil is not a binding")
-	}
-	if _, ok := sxeval.GetBinding((*sxeval.Binding)(nil)); ok {
-		t.Error("nil binding is not a binding")
-	}
-	if _, ok := sxeval.GetBinding(sx.Nil()); ok {
-		t.Error("Nil() is a binding")
-	}
-	var o sx.Object = sxeval.MakeRootBinding(0)
-	res, ok := sxeval.GetBinding(o)
-	if !ok {
-		t.Error("is a binding:", o)
-	} else if !o.IsEqual(res) {
-		t.Error("Different bindings, expected:", o, "but got", res)
-	}
-}
-
-func TestBindingRoot(t *testing.T) {
-	t.Parallel()
-	root := sxeval.MakeRootBinding(0)
-	if got := root.Parent(); got != nil {
-		t.Error("root binding has a parent", got)
-	}
-	child := sxeval.MakeChildBinding(root, "child", 0)
-	if got := child.Parent(); got != root {
-		t.Error("root child parent is not root", got)
-	}
-	grandchild := sxeval.MakeChildBinding(child, "grandchild", 0)
-	if got := grandchild.Parent(); got != child {
-		t.Error("grandchild parent is not child", got)
-	}
-}
-
 func TestBindLookupUnbind(t *testing.T) {
 	t.Parallel()
 	sf := sx.MakeMappedFactory(2)
@@ -81,19 +46,9 @@ func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.
 	if _, found := child.Lookup(sym1); found {
 		t.Error("Symbol", sym1, "was found in child")
 	}
-	if val, found := sxeval.Resolve(child, sym1); !found {
-		t.Error("Symbol", sym1, "not resolved")
-	} else if val != sym2 {
-		t.Errorf("Symbol %v should resolve to %v, but got %v", sym1, sym2, val)
-	}
 
 	if val, found := child.Lookup(sym2); !found {
 		t.Error("Symbol", sym2, "not found")
-	} else if val != sym1 {
-		t.Errorf("Symbol %v should resolve to %v, but got %v", sym2, sym1, val)
-	}
-	if val, found := sxeval.Resolve(child, sym2); !found {
-		t.Error("Symbol", sym2, "not resolved")
 	} else if val != sym1 {
 		t.Errorf("Symbol %v should resolve to %v, but got %v", sym2, sym1, val)
 	}
@@ -103,13 +58,6 @@ func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.
 	}
 	if cc := child.Bindings().Assoc(sym2); cc == nil {
 		t.Error("Symbol", sym2, "not found in child bindings")
-	}
-	bindings := sxeval.AllBindings(child)
-	if cc := bindings.Assoc(sym1); cc == nil {
-		t.Error("Symbol", sym1, "not found in bindings")
-	}
-	if cc := bindings.Assoc(sym2); cc == nil {
-		t.Error("Symbol", sym2, "not found in bindings")
 	}
 
 	root.Unbind(sym1)

@@ -26,6 +26,8 @@ type ParseFrame struct {
 	parser  Parser
 }
 
+func (pf *ParseFrame) String() string { return pf.binding.String() }
+
 func (pf *ParseFrame) IsEqual(other *ParseFrame) bool {
 	if pf == other {
 		return true
@@ -70,6 +72,6 @@ func (pf *ParseFrame) SymbolFactory() sx.SymbolFactory { return pf.sf }
 func (pf *ParseFrame) Bind(sym *sx.Symbol, obj sx.Object) error { return pf.binding.Bind(sym, obj) }
 
 func (pf *ParseFrame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
-	return Resolve(pf.binding, sym)
+	return resolve(pf.binding, sym)
 }
 func (pf *ParseFrame) Binding() *Binding { return pf.binding }

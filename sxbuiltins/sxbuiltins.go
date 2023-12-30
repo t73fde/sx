@@ -71,13 +71,13 @@ func GetPair(args []sx.Object, pos int) (*sx.Pair, error) {
 	return nil, fmt.Errorf("argument %d is not a pair, but %T/%v", pos+1, obj, obj)
 }
 
-// GetBinding returns the given argument as a binding, and checks for errors.
-func GetBinding(args []sx.Object, pos int) (*sxeval.Binding, error) {
+// GetEnvironment returns the given argument as an environment, and checks for errors.
+func GetEnvironment(args []sx.Object, pos int) (*sxeval.Environment, error) {
 	obj := args[pos]
-	if bind, ok := sxeval.GetBinding(obj); ok {
-		return bind, nil
+	if env, ok := sxeval.GetEnvironment(obj); ok {
+		return env, nil
 	}
-	return nil, fmt.Errorf("argument %d is not a binding, but %T/%v", pos+1, obj, obj)
+	return nil, fmt.Errorf("argument %d is not an environment, but %T/%v", pos+1, obj, obj)
 }
 
 // GetCallable returns the given argument as a callable, and checks for errors.

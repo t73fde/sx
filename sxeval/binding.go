@@ -102,19 +102,6 @@ func (mb *Binding) Print(w io.Writer) (int, error) {
 // String returns the local name of this binding.
 func (mb *Binding) String() string { return mb.name }
 
-// Parent allows to retrieve the parent binding. If the binding is the root
-// binding, nil is returned. Lookups that cannot be satisfied in an
-// binding are often delegated to the parent binding.
-func (mb *Binding) Parent() *Binding {
-	if mb == nil {
-		return nil
-	}
-	return mb.parent
-}
-
-// IsRoot returns true for the root binding.
-func (mb *Binding) IsRoot() bool { return mb == nil || mb.isRoot }
-
 // Bind creates a local mapping with a given symbol and object.
 //
 // A previous, non-const mapping will be overwritten.
@@ -201,86 +188,44 @@ func (mb *Binding) Unbind(sym *sx.Symbol) error {
 // Freeze sets the binding in a read-only state.
 func (mb *Binding) Freeze() { mb.frozen = true }
 
-// GetBinding returns the object as a binding, if possible.
-func GetBinding(obj sx.Object) (*Binding, bool) {
-	if sx.IsNil(obj) {
-		return nil, false
-	}
-	bind, ok := obj.(*Binding)
-	return bind, ok
-}
-
-// RootBinding returns the root binding of the given binding.
-func RootBinding(bind *Binding) *Binding {
+// rootBinding returns the root binding of the given binding.
+func rootBinding(bind *Binding) *Binding {
 	currBind := bind
 	for {
-		if currBind.IsRoot() {
+		if currBind.parent == nil {
 			return currBind
 		}
-		currBind = currBind.Parent()
+		currBind = currBind.parent
 	}
 }
 
-// Resolve a symbol is a binding and all of its parent bindings.
-func Resolve(bind *Binding, sym *sx.Symbol) (sx.Object, bool) {
+// resolve a symbol in a binding and all of its parent bindings.
+func resolve(bind *Binding, sym *sx.Symbol) (sx.Object, bool) {
 	currBind := bind
 	for {
 		obj, found := currBind.Lookup(sym)
 		if found {
 			return obj, true
 		}
-		if currBind.IsRoot() {
+		if currBind.parent == nil {
 			return sx.Nil(), false
 		}
-		currBind = currBind.Parent()
+		currBind = currBind.parent
 	}
 }
 
-// IsConstBinding returns true if the symbol is defined with a constant
+// isConstBinding returns true if the symbol is defined with a constant
 // binding in the given binding or its parent bindings.
-func IsConstantBind(bind *Binding, sym *sx.Symbol) bool {
+func isConstantBind(bind *Binding, sym *sx.Symbol) bool {
 	currBind := bind
-	for !sx.IsNil(currBind) {
+	for currBind != nil {
 		if currBind.IsConst(sym) {
 			return true
 		}
 		if _, found := currBind.Lookup(sym); found {
 			return false
 		}
-		currBind = currBind.Parent()
+		currBind = currBind.parent
 	}
 	return false
-}
-
-// AllBindings returns an a-list of all bindings in the given binding and its parent bindinga.
-func AllBindings(bind *Binding) *sx.Pair {
-	currBind := bind
-	result := currBind.Bindings()
-	currResult := result
-	if currResult != nil {
-		for currResult.Tail() != nil {
-			currResult = currResult.Tail()
-		}
-	}
-	for {
-		if currBind.IsRoot() {
-			return result
-		}
-		currBind = currBind.Parent()
-		if currBind == nil {
-			return result
-		}
-		res := currBind.Bindings()
-		if result == nil {
-			result = res
-			currResult = result
-			if currResult != nil {
-				for currResult.Tail() != nil {
-					currResult = currResult.Tail()
-				}
-			}
-		} else {
-			currResult = currResult.ExtendBang(res)
-		}
-	}
 }
