@@ -33,7 +33,7 @@ func createTestBinding(sf sx.SymbolFactory) *sxeval.Binding {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 			var sb strings.Builder
 			for _, val := range args {
 				var s string

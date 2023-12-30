@@ -79,14 +79,14 @@ func (de *DefineExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	de.Val = de.Val.Rework(rf)
 	return de
 }
-func (de *DefineExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	subFrame := frame.MakeCalleeFrame()
-	val, err := subFrame.Execute(de.Val)
+func (de *DefineExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
+	subEnv := env.NewDynamicEnvironment()
+	val, err := subEnv.Execute(de.Val)
 	if err == nil {
 		if de.Const {
-			err = frame.BindConst(de.Sym, val)
+			err = env.BindConst(de.Sym, val)
 		} else {
-			err = frame.Bind(de.Sym, val)
+			err = env.Bind(de.Sym, val)
 		}
 	}
 	return val, err
@@ -174,13 +174,13 @@ func (se *SetXExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	se.Val = se.Val.Rework(rf)
 	return se
 }
-func (se *SetXExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	bind := frame.FindBinding(se.Sym)
+func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
+	bind := env.FindBinding(se.Sym)
 	if sx.IsNil(bind) {
-		return nil, frame.MakeNotBoundError(se.Sym)
+		return nil, env.MakeNotBoundError(se.Sym)
 	}
-	subFrame := frame.MakeCalleeFrame()
-	val, err := subFrame.Execute(se.Val)
+	subEnv := env.NewDynamicEnvironment()
+	val, err := subEnv.Execute(se.Val)
 	if err == nil {
 		err = bind.Bind(se.Sym, val)
 	}

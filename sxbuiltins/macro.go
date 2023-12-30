@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -32,7 +35,7 @@ var DefMacroS = sxeval.Special{
 
 // Macro represents the macro definition form.
 type Macro struct {
-	Frame  *sxeval.Frame
+	Env    *sxeval.Environment
 	PFrame *sxeval.ParseFrame
 	Name   string
 	Params []*sx.Symbol
@@ -93,7 +96,7 @@ func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 		Rest:   m.Rest,
 		Expr:   m.Expr,
 	}
-	return m.Frame.Call(&proc, macroArgs)
+	return m.Env.Call(&proc, macroArgs)
 }
 
 // MacroExpand0 implements one level of macro expansion.
@@ -104,13 +107,13 @@ var Macroexpand0 = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		lst, err := GetList(args, 0)
 		if err == nil && lst != nil {
 			if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
-				if obj, found := frame.Resolve(sym); found {
+				if obj, found := env.Resolve(sym); found {
 					if macro, isMacro := obj.(*Macro); isMacro {
-						return macro.Expand(frame.MakeParseFrame(), lst.Tail())
+						return macro.Expand(env.MakeParseFrame(), lst.Tail())
 					}
 				}
 			}

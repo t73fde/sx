@@ -43,13 +43,13 @@ func (rf *ReworkFrame) Bind(sym *sx.Symbol) error {
 
 // Call a function for constant folding.
 //
-// It is only called, if no full Frame is needed, only an environment.
+// It is only called, if no full environment is needed, only a binding.
 func (rf *ReworkFrame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
-	frame := Frame{
+	env := Environment{
 		engine:   nil,
 		executor: nil,
 		binding:  rf.binding,
 		caller:   nil,
 	}
-	return fn.Call(&frame, args)
+	return fn.Call(&env, args)
 }

@@ -55,15 +55,15 @@ func (mpe *mainParserExecutor) Parse(pf *sxeval.ParseFrame, form sx.Object) (sxe
 
 func (mpe *mainParserExecutor) Reset() { mpe.baseExecutor.Reset() }
 
-func (mpe *mainParserExecutor) Execute(frame *sxeval.Frame, expr sxeval.Expr) (sx.Object, error) {
+func (mpe *mainParserExecutor) Execute(env *sxeval.Environment, expr sxeval.Expr) (sx.Object, error) {
 	if !mpe.logExecutor {
-		return mpe.baseExecutor.Execute(frame, expr)
+		return mpe.baseExecutor.Execute(env, expr)
 	}
-	bind := frame.Binding()
+	bind := env.Binding()
 	fmt.Printf(";X %v<-%v ", bind, bind.Parent())
 	expr.Print(os.Stdout)
 	fmt.Println()
-	obj, err := mpe.baseExecutor.Execute(frame, expr)
+	obj, err := mpe.baseExecutor.Execute(env, expr)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			res := mpe.logReader
 			mpe.logReader = !res
 			return sx.MakeBoolean(res), nil
@@ -158,7 +158,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			res := mpe.logParser
 			mpe.logParser = !res
 			return sx.MakeBoolean(res), nil
@@ -169,7 +169,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			res := mpe.logExpr
 			mpe.logExpr = !res
 			return sx.MakeBoolean(res), nil
@@ -180,7 +180,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			res := mpe.logExecutor
 			mpe.logExecutor = !res
 			return sx.MakeBoolean(res), nil
@@ -191,7 +191,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			mpe.logReader = false
 			mpe.logParser = false
 			mpe.logExecutor = false
@@ -203,7 +203,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 1,
 		TestPure: nil,
-		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 			if len(args) == 0 {
 				panic("common panic")
 			}

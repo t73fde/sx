@@ -51,7 +51,7 @@ func MakeEngine(sf sx.SymbolFactory, root *Binding) *Engine {
 const resolveSymbolName = "*RESOLVE-SYMBOL*"
 const resolveCallableName = "*RESOLVE-CALLABLE*"
 
-type simpleBuiltin func(*Frame, []sx.Object) (sx.Object, error)
+type simpleBuiltin func(*Environment, []sx.Object) (sx.Object, error)
 
 func (sb simpleBuiltin) IsNil() bool  { return sb == nil }
 func (sb simpleBuiltin) IsAtom() bool { return sb == nil }
@@ -64,11 +64,11 @@ func (sb simpleBuiltin) IsEqual(other sx.Object) bool {
 func (sb simpleBuiltin) Repr() string            { return "#<simple-builtin>" }
 func (sb simpleBuiltin) String() string          { return "simple-builtin" }
 func (sb simpleBuiltin) IsPure([]sx.Object) bool { return false }
-func (sb simpleBuiltin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
-	return sb(frame, args)
+func (sb simpleBuiltin) Call(env *Environment, args []sx.Object) (sx.Object, error) {
+	return sb(env, args)
 }
 
-func resolveNotBound(frame *Frame, args []sx.Object) (sx.Object, error) {
+func resolveNotBound(env *Environment, args []sx.Object) (sx.Object, error) {
 	if len(args) == 0 {
 		return nil, fmt.Errorf("at least one argument expected, but none given")
 	}
@@ -76,7 +76,7 @@ func resolveNotBound(frame *Frame, args []sx.Object) (sx.Object, error) {
 	if !isSymbol {
 		return nil, fmt.Errorf("argument 1 is not a symbol, but %T/%v", args[0], args[0])
 	}
-	bind := frame.binding
+	bind := env.binding
 	if len(args) > 1 {
 		argBind, isBind := GetBinding(args[1])
 		if !isBind {
@@ -153,13 +153,13 @@ func (eng *Engine) Execute(expr Expr, bind *Binding, exec Executor) (sx.Object, 
 	if exec != nil {
 		exec.Reset()
 	}
-	frame := Frame{
+	env := Environment{
 		engine:   eng,
 		executor: exec,
 		binding:  bind,
 		caller:   nil,
 	}
-	return frame.Execute(expr)
+	return env.Execute(expr)
 }
 
 // BindSpecial binds a syntax parser to the its name in the engine's root binding.

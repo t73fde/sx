@@ -25,8 +25,8 @@ var CurrentEnv = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: 0,
 	TestPure: nil,
-	Fn: func(frame *sxeval.Frame, _ []sx.Object) (sx.Object, error) {
-		return frame.Binding(), nil
+	Fn: func(env *sxeval.Environment, _ []sx.Object) (sx.Object, error) {
+		return env.Binding(), nil
 	},
 }
 
@@ -35,7 +35,7 @@ var ParentEnv = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		env, err := GetBinding(args, 0)
 		if err != nil {
 			return nil, err
@@ -52,7 +52,7 @@ var EnvBindings = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		env, err := GetBinding(args, 0)
 		if err != nil {
 			return nil, err
@@ -67,12 +67,12 @@ var BoundP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		sym, err := GetSymbol(args, 0)
 		if err != nil {
 			return nil, err
 		}
-		_, found := frame.Resolve(sym)
+		_, found := env.Resolve(sym)
 		return sx.MakeBoolean(found), nil
 	},
 }
@@ -84,12 +84,12 @@ var EnvLookup = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		sym, env, err := envGetSymEnv(frame, args)
+	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+		sym, bind, err := envGetSymBinding(env, args)
 		if err != nil {
 			return nil, err
 		}
-		if obj, found := env.Lookup(sym); found {
+		if obj, found := bind.Lookup(sym); found {
 			return obj, nil
 		}
 		return sx.MakeUndefined(), nil
@@ -103,26 +103,26 @@ var EnvResolve = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
-		sym, env, err := envGetSymEnv(frame, args)
+	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+		sym, bind, err := envGetSymBinding(env, args)
 		if err != nil {
 			return nil, err
 		}
-		if obj, found := sxeval.Resolve(env, sym); found {
+		if obj, found := sxeval.Resolve(bind, sym); found {
 			return obj, nil
 		}
 		return sx.MakeUndefined(), nil
 	},
 }
 
-func envGetSymEnv(frame *sxeval.Frame, args []sx.Object) (*sx.Symbol, *sxeval.Binding, error) {
+func envGetSymBinding(env *sxeval.Environment, args []sx.Object) (*sx.Symbol, *sxeval.Binding, error) {
 	sym, err := GetSymbol(args, 0)
 	if err != nil {
 		return nil, nil, err
 	}
 	if len(args) == 1 {
-		return sym, frame.Binding(), err
+		return sym, env.Binding(), err
 	}
-	env, err := GetBinding(args, 1)
-	return sym, env, err
+	bind, err := GetBinding(args, 1)
+	return sym, bind, err
 }

@@ -33,7 +33,7 @@ type Builtin struct {
 	TestPure func([]sx.Object) bool
 
 	// The actual builtin function
-	Fn func(*Frame, []sx.Object) (sx.Object, error)
+	Fn func(*Environment, []sx.Object) (sx.Object, error)
 
 	// Do not add a CallError
 	NoCallError bool
@@ -85,8 +85,8 @@ func (b *Builtin) IsPure(objs []sx.Object) bool {
 	return false
 }
 
-// Call the builtin function with the given frame and arguments.
-func (b *Builtin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
+// Call the builtin function with the given environment and arguments.
+func (b *Builtin) Call(env *Environment, args []sx.Object) (sx.Object, error) {
 	// Check arity
 	nargs := len(args)
 	if nargs > math.MaxInt16 {
@@ -109,7 +109,7 @@ func (b *Builtin) Call(frame *Frame, args []sx.Object) (sx.Object, error) {
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 
-	obj, err := b.Fn(frame, args)
+	obj, err := b.Fn(env, args)
 	if err == nil {
 		return obj, nil
 	}

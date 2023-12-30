@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -54,7 +57,7 @@ var Map = sxeval.Builtin{
 			lst = pair
 		}
 	},
-	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		// fn must be checked first, because it is an error, if argument 0 is
 		// not a callable, even if the list is empty and fn will never be called.
 		fn, err := GetCallable(args, 0)
@@ -69,7 +72,7 @@ var Map = sxeval.Builtin{
 			return sx.Nil(), nil
 		}
 
-		val, err := frame.Call(fn, []sx.Object{lst.Car()})
+		val, err := env.Call(fn, []sx.Object{lst.Car()})
 		if err != nil {
 			return sx.Nil(), err
 		}
@@ -82,14 +85,14 @@ var Map = sxeval.Builtin{
 			}
 			pair, isPair := sx.GetPair(cdr2)
 			if !isPair {
-				val2, err2 := frame.Call(fn, []sx.Object{cdr2})
+				val2, err2 := env.Call(fn, []sx.Object{cdr2})
 				if err2 != nil {
 					return result, err2
 				}
 				curr.SetCdr(val2)
 				break
 			}
-			val2, err2 := frame.Call(fn, []sx.Object{pair.Car()})
+			val2, err2 := env.Call(fn, []sx.Object{pair.Car()})
 			if err2 != nil {
 				return result, err2
 			}
@@ -106,7 +109,7 @@ var Apply = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: nil, // Might be changed in the future
-	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		lst, err := GetList(args, 1)
 		if err != nil {
 			return nil, err
@@ -116,14 +119,14 @@ var Apply = sxeval.Builtin{
 			Args: nil,
 		}
 		if lst == nil {
-			return frame.ExecuteTCO(&callExpr)
+			return env.ExecuteTCO(&callExpr)
 		}
 		callExpr.Args = append(callExpr.Args, sxeval.ObjExpr{Obj: lst.Car()})
 		for node := lst; ; {
 			cdr := node.Cdr()
 			if sx.IsNil(cdr) {
-				expr := callExpr.Rework(frame.MakeReworkFrame())
-				return frame.ExecuteTCO(expr)
+				expr := callExpr.Rework(env.MakeReworkFrame())
+				return env.ExecuteTCO(expr)
 			}
 			if next, ok2 := sx.GetPair(cdr); ok2 {
 				node = next
@@ -141,7 +144,7 @@ var Fold = sxeval.Builtin{
 	MinArity: 3,
 	MaxArity: 3,
 	TestPure: nil, // Might be changed in the future
-	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		fn, err := GetCallable(args, 0)
 		if err != nil {
 			return nil, err
@@ -155,7 +158,7 @@ var Fold = sxeval.Builtin{
 		for node := lst; node != nil; {
 			params[0] = node.Car()
 			params[1] = res
-			res, err = frame.Call(fn, params)
+			res, err = env.Call(fn, params)
 			if err != nil {
 				return nil, err
 			}
@@ -175,7 +178,7 @@ var FoldReverse = sxeval.Builtin{
 	MinArity: 3,
 	MaxArity: 3,
 	TestPure: nil, // Might be changed in the future
-	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		fn, err := GetCallable(args, 0)
 		if err != nil {
 			return nil, err
@@ -193,7 +196,7 @@ var FoldReverse = sxeval.Builtin{
 		for node := rev; node != nil; {
 			params[0] = node.Car()
 			params[1] = res
-			res, err = frame.Call(fn, params)
+			res, err = env.Call(fn, params)
 			if err != nil {
 				return nil, err
 			}

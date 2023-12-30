@@ -27,7 +27,7 @@ var CallableP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		_, ok := sxeval.GetCallable(args[0])
 		return sx.MakeBoolean(ok), nil
 	},
@@ -45,7 +45,7 @@ var DefunS = sxeval.Special{
 	},
 }
 
-func parseDefProc(frame *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaExpr, error) {
+func parseDefProc(pf *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaExpr, error) {
 	if args == nil {
 		return nil, nil, sxeval.ErrNoArgs
 	}
@@ -57,7 +57,7 @@ func parseDefProc(frame *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaE
 	if args == nil {
 		return nil, nil, fmt.Errorf("parameter spec and body missing")
 	}
-	le, err := ParseProcedure(frame, sx.Repr(sym), args.Car(), args.Cdr())
+	le, err := ParseProcedure(pf, sx.Repr(sym), args.Car(), args.Cdr())
 	return sym, le, err
 }
 
@@ -191,11 +191,11 @@ func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	le.Expr = le.Expr.Rework(fnFrame)
 	return le
 }
-func (le *LambdaExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	if le.IsMacro {
 		return &Macro{
-			Frame:  frame,
-			PFrame: frame.MakeParseFrame(),
+			Env:    env,
+			PFrame: env.MakeParseFrame(),
 			Name:   le.Name,
 			Params: le.Params,
 			Rest:   le.Rest,
@@ -203,7 +203,7 @@ func (le *LambdaExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
 		}, nil
 	}
 	return &Procedure{
-		PFrame: frame.MakeParseFrame(),
+		PFrame: env.MakeParseFrame(),
 		Name:   le.Name,
 		Params: le.Params,
 		Rest:   le.Rest,
@@ -298,7 +298,7 @@ func (p *Procedure) Print(w io.Writer) (int, error) {
 func (p *Procedure) IsPure([]sx.Object) bool { return false }
 
 // Call the Procedure.
-func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+func (p *Procedure) Call(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 	numParams := len(p.Params)
 	if len(args) < numParams {
 		return nil, fmt.Errorf("%s: missing arguments: %v", p.Name, p.Params[len(args):])
@@ -307,20 +307,20 @@ func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, erro
 	if p.Rest != nil {
 		bindSize++
 	}
-	lambdaFrame := frame.MakeLambdaFrame(p.PFrame, p.Name, bindSize)
+	lexicalEnv := env.NewLexicalEnvironment(p.PFrame, p.Name, bindSize)
 	for i, p := range p.Params {
-		err := lambdaFrame.Bind(p, args[i])
+		err := lexicalEnv.Bind(p, args[i])
 		if err != nil {
 			return nil, err
 		}
 	}
 	if p.Rest != nil {
-		err := lambdaFrame.Bind(p.Rest, sx.MakeList(args[numParams:]...))
+		err := lexicalEnv.Bind(p.Rest, sx.MakeList(args[numParams:]...))
 		if err != nil {
 			return nil, err
 		}
 	} else if len(args) > numParams {
 		return nil, fmt.Errorf("%s: excess arguments: %v", p.Name, args[numParams:])
 	}
-	return lambdaFrame.ExecuteTCO(p.Expr)
+	return lexicalEnv.ExecuteTCO(p.Expr)
 }

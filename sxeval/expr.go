@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxeval
@@ -26,7 +29,7 @@ type Expr interface {
 	// Compute the expression in a frame and return the result.
 	// It may have side-effects, on the given environment, or on the
 	// general environment of the system.
-	Compute(*Frame) (sx.Object, error)
+	Compute(*Environment) (sx.Object, error)
 
 	// IsEqual compare two expressions for deep equality.
 	IsEqual(Expr) bool
@@ -73,11 +76,11 @@ var NilExpr = nilExpr{}
 
 type nilExpr struct{}
 
-func (nilExpr) Rework(*ReworkFrame) Expr          { return NilExpr }
-func (nilExpr) Compute(*Frame) (sx.Object, error) { return sx.Nil(), nil }
-func (nilExpr) IsEqual(other Expr) bool           { return other == NilExpr }
-func (nilExpr) Print(w io.Writer) (int, error)    { return io.WriteString(w, "{NIL}") }
-func (nilExpr) Object() sx.Object                 { return sx.Nil() }
+func (nilExpr) Rework(*ReworkFrame) Expr                { return NilExpr }
+func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
+func (nilExpr) IsEqual(other Expr) bool                 { return other == NilExpr }
+func (nilExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{NIL}") }
+func (nilExpr) Object() sx.Object                       { return sx.Nil() }
 
 // ObjExpr returns the stored object.
 type ObjExpr struct {
@@ -90,7 +93,7 @@ func (oe ObjExpr) Rework(rf *ReworkFrame) Expr {
 	}
 	return oe
 }
-func (oe ObjExpr) Compute(*Frame) (sx.Object, error) { return oe.Obj, nil }
+func (oe ObjExpr) Compute(*Environment) (sx.Object, error) { return oe.Obj, nil }
 func (oe ObjExpr) IsEqual(other Expr) bool {
 	if oe == other {
 		return true
@@ -127,11 +130,11 @@ func (re ResolveSymbolExpr) Rework(rf *ReworkFrame) Expr {
 	}
 	return re
 }
-func (re ResolveSymbolExpr) Compute(frame *Frame) (sx.Object, error) {
-	if obj, found := frame.Resolve(re.Symbol); found {
+func (re ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
+	if obj, found := env.Resolve(re.Symbol); found {
 		return obj, nil
 	}
-	return frame.CallResolveSymbol(re.Symbol)
+	return env.CallResolveSymbol(re.Symbol)
 }
 func (re ResolveSymbolExpr) IsEqual(other Expr) bool {
 	if re == other {
@@ -158,11 +161,11 @@ func (re ResolveProcSymbolExpr) Rework(rf *ReworkFrame) Expr {
 	}
 	return re
 }
-func (re ResolveProcSymbolExpr) Compute(frame *Frame) (sx.Object, error) {
-	if obj, found := frame.Resolve(re.Symbol); found {
+func (re ResolveProcSymbolExpr) Compute(env *Environment) (sx.Object, error) {
+	if obj, found := env.Resolve(re.Symbol); found {
 		return obj, nil
 	}
-	return frame.CallResolveCallable(re.Symbol)
+	return env.CallResolveCallable(re.Symbol)
 }
 func (re ResolveProcSymbolExpr) IsEqual(other Expr) bool {
 	if re == other {
@@ -203,9 +206,9 @@ func (ce *CallExpr) Rework(rf *ReworkFrame) Expr {
 	}
 	return ce
 }
-func (ce *CallExpr) Compute(frame *Frame) (sx.Object, error) {
-	subFrame := frame.MakeCalleeFrame()
-	val, err := subFrame.Execute(ce.Proc)
+func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {
+	subEnv := env.NewDynamicEnvironment()
+	val, err := subEnv.Execute(ce.Proc)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +220,7 @@ func (ce *CallExpr) Compute(frame *Frame) (sx.Object, error) {
 		return nil, NotCallableError{Obj: val}
 	}
 
-	return computeCallable(frame, proc, ce.Args)
+	return computeCallable(env, proc, ce.Args)
 }
 func (ce *CallExpr) IsEqual(other Expr) bool {
 	if ce == other {
@@ -251,20 +254,20 @@ func (ce *CallExpr) Print(w io.Writer) (int, error) {
 	return length, err
 }
 
-func computeCallable(frame *Frame, proc Callable, args []Expr) (sx.Object, error) {
+func computeCallable(env *Environment, proc Callable, args []Expr) (sx.Object, error) {
 	if len(args) == 0 {
-		return proc.Call(frame, nil)
+		return proc.Call(env, nil)
 	}
 	objArgs := make([]sx.Object, len(args))
 	for i, exprArg := range args {
-		subFrame := frame.MakeCalleeFrame()
-		val, err := subFrame.Execute(exprArg)
+		subEnv := env.NewDynamicEnvironment()
+		val, err := subEnv.Execute(exprArg)
 		if err != nil {
 			return val, err
 		}
 		objArgs[i] = val
 	}
-	return proc.Call(frame, objArgs)
+	return proc.Call(env, objArgs)
 }
 
 // NotCallableError signals that a value cannot be called when it must be called.
@@ -311,9 +314,9 @@ func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 	}
 	return ObjExpr{Obj: result}.Rework(rf)
 }
-func (bce *BuiltinCallExpr) Compute(frame *Frame) (sx.Object, error) {
-	subFrame := frame.MakeCalleeFrame()
-	return computeCallable(subFrame, bce.Proc, bce.Args)
+func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
+	subEnv := env.NewDynamicEnvironment()
+	return computeCallable(subEnv, bce.Proc, bce.Args)
 }
 func (bce *BuiltinCallExpr) IsEqual(other Expr) bool {
 	if bce == other {
