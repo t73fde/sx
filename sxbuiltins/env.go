@@ -115,7 +115,7 @@ var EnvResolve = sxeval.Builtin{
 	},
 }
 
-func envGetSymEnv(frame *sxeval.Frame, args []sx.Object) (*sx.Symbol, sxeval.Binding, error) {
+func envGetSymEnv(frame *sxeval.Frame, args []sx.Object) (*sx.Symbol, *sxeval.Binding, error) {
 	sym, err := GetSymbol(args, 0)
 	if err != nil {
 		return nil, nil, err

@@ -25,15 +25,15 @@ import (
 // Engine is the collection of all relevant data element to execute / evaluate an object.
 type Engine struct {
 	sf         sx.SymbolFactory
-	root       Binding
-	toplevel   Binding
+	root       *Binding
+	toplevel   *Binding
 	pars       Parser
 	symResSym  *sx.Symbol
 	symResCall *sx.Symbol
 }
 
 // MakeEngine creates a new engine.
-func MakeEngine(sf sx.SymbolFactory, root Binding) *Engine {
+func MakeEngine(sf sx.SymbolFactory, root *Binding) *Engine {
 	symResSym := sf.MustMake(resolveSymbolName)
 	root.Bind(symResSym, simpleBuiltin(resolveNotBound))
 	symResCall := sf.MustMake(resolveCallableName)
@@ -100,11 +100,11 @@ func (eng *Engine) Copy() *Engine {
 func (eng *Engine) SymbolFactory() sx.SymbolFactory { return eng.sf }
 
 // RootBinding returns the root binding of the engine.
-func (eng *Engine) RootBinding() Binding { return eng.root }
+func (eng *Engine) RootBinding() *Binding { return eng.root }
 
 // SetToplevelBinding sets the given binding as the top-level binding.
 // It must be the root binding or a child of it.
-func (eng *Engine) SetToplevelBinding(bind Binding) error {
+func (eng *Engine) SetToplevelBinding(bind *Binding) error {
 	root := RootBinding(bind)
 	if root != eng.root {
 		return fmt.Errorf("root of %v is not root of engine %v: %v", bind, eng.root, root)
@@ -114,7 +114,7 @@ func (eng *Engine) SetToplevelBinding(bind Binding) error {
 }
 
 // GetToplevelBinding returns the current top-level binding.
-func (eng *Engine) GetToplevelBinding() Binding { return eng.toplevel }
+func (eng *Engine) GetToplevelBinding() *Binding { return eng.toplevel }
 
 // SetParser updates the current s-expression parser of the engine.
 func (eng *Engine) SetParser(p Parser) Parser {
@@ -127,7 +127,7 @@ func (eng *Engine) SetParser(p Parser) Parser {
 }
 
 // Eval parses the given object and executes it in the binding.
-func (eng *Engine) Eval(obj sx.Object, bind Binding, exec Executor) (sx.Object, error) {
+func (eng *Engine) Eval(obj sx.Object, bind *Binding, exec Executor) (sx.Object, error) {
 	expr, err := eng.Parse(obj, bind)
 	if err != nil {
 		return nil, err
@@ -137,19 +137,19 @@ func (eng *Engine) Eval(obj sx.Object, bind Binding, exec Executor) (sx.Object, 
 }
 
 // Parse the given object in the given binding.
-func (eng *Engine) Parse(obj sx.Object, bind Binding) (Expr, error) {
+func (eng *Engine) Parse(obj sx.Object, bind *Binding) (Expr, error) {
 	pf := ParseFrame{sf: eng.sf, binding: bind, parser: eng.pars}
 	return pf.Parse(obj)
 }
 
 // Rework the given expression with the options stored in the engine.
-func (eng *Engine) Rework(expr Expr, bind Binding) Expr {
+func (eng *Engine) Rework(expr Expr, bind *Binding) Expr {
 	rf := ReworkFrame{binding: bind}
 	return expr.Rework(&rf)
 }
 
 // Execute the given expression in the given binding.
-func (eng *Engine) Execute(expr Expr, bind Binding, exec Executor) (sx.Object, error) {
+func (eng *Engine) Execute(expr Expr, bind *Binding, exec Executor) (sx.Object, error) {
 	if exec != nil {
 		exec.Reset()
 	}

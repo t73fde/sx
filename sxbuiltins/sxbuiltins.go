@@ -72,7 +72,7 @@ func GetPair(args []sx.Object, pos int) (*sx.Pair, error) {
 }
 
 // GetBinding returns the given argument as a binding, and checks for errors.
-func GetBinding(args []sx.Object, pos int) (sxeval.Binding, error) {
+func GetBinding(args []sx.Object, pos int) (*sxeval.Binding, error) {
 	obj := args[pos]
 	if bind, ok := sxeval.GetBinding(obj); ok {
 		return bind, nil

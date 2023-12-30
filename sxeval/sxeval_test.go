@@ -24,7 +24,7 @@ import (
 	"zettelstore.de/sx.fossil/sxreader"
 )
 
-func createTestBinding(sf sx.SymbolFactory) sxeval.Binding {
+func createTestBinding(sf sx.SymbolFactory) *sxeval.Binding {
 	bind := sxeval.MakeRootBinding(2)
 
 	symCat := sf.MustMake("cat")

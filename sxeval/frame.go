@@ -23,7 +23,7 @@ import (
 type Frame struct {
 	engine   *Engine
 	executor Executor // most of the time: engine.exec, but could be updated for interactive debugging
-	binding  Binding
+	binding  *Binding
 	caller   *Frame
 }
 
@@ -118,7 +118,7 @@ func (frame *Frame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
 // executeAgain is a non-error error signalling that the given expression should be
 // executed again in the given binding.
 type executeAgain struct {
-	binding Binding
+	binding *Binding
 	expr    Expr
 }
 
@@ -146,7 +146,7 @@ func (frame *Frame) BindConst(sym *sx.Symbol, obj sx.Object) error {
 func (frame *Frame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return Resolve(frame.binding, sym)
 }
-func (frame *Frame) FindBinding(sym *sx.Symbol) Binding {
+func (frame *Frame) FindBinding(sym *sx.Symbol) *Binding {
 	bind := frame.binding
 	for !sx.IsNil(bind) {
 		if _, found := bind.Lookup(sym); found {
@@ -162,11 +162,11 @@ func (frame *Frame) MakeNotBoundError(sym *sx.Symbol) NotBoundError {
 
 // NotBoundError signals that a symbol was not found in a binding.
 type NotBoundError struct {
-	Binding Binding
+	Binding *Binding
 	Sym     *sx.Symbol
 }
 
 func (e NotBoundError) Error() string {
 	return fmt.Sprintf("symbol %q not bound in %q", e.Sym.Name(), e.Binding.String())
 }
-func (frame *Frame) Binding() Binding { return frame.binding }
+func (frame *Frame) Binding() *Binding { return frame.binding }

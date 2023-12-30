@@ -24,7 +24,7 @@ func TestGetBinding(t *testing.T) {
 	if _, ok := sxeval.GetBinding(nil); ok {
 		t.Error("nil is not a binding")
 	}
-	if _, ok := sxeval.GetBinding(sxeval.Binding(nil)); ok {
+	if _, ok := sxeval.GetBinding((*sxeval.Binding)(nil)); ok {
 		t.Error("nil binding is not a binding")
 	}
 	if _, ok := sxeval.GetBinding(sx.Nil()); ok {
@@ -75,7 +75,7 @@ func TestBindLookupUnbind(t *testing.T) {
 	})
 }
 
-func bindLookupUnbind(t *testing.T, root, child sxeval.Binding, sym1, sym2 *sx.Symbol) {
+func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.Symbol) {
 	child.Bind(sym2, sym1)
 
 	if _, found := child.Lookup(sym1); found {
@@ -165,7 +165,7 @@ func TestRootBindingEqual(t *testing.T) {
 	checkBindingEqual(t, child1, child2)
 }
 
-func checkBindingEqual(t *testing.T, bind1, bind2 sxeval.Binding) {
+func checkBindingEqual(t *testing.T, bind1, bind2 *sxeval.Binding) {
 	t.Helper()
 	if !bind1.IsEqual(bind2) {
 		t.Error("empty", bind1, "is not equal to empty", bind2)

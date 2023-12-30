@@ -28,7 +28,7 @@ func BenchmarkBinding(b *testing.B) {
 	child77 := sxeval.MakeChildBinding(root, "child-77", 77)
 	child77.Bind(symB, symC)
 
-	uuts := []sxeval.Binding{root, child77}
+	uuts := []*sxeval.Binding{root, child77}
 	b.ResetTimer()
 	for _, uut := range uuts {
 		b.Run("lookupL/"+uut.String(), func(b *testing.B) {

@@ -231,7 +231,7 @@ func main() {
 	wg.Wait()
 }
 
-func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, bind sxeval.Binding, wg *sync.WaitGroup) {
+func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, bind *sxeval.Binding, wg *sync.WaitGroup) {
 	defer func() {
 		if val := recover(); val != nil {
 			stack := debug.Stack()

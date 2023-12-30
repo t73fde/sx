@@ -22,7 +22,7 @@ import (
 // ParseFrame is a parsing environment.
 type ParseFrame struct {
 	sf      sx.SymbolFactory
-	binding Binding
+	binding *Binding
 	parser  Parser
 }
 
@@ -72,4 +72,4 @@ func (pf *ParseFrame) Bind(sym *sx.Symbol, obj sx.Object) error { return pf.bind
 func (pf *ParseFrame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return Resolve(pf.binding, sym)
 }
-func (pf *ParseFrame) Binding() Binding { return pf.binding }
+func (pf *ParseFrame) Binding() *Binding { return pf.binding }

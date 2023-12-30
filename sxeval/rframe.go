@@ -17,7 +17,7 @@ import "zettelstore.de/sx.fossil"
 
 // ReworkFrame guides the Expr.Rework operation.
 type ReworkFrame struct {
-	binding Binding // Current binding
+	binding *Binding // Current binding
 }
 
 // MakeChildFrame creates a subordinate rework frame with a new environment.

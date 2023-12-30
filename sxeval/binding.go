@@ -21,51 +21,8 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// Binding maintains a mapping between symbols and values.
-type Binding interface {
-	// A binding is an object by itself
-	sx.Object
-
-	// String returns the local name of this binding.
-	String() string
-
-	// Parent allows to retrieve the parent binding. If the binding is the root
-	// binding, nil is returned. Lookups that cannot be satisfied in an
-	// binding are often delegated to the parent binding.
-	Parent() Binding
-
-	// IsRoot returns true for the root binding.
-	IsRoot() bool
-
-	// Bind creates a local mapping with a given symbol and object.
-	//
-	// A previous, non-const mapping will be overwritten.
-	Bind(*sx.Symbol, sx.Object) error
-
-	// BindConst creates a local mapping of the symbol to the object, which
-	// cannot be changed afterwards.
-	BindConst(*sx.Symbol, sx.Object) error
-
-	// Lookup will search for a local binding of the given symbol. If not
-	// found, the search will *not* be continued in the parent binding.
-	// Use the global `Resolve` function, if you want a search up to the parent.
-	Lookup(*sx.Symbol) (sx.Object, bool)
-
-	// IsConst returns true if the binding of the symbol is a constant binding.
-	IsConst(*sx.Symbol) bool
-
-	// Bindings returns all bindings as an a-list in some random order.
-	Bindings() *sx.Pair
-
-	// Unbind removes the mapping of the given symbol to an object.
-	Unbind(*sx.Symbol) error
-
-	// Freeze sets the binding in a read-only state.
-	Freeze()
-}
-
 // ErrBindingFrozen is returned when trying to update a frozen binding.
-type ErrBindingFrozen struct{ Binding Binding }
+type ErrBindingFrozen struct{ Binding *Binding }
 
 func (err ErrBindingFrozen) Error() string { return fmt.Sprintf("binding is frozen: %v", err.Binding) }
 
@@ -79,8 +36,8 @@ func (err ErrConstBinding) Error() string {
 type mapSymObj = map[*sx.Symbol]sx.Object
 
 // MakeRootBinding creates a new root binding.
-func MakeRootBinding(sizeHint int) Binding {
-	return &mappedBinding{
+func MakeRootBinding(sizeHint int) *Binding {
+	return &Binding{
 		name:   "root",
 		parent: nil,
 		vars:   make(mapSymObj, sizeHint),
@@ -90,11 +47,11 @@ func MakeRootBinding(sizeHint int) Binding {
 }
 
 // MakeChildBinding creates a new binding with a given parent.
-func MakeChildBinding(parent Binding, name string, sizeHint int) Binding {
+func MakeChildBinding(parent *Binding, name string, sizeHint int) *Binding {
 	if sizeHint <= 0 {
 		sizeHint = 3
 	}
-	return &mappedBinding{
+	return &Binding{
 		name:   name,
 		parent: parent,
 		vars:   make(mapSymObj, sizeHint),
@@ -103,25 +60,26 @@ func MakeChildBinding(parent Binding, name string, sizeHint int) Binding {
 	}
 }
 
-type mappedBinding struct {
+// Binding is a binding based on maps.
+type Binding struct {
 	name   string
-	parent Binding
+	parent *Binding
 	vars   mapSymObj
 	consts map[*sx.Symbol]struct{}
 	isRoot bool
 	frozen bool
 }
 
-func (mb *mappedBinding) IsNil() bool  { return mb == nil }
-func (mb *mappedBinding) IsAtom() bool { return mb == nil }
-func (mb *mappedBinding) IsEqual(other sx.Object) bool {
+func (mb *Binding) IsNil() bool  { return mb == nil }
+func (mb *Binding) IsAtom() bool { return mb == nil }
+func (mb *Binding) IsEqual(other sx.Object) bool {
 	if mb == other {
 		return true
 	}
 	if mb.IsNil() {
 		return sx.IsNil(other)
 	}
-	if omb, ok := other.(*mappedBinding); ok {
+	if omb, ok := other.(*Binding); ok {
 		mvars, ovars := mb.vars, omb.vars
 		if len(mvars) != len(ovars) {
 			return false
@@ -136,19 +94,31 @@ func (mb *mappedBinding) IsEqual(other sx.Object) bool {
 	}
 	return false
 }
-func (mb *mappedBinding) Repr() string { return sx.Repr(mb) }
-func (mb *mappedBinding) Print(w io.Writer) (int, error) {
+func (mb *Binding) Repr() string { return sx.Repr(mb) }
+func (mb *Binding) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<binding:", mb.name, "/", strconv.Itoa(len(mb.vars)), ">")
 }
-func (mb *mappedBinding) String() string { return mb.name }
-func (mb *mappedBinding) Parent() Binding {
+
+// String returns the local name of this binding.
+func (mb *Binding) String() string { return mb.name }
+
+// Parent allows to retrieve the parent binding. If the binding is the root
+// binding, nil is returned. Lookups that cannot be satisfied in an
+// binding are often delegated to the parent binding.
+func (mb *Binding) Parent() *Binding {
 	if mb == nil {
 		return nil
 	}
 	return mb.parent
 }
-func (mb *mappedBinding) IsRoot() bool { return mb == nil || mb.isRoot }
-func (mb *mappedBinding) Bind(sym *sx.Symbol, val sx.Object) error {
+
+// IsRoot returns true for the root binding.
+func (mb *Binding) IsRoot() bool { return mb == nil || mb.isRoot }
+
+// Bind creates a local mapping with a given symbol and object.
+//
+// A previous, non-const mapping will be overwritten.
+func (mb *Binding) Bind(sym *sx.Symbol, val sx.Object) error {
 	if mb.frozen {
 		return ErrBindingFrozen{Binding: mb}
 	}
@@ -162,7 +132,10 @@ func (mb *mappedBinding) Bind(sym *sx.Symbol, val sx.Object) error {
 	mb.vars[sym] = val
 	return nil
 }
-func (mb *mappedBinding) BindConst(sym *sx.Symbol, val sx.Object) error {
+
+// BindConst creates a local mapping of the symbol to the object, which
+// cannot be changed afterwards.
+func (mb *Binding) BindConst(sym *sx.Symbol, val sx.Object) error {
 	if mb.frozen {
 		return ErrBindingFrozen{Binding: mb}
 	}
@@ -181,11 +154,17 @@ func (mb *mappedBinding) BindConst(sym *sx.Symbol, val sx.Object) error {
 	mb.vars[sym] = val
 	return nil
 }
-func (mb *mappedBinding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
+
+// Lookup will search for a local binding of the given symbol. If not
+// found, the search will *not* be continued in the parent binding.
+// Use the global `Resolve` function, if you want a search up to the parent.
+func (mb *Binding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	obj, found := mb.vars[sym]
 	return obj, found
 }
-func (mb *mappedBinding) IsConst(sym *sx.Symbol) bool {
+
+// IsConst returns true if the binding of the symbol is a constant binding.
+func (mb *Binding) IsConst(sym *sx.Symbol) bool {
 	if mb == nil {
 		return false
 	}
@@ -200,33 +179,39 @@ func (mb *mappedBinding) IsConst(sym *sx.Symbol) bool {
 	_, found := mb.consts[sym]
 	return found
 }
-func (mb *mappedBinding) Bindings() *sx.Pair {
+
+// Bindings returns all bindings as an a-list in some random order.
+func (mb *Binding) Bindings() *sx.Pair {
 	result := sx.Nil()
 	for k, v := range mb.vars {
 		result = result.Cons(sx.Cons(k, v))
 	}
 	return result
 }
-func (mb *mappedBinding) Unbind(sym *sx.Symbol) error {
+
+// Unbind removes the mapping of the given symbol to an object.
+func (mb *Binding) Unbind(sym *sx.Symbol) error {
 	if mb.frozen {
 		return ErrBindingFrozen{Binding: mb}
 	}
 	delete(mb.vars, sym)
 	return nil
 }
-func (mb *mappedBinding) Freeze() { mb.frozen = true }
+
+// Freeze sets the binding in a read-only state.
+func (mb *Binding) Freeze() { mb.frozen = true }
 
 // GetBinding returns the object as a binding, if possible.
-func GetBinding(obj sx.Object) (Binding, bool) {
+func GetBinding(obj sx.Object) (*Binding, bool) {
 	if sx.IsNil(obj) {
 		return nil, false
 	}
-	bind, ok := obj.(Binding)
+	bind, ok := obj.(*Binding)
 	return bind, ok
 }
 
 // RootBinding returns the root binding of the given binding.
-func RootBinding(bind Binding) Binding {
+func RootBinding(bind *Binding) *Binding {
 	currBind := bind
 	for {
 		if currBind.IsRoot() {
@@ -237,7 +222,7 @@ func RootBinding(bind Binding) Binding {
 }
 
 // Resolve a symbol is a binding and all of its parent bindings.
-func Resolve(bind Binding, sym *sx.Symbol) (sx.Object, bool) {
+func Resolve(bind *Binding, sym *sx.Symbol) (sx.Object, bool) {
 	currBind := bind
 	for {
 		obj, found := currBind.Lookup(sym)
@@ -253,7 +238,7 @@ func Resolve(bind Binding, sym *sx.Symbol) (sx.Object, bool) {
 
 // IsConstBinding returns true if the symbol is defined with a constant
 // binding in the given binding or its parent bindings.
-func IsConstantBind(bind Binding, sym *sx.Symbol) bool {
+func IsConstantBind(bind *Binding, sym *sx.Symbol) bool {
 	currBind := bind
 	for !sx.IsNil(currBind) {
 		if currBind.IsConst(sym) {
@@ -268,7 +253,7 @@ func IsConstantBind(bind Binding, sym *sx.Symbol) bool {
 }
 
 // AllBindings returns an a-list of all bindings in the given binding and its parent bindinga.
-func AllBindings(bind Binding) *sx.Pair {
+func AllBindings(bind *Binding) *sx.Pair {
 	currBind := bind
 	result := currBind.Bindings()
 	currResult := result
