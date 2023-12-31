@@ -44,16 +44,17 @@ func (tcs tTestCases) Run(t *testing.T) {
 	t.Helper()
 	engine := createEngine()
 	sf := engine.SymbolFactory()
-	root := engine.GetToplevelEnv()
+	root := engine.GetToplevelBinding()
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Helper()
 			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
 
 			var sb strings.Builder
-			env := sxeval.MakeChildEnvironment(root, tc.name, 0)
+			bind := sxeval.MakeChildBinding(root, tc.name, 0)
+			env := sxeval.MakeExecutionEnvironment(engine, nil, bind)
 			for {
-				val, err := rd.Read()
+				obj, err := rd.Read()
 				if err != nil {
 					if err == io.EOF {
 						break
@@ -65,7 +66,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 					t.Errorf("Error %v while reading %s", err, tc.src)
 					return
 				}
-				res, err := engine.Eval(val, env, nil)
+				res, err := env.Eval(obj)
 				if err != nil {
 					if tc.withErr {
 						sb.WriteString(fmt.Errorf("{[{%w}]}", err).Error())
@@ -93,7 +94,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 func createEngine() *sxeval.Engine {
 	numBuiltins := len(specials) + len(builtins) + len(objects)
 	sf := sx.MakeMappedFactory(numBuiltins + 32)
-	root := sxeval.MakeRootEnvironment(numBuiltins)
+	root := sxeval.MakeRootBinding(numBuiltins)
 
 	engine := sxeval.MakeEngine(sf, root)
 	for _, syntax := range specials {
@@ -103,13 +104,13 @@ func createEngine() *sxeval.Engine {
 		engine.BindBuiltin(b)
 	}
 	root.Freeze()
-	env := sxeval.MakeChildEnvironment(root, "vars", len(objects))
+	env := sxeval.MakeChildBinding(root, "vars", len(objects))
 	for _, obj := range objects {
 		if err := env.Bind(sf.MustMake(obj.name), obj.obj); err != nil {
 			panic(err)
 		}
 	}
-	engine.SetToplevelEnv(env)
+	engine.SetToplevelBinding(env)
 	return engine
 }
 
@@ -154,18 +155,18 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.NumLess, &sxbuiltins.NumLessEqual, // <, <=
 	&sxbuiltins.NumGreater, &sxbuiltins.NumGreaterEqual, // >, >=
 	&sxbuiltins.ToString, &sxbuiltins.StringAppend, // ->string, string-append
-	&sxbuiltins.CallableP,     // callable?
-	&sxbuiltins.Macroexpand0,  // macroexpand-0
-	&sxbuiltins.Defined,       // defined?
-	&sxbuiltins.CurrentEnv,    // current-environment
-	&sxbuiltins.ParentEnv,     // parent-environment
-	&sxbuiltins.EnvBindings,   // environment-bindings
-	&sxbuiltins.BoundP,        // bound?
-	&sxbuiltins.EnvLookup,     // environment-lookup
-	&sxbuiltins.EnvResolve,    // environment-resolve
-	&sxbuiltins.Pretty,        // pp
-	&sxbuiltins.Error,         // error
-	&sxbuiltins.NotBoundError, // not-bound-error
+	&sxbuiltins.CallableP,      // callable?
+	&sxbuiltins.Macroexpand0,   // macroexpand-0
+	&sxbuiltins.Defined,        // defined?
+	&sxbuiltins.CurrentBinding, // current-environment
+	&sxbuiltins.ParentBinding,  // parent-environment
+	&sxbuiltins.Bindings,       // environment-bindings
+	&sxbuiltins.BoundP,         // bound?
+	&sxbuiltins.BindingLookup,  // environment-lookup
+	&sxbuiltins.BindingResolve, // environment-resolve
+	&sxbuiltins.Pretty,         // pp
+	&sxbuiltins.Error,          // error
+	&sxbuiltins.NotBoundError,  // not-bound-error
 }
 
 var objects = []struct {

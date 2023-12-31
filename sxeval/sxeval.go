@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 // Package sxeval allows to evaluate s-expressions. Evaluation is splitted into
@@ -23,12 +26,12 @@ import (
 
 // Callable is a value that can be called for evaluation.
 type Callable interface {
-	// IsPure checks if the callable is independent of a Frame and does not
-	// produce any side effects.
+	// IsPure checks if the callable is independent of a full environment and
+	// does not produce any side effects.
 	IsPure([]sx.Object) bool
 
-	// Call the value with the given args and frame.
-	Call(*Frame, []sx.Object) (sx.Object, error)
+	// Call the value with the given args in the given environment.
+	Call(*Environment, []sx.Object) (sx.Object, error)
 }
 
 // GetCallable returns the object as a Callable, if possible.
@@ -62,7 +65,7 @@ type Executor interface {
 	// Execute the expression in a frame and return the result.
 	// It may have side-effects, on the given frame, or on the
 	// general environment of the system.
-	Execute(*Frame, Expr) (sx.Object, error)
+	Execute(*Environment, Expr) (sx.Object, error)
 }
 
 // SimpleExecutor just computes an expression.
@@ -72,8 +75,8 @@ type SimpleExecutor struct{}
 func (*SimpleExecutor) Reset() {}
 
 // Execute the given expression in the given frame.
-func (*SimpleExecutor) Execute(frame *Frame, expr Expr) (sx.Object, error) {
-	return expr.Compute(frame)
+func (*SimpleExecutor) Execute(env *Environment, expr Expr) (sx.Object, error) {
+	return expr.Compute(env)
 }
 
 // limitExecutor computes just some steps and/or for a given time limit.
@@ -104,7 +107,7 @@ func (lex *limitExecutor) Reset() {
 }
 
 // Execute the given expression in the given frame within the limits of this executor.
-func (lex *limitExecutor) Execute(frame *Frame, expr Expr) (sx.Object, error) {
+func (lex *limitExecutor) Execute(env *Environment, expr Expr) (sx.Object, error) {
 	stepCount := lex.stepCount
 	stepCount++
 	if stepCount > lex.maxSteps {
@@ -114,7 +117,7 @@ func (lex *limitExecutor) Execute(frame *Frame, expr Expr) (sx.Object, error) {
 		return nil, &LimitError{MaxSteps: 0, MaxDuration: lex.maxDuration}
 	}
 	lex.stepCount = stepCount
-	return expr.Compute(frame)
+	return expr.Compute(env)
 }
 
 // LimitError is signaled when execution limits are exceeded.

@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -92,15 +95,15 @@ func (be *BeginExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	return be
 }
 
-func (be *BeginExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+func (be *BeginExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	for _, e := range be.Front {
-		subFrame := frame.MakeCalleeFrame()
-		_, err := subFrame.Execute(e)
+		subEnv := env.NewDynamicEnvironment()
+		_, err := subEnv.Execute(e)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return frame.ExecuteTCO(be.Last)
+	return env.ExecuteTCO(be.Last)
 }
 
 func (be *BeginExpr) IsEqual(other sxeval.Expr) bool {

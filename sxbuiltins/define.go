@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -76,14 +79,14 @@ func (de *DefineExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	de.Val = de.Val.Rework(rf)
 	return de
 }
-func (de *DefineExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	subFrame := frame.MakeCalleeFrame()
-	val, err := subFrame.Execute(de.Val)
+func (de *DefineExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
+	subEnv := env.NewDynamicEnvironment()
+	val, err := subEnv.Execute(de.Val)
 	if err == nil {
 		if de.Const {
-			err = frame.BindConst(de.Sym, val)
+			err = env.BindConst(de.Sym, val)
 		} else {
-			err = frame.Bind(de.Sym, val)
+			err = env.Bind(de.Sym, val)
 		}
 	}
 	return val, err
@@ -171,15 +174,15 @@ func (se *SetXExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	se.Val = se.Val.Rework(rf)
 	return se
 }
-func (se *SetXExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	env := frame.FindBindingEnv(se.Sym)
-	if sx.IsNil(env) {
-		return nil, frame.MakeNotBoundError(se.Sym)
+func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
+	bind := env.FindBinding(se.Sym)
+	if bind == nil {
+		return nil, env.MakeNotBoundError(se.Sym)
 	}
-	subFrame := frame.MakeCalleeFrame()
-	val, err := subFrame.Execute(se.Val)
+	subEnv := env.NewDynamicEnvironment()
+	val, err := subEnv.Execute(se.Val)
 	if err == nil {
-		err = env.Bind(se.Sym, val)
+		err = bind.Bind(se.Sym, val)
 	}
 	return val, err
 }

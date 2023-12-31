@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -24,7 +27,7 @@ var CallableP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		_, ok := sxeval.GetCallable(args[0])
 		return sx.MakeBoolean(ok), nil
 	},
@@ -42,7 +45,7 @@ var DefunS = sxeval.Special{
 	},
 }
 
-func parseDefProc(frame *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaExpr, error) {
+func parseDefProc(pf *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaExpr, error) {
 	if args == nil {
 		return nil, nil, sxeval.ErrNoArgs
 	}
@@ -54,7 +57,7 @@ func parseDefProc(frame *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaE
 	if args == nil {
 		return nil, nil, fmt.Errorf("parameter spec and body missing")
 	}
-	le, err := ParseProcedure(frame, sx.Repr(sym), args.Car(), args.Cdr())
+	le, err := ParseProcedure(pf, sx.Repr(sym), args.Car(), args.Cdr())
 	return sym, le, err
 }
 
@@ -95,11 +98,11 @@ func ParseProcedure(pf *sxeval.ParseFrame, name string, paramSpec, bodySpec sx.O
 	if !isPair {
 		return nil, fmt.Errorf("body must not be a dotted pair")
 	}
-	envSize := len(params)
+	bindSize := len(params)
 	if rest != nil {
-		envSize++
+		bindSize++
 	}
-	fnFrame := pf.MakeChildFrame(name+"-def", envSize)
+	fnFrame := pf.MakeChildFrame(name+"-def", bindSize)
 	for _, p := range params {
 		err := fnFrame.Bind(p, sx.MakeUndefined())
 		if err != nil {
@@ -173,11 +176,11 @@ type LambdaExpr struct {
 }
 
 func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	envSize := len(le.Params)
+	bindSize := len(le.Params)
 	if le.Rest != nil {
-		envSize++
+		bindSize++
 	}
-	fnFrame := rf.MakeChildFrame(le.Name+"-rework", envSize)
+	fnFrame := rf.MakeChildFrame(le.Name+"-rework", bindSize)
 	for _, sym := range le.Params {
 		fnFrame.Bind(sym)
 	}
@@ -188,23 +191,23 @@ func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	le.Expr = le.Expr.Rework(fnFrame)
 	return le
 }
-func (le *LambdaExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
+func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	if le.IsMacro {
 		return &Macro{
-			Frame:  frame,
-			PFrame: frame.MakeParseFrame(),
-			Name:   le.Name,
-			Params: le.Params,
-			Rest:   le.Rest,
-			Expr:   le.Expr,
+			Env:     env,
+			Binding: env.Binding(),
+			Name:    le.Name,
+			Params:  le.Params,
+			Rest:    le.Rest,
+			Expr:    le.Expr,
 		}, nil
 	}
 	return &Procedure{
-		PFrame: frame.MakeParseFrame(),
-		Name:   le.Name,
-		Params: le.Params,
-		Rest:   le.Rest,
-		Expr:   le.Expr,
+		Binding: env.Binding(),
+		Name:    le.Name,
+		Params:  le.Params,
+		Rest:    le.Rest,
+		Expr:    le.Expr,
 	}, nil
 }
 func (le *LambdaExpr) IsEqual(other sxeval.Expr) bool {
@@ -258,11 +261,11 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 
 // Procedure represents the procedure definition form (aka lambda).
 type Procedure struct {
-	PFrame *sxeval.ParseFrame
-	Name   string
-	Params []*sx.Symbol
-	Rest   *sx.Symbol
-	Expr   sxeval.Expr
+	Binding *sxeval.Binding
+	Name    string
+	Params  []*sx.Symbol
+	Rest    *sx.Symbol
+	Expr    sxeval.Expr
 }
 
 func (p *Procedure) IsNil() bool  { return p == nil }
@@ -276,7 +279,7 @@ func (p *Procedure) IsEqual(other sx.Object) bool {
 	}
 	if otherP, ok := other.(*Procedure); ok {
 		// Don't compare Name, because they are always different, but that does not matter.
-		return p.PFrame.IsEqual(otherP.PFrame) &&
+		return p.Binding.IsEqual(otherP.Binding) &&
 			sxeval.EqualSymbolSlice(p.Params, otherP.Params) &&
 			p.Rest.IsEqual(otherP.Rest) &&
 			p.Expr.IsEqual(otherP.Expr)
@@ -295,29 +298,29 @@ func (p *Procedure) Print(w io.Writer) (int, error) {
 func (p *Procedure) IsPure([]sx.Object) bool { return false }
 
 // Call the Procedure.
-func (p *Procedure) Call(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+func (p *Procedure) Call(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 	numParams := len(p.Params)
 	if len(args) < numParams {
 		return nil, fmt.Errorf("%s: missing arguments: %v", p.Name, p.Params[len(args):])
 	}
-	envSize := numParams
+	bindSize := numParams
 	if p.Rest != nil {
-		envSize++
+		bindSize++
 	}
-	lambdaFrame := frame.MakeLambdaFrame(p.PFrame, p.Name, envSize)
+	lexicalEnv := env.NewLexicalEnvironment(p.Binding, p.Name, bindSize)
 	for i, p := range p.Params {
-		err := lambdaFrame.Bind(p, args[i])
+		err := lexicalEnv.Bind(p, args[i])
 		if err != nil {
 			return nil, err
 		}
 	}
 	if p.Rest != nil {
-		err := lambdaFrame.Bind(p.Rest, sx.MakeList(args[numParams:]...))
+		err := lexicalEnv.Bind(p.Rest, sx.MakeList(args[numParams:]...))
 		if err != nil {
 			return nil, err
 		}
 	} else if len(args) > numParams {
 		return nil, fmt.Errorf("%s: excess arguments: %v", p.Name, args[numParams:])
 	}
-	return lambdaFrame.ExecuteTCO(p.Expr)
+	return lexicalEnv.ExecuteTCO(p.Expr)
 }

@@ -41,8 +41,8 @@ func (mpe *mainParserExecutor) Parse(pf *sxeval.ParseFrame, form sx.Object) (sxe
 	if !mpe.logParser {
 		return mpe.origParser.Parse(pf, form)
 	}
-	env := pf.Environment()
-	fmt.Printf(";P %v<-%v %T %v\n", env, env.Parent(), form, form)
+	bind := pf.Binding()
+	fmt.Printf(";P %v<-%v %T %v\n", bind, bind, form, form)
 	expr, err := mpe.origParser.Parse(pf, form)
 	if err != nil {
 		return nil, err
@@ -55,15 +55,15 @@ func (mpe *mainParserExecutor) Parse(pf *sxeval.ParseFrame, form sx.Object) (sxe
 
 func (mpe *mainParserExecutor) Reset() { mpe.baseExecutor.Reset() }
 
-func (mpe *mainParserExecutor) Execute(frame *sxeval.Frame, expr sxeval.Expr) (sx.Object, error) {
+func (mpe *mainParserExecutor) Execute(env *sxeval.Environment, expr sxeval.Expr) (sx.Object, error) {
 	if !mpe.logExecutor {
-		return mpe.baseExecutor.Execute(frame, expr)
+		return mpe.baseExecutor.Execute(env, expr)
 	}
-	env := frame.Environment()
-	fmt.Printf(";X %v<-%v ", env, env.Parent())
+	bind := env.Binding()
+	fmt.Printf(";X %v<-%v ", bind, bind.Parent())
 	expr.Print(os.Stdout)
 	fmt.Println()
-	obj, err := mpe.baseExecutor.Execute(frame, expr)
+	obj, err := mpe.baseExecutor.Execute(env, expr)
 	if err != nil {
 		return nil, err
 	}
@@ -113,18 +113,18 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.NumLess, &sxbuiltins.NumLessEqual, // <, <=
 	&sxbuiltins.NumGreater, &sxbuiltins.NumGreaterEqual, // >, >=
 	&sxbuiltins.ToString, &sxbuiltins.StringAppend, // ->string, string-append
-	&sxbuiltins.CallableP,     // callable?
-	&sxbuiltins.Macroexpand0,  // macroexpand-0
-	&sxbuiltins.Defined,       // defined?
-	&sxbuiltins.CurrentEnv,    // current-environment
-	&sxbuiltins.ParentEnv,     // parent-environment
-	&sxbuiltins.EnvBindings,   // environment-bindings
-	&sxbuiltins.BoundP,        // bound?
-	&sxbuiltins.EnvLookup,     // environment-lookup
-	&sxbuiltins.EnvResolve,    // environment-resolve
-	&sxbuiltins.Pretty,        // pp
-	&sxbuiltins.Error,         // error
-	&sxbuiltins.NotBoundError, // not-bound-error
+	&sxbuiltins.CallableP,      // callable?
+	&sxbuiltins.Macroexpand0,   // macroexpand-0
+	&sxbuiltins.Defined,        // defined?
+	&sxbuiltins.CurrentBinding, // current-environment
+	&sxbuiltins.ParentBinding,  // parent-environment
+	&sxbuiltins.Bindings,       // environment-bindings
+	&sxbuiltins.BoundP,         // bound?
+	&sxbuiltins.BindingLookup,  // environment-lookup
+	&sxbuiltins.BindingResolve, // environment-resolve
+	&sxbuiltins.Pretty,         // pp
+	&sxbuiltins.Error,          // error
+	&sxbuiltins.NotBoundError,  // not-bound-error
 }
 
 func main() {
@@ -132,9 +132,9 @@ func main() {
 	rd := sxreader.MakeReader(os.Stdin, sxreader.WithSymbolFactory(sf))
 
 	mpe := mainParserExecutor{baseExecutor: &sxeval.SimpleExecutor{}}
-	engine := sxeval.MakeEngine(sf, sxeval.MakeRootEnvironment(len(specials)+len(builtins)+16))
+	engine := sxeval.MakeEngine(sf, sxeval.MakeRootBinding(len(specials)+len(builtins)+16))
 	mpe.origParser = engine.SetParser(&mpe)
-	root := engine.RootEnvironment()
+	root := engine.RootBinding()
 	for _, synDef := range specials {
 		engine.BindSpecial(synDef)
 	}
@@ -147,7 +147,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			res := mpe.logReader
 			mpe.logReader = !res
 			return sx.MakeBoolean(res), nil
@@ -158,7 +158,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			res := mpe.logParser
 			mpe.logParser = !res
 			return sx.MakeBoolean(res), nil
@@ -169,7 +169,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			res := mpe.logExpr
 			mpe.logExpr = !res
 			return sx.MakeBoolean(res), nil
@@ -180,7 +180,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			res := mpe.logExecutor
 			mpe.logExecutor = !res
 			return sx.MakeBoolean(res), nil
@@ -191,7 +191,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Frame, []sx.Object) (sx.Object, error) {
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			mpe.logReader = false
 			mpe.logParser = false
 			mpe.logExecutor = false
@@ -203,7 +203,7 @@ func main() {
 		MinArity: 0,
 		MaxArity: 1,
 		TestPure: nil,
-		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 			if len(args) == 0 {
 				panic("common panic")
 			}
@@ -216,9 +216,9 @@ func main() {
 		os.Exit(17)
 	}
 	root.Freeze()
-	env := sxeval.MakeChildEnvironment(engine.GetToplevelEnv(), "repl", 1024)
-	env.Bind(sf.MustMake("root-env"), root)
-	env.Bind(sf.MustMake("repl-env"), env)
+	bind := sxeval.MakeChildBinding(engine.GetToplevelBinding(), "repl", 1024)
+	bind.Bind(sf.MustMake("root-binding"), root)
+	bind.Bind(sf.MustMake("repl-binding"), bind)
 
 	mpe.logReader = true
 	mpe.logParser = true
@@ -227,22 +227,23 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go repl(rd, &mpe, engine, env, &wg)
+	go repl(rd, &mpe, engine, bind, &wg)
 	wg.Wait()
 }
 
-func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env sxeval.Environment, wg *sync.WaitGroup) {
+func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, bind *sxeval.Binding, wg *sync.WaitGroup) {
 	defer func() {
 		if val := recover(); val != nil {
 			stack := debug.Stack()
 			fmt.Printf("RECOVER PANIC: %v\n\n%s\n", val, string(stack))
-			go repl(rd, mpe, eng, env, wg)
+			go repl(rd, mpe, eng, bind, wg)
 			return
 		}
 		wg.Done()
 	}()
 
 	for {
+		env := sxeval.MakeExecutionEnvironment(eng, mpe, bind)
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {
@@ -255,12 +256,12 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env 
 		if mpe.logReader {
 			fmt.Println(";<", obj)
 		}
-		expr, err := eng.Parse(obj, env)
+		expr, err := env.Parse(obj)
 		if err != nil {
 			fmt.Println(";p", err)
 			continue
 		}
-		expr = eng.Rework(expr, env)
+		expr = env.Rework(expr)
 		if mpe.logExpr {
 			printExpr(expr, 0)
 			continue
@@ -269,7 +270,7 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, env 
 			expr.Print(os.Stdout)
 			fmt.Println()
 		}
-		res, err := eng.Execute(expr, env, mpe)
+		res, err := env.Run(expr)
 		if err != nil {
 			fmt.Println(";e", err)
 			continue
@@ -352,6 +353,7 @@ var prelude string
 
 func readPrelude(engine *sxeval.Engine) error {
 	rd := sxreader.MakeReader(strings.NewReader(prelude), sxreader.WithSymbolFactory(engine.SymbolFactory()))
+	env := sxeval.MakeExecutionEnvironment(engine, nil, engine.RootBinding())
 	for {
 		form, err := rd.Read()
 		if err != nil {
@@ -360,7 +362,7 @@ func readPrelude(engine *sxeval.Engine) error {
 			}
 			return err
 		}
-		_, err = engine.Eval(form, engine.RootEnvironment(), nil)
+		_, err = env.Eval(form)
 		if err != nil {
 			return err
 		}

@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -32,12 +35,12 @@ var DefMacroS = sxeval.Special{
 
 // Macro represents the macro definition form.
 type Macro struct {
-	Frame  *sxeval.Frame
-	PFrame *sxeval.ParseFrame
-	Name   string
-	Params []*sx.Symbol
-	Rest   *sx.Symbol
-	Expr   sxeval.Expr
+	Env     *sxeval.Environment
+	Binding *sxeval.Binding
+	Name    string
+	Params  []*sx.Symbol
+	Rest    *sx.Symbol
+	Expr    sxeval.Expr
 }
 
 func (m *Macro) IsNil() bool  { return m == nil }
@@ -51,7 +54,7 @@ func (m *Macro) IsEqual(other sx.Object) bool {
 	}
 	if otherM, ok := other.(*Macro); ok {
 		// Don't compare Name, because they are always different, but that does not matter.
-		return m.PFrame.IsEqual(otherM.PFrame) &&
+		return m.Binding.IsEqual(otherM.Binding) &&
 			sxeval.EqualSymbolSlice(m.Params, otherM.Params) &&
 			m.Rest.IsEqual(otherM.Rest) &&
 			m.Expr.IsEqual(otherM.Expr)
@@ -87,13 +90,13 @@ func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 	}
 
 	proc := Procedure{
-		PFrame: m.PFrame,
-		Name:   m.Name,
-		Params: m.Params,
-		Rest:   m.Rest,
-		Expr:   m.Expr,
+		Binding: m.Binding,
+		Name:    m.Name,
+		Params:  m.Params,
+		Rest:    m.Rest,
+		Expr:    m.Expr,
 	}
-	return m.Frame.Call(&proc, macroArgs)
+	return m.Env.Call(&proc, macroArgs)
 }
 
 // MacroExpand0 implements one level of macro expansion.
@@ -104,13 +107,13 @@ var Macroexpand0 = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn: func(frame *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		lst, err := GetList(args, 0)
 		if err == nil && lst != nil {
 			if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
-				if obj, found := frame.Resolve(sym); found {
+				if obj, found := env.Resolve(sym); found {
 					if macro, isMacro := obj.(*Macro); isMacro {
-						return macro.Expand(frame.MakeParseFrame(), lst.Tail())
+						return macro.Expand(env.MakeParseFrame(), lst.Tail())
 					}
 				}
 			}

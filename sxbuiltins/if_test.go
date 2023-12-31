@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins_test
@@ -52,7 +55,7 @@ var tcsIf = tTestCases{
 	{
 		name:    "if-3-err-sym",
 		src:     "(if xyz 2 3)",
-		exp:     "{[{symbol \"xyz\" not bound in environment \"if-3-err-sym\"}]}",
+		exp:     "{[{symbol \"xyz\" not bound in \"if-3-err-sym\"}]}",
 		withErr: true,
 	},
 }

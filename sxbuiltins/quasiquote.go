@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -34,7 +37,7 @@ var QuasiquoteS = sxeval.Special{
 		}
 		sf := pf.SymbolFactory()
 		qqp := qqParser{
-			frame:              pf,
+			pframe:             pf,
 			symQuasiQuote:      sf.MustMake(sx.QuasiquoteName),
 			symUnquote:         sf.MustMake(sx.UnquoteName),
 			symUnquoteSplicing: sf.MustMake(sx.UnquoteSplicingName),
@@ -64,13 +67,13 @@ var UnquoteSplicingS = sxeval.Special{
 var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.QuasiquoteName)
 
 type qqParser struct {
-	frame              *sxeval.ParseFrame
+	pframe             *sxeval.ParseFrame
 	symQuasiQuote      *sx.Symbol
 	symUnquote         *sx.Symbol
 	symUnquoteSplicing *sx.Symbol
 }
 
-func (qqp *qqParser) parse(obj sx.Object) (sxeval.Expr, error) { return qqp.frame.Parse(obj) }
+func (qqp *qqParser) parse(obj sx.Object) (sxeval.Expr, error) { return qqp.pframe.Parse(obj) }
 
 func (qqp *qqParser) parseQQ(obj sx.Object) (sxeval.Expr, error) {
 	pair, isPair := sx.GetPair(obj)
@@ -376,9 +379,9 @@ func (mle MakeListExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	mle.Elem = mle.Elem.Rework(rf)
 	return mle
 }
-func (mle MakeListExpr) Compute(frame *sxeval.Frame) (sx.Object, error) {
-	subFrame := frame.MakeCalleeFrame()
-	elem, err := subFrame.Execute(mle.Elem)
+func (mle MakeListExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
+	subEnv := env.NewDynamicEnvironment()
+	elem, err := subEnv.Execute(mle.Elem)
 	if err != nil {
 		return nil, err
 	}

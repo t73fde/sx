@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxeval_test
@@ -21,16 +24,16 @@ import (
 	"zettelstore.de/sx.fossil/sxreader"
 )
 
-func createTestEnv(sf sx.SymbolFactory) sxeval.Environment {
-	env := sxeval.MakeRootEnvironment(2)
+func createTestBinding(sf sx.SymbolFactory) *sxeval.Binding {
+	bind := sxeval.MakeRootBinding(2)
 
 	symCat := sf.MustMake("cat")
-	env.Bind(symCat, &sxeval.Builtin{
+	bind.Bind(symCat, &sxeval.Builtin{
 		Name:     "cat",
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+		Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 			var sb strings.Builder
 			for _, val := range args {
 				var s string
@@ -50,8 +53,8 @@ func createTestEnv(sf sx.SymbolFactory) sxeval.Environment {
 	})
 
 	symHello := sf.MustMake("hello")
-	env.Bind(symHello, sx.String("Hello, World"))
-	return env
+	bind.Bind(symHello, sx.String("Hello, World"))
+	return bind
 }
 
 type testcase struct {
@@ -64,17 +67,18 @@ type testCases []testcase
 
 func (testcases testCases) Run(t *testing.T, engine *sxeval.Engine) {
 	sf := engine.SymbolFactory()
-	root := engine.GetToplevelEnv()
+	root := engine.GetToplevelBinding()
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
-			val, err := rd.Read()
+			obj, err := rd.Read()
 			if err != nil {
 				t.Errorf("Error %v while reading %s", err, tc.src)
 				return
 			}
-			env := sxeval.MakeChildEnvironment(root, tc.name, 0)
-			res, err := engine.Eval(val, env, nil)
+			bind := sxeval.MakeChildBinding(root, tc.name, 0)
+			env := sxeval.MakeExecutionEnvironment(engine, nil, bind)
+			res, err := env.Eval(obj)
 			if err != nil {
 				t.Error(err) // TODO: temp
 				return
@@ -100,7 +104,7 @@ func TestEval(t *testing.T) {
 		// {name: "err-callable", src: "(hello)", mustErr: true},
 	}
 	sf := sx.MakeMappedFactory(0)
-	root := createTestEnv(sf)
+	root := createTestBinding(sf)
 	engine := sxeval.MakeEngine(sf, root)
 	engine.BindSpecial(&sxeval.Special{
 		Name: "quote",
@@ -111,24 +115,29 @@ func TestEval(t *testing.T) {
 	testcases.Run(t, engine)
 }
 
-var sxEvenOdd = `;;; Indirekt recursive definition of even/odd
+var sxPrelude = `;; Indirekt recursive definition of even/odd
 (defun even? (n) (if (= n 0) 1 (odd? (- n 1))))
 (defun odd? (n) (if (= n 0) () (even? (- n 1))))
+
+;; Naive implementation of fac
+(defun fac (n) (if (= n 0) 1 (* n (fac (- n 1)))))
 `
 
 func createEngineForTCO() *sxeval.Engine {
 	sf := sx.MakeMappedFactory(128)
-	root := sxeval.MakeRootEnvironment(6)
+	root := sxeval.MakeRootBinding(6)
 	engine := sxeval.MakeEngine(sf, root)
 	engine.BindSpecial(&sxbuiltins.DefunS)
 	engine.BindSpecial(&sxbuiltins.IfS)
 	engine.BindBuiltin(&sxbuiltins.Equal)
 	engine.BindBuiltin(&sxbuiltins.Sub)
+	engine.BindBuiltin(&sxbuiltins.Mul)
 	engine.BindBuiltin(&sxbuiltins.Map)
 	engine.BindBuiltin(&sxbuiltins.List)
 	root.Freeze()
-	rd := sxreader.MakeReader(strings.NewReader(sxEvenOdd), sxreader.WithSymbolFactory(sf))
-	env := sxeval.MakeChildEnvironment(root, "TCO", 128)
+	rd := sxreader.MakeReader(strings.NewReader(sxPrelude), sxreader.WithSymbolFactory(sf))
+	bind := sxeval.MakeChildBinding(root, "TCO", 128)
+	env := sxeval.MakeExecutionEnvironment(engine, nil, bind)
 	for {
 		obj, err := rd.Read()
 		if err != nil {
@@ -137,14 +146,15 @@ func createEngineForTCO() *sxeval.Engine {
 			}
 			panic(err)
 		}
-		_, err = engine.Eval(obj, env, nil)
+		_, err = env.Eval(obj)
 		if err != nil {
 			panic(err)
 		}
 	}
-	engine.SetToplevelEnv(env)
+	engine.SetToplevelBinding(bind)
 	return engine
 }
+
 func TestTailCallOptimization(t *testing.T) {
 	t.Parallel()
 	testcases := testCases{
@@ -153,6 +163,9 @@ func TestTailCallOptimization(t *testing.T) {
 		{name: "trivial-map-even", src: "(map even? (list 0 1 2 3 4 5 6))", exp: "(1 () 1 () 1 () 1)"},
 		{name: "trivial-map-odd", src: "(map odd? (list 0 1 2 3 4 5 6))", exp: "(() 1 () 1 () 1 ())"},
 		{name: "heavy-even", src: "(even? 1000000)", exp: "1"},
+
+		// The following is not a TCO test, but a test for a correct fac implementation.
+		{name: "fac20", src: "(fac 20)", exp: "2432902008176640000"},
 	}
 	engine := createEngineForTCO()
 	testcases.Run(t, engine)

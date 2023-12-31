@@ -23,7 +23,7 @@ var NumberP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		_, ok := sx.GetNumber(args[0])
 		return sx.MakeBoolean(ok), nil
 	},
@@ -35,7 +35,7 @@ var Add = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(0))
 		if len(args) == 0 {
 			return acc, nil
@@ -58,7 +58,7 @@ var Sub = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		acc, err := GetNumber(args, 0)
 		if err != nil {
 			return nil, err
@@ -83,7 +83,7 @@ var Mul = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(1))
 		for i := 0; i < len(args); i++ {
 			num, err := GetNumber(args, i)
@@ -102,7 +102,7 @@ var Div = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		acc, err := GetNumber(args, 0)
 		if err != nil {
 			return nil, err
@@ -121,7 +121,7 @@ var Mod = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
 		acc, err := GetNumber(args, 0)
 		if err != nil {
 			return nil, err
