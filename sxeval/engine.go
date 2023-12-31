@@ -150,6 +150,9 @@ func (eng *Engine) Rework(expr Expr, bind *Binding) Expr {
 
 // Execute the given expression in the given binding.
 func (eng *Engine) Execute(expr Expr, bind *Binding, exec Executor) (sx.Object, error) {
+	if exec != nil {
+		exec.Reset()
+	}
 	env := MakeExecutionEnvironment(eng, exec, bind)
 	return env.Execute(expr)
 }

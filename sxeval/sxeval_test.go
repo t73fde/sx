@@ -114,9 +114,12 @@ func TestEval(t *testing.T) {
 	testcases.Run(t, engine)
 }
 
-var sxEvenOdd = `;;; Indirekt recursive definition of even/odd
+var sxPrelude = `;; Indirekt recursive definition of even/odd
 (defun even? (n) (if (= n 0) 1 (odd? (- n 1))))
 (defun odd? (n) (if (= n 0) () (even? (- n 1))))
+
+;; Naive implementation of fac
+(defun fac (n) (if (= n 0) 1 (* n (fac (- n 1)))))
 `
 
 func createEngineForTCO() *sxeval.Engine {
@@ -127,10 +130,11 @@ func createEngineForTCO() *sxeval.Engine {
 	engine.BindSpecial(&sxbuiltins.IfS)
 	engine.BindBuiltin(&sxbuiltins.Equal)
 	engine.BindBuiltin(&sxbuiltins.Sub)
+	engine.BindBuiltin(&sxbuiltins.Mul)
 	engine.BindBuiltin(&sxbuiltins.Map)
 	engine.BindBuiltin(&sxbuiltins.List)
 	root.Freeze()
-	rd := sxreader.MakeReader(strings.NewReader(sxEvenOdd), sxreader.WithSymbolFactory(sf))
+	rd := sxreader.MakeReader(strings.NewReader(sxPrelude), sxreader.WithSymbolFactory(sf))
 	bind := sxeval.MakeChildBinding(root, "TCO", 128)
 	for {
 		obj, err := rd.Read()
@@ -148,6 +152,7 @@ func createEngineForTCO() *sxeval.Engine {
 	engine.SetToplevelBinding(bind)
 	return engine
 }
+
 func TestTailCallOptimization(t *testing.T) {
 	t.Parallel()
 	testcases := testCases{
@@ -156,6 +161,9 @@ func TestTailCallOptimization(t *testing.T) {
 		{name: "trivial-map-even", src: "(map even? (list 0 1 2 3 4 5 6))", exp: "(1 () 1 () 1 () 1)"},
 		{name: "trivial-map-odd", src: "(map odd? (list 0 1 2 3 4 5 6))", exp: "(() 1 () 1 () 1 ())"},
 		{name: "heavy-even", src: "(even? 1000000)", exp: "1"},
+
+		// The following is not a TCO test, but a test for a correct fac implementation.
+		{name: "fac20", src: "(fac 20)", exp: "2432902008176640000"},
 	}
 	engine := createEngineForTCO()
 	testcases.Run(t, engine)

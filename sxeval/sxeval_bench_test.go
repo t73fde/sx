@@ -41,3 +41,20 @@ func BenchmarkEvenTCO(b *testing.B) {
 		})
 	}
 }
+
+func BenchmarkFac(b *testing.B) {
+	engine := createEngineForTCO()
+	sf := engine.SymbolFactory()
+	facSym := sf.MustMake("fac")
+	root := engine.GetToplevelBinding()
+	obj := sx.MakeList(facSym, sx.Int64(20))
+	expr, err := engine.Parse(obj, root)
+	if err != nil {
+		panic(err)
+	}
+	expr = engine.Rework(expr, root)
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		engine.Execute(expr, root, nil)
+	}
+}

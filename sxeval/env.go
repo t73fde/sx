@@ -29,9 +29,6 @@ type Environment struct {
 
 // MakeExecutionEnvironment creates an environment for later execution of an expression.
 func MakeExecutionEnvironment(eng *Engine, exec Executor, bind *Binding) Environment {
-	if exec != nil {
-		exec.Reset()
-	}
 	return Environment{
 		engine:   eng,
 		executor: exec,
