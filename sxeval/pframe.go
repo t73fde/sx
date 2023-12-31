@@ -72,6 +72,6 @@ func (pf *ParseFrame) SymbolFactory() sx.SymbolFactory { return pf.sf }
 func (pf *ParseFrame) Bind(sym *sx.Symbol, obj sx.Object) error { return pf.binding.Bind(sym, obj) }
 
 func (pf *ParseFrame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
-	return resolve(pf.binding, sym)
+	return pf.binding.Resolve(sym)
 }
 func (pf *ParseFrame) Binding() *Binding { return pf.binding }

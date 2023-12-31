@@ -102,6 +102,14 @@ func (mb *Binding) Print(w io.Writer) (int, error) {
 // String returns the local name of this binding.
 func (mb *Binding) String() string { return mb.name }
 
+// Parent returns the parent binding.
+func (mb *Binding) Parent() *Binding {
+	if mb == nil {
+		return nil
+	}
+	return mb.parent
+}
+
 // Bind creates a local mapping with a given symbol and object.
 //
 // A previous, non-const mapping will be overwritten.
@@ -189,19 +197,20 @@ func (mb *Binding) Unbind(sym *sx.Symbol) error {
 func (mb *Binding) Freeze() { mb.frozen = true }
 
 // rootBinding returns the root binding of the given binding.
-func rootBinding(bind *Binding) *Binding {
-	currBind := bind
-	for {
-		if currBind.parent == nil {
-			return currBind
+func (mb *Binding) rootBinding() *Binding {
+	for curr := mb; curr != nil; {
+		parent := curr.parent
+		if parent == nil {
+			return curr
 		}
-		currBind = currBind.parent
+		curr = parent
 	}
+	return nil
 }
 
-// resolve a symbol in a binding and all of its parent bindings.
-func resolve(bind *Binding, sym *sx.Symbol) (sx.Object, bool) {
-	for curr := bind; curr != nil; curr = curr.parent {
+// Resolve a symbol in a binding and all of its parent bindings.
+func (mb *Binding) Resolve(sym *sx.Symbol) (sx.Object, bool) {
+	for curr := mb; curr != nil; curr = curr.parent {
 		if obj, found := curr.Lookup(sym); found {
 			return obj, true
 		}
@@ -211,16 +220,23 @@ func resolve(bind *Binding, sym *sx.Symbol) (sx.Object, bool) {
 
 // isConstBinding returns true if the symbol is defined with a constant
 // binding in the given binding or its parent bindings.
-func isConstantBind(bind *Binding, sym *sx.Symbol) bool {
-	currBind := bind
-	for currBind != nil {
-		if currBind.IsConst(sym) {
+func (mb *Binding) isConstantBind(sym *sx.Symbol) bool {
+	for curr := mb; curr != nil; curr = curr.parent {
+		if curr.IsConst(sym) {
 			return true
 		}
-		if _, found := currBind.Lookup(sym); found {
+		if _, found := curr.Lookup(sym); found {
 			return false
 		}
-		currBind = currBind.parent
 	}
 	return false
+}
+
+// GetBinding returns the object as a binding, if possible.
+func GetBinding(obj sx.Object) (*Binding, bool) {
+	if sx.IsNil(obj) {
+		return nil, false
+	}
+	env, ok := obj.(*Binding)
+	return env, ok
 }

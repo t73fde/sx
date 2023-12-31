@@ -30,8 +30,8 @@ func (rf *ReworkFrame) MakeChildFrame(name string, baseSize int) *ReworkFrame {
 // ResolveConst will resolve the symbol in an environment that is assumed not
 // to be exchanged afterwards.
 func (rf *ReworkFrame) ResolveConst(sym *sx.Symbol) (sx.Object, bool) {
-	if bind := rf.binding; isConstantBind(bind, sym) {
-		return resolve(bind, sym)
+	if bind := rf.binding; bind.isConstantBind(sym) {
+		return bind.Resolve(sym)
 	}
 	return nil, false
 }

@@ -41,7 +41,8 @@ func (mpe *mainParserExecutor) Parse(pf *sxeval.ParseFrame, form sx.Object) (sxe
 	if !mpe.logParser {
 		return mpe.origParser.Parse(pf, form)
 	}
-	fmt.Printf(";P %v %T %v\n", pf, form, form)
+	bind := pf.Binding()
+	fmt.Printf(";P %v<-%v %T %v\n", bind, bind, form, form)
 	expr, err := mpe.origParser.Parse(pf, form)
 	if err != nil {
 		return nil, err
@@ -58,7 +59,8 @@ func (mpe *mainParserExecutor) Execute(env *sxeval.Environment, expr sxeval.Expr
 	if !mpe.logExecutor {
 		return mpe.baseExecutor.Execute(env, expr)
 	}
-	fmt.Printf(";X %v<-%v ", env, env.Parent())
+	bind := env.Binding()
+	fmt.Printf(";X %v<-%v ", bind, bind.Parent())
 	expr.Print(os.Stdout)
 	fmt.Println()
 	obj, err := mpe.baseExecutor.Execute(env, expr)
@@ -111,18 +113,18 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.NumLess, &sxbuiltins.NumLessEqual, // <, <=
 	&sxbuiltins.NumGreater, &sxbuiltins.NumGreaterEqual, // >, >=
 	&sxbuiltins.ToString, &sxbuiltins.StringAppend, // ->string, string-append
-	&sxbuiltins.CallableP,     // callable?
-	&sxbuiltins.Macroexpand0,  // macroexpand-0
-	&sxbuiltins.Defined,       // defined?
-	&sxbuiltins.CurrentEnv,    // current-environment
-	&sxbuiltins.ParentEnv,     // parent-environment
-	&sxbuiltins.EnvBindings,   // environment-bindings
-	&sxbuiltins.BoundP,        // bound?
-	&sxbuiltins.EnvLookup,     // environment-lookup
-	&sxbuiltins.EnvResolve,    // environment-resolve
-	&sxbuiltins.Pretty,        // pp
-	&sxbuiltins.Error,         // error
-	&sxbuiltins.NotBoundError, // not-bound-error
+	&sxbuiltins.CallableP,      // callable?
+	&sxbuiltins.Macroexpand0,   // macroexpand-0
+	&sxbuiltins.Defined,        // defined?
+	&sxbuiltins.CurrentBinding, // current-environment
+	&sxbuiltins.ParentBinding,  // parent-environment
+	&sxbuiltins.Bindings,       // environment-bindings
+	&sxbuiltins.BoundP,         // bound?
+	&sxbuiltins.BindingLookup,  // environment-lookup
+	&sxbuiltins.BindingResolve, // environment-resolve
+	&sxbuiltins.Pretty,         // pp
+	&sxbuiltins.Error,          // error
+	&sxbuiltins.NotBoundError,  // not-bound-error
 }
 
 func main() {
@@ -215,8 +217,8 @@ func main() {
 	}
 	root.Freeze()
 	bind := sxeval.MakeChildBinding(engine.GetToplevelBinding(), "repl", 1024)
-	bind.Bind(sf.MustMake("root-env"), root)
-	bind.Bind(sf.MustMake("repl-env"), bind)
+	bind.Bind(sf.MustMake("root-binding"), root)
+	bind.Bind(sf.MustMake("repl-binding"), bind)
 
 	mpe.logReader = true
 	mpe.logParser = true

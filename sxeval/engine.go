@@ -76,14 +76,15 @@ func resolveNotBound(env *Environment, args []sx.Object) (sx.Object, error) {
 	if !isSymbol {
 		return nil, fmt.Errorf("argument 1 is not a symbol, but %T/%v", args[0], args[0])
 	}
+	bind := env.binding
 	if len(args) > 1 {
-		argEnv, isBind := GetEnvironment(args[1])
+		arg, isBind := GetBinding(args[1])
 		if !isBind {
-			return nil, fmt.Errorf("argument 1 is not an environment, but %T/%v", args[1], args[1])
+			return nil, fmt.Errorf("argument 1 is not a binding, but %T/%v", args[1], args[1])
 		}
-		env = argEnv
+		bind = arg
 	}
-	return nil, NotBoundError{Env: env, Sym: sym}
+	return nil, NotBoundError{Binding: bind, Sym: sym}
 }
 
 // Copy creates a shallow copy of the given engine.
@@ -104,7 +105,7 @@ func (eng *Engine) RootBinding() *Binding { return eng.root }
 // SetToplevelBinding sets the given binding as the top-level binding.
 // It must be the root binding or a child of it.
 func (eng *Engine) SetToplevelBinding(bind *Binding) error {
-	root := rootBinding(bind)
+	root := bind.rootBinding()
 	if root != eng.root {
 		return fmt.Errorf("root of %v is not root of engine %v: %v", bind, eng.root, root)
 	}

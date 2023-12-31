@@ -28,10 +28,11 @@ expression. To control this logging, some additional functions are available:
 
 Some symbols are bound to specific objects:
 
-* `root-env` is bound to the root environment, where most predefined functions
+* `root-binding` is bound to the root binding, where most predefined functions
   are defined.
-* `repl-env` is bound to the environment that is used in the shell. The root
-  environment is a (possible indirect) parent environment.
+* `repl-binding` is bound to the binding that is used in the shell. The root
+  binding is a (possible indirect) parent binding.
+* `UNDEFINED` is bound to the undefined value.
 
 When the shell starts, the content of the file "prelude.sxn" is evaluated
 before any input is read from the user (via the reader).

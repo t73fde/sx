@@ -154,18 +154,18 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.NumLess, &sxbuiltins.NumLessEqual, // <, <=
 	&sxbuiltins.NumGreater, &sxbuiltins.NumGreaterEqual, // >, >=
 	&sxbuiltins.ToString, &sxbuiltins.StringAppend, // ->string, string-append
-	&sxbuiltins.CallableP,     // callable?
-	&sxbuiltins.Macroexpand0,  // macroexpand-0
-	&sxbuiltins.Defined,       // defined?
-	&sxbuiltins.CurrentEnv,    // current-environment
-	&sxbuiltins.ParentEnv,     // parent-environment
-	&sxbuiltins.EnvBindings,   // environment-bindings
-	&sxbuiltins.BoundP,        // bound?
-	&sxbuiltins.EnvLookup,     // environment-lookup
-	&sxbuiltins.EnvResolve,    // environment-resolve
-	&sxbuiltins.Pretty,        // pp
-	&sxbuiltins.Error,         // error
-	&sxbuiltins.NotBoundError, // not-bound-error
+	&sxbuiltins.CallableP,      // callable?
+	&sxbuiltins.Macroexpand0,   // macroexpand-0
+	&sxbuiltins.Defined,        // defined?
+	&sxbuiltins.CurrentBinding, // current-environment
+	&sxbuiltins.ParentBinding,  // parent-environment
+	&sxbuiltins.Bindings,       // environment-bindings
+	&sxbuiltins.BoundP,         // bound?
+	&sxbuiltins.BindingLookup,  // environment-lookup
+	&sxbuiltins.BindingResolve, // environment-resolve
+	&sxbuiltins.Pretty,         // pp
+	&sxbuiltins.Error,          // error
+	&sxbuiltins.NotBoundError,  // not-bound-error
 }
 
 var objects = []struct {

@@ -20,42 +20,42 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-var CurrentEnv = sxeval.Builtin{
-	Name:     "current-environment",
+var CurrentBinding = sxeval.Builtin{
+	Name:     "current-binding",
 	MinArity: 0,
 	MaxArity: 0,
 	TestPure: nil,
-	Fn:       func(env *sxeval.Environment, _ []sx.Object) (sx.Object, error) { return env, nil },
+	Fn:       func(env *sxeval.Environment, _ []sx.Object) (sx.Object, error) { return env.Binding(), nil },
 }
 
-var ParentEnv = sxeval.Builtin{
-	Name:     "parent-environment",
+var ParentBinding = sxeval.Builtin{
+	Name:     "parent-binding",
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
 	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
-		env, err := GetEnvironment(args, 0)
+		bind, err := GetBinding(args, 0)
 		if err != nil {
 			return nil, err
 		}
-		if parent := env.Parent(); parent != nil {
+		if parent := bind.Parent(); parent != nil {
 			return parent, nil
 		}
 		return sx.MakeUndefined(), nil
 	},
 }
 
-var EnvBindings = sxeval.Builtin{
-	Name:     "environment-bindings",
+var Bindings = sxeval.Builtin{
+	Name:     "bindings",
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
-		env, err := GetEnvironment(args, 0)
+		bind, err := GetBinding(args, 0)
 		if err != nil {
 			return nil, err
 		}
-		return env.Bindings(), nil
+		return bind.Bindings(), nil
 	},
 }
 
@@ -75,52 +75,52 @@ var BoundP = sxeval.Builtin{
 	},
 }
 
-// EnvLookup returns the symbol's binding value in the given
-// environment, or Undefined if there is no such value.
-var EnvLookup = sxeval.Builtin{
-	Name:     "environment-lookup",
+// BindingLookup returns the symbol's bound value in the given
+// binding, or Undefined if there is no such value.
+var BindingLookup = sxeval.Builtin{
+	Name:     "binding-lookup",
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
 	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
-		sym, env, err := envGetSymBinding(env, args)
+		sym, bind, err := envGetSymBinding(env, args)
 		if err != nil {
 			return nil, err
 		}
-		if obj, found := env.Lookup(sym); found {
+		if obj, found := bind.Lookup(sym); found {
 			return obj, nil
 		}
 		return sx.MakeUndefined(), nil
 	},
 }
 
-// EnvResolve returns the symbol's binding value in the given environment
+// BindingResolve returns the symbol's bound value in the given environment
 // and all its parent environment, or Undefined if there is no such value.
-var EnvResolve = sxeval.Builtin{
-	Name:     "environment-resolve",
+var BindingResolve = sxeval.Builtin{
+	Name:     "binding-resolve",
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
 	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
-		sym, env, err := envGetSymBinding(env, args)
+		sym, bind, err := envGetSymBinding(env, args)
 		if err != nil {
 			return nil, err
 		}
-		if obj, found := env.Resolve(sym); found {
+		if obj, found := bind.Resolve(sym); found {
 			return obj, nil
 		}
 		return sx.MakeUndefined(), nil
 	},
 }
 
-func envGetSymBinding(env *sxeval.Environment, args []sx.Object) (*sx.Symbol, *sxeval.Environment, error) {
+func envGetSymBinding(env *sxeval.Environment, args []sx.Object) (*sx.Symbol, *sxeval.Binding, error) {
 	sym, err := GetSymbol(args, 0)
 	if err != nil {
 		return nil, nil, err
 	}
 	if len(args) == 1 {
-		return sym, env, err
+		return sym, env.Binding(), err
 	}
-	argEnv, err := GetEnvironment(args, 1)
-	return sym, argEnv, err
+	bind, err := GetBinding(args, 1)
+	return sym, bind, err
 }
