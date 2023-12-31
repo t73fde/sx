@@ -28,12 +28,56 @@ type Environment struct {
 }
 
 // MakeExecutionEnvironment creates an environment for later execution of an expression.
-func MakeExecutionEnvironment(eng *Engine, exec Executor, bind *Binding) Environment {
-	return Environment{
+func MakeExecutionEnvironment(eng *Engine, exec Executor, bind *Binding) *Environment {
+	return &Environment{
 		engine:   eng,
 		executor: exec,
 		binding:  bind,
 		caller:   nil,
+	}
+}
+
+// Eval parses the given object and runs it in the environment.
+func (env *Environment) Eval(obj sx.Object) (sx.Object, error) {
+	expr, err := env.Parse(obj)
+	if err != nil {
+		return nil, err
+	}
+	expr = env.Rework(expr)
+	return env.Run(expr)
+}
+
+// Parse the given object.
+func (env *Environment) Parse(obj sx.Object) (Expr, error) {
+	pf := env.MakeParseFrame()
+	return pf.Parse(obj)
+}
+
+// Rework the given expression.
+func (env *Environment) Rework(expr Expr) Expr {
+	rf := env.MakeReworkFrame()
+	return expr.Rework(rf)
+}
+
+// Run the given expression.
+func (env *Environment) Run(expr Expr) (sx.Object, error) {
+	if exec := env.executor; exec != nil {
+		exec.Reset()
+	}
+	return env.Execute(expr)
+}
+
+func (env *Environment) MakeParseFrame() *ParseFrame {
+	return &ParseFrame{
+		sf:      env.engine.sf,
+		binding: env.binding,
+		parser:  env.engine.pars,
+	}
+}
+
+func (env *Environment) MakeReworkFrame() *ReworkFrame {
+	return &ReworkFrame{
+		binding: env.binding,
 	}
 }
 
@@ -46,25 +90,11 @@ func (env *Environment) NewDynamicEnvironment() *Environment {
 	}
 }
 
-func (env *Environment) MakeParseFrame() *ParseFrame {
-	return &ParseFrame{
-		sf:      env.engine.SymbolFactory(),
-		binding: env.binding,
-		parser:  env.engine.pars,
-	}
-}
-
-func (env *Environment) MakeReworkFrame() *ReworkFrame {
-	return &ReworkFrame{
-		binding: env.binding,
-	}
-}
-
-func (env *Environment) NewLexicalEnvironment(pf *ParseFrame, name string, numBindings int) *Environment {
+func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
 	return &Environment{
 		engine:   env.engine,
 		executor: env.executor,
-		binding:  MakeChildBinding(pf.binding, name, numBindings),
+		binding:  MakeChildBinding(parent, name, numBindings),
 		caller:   env,
 	}
 }
@@ -108,13 +138,8 @@ func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 }
 
 func (env *Environment) Call(fn Callable, args []sx.Object) (sx.Object, error) {
-	dynamicEnv := Environment{
-		engine:   env.engine,
-		executor: env.executor,
-		binding:  env.binding,
-		caller:   env,
-	}
-	res, err := fn.Call(&dynamicEnv, args)
+	dynamicEnv := env.NewDynamicEnvironment()
+	res, err := fn.Call(dynamicEnv, args)
 	if err == nil {
 		return res, nil
 	}

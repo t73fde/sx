@@ -307,7 +307,7 @@ func (p *Procedure) Call(env *sxeval.Environment, args []sx.Object) (sx.Object, 
 	if p.Rest != nil {
 		bindSize++
 	}
-	lexicalEnv := env.NewLexicalEnvironment(p.PFrame, p.Name, bindSize)
+	lexicalEnv := env.NewLexicalEnvironment(p.PFrame.Binding(), p.Name, bindSize)
 	for i, p := range p.Params {
 		err := lexicalEnv.Bind(p, args[i])
 		if err != nil {

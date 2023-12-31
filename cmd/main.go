@@ -243,6 +243,7 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, bind
 	}()
 
 	for {
+		env := sxeval.MakeExecutionEnvironment(eng, mpe, bind)
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {
@@ -255,12 +256,12 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, bind
 		if mpe.logReader {
 			fmt.Println(";<", obj)
 		}
-		expr, err := eng.Parse(obj, bind)
+		expr, err := env.Parse(obj)
 		if err != nil {
 			fmt.Println(";p", err)
 			continue
 		}
-		expr = eng.Rework(expr, bind)
+		expr = env.Rework(expr)
 		if mpe.logExpr {
 			printExpr(expr, 0)
 			continue
@@ -269,7 +270,7 @@ func repl(rd *sxreader.Reader, mpe *mainParserExecutor, eng *sxeval.Engine, bind
 			expr.Print(os.Stdout)
 			fmt.Println()
 		}
-		res, err := eng.Execute(expr, bind, mpe)
+		res, err := env.Run(expr)
 		if err != nil {
 			fmt.Println(";e", err)
 			continue
@@ -352,6 +353,7 @@ var prelude string
 
 func readPrelude(engine *sxeval.Engine) error {
 	rd := sxreader.MakeReader(strings.NewReader(prelude), sxreader.WithSymbolFactory(engine.SymbolFactory()))
+	env := sxeval.MakeExecutionEnvironment(engine, nil, engine.RootBinding())
 	for {
 		form, err := rd.Read()
 		if err != nil {
@@ -360,7 +362,7 @@ func readPrelude(engine *sxeval.Engine) error {
 			}
 			return err
 		}
-		_, err = engine.Eval(form, engine.RootBinding(), nil)
+		_, err = env.Eval(form)
 		if err != nil {
 			return err
 		}

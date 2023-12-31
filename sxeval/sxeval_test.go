@@ -71,13 +71,14 @@ func (testcases testCases) Run(t *testing.T, engine *sxeval.Engine) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
-			val, err := rd.Read()
+			obj, err := rd.Read()
 			if err != nil {
 				t.Errorf("Error %v while reading %s", err, tc.src)
 				return
 			}
 			bind := sxeval.MakeChildBinding(root, tc.name, 0)
-			res, err := engine.Eval(val, bind, nil)
+			env := sxeval.MakeExecutionEnvironment(engine, nil, bind)
+			res, err := env.Eval(obj)
 			if err != nil {
 				t.Error(err) // TODO: temp
 				return
@@ -136,6 +137,7 @@ func createEngineForTCO() *sxeval.Engine {
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxPrelude), sxreader.WithSymbolFactory(sf))
 	bind := sxeval.MakeChildBinding(root, "TCO", 128)
+	env := sxeval.MakeExecutionEnvironment(engine, nil, bind)
 	for {
 		obj, err := rd.Read()
 		if err != nil {
@@ -144,7 +146,7 @@ func createEngineForTCO() *sxeval.Engine {
 			}
 			panic(err)
 		}
-		_, err = engine.Eval(obj, bind, nil)
+		_, err = env.Eval(obj)
 		if err != nil {
 			panic(err)
 		}

@@ -51,9 +51,10 @@ func (tcs tTestCases) Run(t *testing.T) {
 			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
 
 			var sb strings.Builder
-			env := sxeval.MakeChildBinding(root, tc.name, 0)
+			bind := sxeval.MakeChildBinding(root, tc.name, 0)
+			env := sxeval.MakeExecutionEnvironment(engine, nil, bind)
 			for {
-				val, err := rd.Read()
+				obj, err := rd.Read()
 				if err != nil {
 					if err == io.EOF {
 						break
@@ -65,7 +66,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 					t.Errorf("Error %v while reading %s", err, tc.src)
 					return
 				}
-				res, err := engine.Eval(val, env, nil)
+				res, err := env.Eval(obj)
 				if err != nil {
 					if tc.withErr {
 						sb.WriteString(fmt.Errorf("{[{%w}]}", err).Error())

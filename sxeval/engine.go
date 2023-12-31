@@ -126,37 +126,6 @@ func (eng *Engine) SetParser(p Parser) Parser {
 	return orig
 }
 
-// Eval parses the given object and executes it in the binding.
-func (eng *Engine) Eval(obj sx.Object, bind *Binding, exec Executor) (sx.Object, error) {
-	expr, err := eng.Parse(obj, bind)
-	if err != nil {
-		return nil, err
-	}
-	expr = eng.Rework(expr, bind)
-	return eng.Execute(expr, bind, exec)
-}
-
-// Parse the given object in the given binding.
-func (eng *Engine) Parse(obj sx.Object, bind *Binding) (Expr, error) {
-	pf := ParseFrame{sf: eng.sf, binding: bind, parser: eng.pars}
-	return pf.Parse(obj)
-}
-
-// Rework the given expression with the options stored in the engine.
-func (eng *Engine) Rework(expr Expr, bind *Binding) Expr {
-	rf := ReworkFrame{binding: bind}
-	return expr.Rework(&rf)
-}
-
-// Execute the given expression in the given binding.
-func (eng *Engine) Execute(expr Expr, bind *Binding, exec Executor) (sx.Object, error) {
-	if exec != nil {
-		exec.Reset()
-	}
-	env := MakeExecutionEnvironment(eng, exec, bind)
-	return env.Execute(expr)
-}
-
 // BindSpecial binds a syntax parser to the its name in the engine's root binding.
 func (eng *Engine) BindSpecial(syn *Special) error {
 	return eng.BindConst(syn.Name, syn)

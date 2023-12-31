@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxeval"
 )
 
 func BenchmarkEvenTCO(b *testing.B) {
@@ -28,15 +29,16 @@ func BenchmarkEvenTCO(b *testing.B) {
 	b.ResetTimer()
 	for _, tc := range testcases {
 		b.Run(strconv.Itoa(tc), func(b *testing.B) {
+			env := sxeval.MakeExecutionEnvironment(engine, nil, root)
 			obj := sx.MakeList(evenSym, sx.Int64(tc))
-			expr, err := engine.Parse(obj, root)
+			expr, err := env.Parse(obj)
 			if err != nil {
 				panic(err)
 			}
-			expr = engine.Rework(expr, root)
+			expr = env.Rework(expr)
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
-				engine.Execute(expr, root, nil)
+				env.Run(expr)
 			}
 		})
 	}
@@ -48,13 +50,14 @@ func BenchmarkFac(b *testing.B) {
 	facSym := sf.MustMake("fac")
 	root := engine.GetToplevelBinding()
 	obj := sx.MakeList(facSym, sx.Int64(20))
-	expr, err := engine.Parse(obj, root)
+	env := sxeval.MakeExecutionEnvironment(engine, nil, root)
+	expr, err := env.Parse(obj)
 	if err != nil {
 		panic(err)
 	}
-	expr = engine.Rework(expr, root)
+	expr = env.Rework(expr)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		engine.Execute(expr, root, nil)
+		env.Run(expr)
 	}
 }
