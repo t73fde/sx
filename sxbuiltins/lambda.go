@@ -194,20 +194,20 @@ func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	if le.IsMacro {
 		return &Macro{
-			Env:    env,
-			PFrame: env.MakeParseFrame(),
-			Name:   le.Name,
-			Params: le.Params,
-			Rest:   le.Rest,
-			Expr:   le.Expr,
+			Env:     env,
+			Binding: env.Binding(),
+			Name:    le.Name,
+			Params:  le.Params,
+			Rest:    le.Rest,
+			Expr:    le.Expr,
 		}, nil
 	}
 	return &Procedure{
-		PFrame: env.MakeParseFrame(),
-		Name:   le.Name,
-		Params: le.Params,
-		Rest:   le.Rest,
-		Expr:   le.Expr,
+		Binding: env.Binding(),
+		Name:    le.Name,
+		Params:  le.Params,
+		Rest:    le.Rest,
+		Expr:    le.Expr,
 	}, nil
 }
 func (le *LambdaExpr) IsEqual(other sxeval.Expr) bool {
@@ -261,11 +261,11 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 
 // Procedure represents the procedure definition form (aka lambda).
 type Procedure struct {
-	PFrame *sxeval.ParseFrame
-	Name   string
-	Params []*sx.Symbol
-	Rest   *sx.Symbol
-	Expr   sxeval.Expr
+	Binding *sxeval.Binding
+	Name    string
+	Params  []*sx.Symbol
+	Rest    *sx.Symbol
+	Expr    sxeval.Expr
 }
 
 func (p *Procedure) IsNil() bool  { return p == nil }
@@ -279,7 +279,7 @@ func (p *Procedure) IsEqual(other sx.Object) bool {
 	}
 	if otherP, ok := other.(*Procedure); ok {
 		// Don't compare Name, because they are always different, but that does not matter.
-		return p.PFrame.IsEqual(otherP.PFrame) &&
+		return p.Binding.IsEqual(otherP.Binding) &&
 			sxeval.EqualSymbolSlice(p.Params, otherP.Params) &&
 			p.Rest.IsEqual(otherP.Rest) &&
 			p.Expr.IsEqual(otherP.Expr)
@@ -307,7 +307,7 @@ func (p *Procedure) Call(env *sxeval.Environment, args []sx.Object) (sx.Object, 
 	if p.Rest != nil {
 		bindSize++
 	}
-	lexicalEnv := env.NewLexicalEnvironment(p.PFrame.Binding(), p.Name, bindSize)
+	lexicalEnv := env.NewLexicalEnvironment(p.Binding, p.Name, bindSize)
 	for i, p := range p.Params {
 		err := lexicalEnv.Bind(p, args[i])
 		if err != nil {

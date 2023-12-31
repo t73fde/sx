@@ -26,21 +26,6 @@ type ParseFrame struct {
 	parser  Parser
 }
 
-func (pf *ParseFrame) String() string { return pf.binding.String() }
-
-func (pf *ParseFrame) IsEqual(other *ParseFrame) bool {
-	if pf == other {
-		return true
-	}
-	if pf == nil || other == nil {
-		return false
-	}
-	if pf.sf != other.sf {
-		return false
-	}
-	return pf.binding.IsEqual(other.binding)
-}
-
 func (pf *ParseFrame) Parse(obj sx.Object) (Expr, error) {
 	return pf.parser.Parse(pf, obj)
 

@@ -35,12 +35,12 @@ var DefMacroS = sxeval.Special{
 
 // Macro represents the macro definition form.
 type Macro struct {
-	Env    *sxeval.Environment
-	PFrame *sxeval.ParseFrame
-	Name   string
-	Params []*sx.Symbol
-	Rest   *sx.Symbol
-	Expr   sxeval.Expr
+	Env     *sxeval.Environment
+	Binding *sxeval.Binding
+	Name    string
+	Params  []*sx.Symbol
+	Rest    *sx.Symbol
+	Expr    sxeval.Expr
 }
 
 func (m *Macro) IsNil() bool  { return m == nil }
@@ -54,7 +54,7 @@ func (m *Macro) IsEqual(other sx.Object) bool {
 	}
 	if otherM, ok := other.(*Macro); ok {
 		// Don't compare Name, because they are always different, but that does not matter.
-		return m.PFrame.IsEqual(otherM.PFrame) &&
+		return m.Binding.IsEqual(otherM.Binding) &&
 			sxeval.EqualSymbolSlice(m.Params, otherM.Params) &&
 			m.Rest.IsEqual(otherM.Rest) &&
 			m.Expr.IsEqual(otherM.Expr)
@@ -90,11 +90,11 @@ func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
 	}
 
 	proc := Procedure{
-		PFrame: m.PFrame,
-		Name:   m.Name,
-		Params: m.Params,
-		Rest:   m.Rest,
-		Expr:   m.Expr,
+		Binding: m.Binding,
+		Name:    m.Name,
+		Params:  m.Params,
+		Rest:    m.Rest,
+		Expr:    m.Expr,
 	}
 	return m.Env.Call(&proc, macroArgs)
 }
