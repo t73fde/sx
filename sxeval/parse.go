@@ -56,7 +56,7 @@ func (*defaultParser) parsePair(pf *ParseFrame, pair *sx.Pair) (Expr, error) {
 				return sp.Parse(pf, pair.Tail())
 			}
 		}
-		proc = ResolveProcSymbolExpr{Symbol: sym}
+		proc = ResolveSymbolExpr{Symbol: sym}
 	} else {
 		p, err := pf.Parse(first)
 		if err != nil {

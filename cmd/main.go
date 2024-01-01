@@ -300,8 +300,6 @@ func printExpr(expr sxeval.Expr, level int) {
 		}
 	case sxeval.ResolveSymbolExpr:
 		fmt.Printf("RESOLVE %v\n", e.Symbol)
-	case sxeval.ResolveProcSymbolExpr:
-		fmt.Printf("RESOLVE-PROC %v\n", e.Symbol)
 	case sxeval.ObjExpr:
 		fmt.Printf("OBJ %T/%v\n", e.Obj, e.Obj)
 	case *sxbuiltins.LambdaExpr:

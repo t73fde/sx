@@ -159,21 +159,6 @@ type executeAgain struct {
 
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }
 
-func (env *Environment) CallResolveSymbol(sym *sx.Symbol) (sx.Object, error) {
-	return env.callResolve(sym, env.engine.symResSym)
-}
-func (env *Environment) CallResolveCallable(sym *sx.Symbol) (sx.Object, error) {
-	return env.callResolve(sym, env.engine.symResCall)
-}
-func (env *Environment) callResolve(sym *sx.Symbol, defSym *sx.Symbol) (sx.Object, error) {
-	if obj, found := env.Resolve(defSym); found {
-		if fn, isCallable := obj.(Callable); isCallable {
-			return env.Call(fn, []sx.Object{sym, env.binding})
-		}
-	}
-	return nil, env.MakeNotBoundError(sym)
-}
-
 func (env *Environment) Bind(sym *sx.Symbol, obj sx.Object) error {
 	return env.binding.Bind(sym, obj)
 }

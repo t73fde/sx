@@ -134,7 +134,7 @@ func (re ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	if obj, found := env.Resolve(re.Symbol); found {
 		return obj, nil
 	}
-	return env.CallResolveSymbol(re.Symbol)
+	return nil, env.MakeNotBoundError(re.Symbol)
 }
 func (re ResolveSymbolExpr) IsEqual(other Expr) bool {
 	if re == other {
@@ -147,37 +147,6 @@ func (re ResolveSymbolExpr) IsEqual(other Expr) bool {
 }
 func (re ResolveSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{RESOLVE %v}", re.Symbol)
-}
-
-// ResolveProcSymbolExpr resolves the given symbol in an environment and returns the value.
-// The symbol must resolve to a Callable, but this is not enforced by this expression.
-type ResolveProcSymbolExpr struct {
-	Symbol *sx.Symbol
-}
-
-func (re ResolveProcSymbolExpr) Rework(rf *ReworkFrame) Expr {
-	if obj, found := rf.ResolveConst(re.Symbol); found {
-		return ObjExpr{Obj: obj}.Rework(rf)
-	}
-	return re
-}
-func (re ResolveProcSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	if obj, found := env.Resolve(re.Symbol); found {
-		return obj, nil
-	}
-	return env.CallResolveCallable(re.Symbol)
-}
-func (re ResolveProcSymbolExpr) IsEqual(other Expr) bool {
-	if re == other {
-		return true
-	}
-	if otherR, ok := other.(ResolveProcSymbolExpr); ok {
-		return re.Symbol.IsEqual(otherR.Symbol)
-	}
-	return false
-}
-func (re ResolveProcSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{RESOLVE-PROC %v}", re.Symbol)
 }
 
 // CallExpr calls a procedure and returns the resulting objects.

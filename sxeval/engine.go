@@ -24,67 +24,20 @@ import (
 
 // Engine is the collection of all relevant data element to execute / evaluate an object.
 type Engine struct {
-	sf         sx.SymbolFactory
-	root       *Binding
-	toplevel   *Binding
-	pars       Parser
-	symResSym  *sx.Symbol
-	symResCall *sx.Symbol
+	sf       sx.SymbolFactory
+	root     *Binding
+	toplevel *Binding
+	pars     Parser
 }
 
 // MakeEngine creates a new engine.
 func MakeEngine(sf sx.SymbolFactory, root *Binding) *Engine {
-	symResSym := sf.MustMake(resolveSymbolName)
-	root.Bind(symResSym, simpleBuiltin(resolveNotBound))
-	symResCall := sf.MustMake(resolveCallableName)
-	root.Bind(symResCall, simpleBuiltin(resolveNotBound))
 	return &Engine{
-		sf:         sf,
-		root:       root,
-		toplevel:   root,
-		pars:       &myDefaultParser,
-		symResSym:  symResSym,
-		symResCall: symResCall,
+		sf:       sf,
+		root:     root,
+		toplevel: root,
+		pars:     &myDefaultParser,
 	}
-}
-
-const resolveSymbolName = "*RESOLVE-SYMBOL*"
-const resolveCallableName = "*RESOLVE-CALLABLE*"
-
-type simpleBuiltin func(*Environment, []sx.Object) (sx.Object, error)
-
-func (sb simpleBuiltin) IsNil() bool  { return sb == nil }
-func (sb simpleBuiltin) IsAtom() bool { return sb == nil }
-func (sb simpleBuiltin) IsEqual(other sx.Object) bool {
-	if sb == nil {
-		return sx.IsNil(other)
-	}
-	return false
-}
-func (sb simpleBuiltin) Repr() string            { return "#<simple-builtin>" }
-func (sb simpleBuiltin) String() string          { return "simple-builtin" }
-func (sb simpleBuiltin) IsPure([]sx.Object) bool { return false }
-func (sb simpleBuiltin) Call(env *Environment, args []sx.Object) (sx.Object, error) {
-	return sb(env, args)
-}
-
-func resolveNotBound(env *Environment, args []sx.Object) (sx.Object, error) {
-	if len(args) == 0 {
-		return nil, fmt.Errorf("at least one argument expected, but none given")
-	}
-	sym, isSymbol := sx.GetSymbol(args[0])
-	if !isSymbol {
-		return nil, fmt.Errorf("argument 1 is not a symbol, but %T/%v", args[0], args[0])
-	}
-	bind := env.binding
-	if len(args) > 1 {
-		arg, isBind := GetBinding(args[1])
-		if !isBind {
-			return nil, fmt.Errorf("argument 1 is not a binding, but %T/%v", args[1], args[1])
-		}
-		bind = arg
-	}
-	return nil, NotBoundError{Binding: bind, Sym: sym}
 }
 
 // Copy creates a shallow copy of the given engine.
