@@ -51,7 +51,7 @@ type Option func(*Generator)
 // WithNewline will add new-line characters before certain tags.
 func WithNewline(gen *Generator) { gen.withNewline = true }
 
-// NewGenerator creates a new generator based on a symbol factory.
+// NewGenerator creates a new generator.
 func NewGenerator(opts ...Option) *Generator {
 	gen := Generator{}
 	for _, opt := range opts {
@@ -133,7 +133,7 @@ func (enc *myEncoder) generate(obj sx.Object) {
 		}
 		if sym, isSymbol := sx.GetSymbol(o.Car()); isSymbol {
 			tail := o.Tail()
-			if s := sym.String(); s[0] == '@' {
+			if s := sym.Name(); s[0] == '@' {
 				switch s {
 				case NameSymCDATA:
 					enc.writeCDATA(tail)

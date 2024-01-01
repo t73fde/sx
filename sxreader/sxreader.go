@@ -32,9 +32,6 @@ type Reader struct {
 	col     int
 	prevCol int
 	macros  macroMap
-	symFac  sx.SymbolFactory
-
-	quoteSym, quasiquoteSym, unquoteSym, unquoteSplicingSym sx.Symbol
 
 	maxDepth, curDepth uint
 	maxLength          uint
@@ -63,25 +60,6 @@ func (rp *Position) String() string {
 
 // Option is a function to modify the default reader when it is made.
 type Option func(*Reader)
-
-// WithSymbolFactory sets the symbol factory to a defined value.
-func WithSymbolFactory(sf sx.SymbolFactory) Option {
-	return func(rd *Reader) {
-		if rd.symFac != nil {
-			panic("symbol factory already set")
-		}
-		rd.symFac = sf
-	}
-}
-
-// WithDefaultSymbolFactory sets a new symbol factory.
-// Use this option, if following options need a defined symbol factory.
-func WithDefaultSymbolFactory(rd *Reader) {
-	if rd.symFac != nil {
-		panic("symbol factory already set")
-	}
-	rd.symFac = sx.MakeMappedFactory(128)
-}
 
 // WithNestingLimit sets the maximum nesting for a object.
 func WithNestingLimit(depth uint) Option {
@@ -126,15 +104,6 @@ func MakeReader(r io.Reader, opts ...Option) *Reader {
 	for _, opt := range opts {
 		opt(&rd)
 	}
-	if rd.symFac == nil {
-		rd.symFac = sx.MakeMappedFactory(128)
-	}
-
-	rd.quoteSym = rd.symFac.MustMake(sx.QuoteName)
-	rd.quasiquoteSym = rd.symFac.MustMake(sx.QuasiquoteName)
-	rd.unquoteSym = rd.symFac.MustMake(sx.UnquoteName)
-	rd.unquoteSplicingSym = rd.symFac.MustMake(sx.UnquoteSplicingName)
-
 	return &rd
 }
 func inferReaderName(r io.Reader) string {
@@ -150,9 +119,6 @@ func inferReaderName(r io.Reader) string {
 
 // Name return the name of the underlying reader.
 func (rd *Reader) Name() string { return rd.name }
-
-// SymbolFactory returns the symbol factory that is used in the reader.
-func (rd *Reader) SymbolFactory() sx.SymbolFactory { return rd.symFac }
 
 // nextRune returns the next rune from the reader and advances the reader.
 func (rd *Reader) nextRune() (rune, error) {

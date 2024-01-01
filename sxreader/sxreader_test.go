@@ -165,7 +165,7 @@ func performReaderTestCases(t *testing.T, testcases []readerTestCase) {
 	t.Parallel()
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithDefaultSymbolFactory)
+			rd := sxreader.MakeReader(strings.NewReader(tc.src))
 			val, err := rd.Read()
 			if err != nil {
 				got := err.Error()

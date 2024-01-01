@@ -24,10 +24,10 @@ import (
 	"zettelstore.de/sx.fossil/sxreader"
 )
 
-func createTestBinding(sf sx.SymbolFactory) *sxeval.Binding {
+func createTestBinding() *sxeval.Binding {
 	bind := sxeval.MakeRootBinding(2)
 
-	symCat := sf.MustMake("cat")
+	symCat := sx.Symbol("cat")
 	bind.Bind(symCat, &sxeval.Builtin{
 		Name:     "cat",
 		MinArity: 0,
@@ -52,7 +52,7 @@ func createTestBinding(sf sx.SymbolFactory) *sxeval.Binding {
 		},
 	})
 
-	symHello := sf.MustMake("hello")
+	symHello := sx.Symbol("hello")
 	bind.Bind(symHello, sx.String("Hello, World"))
 	return bind
 }
@@ -66,11 +66,10 @@ type testcase struct {
 type testCases []testcase
 
 func (testcases testCases) Run(t *testing.T, engine *sxeval.Engine) {
-	sf := engine.SymbolFactory()
 	root := engine.GetToplevelBinding()
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
+			rd := sxreader.MakeReader(strings.NewReader(tc.src))
 			obj, err := rd.Read()
 			if err != nil {
 				t.Errorf("Error %v while reading %s", err, tc.src)
@@ -103,9 +102,8 @@ func TestEval(t *testing.T) {
 		// {name: "err-binding", src: "moin", mustErr: true},
 		// {name: "err-callable", src: "(hello)", mustErr: true},
 	}
-	sf := sx.MakeMappedFactory(0)
-	root := createTestBinding(sf)
-	engine := sxeval.MakeEngine(sf, root)
+	root := createTestBinding()
+	engine := sxeval.MakeEngine(root)
 	engine.BindSpecial(&sxeval.Special{
 		Name: "quote",
 		Fn: func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
@@ -124,9 +122,8 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 `
 
 func createEngineForTCO() *sxeval.Engine {
-	sf := sx.MakeMappedFactory(128)
 	root := sxeval.MakeRootBinding(6)
-	engine := sxeval.MakeEngine(sf, root)
+	engine := sxeval.MakeEngine(root)
 	engine.BindSpecial(&sxbuiltins.DefunS)
 	engine.BindSpecial(&sxbuiltins.IfS)
 	engine.BindBuiltin(&sxbuiltins.Equal)
@@ -135,7 +132,7 @@ func createEngineForTCO() *sxeval.Engine {
 	engine.BindBuiltin(&sxbuiltins.Map)
 	engine.BindBuiltin(&sxbuiltins.List)
 	root.Freeze()
-	rd := sxreader.MakeReader(strings.NewReader(sxPrelude), sxreader.WithSymbolFactory(sf))
+	rd := sxreader.MakeReader(strings.NewReader(sxPrelude))
 	bind := sxeval.MakeChildBinding(root, "TCO", 128)
 	env := sxeval.MakeExecutionEnvironment(engine, nil, bind)
 	for {

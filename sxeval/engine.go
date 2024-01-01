@@ -24,16 +24,14 @@ import (
 
 // Engine is the collection of all relevant data element to execute / evaluate an object.
 type Engine struct {
-	sf       sx.SymbolFactory
 	root     *Binding
 	toplevel *Binding
 	pars     Parser
 }
 
 // MakeEngine creates a new engine.
-func MakeEngine(sf sx.SymbolFactory, root *Binding) *Engine {
+func MakeEngine(root *Binding) *Engine {
 	return &Engine{
-		sf:       sf,
 		root:     root,
 		toplevel: root,
 		pars:     &myDefaultParser,
@@ -48,9 +46,6 @@ func (eng *Engine) Copy() *Engine {
 	result := *eng
 	return &result
 }
-
-// SymbolFactory returns the symbol factory of the engine.
-func (eng *Engine) SymbolFactory() sx.SymbolFactory { return eng.sf }
 
 // RootBinding returns the root binding of the engine.
 func (eng *Engine) RootBinding() *Binding { return eng.root }
@@ -93,10 +88,10 @@ func (eng *Engine) BindBuiltin(b *Builtin) error {
 // BindConst a given object to a symbol of the given name as a constant in the
 // engine's root binding.
 func (eng *Engine) BindConst(name string, obj sx.Object) error {
-	return eng.root.BindConst(eng.sf.MustMake(name), obj)
+	return eng.root.BindConst(sx.Symbol(name), obj)
 }
 
 // Bind a given object to a symbol of the given name in the engine's root binding.
 func (eng *Engine) Bind(name string, obj sx.Object) error {
-	return eng.root.Bind(eng.sf.MustMake(name), obj)
+	return eng.root.Bind(sx.Symbol(name), obj)
 }

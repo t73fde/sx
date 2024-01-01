@@ -30,11 +30,6 @@ because such representation may encode other `sx.Object`s in the future.
 When creating a `sxreader.Reader`, some options can be specified to customize
 the behaviour of the reader:
 
-* `WithSymbolFactory(sx.SymbolFactory)` specifies a symbol factory
-  to be used to create symbols. If no symbol factory is specified, or
-  `WithDefaultSymbolFactory` is used, an internal created, reader specific
-  symbol factory is used. Please note, that two symbols always differ, if they
-  are created by different symbol factories.
 * `WithListLimit(uint)` specifies a maximum list length. It should be used,
   if the reader reads from external sources to mitigate DOS attacks. If not
   specified, the value of `sxreader.DefaultListLimit` is used.
