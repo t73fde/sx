@@ -31,13 +31,13 @@ const (
 
 // Names for special symbols.
 const (
-	NameSymAttr          = "@"
-	NameSymCDATA         = "@C"
-	NameSymNoEscape      = "@H"
-	NameSymList          = "@L"
-	NameSymInlineComment = "@@"
-	NameSymBlockComment  = "@@@"
-	NameSymDoctype       = "@@@@"
+	SymAttr          = sx.Symbol("@")
+	SymCDATA         = sx.Symbol("@C")
+	SymNoEscape      = sx.Symbol("@H")
+	SymList          = sx.Symbol("@L")
+	SymInlineComment = sx.Symbol("@@")
+	SymBlockComment  = sx.Symbol("@@@")
+	SymDoctype       = sx.Symbol("@@@@")
 )
 
 // Generator is the object that allows to generate HTML.
@@ -79,8 +79,8 @@ var (
 		"div": true,
 	}
 	nlTags = map[sx.Symbol]bool{
-		NameSymCDATA: true,
-		"head":       true, "link": true, "meta": true, "title": true,
+		SymCDATA: true,
+		"head":   true, "link": true, "meta": true, "title": true,
 		"script": true,
 		"body":   true, "article": true, "details": true, "div": true,
 		"header": true, "footer": true, "form": true, "main": true,
@@ -134,18 +134,18 @@ func (enc *myEncoder) generate(obj sx.Object) {
 		if sym, isSymbol := sx.GetSymbol(o.Car()); isSymbol {
 			tail := o.Tail()
 			if s := sym.Name(); s[0] == '@' {
-				switch s {
-				case NameSymCDATA:
+				switch sym {
+				case SymCDATA:
 					enc.writeCDATA(tail)
-				case NameSymNoEscape:
+				case SymNoEscape:
 					enc.writeNoEscape(tail)
-				case NameSymInlineComment:
+				case SymInlineComment:
 					enc.writeComment(tail)
-				case NameSymBlockComment:
+				case SymBlockComment:
 					enc.writeCommentML(tail)
-				case NameSymList:
+				case SymList:
 					enc.generateList(tail)
-				case NameSymDoctype:
+				case SymDoctype:
 					enc.writeDoctype(tail)
 				default:
 					enc.writeTag(sym, tail)
@@ -251,7 +251,7 @@ func (enc *myEncoder) getAttributes(lst *sx.Pair) *sx.Pair {
 		return nil
 	}
 	sym, isSymbol := sx.GetSymbol(pair.Car())
-	if !isSymbol || !sym.IsEqual(sx.Symbol(NameSymAttr)) {
+	if !isSymbol || !sym.IsEqual(SymAttr) {
 		return nil
 	}
 	return pair.Tail()
