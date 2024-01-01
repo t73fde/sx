@@ -43,12 +43,11 @@ type (
 func (tcs tTestCases) Run(t *testing.T) {
 	t.Helper()
 	engine := createEngine()
-	sf := engine.SymbolFactory()
 	root := engine.GetToplevelBinding()
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Helper()
-			rd := sxreader.MakeReader(strings.NewReader(tc.src), sxreader.WithSymbolFactory(sf))
+			rd := sxreader.MakeReader(strings.NewReader(tc.src))
 
 			var sb strings.Builder
 			bind := sxeval.MakeChildBinding(root, tc.name, 0)
@@ -93,10 +92,9 @@ func (tcs tTestCases) Run(t *testing.T) {
 
 func createEngine() *sxeval.Engine {
 	numBuiltins := len(specials) + len(builtins) + len(objects)
-	sf := sx.MakeMappedFactory(numBuiltins + 32)
 	root := sxeval.MakeRootBinding(numBuiltins)
 
-	engine := sxeval.MakeEngine(sf, root)
+	engine := sxeval.MakeEngine(root)
 	for _, syntax := range specials {
 		engine.BindSpecial(syntax)
 	}
@@ -106,7 +104,7 @@ func createEngine() *sxeval.Engine {
 	root.Freeze()
 	env := sxeval.MakeChildBinding(root, "vars", len(objects))
 	for _, obj := range objects {
-		if err := env.Bind(sf.MustMake(obj.name), obj.obj); err != nil {
+		if err := env.Bind(sx.Symbol(obj.name), obj.obj); err != nil {
 			panic(err)
 		}
 	}

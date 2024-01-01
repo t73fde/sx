@@ -27,13 +27,13 @@ type ErrBindingFrozen struct{ Binding *Binding }
 func (err ErrBindingFrozen) Error() string { return fmt.Sprintf("binding is frozen: %v", err.Binding) }
 
 // ErrConstBinding is returned when a constant binding should be changed.
-type ErrConstBinding struct{ Sym *sx.Symbol }
+type ErrConstBinding struct{ Sym sx.Symbol }
 
 func (err ErrConstBinding) Error() string {
 	return fmt.Sprintf("constant bindung for symbol %v", err.Sym.Repr())
 }
 
-type mapSymObj = map[*sx.Symbol]sx.Object
+type mapSymObj = map[sx.Symbol]sx.Object
 
 // MakeRootBinding creates a new root binding.
 func MakeRootBinding(sizeHint int) *Binding {
@@ -65,7 +65,7 @@ type Binding struct {
 	name   string
 	parent *Binding
 	vars   mapSymObj
-	consts map[*sx.Symbol]struct{}
+	consts map[sx.Symbol]struct{}
 	isRoot bool
 	frozen bool
 }
@@ -113,7 +113,7 @@ func (mb *Binding) Parent() *Binding {
 // Bind creates a local mapping with a given symbol and object.
 //
 // A previous, non-const mapping will be overwritten.
-func (mb *Binding) Bind(sym *sx.Symbol, val sx.Object) error {
+func (mb *Binding) Bind(sym sx.Symbol, val sx.Object) error {
 	if mb.frozen {
 		return ErrBindingFrozen{Binding: mb}
 	}
@@ -130,7 +130,7 @@ func (mb *Binding) Bind(sym *sx.Symbol, val sx.Object) error {
 
 // BindConst creates a local mapping of the symbol to the object, which
 // cannot be changed afterwards.
-func (mb *Binding) BindConst(sym *sx.Symbol, val sx.Object) error {
+func (mb *Binding) BindConst(sym sx.Symbol, val sx.Object) error {
 	if mb.frozen {
 		return ErrBindingFrozen{Binding: mb}
 	}
@@ -138,7 +138,7 @@ func (mb *Binding) BindConst(sym *sx.Symbol, val sx.Object) error {
 		return ErrConstBinding{Sym: sym}
 	}
 	if mb.consts == nil {
-		mb.consts = map[*sx.Symbol]struct{}{sym: {}}
+		mb.consts = map[sx.Symbol]struct{}{sym: {}}
 	} else {
 		mb.consts[sym] = struct{}{}
 	}
@@ -153,13 +153,13 @@ func (mb *Binding) BindConst(sym *sx.Symbol, val sx.Object) error {
 // Lookup will search for a local binding of the given symbol. If not
 // found, the search will *not* be continued in the parent binding.
 // Use the global `Resolve` function, if you want a search up to the parent.
-func (mb *Binding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
+func (mb *Binding) Lookup(sym sx.Symbol) (sx.Object, bool) {
 	obj, found := mb.vars[sym]
 	return obj, found
 }
 
 // IsConst returns true if the binding of the symbol is a constant binding.
-func (mb *Binding) IsConst(sym *sx.Symbol) bool {
+func (mb *Binding) IsConst(sym sx.Symbol) bool {
 	if mb == nil {
 		return false
 	}
@@ -185,7 +185,7 @@ func (mb *Binding) Bindings() *sx.Pair {
 }
 
 // Unbind removes the mapping of the given symbol to an object.
-func (mb *Binding) Unbind(sym *sx.Symbol) error {
+func (mb *Binding) Unbind(sym sx.Symbol) error {
 	if mb.frozen {
 		return ErrBindingFrozen{Binding: mb}
 	}
@@ -209,7 +209,7 @@ func (mb *Binding) rootBinding() *Binding {
 }
 
 // Resolve a symbol in a binding and all of its parent bindings.
-func (mb *Binding) Resolve(sym *sx.Symbol) (sx.Object, bool) {
+func (mb *Binding) Resolve(sym sx.Symbol) (sx.Object, bool) {
 	for curr := mb; curr != nil; curr = curr.parent {
 		if obj, found := curr.Lookup(sym); found {
 			return obj, true
@@ -220,7 +220,7 @@ func (mb *Binding) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 
 // isConstBinding returns true if the symbol is defined with a constant
 // binding in the given binding or its parent bindings.
-func (mb *Binding) isConstantBind(sym *sx.Symbol) bool {
+func (mb *Binding) isConstantBind(sym sx.Symbol) bool {
 	for curr := mb; curr != nil; curr = curr.parent {
 		if curr.IsConst(sym) {
 			return true

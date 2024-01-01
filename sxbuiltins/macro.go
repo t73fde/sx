@@ -38,8 +38,8 @@ type Macro struct {
 	Env     *sxeval.Environment
 	Binding *sxeval.Binding
 	Name    string
-	Params  []*sx.Symbol
-	Rest    *sx.Symbol
+	Params  []sx.Symbol
+	Rest    sx.Symbol
 	Expr    sxeval.Expr
 }
 

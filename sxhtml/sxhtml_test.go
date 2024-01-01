@@ -14,7 +14,6 @@ import (
 	"strings"
 	"testing"
 
-	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxhtml"
 	"zettelstore.de/sx.fossil/sxreader"
 )
@@ -69,19 +68,19 @@ func TestSXHTML(t *testing.T) {
 
 		{name: "JustAList", src: `(@L "a" "b")`, exp: `ab`},
 	}
-	checkTestcases(t, testcases, func(sf sx.SymbolFactory) *sxhtml.Generator { return sxhtml.NewGenerator(sf) })
+	checkTestcases(t, testcases, func() *sxhtml.Generator { return sxhtml.NewGenerator() })
 }
 
 func TestWithNewline(t *testing.T) {
 	testcases := []testcase{
 		{name: "HeadBody", src: `(@@@@ (html (head (title "T"))))`, exp: "<!DOCTYPE html>\n<html>\n<head>\n<title>T</title>\n</head>\n</html>"},
 	}
-	checkTestcases(t, testcases, func(sf sx.SymbolFactory) *sxhtml.Generator {
-		return sxhtml.NewGenerator(sf, sxhtml.WithNewline)
+	checkTestcases(t, testcases, func() *sxhtml.Generator {
+		return sxhtml.NewGenerator(sxhtml.WithNewline)
 	})
 }
 
-func checkTestcases(t *testing.T, testcases []testcase, newGen func(sx.SymbolFactory) *sxhtml.Generator) {
+func checkTestcases(t *testing.T, testcases []testcase, newGen func() *sxhtml.Generator) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			rd := sxreader.MakeReader(strings.NewReader(tc.src))
@@ -91,7 +90,7 @@ func checkTestcases(t *testing.T, testcases []testcase, newGen func(sx.SymbolFac
 				return
 			}
 
-			gen := newGen(rd.SymbolFactory())
+			gen := newGen()
 			var sb strings.Builder
 			_, err = gen.WriteHTML(&sb, val)
 			if err != nil {

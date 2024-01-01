@@ -128,11 +128,10 @@ var builtins = []*sxeval.Builtin{
 }
 
 func main() {
-	sf := sx.MakeMappedFactory(1024)
-	rd := sxreader.MakeReader(os.Stdin, sxreader.WithSymbolFactory(sf))
+	rd := sxreader.MakeReader(os.Stdin)
 
 	mpe := mainParserExecutor{baseExecutor: &sxeval.SimpleExecutor{}}
-	engine := sxeval.MakeEngine(sf, sxeval.MakeRootBinding(len(specials)+len(builtins)+16))
+	engine := sxeval.MakeEngine(sxeval.MakeRootBinding(len(specials) + len(builtins) + 16))
 	mpe.origParser = engine.SetParser(&mpe)
 	root := engine.RootBinding()
 	for _, synDef := range specials {
@@ -217,8 +216,8 @@ func main() {
 	}
 	root.Freeze()
 	bind := sxeval.MakeChildBinding(engine.GetToplevelBinding(), "repl", 1024)
-	bind.Bind(sf.MustMake("root-binding"), root)
-	bind.Bind(sf.MustMake("repl-binding"), bind)
+	bind.Bind(sx.Symbol("root-binding"), root)
+	bind.Bind(sx.Symbol("repl-binding"), bind)
 
 	mpe.logReader = true
 	mpe.logParser = true
@@ -307,7 +306,7 @@ func printExpr(expr sxeval.Expr, level int) {
 		for _, sym := range e.Params {
 			fmt.Printf(" %v", sym)
 		}
-		if e.Rest != nil {
+		if e.Rest != "" {
 			fmt.Printf(" . %v", e.Rest)
 		}
 		fmt.Println()
@@ -350,7 +349,7 @@ func printExpr(expr sxeval.Expr, level int) {
 var prelude string
 
 func readPrelude(engine *sxeval.Engine) error {
-	rd := sxreader.MakeReader(strings.NewReader(prelude), sxreader.WithSymbolFactory(engine.SymbolFactory()))
+	rd := sxreader.MakeReader(strings.NewReader(prelude))
 	env := sxeval.MakeExecutionEnvironment(engine, nil, engine.RootBinding())
 	for {
 		form, err := rd.Read()

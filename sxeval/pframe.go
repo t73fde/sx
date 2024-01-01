@@ -21,7 +21,6 @@ import (
 
 // ParseFrame is a parsing environment.
 type ParseFrame struct {
-	sf      sx.SymbolFactory
 	binding *Binding
 	parser  Parser
 }
@@ -46,17 +45,14 @@ func (e errParseAgain) Error() string { return fmt.Sprintf("Again: %T/%v", e.for
 
 func (pf *ParseFrame) MakeChildFrame(name string, baseSize int) *ParseFrame {
 	return &ParseFrame{
-		sf:      pf.sf,
 		binding: MakeChildBinding(pf.binding, name, baseSize),
 		parser:  pf.parser,
 	}
 }
 
-func (pf *ParseFrame) SymbolFactory() sx.SymbolFactory { return pf.sf }
+func (pf *ParseFrame) Bind(sym sx.Symbol, obj sx.Object) error { return pf.binding.Bind(sym, obj) }
 
-func (pf *ParseFrame) Bind(sym *sx.Symbol, obj sx.Object) error { return pf.binding.Bind(sym, obj) }
-
-func (pf *ParseFrame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
+func (pf *ParseFrame) Resolve(sym sx.Symbol) (sx.Object, bool) {
 	return pf.binding.Resolve(sym)
 }
 func (pf *ParseFrame) Binding() *Binding { return pf.binding }

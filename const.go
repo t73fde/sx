@@ -14,10 +14,10 @@ package sx
 //
 // Used in packages sxbuiltins, sxreader.
 const (
-	QuoteName           = "quote"
-	QuasiquoteName      = "quasiquote"
-	UnquoteName         = "unquote"
-	UnquoteSplicingName = "unquote-splicing"
+	QuoteSymbol           = Symbol("quote")
+	QuasiquoteSymbol      = Symbol("quasiquote")
+	UnquoteSymbol         = Symbol("unquote")
+	UnquoteSplicingSymbol = Symbol("unquote-splicing")
 )
 
 // ListName is the name of the list function.

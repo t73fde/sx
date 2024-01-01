@@ -45,17 +45,17 @@ var DefunS = sxeval.Special{
 	},
 }
 
-func parseDefProc(pf *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, *LambdaExpr, error) {
+func parseDefProc(pf *sxeval.ParseFrame, args *sx.Pair) (sx.Symbol, *LambdaExpr, error) {
 	if args == nil {
-		return nil, nil, sxeval.ErrNoArgs
+		return "", nil, sxeval.ErrNoArgs
 	}
 	sym, isSymbol := sx.GetSymbol(args.Car())
 	if !isSymbol {
-		return nil, nil, fmt.Errorf("not a symbol: %T/%v", args.Car(), args.Car())
+		return "", nil, fmt.Errorf("not a symbol: %T/%v", args.Car(), args.Car())
 	}
 	args = args.Tail()
 	if args == nil {
-		return nil, nil, fmt.Errorf("parameter spec and body missing")
+		return "", nil, fmt.Errorf("parameter spec and body missing")
 	}
 	le, err := ParseProcedure(pf, sx.Repr(sym), args.Car(), args.Cdr())
 	return sym, le, err
@@ -75,11 +75,11 @@ var LambdaS = sxeval.Special{
 
 // ParseProcedure parses a procedure definition, where some parsing is already done.
 func ParseProcedure(pf *sxeval.ParseFrame, name string, paramSpec, bodySpec sx.Object) (*LambdaExpr, error) {
-	var params []*sx.Symbol
-	var rest *sx.Symbol
+	var params []sx.Symbol
+	var rest sx.Symbol
 	if !sx.IsNil(paramSpec) {
 		switch p := paramSpec.(type) {
-		case *sx.Symbol:
+		case sx.Symbol:
 			params, rest = nil, p
 		case *sx.Pair:
 			ps, r, err := parseProcHead(p)
@@ -99,7 +99,7 @@ func ParseProcedure(pf *sxeval.ParseFrame, name string, paramSpec, bodySpec sx.O
 		return nil, fmt.Errorf("body must not be a dotted pair")
 	}
 	bindSize := len(params)
-	if rest != nil {
+	if rest != "" {
 		bindSize++
 	}
 	fnFrame := pf.MakeChildFrame(name+"-def", bindSize)
@@ -109,7 +109,7 @@ func ParseProcedure(pf *sxeval.ParseFrame, name string, paramSpec, bodySpec sx.O
 			return nil, err
 		}
 	}
-	if rest != nil {
+	if rest != "" {
 		err := fnFrame.Bind(rest, sx.MakeUndefined())
 		if err != nil {
 			return nil, err
@@ -129,17 +129,17 @@ func ParseProcedure(pf *sxeval.ParseFrame, name string, paramSpec, bodySpec sx.O
 	return fn, nil
 }
 
-func parseProcHead(plist *sx.Pair) (params []*sx.Symbol, _ *sx.Symbol, _ error) {
+func parseProcHead(plist *sx.Pair) (params []sx.Symbol, _ sx.Symbol, _ error) {
 	for node := plist; ; {
 		sym, err := GetParameterSymbol(params, node.Car())
 		if err != nil {
-			return nil, nil, err
+			return nil, "", err
 		}
 		params = append(params, sym)
 
 		cdr := node.Cdr()
 		if sx.IsNil(cdr) {
-			return params, nil, nil
+			return params, "", nil
 		}
 		if next, isPair := sx.GetPair(cdr); isPair {
 			node = next
@@ -148,20 +148,20 @@ func parseProcHead(plist *sx.Pair) (params []*sx.Symbol, _ *sx.Symbol, _ error) 
 
 		sym, err = GetParameterSymbol(params, cdr)
 		if err != nil {
-			return nil, nil, err
+			return nil, "", err
 		}
 		return params, sym, nil
 	}
 }
 
-func GetParameterSymbol(params []*sx.Symbol, obj sx.Object) (*sx.Symbol, error) {
+func GetParameterSymbol(params []sx.Symbol, obj sx.Object) (sx.Symbol, error) {
 	sym, isSymbol := sx.GetSymbol(obj)
 	if !isSymbol {
-		return nil, fmt.Errorf("symbol in list expected, but got %T/%v", obj, obj)
+		return "", fmt.Errorf("symbol in list expected, but got %T/%v", obj, obj)
 	}
 	for _, p := range params {
 		if sym.IsEqual(p) {
-			return nil, fmt.Errorf("symbol %v already defined", sym)
+			return "", fmt.Errorf("symbol %v already defined", sym)
 		}
 	}
 	return sym, nil
@@ -169,22 +169,22 @@ func GetParameterSymbol(params []*sx.Symbol, obj sx.Object) (*sx.Symbol, error) 
 
 type LambdaExpr struct {
 	Name    string
-	Params  []*sx.Symbol
-	Rest    *sx.Symbol
+	Params  []sx.Symbol
+	Rest    sx.Symbol
 	Expr    sxeval.Expr
 	IsMacro bool
 }
 
 func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	bindSize := len(le.Params)
-	if le.Rest != nil {
+	if le.Rest != "" {
 		bindSize++
 	}
 	fnFrame := rf.MakeChildFrame(le.Name+"-rework", bindSize)
 	for _, sym := range le.Params {
 		fnFrame.Bind(sym)
 	}
-	if rest := le.Rest; rest != nil {
+	if rest := le.Rest; rest != "" {
 		fnFrame.Bind(rest)
 	}
 
@@ -239,7 +239,7 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 			return length, err2
 		}
 	}
-	if le.Rest == nil {
+	if le.Rest == "" {
 		l, err = io.WriteString(w, " none ")
 	} else {
 		l, err = fmt.Fprintf(w, " %v ", le.Rest)
@@ -263,8 +263,8 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 type Procedure struct {
 	Binding *sxeval.Binding
 	Name    string
-	Params  []*sx.Symbol
-	Rest    *sx.Symbol
+	Params  []sx.Symbol
+	Rest    sx.Symbol
 	Expr    sxeval.Expr
 }
 
@@ -304,7 +304,7 @@ func (p *Procedure) Call(env *sxeval.Environment, args []sx.Object) (sx.Object, 
 		return nil, fmt.Errorf("%s: missing arguments: %v", p.Name, p.Params[len(args):])
 	}
 	bindSize := numParams
-	if p.Rest != nil {
+	if p.Rest != "" {
 		bindSize++
 	}
 	lexicalEnv := env.NewLexicalEnvironment(p.Binding, p.Name, bindSize)
@@ -314,7 +314,7 @@ func (p *Procedure) Call(env *sxeval.Environment, args []sx.Object) (sx.Object, 
 			return nil, err
 		}
 	}
-	if p.Rest != nil {
+	if p.Rest != "" {
 		err := lexicalEnv.Bind(p.Rest, sx.MakeList(args[numParams:]...))
 		if err != nil {
 			return nil, err

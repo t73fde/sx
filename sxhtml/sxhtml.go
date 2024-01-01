@@ -19,28 +19,14 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-var (
-	kwSF = sx.MakeMappedFactory(16)
+type attrType int
 
-	// keyVoid marks void HTML elements, i.e. w/o end tag.
-	keyVoid = kwSF.MustMake("sxhtml:isVoid")
-
-	// keyIgnoreEmpty marks HTML tags that may be ignored if empty.
-	keyIgnoreEmpty = kwSF.MustMake("sxhtml:igEm")
-
-	// keyWithNL marks HTML elements that may start with a new-line character
-	keyWithNL = kwSF.MustMake("sxhtml:nl")
-
-	// keyAlwaysNL signals that an new-line character should be emitted if needed.
-	keyAlwaysNL = kwSF.MustMake("sxhtml:alwaysNL")
-
-	// keyAttr specifies the type of an HTML attribute value.
-	// This controls how attribute values are escaped.
-	keyAttr   = kwSF.MustMake("sxhtml:attrType")
-	attrPlain = kwSF.MustMake("sxhtml:plain") // No further escape needed
-	attrURL   = kwSF.MustMake("sxhtml:url")   // Escape URL
-	attrCSS   = kwSF.MustMake("sxhtml:css")   // Special CSS escaping
-	attrJS    = kwSF.MustMake("sxhtml:js")    // Escape JavaScript
+const (
+	_         attrType = iota
+	attrPlain          // No further escape needed
+	attrURL            // Escape URL
+	attrCSS            // Special CSS escaping
+	attrJS             // Escape JavaScript
 )
 
 // Names for special symbols.
@@ -56,8 +42,6 @@ const (
 
 // Generator is the object that allows to generate HTML.
 type Generator struct {
-	sf          sx.SymbolFactory
-	symAttr     *sx.Symbol
 	withNewline bool
 }
 
@@ -67,75 +51,52 @@ type Option func(*Generator)
 // WithNewline will add new-line characters before certain tags.
 func WithNewline(gen *Generator) { gen.withNewline = true }
 
-// NewGenerator creates a new generator based on a symbol factory.
-func NewGenerator(sf sx.SymbolFactory, opts ...Option) *Generator {
-	gen := Generator{sf: sf}
+// NewGenerator creates a new generator.
+func NewGenerator(opts ...Option) *Generator {
+	gen := Generator{}
 	for _, opt := range opts {
 		opt(&gen)
 	}
-	if sf == nil {
-		return &gen
-	}
-	gen.symAttr = sf.MustMake(NameSymAttr)
-
-	addBinding := func(symName string, key, val sx.Object) {
-		if sym := sf.MustMake(symName); sym.Assoc(key) == nil {
-			sym.Cons(key, val)
-		}
-	}
-
-	for _, voidTag := range voidTags {
-		addBinding(voidTag, keyVoid, sx.Nil())
-	}
-
-	for _, urlAttr := range urlAttrs {
-		addBinding(urlAttr, keyAttr, attrURL)
-	}
-
-	addBinding("style", keyAttr, attrCSS)
-
-	if gen.withNewline {
-		for _, alNlTag := range allNLTags {
-			addBinding(alNlTag, keyAlwaysNL, sx.Nil())
-		}
-		for _, nlTag := range nlTags {
-			addBinding(nlTag, keyWithNL, sx.Nil())
-		}
-	}
-
-	for _, emptyTag := range emptyTags {
-		addBinding(emptyTag, keyIgnoreEmpty, sx.Nil())
-	}
-
 	return &gen
 }
 
 // Special elements / attributes
 var (
 	// Void elements: https://html.spec.whatwg.org/multipage/syntax.html#void-elements
-	voidTags = []string{
-		"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
-	// Attributes with URL values: https://html.spec.whatwg.org/multipage/indices.html#attributes-1
-	urlAttrs = []string{
-		"action", "cite", "data", "formaction", "href", "itemid", "itemprop", "itemtype", "ping", "poster", "src"}
-	allNLTags = []string{
-		"head", "link", "meta", "title",
-		"div",
+	voidTags = map[sx.Symbol]bool{
+		"area": true, "base": true, "br": true, "col": true, "embed": true,
+		"hr": true, "img": true, "input": true, "link": true, "meta": true,
+		"source": true, "track": true, "wbr": true,
 	}
-	nlTags = []string{
-		NameSymCDATA,
-		"head", "link", "meta", "title",
-		"script",
-		"body", "article", "details", "div", "header", "footer", "form", "main", "summary",
-		"h1", "h2", "h3", "h4", "h5", "h6",
-		"li", "ol", "ul",
-		"dd", "dt", "dl",
-		"table", "thead", "tbody", "tr",
-		"section",
-		"input",
+	// Attributes with URL values: https://html.spec.whatwg.org/multipage/indices.html#attributes-1
+	urlAttrs = map[sx.Symbol]bool{
+		"action": true, "cite": true, "data": true, "formaction": true,
+		"href": true, "itemid": true, "itemprop": true, "itemtype": true,
+		"ping": true, "poster": true, "src": true,
+	}
+	allNLTags = map[sx.Symbol]bool{
+		"head": true, "link": true, "meta": true, "title": true,
+		"div": true,
+	}
+	nlTags = map[sx.Symbol]bool{
+		NameSymCDATA: true,
+		"head":       true, "link": true, "meta": true, "title": true,
+		"script": true,
+		"body":   true, "article": true, "details": true, "div": true,
+		"header": true, "footer": true, "form": true, "main": true,
+		"summary": true,
+		"h1":      true, "h2": true, "h3": true, "h4": true, "h5": true, "h6": true,
+		"li": true, "ol": true, "ul": true,
+		"dd": true, "dt": true, "dl": true,
+		"table": true, "thead": true, "tbody": true, "tr": true,
+		"section": true,
+		"input":   true,
 	}
 	// Elements that may be ignored if empty.
-	emptyTags = []string{"div", "span", "code", "kbd", "p", "samp"}
+	emptyTags = map[sx.Symbol]bool{
+		"div": true, "span": true, "code": true, "kbd": true, "p": true,
+		"samp": true,
+	}
 )
 
 // WriteHTML emit HTML code for the s-expression to the given writer.
@@ -172,7 +133,7 @@ func (enc *myEncoder) generate(obj sx.Object) {
 		}
 		if sym, isSymbol := sx.GetSymbol(o.Car()); isSymbol {
 			tail := o.Tail()
-			if s := sym.String(); s[0] == '@' {
+			if s := sym.Name(); s[0] == '@' {
 				switch s {
 				case NameSymCDATA:
 					enc.writeCDATA(tail)
@@ -245,13 +206,13 @@ func (enc *myEncoder) writeDoctype(elems *sx.Pair) {
 	enc.generateList(elems)
 }
 
-func (enc *myEncoder) writeTag(sym *sx.Symbol, elems *sx.Pair) {
-	if sym.Assoc(keyIgnoreEmpty) != nil && ignoreEmptyStrings(elems) == nil {
+func (enc *myEncoder) writeTag(sym sx.Symbol, elems *sx.Pair) {
+	if emptyTags[sym] && ignoreEmptyStrings(elems) == nil {
 		return
 	}
-	withNewline := enc.gen.withNewline && sym.Assoc(keyWithNL) != nil
+	withNewline := enc.gen.withNewline && nlTags[sym]
 	tagName := sym.String()
-	if withNewline && (!enc.lastWasTag || sym.Assoc(keyAlwaysNL) != nil) {
+	if withNewline && (!enc.lastWasTag || allNLTags[sym]) {
 		enc.pr.printStrings("\n<", tagName)
 	} else {
 		enc.pr.printStrings("<", tagName)
@@ -261,7 +222,7 @@ func (enc *myEncoder) writeTag(sym *sx.Symbol, elems *sx.Pair) {
 		elems = elems.Tail()
 	}
 	enc.pr.printString(">")
-	if sym.Assoc(keyVoid) != nil {
+	if voidTags[sym] {
 		enc.lastWasTag = withNewline
 		return
 	}
@@ -290,7 +251,7 @@ func (enc *myEncoder) getAttributes(lst *sx.Pair) *sx.Pair {
 		return nil
 	}
 	sym, isSymbol := sx.GetSymbol(pair.Car())
-	if !isSymbol || !sym.IsEqual(enc.gen.symAttr) {
+	if !isSymbol || !sym.IsEqual(sx.Symbol(NameSymAttr)) {
 		return nil
 	}
 	return pair.Tail()
@@ -301,7 +262,6 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 	found := make(map[string]struct{}, length)
 	empty := make(map[string]struct{}, length)
 	a := make(map[string]string, length)
-	sf := enc.gen.sf
 	for node := attrs; node != nil; node = node.Tail() {
 		pair, isPair := sx.GetPair(node.Car())
 		if !isPair {
@@ -326,7 +286,7 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 			if sx.IsNil(obj) || sx.IsList(obj) {
 				continue
 			}
-			a[key] = strings.TrimSpace(getAttributeValue(sym, obj, sf))
+			a[key] = strings.TrimSpace(getAttributeValue(sym, obj))
 		} else {
 			a[key] = ""
 			empty[key] = struct{}{}
@@ -348,8 +308,8 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 	}
 }
 
-func getAttributeValue(sym *sx.Symbol, value sx.Object, sf sx.SymbolFactory) string {
-	switch getAttributeType(sym, sf) {
+func getAttributeValue(sym sx.Symbol, value sx.Object) string {
+	switch getAttributeType(sym) {
 	case attrURL:
 		return urlEscape(value.String())
 	default:
@@ -357,21 +317,24 @@ func getAttributeValue(sym *sx.Symbol, value sx.Object, sf sx.SymbolFactory) str
 	}
 }
 
-func getAttributeType(sym *sx.Symbol, sf sx.SymbolFactory) *sx.Symbol {
+func getAttributeType(sym sx.Symbol) attrType {
 	name := sym.String()
 	if dataName, isData := strings.CutPrefix(name, "data-"); isData {
 		name = dataName
-		sym = sf.MustMake(name)
+		sym = sx.Symbol(name)
 	} else if prefix, rest, hasPrefix := strings.Cut(name, ":"); hasPrefix {
 		if prefix == "xmlns" {
 			return attrURL
 		}
 		name = rest
-		sym = sf.MustMake(name)
+		sym = sx.Symbol(name)
 	}
 
-	if p := sym.Assoc(keyAttr); p != nil {
-		return p.Cdr().(*sx.Symbol)
+	if urlAttrs[sym] {
+		return attrURL
+	}
+	if sym == "style" {
+		return attrCSS
 	}
 
 	// Attribute names starting with "on" (e.g. "onload") are treated as JavaScript values.

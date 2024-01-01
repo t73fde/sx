@@ -48,10 +48,7 @@ func readNumber(rd *Reader, firstCh rune) (sx.Object, error) {
 	if err == nil {
 		return num, nil
 	}
-	sym, err := rd.symFac.Make(tok)
-	if err != nil {
-		return nil, rd.annotateError(err, beginPos)
-	}
+	sym := sx.Symbol(tok)
 	return sym, nil
 }
 
@@ -66,18 +63,12 @@ func readDot(rd *Reader, _ rune) (sx.Object, error) {
 }
 
 func readSymbol(rd *Reader, firstCh rune) (sx.Object, error) {
-	if rd.symFac == nil {
-		return sx.Nil(), fmt.Errorf("symbol factory of reader not set")
-	}
 	beginPos := rd.Position()
 	tok, err := rd.readToken(firstCh, rd.isTerminal)
 	if err != nil {
 		return nil, rd.annotateError(err, beginPos)
 	}
-	sym, err := rd.symFac.Make(tok)
-	if err != nil {
-		return nil, rd.annotateError(err, beginPos)
-	}
+	sym := sx.Symbol(tok)
 	return sym, nil
 }
 
@@ -258,7 +249,7 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 func readQuote(rd *Reader, _ rune) (sx.Object, error) {
 	obj, err := rd.Read()
 	if err == nil {
-		return sx.Nil().Cons(obj).Cons(rd.quoteSym), nil
+		return sx.Nil().Cons(obj).Cons(sx.QuoteSymbol), nil
 	}
 	if err == io.EOF {
 		return obj, ErrEOF
@@ -269,7 +260,7 @@ func readQuote(rd *Reader, _ rune) (sx.Object, error) {
 func readQuasiquote(rd *Reader, _ rune) (sx.Object, error) {
 	obj, err := rd.Read()
 	if err == nil {
-		return sx.Nil().Cons(obj).Cons(rd.quasiquoteSym), nil
+		return sx.Nil().Cons(obj).Cons(sx.QuasiquoteSymbol), nil
 	}
 	if err == io.EOF {
 		return obj, ErrEOF
@@ -282,10 +273,10 @@ func readUnquote(rd *Reader, _ rune) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	sym := rd.unquoteSplicingSym
+	sym := sx.UnquoteSplicingSymbol
 	if ch != '@' {
 		rd.unreadRunes(ch)
-		sym = rd.unquoteSym
+		sym = sx.UnquoteSymbol
 	}
 	obj, err := rd.Read()
 	if err == nil {

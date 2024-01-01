@@ -18,10 +18,7 @@ Sx support the following atomic, immutable types:
   like the `"` character itself, are escaped by the `\` character.
 * **Symbols** are sequences of printable / visible Unicode characters.
   They are typically used to bind them to values within an environment. Another
-  use case is symbolic computation. A symbol allows to store additional values
-  by providing an association list (a-list), a list of pairs. Symbols can be
-  compared for equality quite efficients, since they are interned by their
-  associated symbol factory.
+  use case is symbolic computation.
 
 Sx supports nested lists. A list is delimited by parentheses: `( ... )`. Within
 a list, all values are separated by space characters, including new line. Lists

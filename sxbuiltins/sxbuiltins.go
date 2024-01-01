@@ -22,12 +22,12 @@ import (
 )
 
 // GetSymbol returns the given argument as a symbol, and checks for errors.
-func GetSymbol(args []sx.Object, pos int) (*sx.Symbol, error) {
+func GetSymbol(args []sx.Object, pos int) (sx.Symbol, error) {
 	obj := args[pos]
 	if sym, ok := sx.GetSymbol(obj); ok {
 		return sym, nil
 	}
-	return nil, fmt.Errorf("argument %d is not a symbol, but %T/%v", pos+1, obj, obj)
+	return "", fmt.Errorf("argument %d is not a symbol, but %T/%v", pos+1, obj, obj)
 }
 
 // GetString returns the given argument as a string, and checks for errors.
