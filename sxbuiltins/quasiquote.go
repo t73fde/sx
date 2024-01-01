@@ -27,7 +27,7 @@ import (
 
 // QuasiquoteS parses a form that is quasi-quotated
 var QuasiquoteS = sxeval.Special{
-	Name: sx.QuasiquoteSymbol.Name(),
+	Name: sx.SymbolQuasiquote.Name(),
 	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs
@@ -45,7 +45,7 @@ var QuasiquoteS = sxeval.Special{
 // UnquoteS parses the unquote symbol (and returns an error, because it is
 // not allowed outside a quasiquote).
 var UnquoteS = sxeval.Special{
-	Name: sx.UnquoteSymbol.Name(),
+	Name: sx.SymbolUnquote.Name(),
 	Fn: func(*sxeval.ParseFrame, *sx.Pair) (sxeval.Expr, error) {
 		return nil, errNotAllowedOutsideQQ
 	},
@@ -54,13 +54,13 @@ var UnquoteS = sxeval.Special{
 // UnquoteSplicingS parses the unquote-splicing symbol (and returns an error,
 // because it is not allowed outside a quasiquote).
 var UnquoteSplicingS = sxeval.Special{
-	Name: sx.UnquoteSplicingSymbol.Name(),
+	Name: sx.SymbolUnquoteSplicing.Name(),
 	Fn: func(*sxeval.ParseFrame, *sx.Pair) (sxeval.Expr, error) {
 		return nil, errNotAllowedOutsideQQ
 	},
 }
 
-var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.QuasiquoteSymbol.Name())
+var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.SymbolQuasiquote.Name())
 
 type qqParser struct {
 	pframe *sxeval.ParseFrame
@@ -76,7 +76,7 @@ func (qqp *qqParser) parseQQ(obj sx.Object) (sxeval.Expr, error) {
 	}
 	first := pair.Car()
 	if sym, isSymbol := sx.GetSymbol(first); isSymbol {
-		if sx.UnquoteSymbol.IsEqual(sym) {
+		if sx.SymbolUnquote.IsEqual(sym) {
 			form, err := getUnquoteObj(sym, pair)
 			if err != nil {
 				return nil, err
@@ -84,7 +84,7 @@ func (qqp *qqParser) parseQQ(obj sx.Object) (sxeval.Expr, error) {
 			// `,form is the same as form, for any form.
 			return qqp.parse(form)
 		}
-		if sx.QuasiquoteSymbol.IsEqual(sym) {
+		if sx.SymbolQuasiquote.IsEqual(sym) {
 			form, err := getUnquoteObj(sym, pair)
 			if err != nil {
 				return nil, err
@@ -97,9 +97,9 @@ func (qqp *qqParser) parseQQ(obj sx.Object) (sxeval.Expr, error) {
 			}
 			return listArgs([]sxeval.Expr{sxeval.ObjExpr{Obj: sym}, expr}), err
 		}
-		if sx.UnquoteSplicingSymbol.IsEqual(sym) {
+		if sx.SymbolUnquoteSplicing.IsEqual(sym) {
 			// `,@form has undefined consequences.
-			return nil, fmt.Errorf("(%v %v) is not allowed", sx.QuasiquoteSymbol, obj)
+			return nil, fmt.Errorf("(%v %v) is not allowed", sx.SymbolQuasiquote, obj)
 		}
 	}
 	args, err := qqp.parseList(pair)
@@ -255,7 +255,7 @@ func (qqp *qqParser) parseList(lst *sx.Pair) ([]sxeval.Expr, error) {
 	var form sxeval.Expr
 	if prevPair != nil {
 		if sym, isSymbol := sx.GetSymbol(prevPair.Car()); isSymbol {
-			if sx.UnquoteSymbol.IsEqual(sym) {
+			if sx.SymbolUnquote.IsEqual(sym) {
 				obj, err := getUnquoteObj(sym, prevPair)
 				if err != nil {
 					return nil, err
@@ -268,7 +268,7 @@ func (qqp *qqParser) parseList(lst *sx.Pair) ([]sxeval.Expr, error) {
 				numArgs--
 				realArgs -= 2
 				form = expr
-			} else if sx.UnquoteSplicingSymbol.IsEqual(sym) {
+			} else if sx.SymbolUnquoteSplicing.IsEqual(sym) {
 				// `(x1 x2 x3 ... xn . ,@form) has undefined consequences.
 				return nil, fmt.Errorf("%v not allowed", lst)
 			}
@@ -289,7 +289,7 @@ func (qqp *qqParser) parseList(lst *sx.Pair) ([]sxeval.Expr, error) {
 		node = node.Tail()
 		if elemList, isPair := sx.GetPair(elem); isPair && elemList != nil {
 			if sym, isSymbol := sx.GetSymbol(elemList.Car()); isSymbol {
-				if sx.UnquoteSymbol.IsEqual(sym) {
+				if sx.SymbolUnquote.IsEqual(sym) {
 					// -- [,form] is interpreted as (list form)
 					obj, err := getUnquoteObj(sym, elemList)
 					if err != nil {
@@ -302,7 +302,7 @@ func (qqp *qqParser) parseList(lst *sx.Pair) ([]sxeval.Expr, error) {
 					args[i] = MakeListExpr{expr}
 					continue
 				}
-				if sx.UnquoteSplicingSymbol.IsEqual(sym) {
+				if sx.SymbolUnquoteSplicing.IsEqual(sym) {
 					// -- [,@form] is interpreted as form.
 					obj, err := getUnquoteObj(sym, elemList)
 					if err != nil {

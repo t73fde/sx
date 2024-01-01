@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 // Package sxhtml represents HTML as s-expressions.
@@ -34,7 +37,7 @@ const (
 	SymAttr          = sx.Symbol("@")
 	SymCDATA         = sx.Symbol("@C")
 	SymNoEscape      = sx.Symbol("@H")
-	SymList          = sx.Symbol("@L")
+	SymListSplice    = sx.Symbol("@L")
 	SymInlineComment = sx.Symbol("@@")
 	SymBlockComment  = sx.Symbol("@@@")
 	SymDoctype       = sx.Symbol("@@@@")
@@ -143,7 +146,7 @@ func (enc *myEncoder) generate(obj sx.Object) {
 					enc.writeComment(tail)
 				case SymBlockComment:
 					enc.writeCommentML(tail)
-				case SymList:
+				case SymListSplice:
 					enc.generateList(tail)
 				case SymDoctype:
 					enc.writeDoctype(tail)

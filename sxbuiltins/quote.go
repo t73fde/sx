@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -22,7 +25,7 @@ import (
 
 // QuoteS parses the quote syntax.
 var QuoteS = sxeval.Special{
-	Name: sx.QuoteSymbol.Name(),
+	Name: sx.SymbolQuote.Name(),
 	Fn: func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs

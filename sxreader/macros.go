@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxreader
@@ -249,7 +252,7 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 func readQuote(rd *Reader, _ rune) (sx.Object, error) {
 	obj, err := rd.Read()
 	if err == nil {
-		return sx.Nil().Cons(obj).Cons(sx.QuoteSymbol), nil
+		return sx.Nil().Cons(obj).Cons(sx.SymbolQuote), nil
 	}
 	if err == io.EOF {
 		return obj, ErrEOF
@@ -260,7 +263,7 @@ func readQuote(rd *Reader, _ rune) (sx.Object, error) {
 func readQuasiquote(rd *Reader, _ rune) (sx.Object, error) {
 	obj, err := rd.Read()
 	if err == nil {
-		return sx.Nil().Cons(obj).Cons(sx.QuasiquoteSymbol), nil
+		return sx.Nil().Cons(obj).Cons(sx.SymbolQuasiquote), nil
 	}
 	if err == io.EOF {
 		return obj, ErrEOF
@@ -273,10 +276,10 @@ func readUnquote(rd *Reader, _ rune) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	sym := sx.UnquoteSplicingSymbol
+	sym := sx.SymbolUnquoteSplicing
 	if ch != '@' {
 		rd.unreadRunes(ch)
-		sym = sx.UnquoteSymbol
+		sym = sx.SymbolUnquote
 	}
 	obj, err := rd.Read()
 	if err == nil {

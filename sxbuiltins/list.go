@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -184,7 +187,7 @@ var Last = sxeval.Builtin{
 
 // List returns a list of all arguments.
 var List = sxeval.Builtin{
-	Name:     sx.ListName,
+	Name:     sx.SymbolList.Name(),
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,

@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sx
@@ -14,11 +17,11 @@ package sx
 //
 // Used in packages sxbuiltins, sxreader.
 const (
-	QuoteSymbol           = Symbol("quote")
-	QuasiquoteSymbol      = Symbol("quasiquote")
-	UnquoteSymbol         = Symbol("unquote")
-	UnquoteSplicingSymbol = Symbol("unquote-splicing")
+	SymbolQuote           = Symbol("quote")
+	SymbolQuasiquote      = Symbol("quasiquote")
+	SymbolUnquote         = Symbol("unquote")
+	SymbolUnquoteSplicing = Symbol("unquote-splicing")
 )
 
-// ListName is the name of the list function.
-const ListName = "list"
+// SymbolList is the symbol of the (list ...) function.
+const SymbolList = Symbol("list")
