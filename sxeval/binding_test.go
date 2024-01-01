@@ -40,7 +40,7 @@ func TestBindLookupUnbind(t *testing.T) {
 	})
 }
 
-func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.Symbol) {
+func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 sx.Symbol) {
 	child.Bind(sym2, sym1)
 
 	if _, found := child.Lookup(sym1); found {
@@ -90,7 +90,7 @@ func TestAlist(t *testing.T) {
 	for elem := alist; elem != nil; elem = elem.Tail() {
 		cnt++
 		cons := elem.Car().(*sx.Pair)
-		sym := cons.Car().(*sx.Symbol)
+		sym := cons.Car().(sx.Symbol)
 		str := cons.Cdr().(sx.String)
 		if got := sf.MustMake(str.String()); !sym.IsEqual(got) {
 			t.Error("Symbol", sym, "is not equal to", str, "but to", got)

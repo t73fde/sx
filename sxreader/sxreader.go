@@ -34,7 +34,7 @@ type Reader struct {
 	macros  macroMap
 	symFac  sx.SymbolFactory
 
-	quoteSym, quasiquoteSym, unquoteSym, unquoteSplicingSym *sx.Symbol
+	quoteSym, quasiquoteSym, unquoteSym, unquoteSplicingSym sx.Symbol
 
 	maxDepth, curDepth uint
 	maxLength          uint

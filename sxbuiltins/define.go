@@ -47,22 +47,22 @@ var DefConstS = sxeval.Special{
 	},
 }
 
-func parseSymValue(pf *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
+func parseSymValue(pf *sxeval.ParseFrame, args *sx.Pair) (sx.Symbol, sxeval.Expr, error) {
 	if args == nil {
-		return nil, nil, fmt.Errorf("need at least two arguments")
+		return "", nil, fmt.Errorf("need at least two arguments")
 	}
 	car := args.Car()
 	sym, isSymbol := sx.GetSymbol(car)
 	if !isSymbol {
-		return nil, nil, fmt.Errorf("argument 1 must be a symbol, but is: %T/%v", car, car)
+		return "", nil, fmt.Errorf("argument 1 must be a symbol, but is: %T/%v", car, car)
 	}
 	cdr := args.Cdr()
 	if sx.IsNil(cdr) {
-		return nil, nil, fmt.Errorf("argument 2 missing")
+		return "", nil, fmt.Errorf("argument 2 missing")
 	}
 	pair, isPair := sx.GetPair(cdr)
 	if !isPair {
-		return nil, nil, fmt.Errorf("argument 2 must be a proper list")
+		return "", nil, fmt.Errorf("argument 2 must be a proper list")
 	}
 	val, err := pf.Parse(pair.Car())
 	return sym, val, err
@@ -70,7 +70,7 @@ func parseSymValue(pf *sxeval.ParseFrame, args *sx.Pair) (*sx.Symbol, sxeval.Exp
 
 // DefineExpr stores data for a define statement.
 type DefineExpr struct {
-	Sym   *sx.Symbol
+	Sym   sx.Symbol
 	Val   sxeval.Expr
 	Const bool
 }
@@ -166,7 +166,7 @@ var SetXS = sxeval.Special{
 
 // SetXExpr stores data for a set! statement.
 type SetXExpr struct {
-	Sym *sx.Symbol
+	Sym sx.Symbol
 	Val sxeval.Expr
 }
 

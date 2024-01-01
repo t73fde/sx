@@ -29,7 +29,7 @@ func (rf *ReworkFrame) MakeChildFrame(name string, baseSize int) *ReworkFrame {
 
 // ResolveConst will resolve the symbol in an environment that is assumed not
 // to be exchanged afterwards.
-func (rf *ReworkFrame) ResolveConst(sym *sx.Symbol) (sx.Object, bool) {
+func (rf *ReworkFrame) ResolveConst(sym sx.Symbol) (sx.Object, bool) {
 	if bind := rf.binding; bind.isConstantBind(sym) {
 		return bind.Resolve(sym)
 	}
@@ -37,7 +37,7 @@ func (rf *ReworkFrame) ResolveConst(sym *sx.Symbol) (sx.Object, bool) {
 }
 
 // Bind the undefined value to the symbol in the current environment.
-func (rf *ReworkFrame) Bind(sym *sx.Symbol) error {
+func (rf *ReworkFrame) Bind(sym sx.Symbol) error {
 	return rf.binding.Bind(sym, sx.MakeUndefined())
 }
 

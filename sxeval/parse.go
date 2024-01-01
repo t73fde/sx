@@ -31,7 +31,7 @@ restart:
 		return NilExpr, nil
 	}
 	switch f := form.(type) {
-	case *sx.Symbol:
+	case sx.Symbol:
 		return ResolveSymbolExpr{Symbol: f}, nil
 	case *sx.Pair:
 		expr, err := dp.parsePair(pf, f)

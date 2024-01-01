@@ -44,8 +44,8 @@ func EqualExprSlice(s1, s2 []Expr) bool {
 }
 
 // EqualSymbolSlice compares two `sx.Symbol` slices if they are `IsEqual`.
-func EqualSymbolSlice(s1, s2 []*sx.Symbol) bool {
-	return slices.EqualFunc(s1, s2, func(e1, e2 *sx.Symbol) bool { return e1.IsEqual(e2) })
+func EqualSymbolSlice(s1, s2 []sx.Symbol) bool {
+	return slices.EqualFunc(s1, s2, func(e1, e2 sx.Symbol) bool { return e1.IsEqual(e2) })
 }
 
 // PrintExprs is a helper method to implement Expr.Print.
@@ -121,7 +121,7 @@ func (oe ObjExpr) Object() sx.Object { return oe.Obj }
 
 // ResolveSymbolExpr resolves the given symbol in an environment and returns the value.
 type ResolveSymbolExpr struct {
-	Symbol *sx.Symbol
+	Symbol sx.Symbol
 }
 
 func (re ResolveSymbolExpr) Rework(rf *ReworkFrame) Expr {

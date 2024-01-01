@@ -307,7 +307,7 @@ func printExpr(expr sxeval.Expr, level int) {
 		for _, sym := range e.Params {
 			fmt.Printf(" %v", sym)
 		}
-		if e.Rest != nil {
+		if e.Rest != "" {
 			fmt.Printf(" . %v", e.Rest)
 		}
 		fmt.Println()

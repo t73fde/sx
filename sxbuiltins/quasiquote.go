@@ -68,9 +68,9 @@ var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.QuasiquoteNa
 
 type qqParser struct {
 	pframe             *sxeval.ParseFrame
-	symQuasiQuote      *sx.Symbol
-	symUnquote         *sx.Symbol
-	symUnquoteSplicing *sx.Symbol
+	symQuasiQuote      sx.Symbol
+	symUnquote         sx.Symbol
+	symUnquoteSplicing sx.Symbol
 }
 
 func (qqp *qqParser) parse(obj sx.Object) (sxeval.Expr, error) { return qqp.pframe.Parse(obj) }
@@ -357,7 +357,7 @@ func analyseList(lst *sx.Pair) (int, *sx.Pair, *sx.Pair) {
 	return length, prevObj, lastPair
 }
 
-func getUnquoteObj(sym *sx.Symbol, lst *sx.Pair) (sx.Object, error) {
+func getUnquoteObj(sym sx.Symbol, lst *sx.Pair) (sx.Object, error) {
 	args, isPair := sx.GetPair(lst.Cdr())
 	if !isPair {
 		return nil, sx.ErrImproper{Pair: lst}
