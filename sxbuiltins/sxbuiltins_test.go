@@ -51,7 +51,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 
 			var sb strings.Builder
 			bind := sxeval.MakeChildBinding(root, tc.name, 0)
-			env := sxeval.MakeExecutionEnvironment(engine, nil, bind)
+			env := sxeval.MakeExecutionEnvironment(bind, nil)
 			for {
 				obj, err := rd.Read()
 				if err != nil {

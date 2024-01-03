@@ -27,7 +27,7 @@ type Environment struct {
 }
 
 // MakeExecutionEnvironment creates an environment for later execution of an expression.
-func MakeExecutionEnvironment(eng *Engine, exec Executor, bind *Binding) *Environment {
+func MakeExecutionEnvironment(bind *Binding, exec Executor) *Environment {
 	return &Environment{
 		executor: exec,
 		binding:  bind,

@@ -45,6 +45,6 @@ func (rf *ReworkFrame) Bind(sym sx.Symbol) error {
 //
 // It is only called, if no full environment is needed, only a binding.
 func (rf *ReworkFrame) Call(fn Callable, args []sx.Object) (sx.Object, error) {
-	env := MakeExecutionEnvironment(nil, nil, rf.binding)
+	env := MakeExecutionEnvironment(rf.binding, nil)
 	return fn.Call(env, args)
 }

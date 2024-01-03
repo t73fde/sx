@@ -29,7 +29,7 @@ func BenchmarkEvenTCO(b *testing.B) {
 	b.ResetTimer()
 	for _, tc := range testcases {
 		b.Run(strconv.Itoa(tc), func(b *testing.B) {
-			env := sxeval.MakeExecutionEnvironment(engine, nil, root)
+			env := sxeval.MakeExecutionEnvironment(root, nil)
 			obj := sx.MakeList(evenSym, sx.Int64(tc))
 			expr, err := env.Parse(obj)
 			if err != nil {
@@ -49,7 +49,7 @@ func BenchmarkFac(b *testing.B) {
 	facSym := sx.Symbol("fac")
 	root := engine.GetToplevelBinding()
 	obj := sx.MakeList(facSym, sx.Int64(20))
-	env := sxeval.MakeExecutionEnvironment(engine, nil, root)
+	env := sxeval.MakeExecutionEnvironment(root, nil)
 	expr, err := env.Parse(obj)
 	if err != nil {
 		panic(err)
