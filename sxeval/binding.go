@@ -206,18 +206,6 @@ func (mb *Binding) Unbind(sym sx.Symbol) error {
 // Freeze sets the binding in a read-only state.
 func (mb *Binding) Freeze() { mb.frozen = true }
 
-// rootBinding returns the root binding of the given binding.
-func (mb *Binding) rootBinding() *Binding {
-	for curr := mb; curr != nil; {
-		parent := curr.parent
-		if parent == nil {
-			return curr
-		}
-		curr = parent
-	}
-	return nil
-}
-
 // Resolve a symbol in a binding and all of its parent bindings.
 func (mb *Binding) Resolve(sym sx.Symbol) (sx.Object, bool) {
 	for curr := mb; curr != nil; curr = curr.parent {

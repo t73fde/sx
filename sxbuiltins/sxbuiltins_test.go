@@ -42,8 +42,7 @@ type (
 
 func (tcs tTestCases) Run(t *testing.T) {
 	t.Helper()
-	engine := createEngine()
-	root := engine.GetToplevelBinding()
+	root := createBinding()
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Helper()
@@ -90,11 +89,10 @@ func (tcs tTestCases) Run(t *testing.T) {
 
 }
 
-func createEngine() *sxeval.Engine {
+func createBinding() *sxeval.Binding {
 	numBuiltins := len(specials) + len(builtins) + len(objects)
 	root := sxeval.MakeRootBinding(numBuiltins)
 
-	engine := sxeval.MakeEngine(root)
 	for _, syntax := range specials {
 		root.BindSpecial(syntax)
 	}
@@ -108,8 +106,7 @@ func createEngine() *sxeval.Engine {
 			panic(err)
 		}
 	}
-	engine.SetToplevelBinding(env)
-	return engine
+	return env
 }
 
 var specials = []*sxeval.Special{

@@ -113,8 +113,7 @@ func main() {
 	rd := sxreader.MakeReader(os.Stdin)
 
 	me := mainExecutor{baseExecutor: &sxeval.SimpleExecutor{}}
-	engine := sxeval.MakeEngine(sxeval.MakeRootBinding(len(specials) + len(builtins) + 16))
-	root := engine.RootBinding()
+	root := sxeval.MakeRootBinding(len(specials) + len(builtins) + 16)
 	for _, synDef := range specials {
 		root.BindSpecial(synDef)
 	}
@@ -178,13 +177,13 @@ func main() {
 			panic(args[0])
 		},
 	})
-	err := readPrelude(engine)
+	err := readPrelude(root)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to read prelude: %v\n", err)
 		os.Exit(17)
 	}
 	root.Freeze()
-	bind := sxeval.MakeChildBinding(engine.GetToplevelBinding(), "repl", 1024)
+	bind := sxeval.MakeChildBinding(root, "repl", 1024)
 	bind.Bind(sx.Symbol("root-binding"), root)
 	bind.Bind(sx.Symbol("repl-binding"), bind)
 
@@ -316,9 +315,9 @@ func printExpr(expr sxeval.Expr, level int) {
 //go:embed prelude.sxn
 var prelude string
 
-func readPrelude(engine *sxeval.Engine) error {
+func readPrelude(root *sxeval.Binding) error {
 	rd := sxreader.MakeReader(strings.NewReader(prelude))
-	env := sxeval.MakeExecutionEnvironment(engine.RootBinding(), nil)
+	env := sxeval.MakeExecutionEnvironment(root, nil)
 	for {
 		form, err := rd.Read()
 		if err != nil {

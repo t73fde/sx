@@ -65,8 +65,7 @@ type testcase struct {
 }
 type testCases []testcase
 
-func (testcases testCases) Run(t *testing.T, engine *sxeval.Engine) {
-	root := engine.GetToplevelBinding()
+func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			rd := sxreader.MakeReader(strings.NewReader(tc.src))
@@ -103,14 +102,13 @@ func TestEval(t *testing.T) {
 		// {name: "err-callable", src: "(hello)", mustErr: true},
 	}
 	root := createTestBinding()
-	engine := sxeval.MakeEngine(root)
 	root.BindSpecial(&sxeval.Special{
 		Name: "quote",
 		Fn: func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 			return sxeval.ObjExpr{Obj: args.Car()}, nil
 		},
 	})
-	testcases.Run(t, engine)
+	testcases.Run(t, root)
 }
 
 var sxPrelude = `;; Indirekt recursive definition of even/odd
@@ -121,9 +119,8 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 (defun fac (n) (if (= n 0) 1 (* n (fac (- n 1)))))
 `
 
-func createEngineForTCO() *sxeval.Engine {
+func createBindingForTCO() *sxeval.Binding {
 	root := sxeval.MakeRootBinding(6)
-	engine := sxeval.MakeEngine(root)
 	root.BindSpecial(&sxbuiltins.DefunS)
 	root.BindSpecial(&sxbuiltins.IfS)
 	root.BindBuiltin(&sxbuiltins.Equal)
@@ -148,8 +145,7 @@ func createEngineForTCO() *sxeval.Engine {
 			panic(err)
 		}
 	}
-	engine.SetToplevelBinding(bind)
-	return engine
+	return bind
 }
 
 func TestTailCallOptimization(t *testing.T) {
@@ -164,6 +160,6 @@ func TestTailCallOptimization(t *testing.T) {
 		// The following is not a TCO test, but a test for a correct fac implementation.
 		{name: "fac20", src: "(fac 20)", exp: "2432902008176640000"},
 	}
-	engine := createEngineForTCO()
-	testcases.Run(t, engine)
+	root := createBindingForTCO()
+	testcases.Run(t, root)
 }

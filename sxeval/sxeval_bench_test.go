@@ -23,8 +23,7 @@ import (
 
 func BenchmarkEvenTCO(b *testing.B) {
 	testcases := [...]int{0, 1, 2, 4, 16, 64, 256, 1024, 4096, 16384, 65536}
-	engine := createEngineForTCO()
-	root := engine.GetToplevelBinding()
+	root := createBindingForTCO()
 	evenSym := sx.Symbol("even?")
 	b.ResetTimer()
 	for _, tc := range testcases {
@@ -45,9 +44,8 @@ func BenchmarkEvenTCO(b *testing.B) {
 }
 
 func BenchmarkFac(b *testing.B) {
-	engine := createEngineForTCO()
+	root := createBindingForTCO()
 	facSym := sx.Symbol("fac")
-	root := engine.GetToplevelBinding()
 	obj := sx.MakeList(facSym, sx.Int64(20))
 	env := sxeval.MakeExecutionEnvironment(root, nil)
 	expr, err := env.Parse(obj)
