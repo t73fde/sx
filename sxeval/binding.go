@@ -150,6 +150,16 @@ func (mb *Binding) BindConst(sym sx.Symbol, val sx.Object) error {
 	return nil
 }
 
+func (mb *Binding) BindSpecial(syn *Special) error {
+	return mb.BindConst(sx.Symbol(syn.Name), syn)
+}
+
+// BindBuiltin binds the given builtin with its given name in the engine's
+// root binding.
+func (mb *Binding) BindBuiltin(b *Builtin) error {
+	return mb.BindConst(sx.Symbol(b.Name), b)
+}
+
 // Lookup will search for a local binding of the given symbol. If not
 // found, the search will *not* be continued in the parent binding.
 // Use the global `Resolve` function, if you want a search up to the parent.

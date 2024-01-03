@@ -104,7 +104,7 @@ func TestEval(t *testing.T) {
 	}
 	root := createTestBinding()
 	engine := sxeval.MakeEngine(root)
-	engine.BindSpecial(&sxeval.Special{
+	root.BindSpecial(&sxeval.Special{
 		Name: "quote",
 		Fn: func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
 			return sxeval.ObjExpr{Obj: args.Car()}, nil
@@ -124,13 +124,13 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 func createEngineForTCO() *sxeval.Engine {
 	root := sxeval.MakeRootBinding(6)
 	engine := sxeval.MakeEngine(root)
-	engine.BindSpecial(&sxbuiltins.DefunS)
-	engine.BindSpecial(&sxbuiltins.IfS)
-	engine.BindBuiltin(&sxbuiltins.Equal)
-	engine.BindBuiltin(&sxbuiltins.Sub)
-	engine.BindBuiltin(&sxbuiltins.Mul)
-	engine.BindBuiltin(&sxbuiltins.Map)
-	engine.BindBuiltin(&sxbuiltins.List)
+	root.BindSpecial(&sxbuiltins.DefunS)
+	root.BindSpecial(&sxbuiltins.IfS)
+	root.BindBuiltin(&sxbuiltins.Equal)
+	root.BindBuiltin(&sxbuiltins.Sub)
+	root.BindBuiltin(&sxbuiltins.Mul)
+	root.BindBuiltin(&sxbuiltins.Map)
+	root.BindBuiltin(&sxbuiltins.List)
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxPrelude))
 	bind := sxeval.MakeChildBinding(root, "TCO", 128)

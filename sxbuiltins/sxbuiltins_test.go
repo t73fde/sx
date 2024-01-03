@@ -96,10 +96,10 @@ func createEngine() *sxeval.Engine {
 
 	engine := sxeval.MakeEngine(root)
 	for _, syntax := range specials {
-		engine.BindSpecial(syntax)
+		root.BindSpecial(syntax)
 	}
 	for _, b := range builtins {
-		engine.BindBuiltin(b)
+		root.BindBuiltin(b)
 	}
 	root.Freeze()
 	env := sxeval.MakeChildBinding(root, "vars", len(objects))

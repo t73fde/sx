@@ -31,7 +31,6 @@ import (
 type mainExecutor struct {
 	baseExecutor sxeval.Executor
 	logReader    bool
-	logParser    bool
 	logExpr      bool
 	logExecutor  bool
 }
@@ -117,13 +116,13 @@ func main() {
 	engine := sxeval.MakeEngine(sxeval.MakeRootBinding(len(specials) + len(builtins) + 16))
 	root := engine.RootBinding()
 	for _, synDef := range specials {
-		engine.BindSpecial(synDef)
+		root.BindSpecial(synDef)
 	}
 	for _, b := range builtins {
-		engine.BindBuiltin(b)
+		root.BindBuiltin(b)
 	}
-	engine.Bind("UNDEFINED", sx.MakeUndefined())
-	engine.BindBuiltin(&sxeval.Builtin{
+	root.Bind("UNDEFINED", sx.MakeUndefined())
+	root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-reader",
 		MinArity: 0,
 		MaxArity: 0,
@@ -134,18 +133,7 @@ func main() {
 			return sx.MakeBoolean(res), nil
 		},
 	})
-	engine.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-parser",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
-			res := me.logParser
-			me.logParser = !res
-			return sx.MakeBoolean(res), nil
-		},
-	})
-	engine.BindBuiltin(&sxeval.Builtin{
+	root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-expr",
 		MinArity: 0,
 		MaxArity: 0,
@@ -156,7 +144,7 @@ func main() {
 			return sx.MakeBoolean(res), nil
 		},
 	})
-	engine.BindBuiltin(&sxeval.Builtin{
+	root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-executor",
 		MinArity: 0,
 		MaxArity: 0,
@@ -167,19 +155,18 @@ func main() {
 			return sx.MakeBoolean(res), nil
 		},
 	})
-	engine.BindBuiltin(&sxeval.Builtin{
+	root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-off",
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
 		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			me.logReader = false
-			me.logParser = false
 			me.logExecutor = false
 			return sx.Nil(), nil
 		},
 	})
-	engine.BindBuiltin(&sxeval.Builtin{
+	root.BindBuiltin(&sxeval.Builtin{
 		Name:     "panic",
 		MinArity: 0,
 		MaxArity: 1,
@@ -202,7 +189,6 @@ func main() {
 	bind.Bind(sx.Symbol("repl-binding"), bind)
 
 	me.logReader = true
-	me.logParser = true
 	me.logExpr = false
 	me.logExecutor = true
 

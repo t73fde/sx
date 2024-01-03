@@ -16,11 +16,7 @@
 // This is done to reduce syntax checks.
 package sxeval
 
-import (
-	"fmt"
-
-	"zettelstore.de/sx.fossil"
-)
+import "fmt"
 
 // Engine is the collection of all relevant data element to execute / evaluate an object.
 type Engine struct {
@@ -61,25 +57,3 @@ func (eng *Engine) SetToplevelBinding(bind *Binding) error {
 
 // GetToplevelBinding returns the current top-level binding.
 func (eng *Engine) GetToplevelBinding() *Binding { return eng.toplevel }
-
-// BindSpecial binds a syntax parser to the its name in the engine's root binding.
-func (eng *Engine) BindSpecial(syn *Special) error {
-	return eng.BindConst(syn.Name, syn)
-}
-
-// BindBuiltin binds the given builtin with its given name in the engine's
-// root binding.
-func (eng *Engine) BindBuiltin(b *Builtin) error {
-	return eng.BindConst(b.Name, b)
-}
-
-// BindConst a given object to a symbol of the given name as a constant in the
-// engine's root binding.
-func (eng *Engine) BindConst(name string, obj sx.Object) error {
-	return eng.root.BindConst(sx.Symbol(name), obj)
-}
-
-// Bind a given object to a symbol of the given name in the engine's root binding.
-func (eng *Engine) Bind(name string, obj sx.Object) error {
-	return eng.root.Bind(sx.Symbol(name), obj)
-}
