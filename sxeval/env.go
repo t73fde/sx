@@ -70,7 +70,6 @@ func (env *Environment) Run(expr Expr) (sx.Object, error) {
 func (env *Environment) MakeParseFrame() *ParseFrame {
 	return &ParseFrame{
 		binding: env.binding,
-		parser:  env.engine.pars,
 	}
 }
 

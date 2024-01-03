@@ -30,27 +30,10 @@ import (
 
 type mainParserExecutor struct {
 	baseExecutor sxeval.Executor
-	origParser   sxeval.Parser
 	logReader    bool
 	logParser    bool
 	logExpr      bool
 	logExecutor  bool
-}
-
-func (mpe *mainParserExecutor) Parse(pf *sxeval.ParseFrame, form sx.Object) (sxeval.Expr, error) {
-	if !mpe.logParser {
-		return mpe.origParser.Parse(pf, form)
-	}
-	bind := pf.Binding()
-	fmt.Printf(";P %v<-%v %T %v\n", bind, bind, form, form)
-	expr, err := mpe.origParser.Parse(pf, form)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf(";Q ")
-	expr.Print(os.Stdout)
-	fmt.Println()
-	return expr, nil
 }
 
 func (mpe *mainParserExecutor) Reset() { mpe.baseExecutor.Reset() }
@@ -132,7 +115,6 @@ func main() {
 
 	mpe := mainParserExecutor{baseExecutor: &sxeval.SimpleExecutor{}}
 	engine := sxeval.MakeEngine(sxeval.MakeRootBinding(len(specials) + len(builtins) + 16))
-	mpe.origParser = engine.SetParser(&mpe)
 	root := engine.RootBinding()
 	for _, synDef := range specials {
 		engine.BindSpecial(synDef)

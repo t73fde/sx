@@ -26,7 +26,6 @@ import (
 type Engine struct {
 	root     *Binding
 	toplevel *Binding
-	pars     Parser
 }
 
 // MakeEngine creates a new engine.
@@ -34,7 +33,6 @@ func MakeEngine(root *Binding) *Engine {
 	return &Engine{
 		root:     root,
 		toplevel: root,
-		pars:     &myDefaultParser,
 	}
 }
 
@@ -63,16 +61,6 @@ func (eng *Engine) SetToplevelBinding(bind *Binding) error {
 
 // GetToplevelBinding returns the current top-level binding.
 func (eng *Engine) GetToplevelBinding() *Binding { return eng.toplevel }
-
-// SetParser updates the current s-expression parser of the engine.
-func (eng *Engine) SetParser(p Parser) Parser {
-	orig := eng.pars
-	if p == nil {
-		p = &myDefaultParser
-	}
-	eng.pars = p
-	return orig
-}
 
 // BindSpecial binds a syntax parser to the its name in the engine's root binding.
 func (eng *Engine) BindSpecial(syn *Special) error {

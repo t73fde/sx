@@ -13,19 +13,18 @@
 
 package sxeval
 
-import "zettelstore.de/sx.fossil"
+import (
+	"fmt"
 
-// Parser transform an object into an executable expression.
-type Parser interface {
-	Parse(*ParseFrame, sx.Object) (Expr, error)
+	"zettelstore.de/sx.fossil"
+)
+
+// ParseFrame is a parsing environment.
+type ParseFrame struct {
+	binding *Binding
 }
 
-// defaultParser is the parser for normal use.
-type defaultParser struct{}
-
-var myDefaultParser defaultParser
-
-func (dp *defaultParser) Parse(pf *ParseFrame, form sx.Object) (Expr, error) {
+func (pf *ParseFrame) Parse(form sx.Object) (Expr, error) {
 restart:
 	if sx.IsNil(form) {
 		return NilExpr, nil
@@ -34,7 +33,7 @@ restart:
 	case sx.Symbol:
 		return ResolveSymbolExpr{Symbol: f}, nil
 	case *sx.Pair:
-		expr, err := dp.parsePair(pf, f)
+		expr, err := pf.parsePair(f)
 		if err == nil {
 			return expr, nil
 		}
@@ -47,7 +46,7 @@ restart:
 	return ObjExpr{Obj: form}, nil
 }
 
-func (*defaultParser) parsePair(pf *ParseFrame, pair *sx.Pair) (Expr, error) {
+func (pf *ParseFrame) parsePair(pair *sx.Pair) (Expr, error) {
 	var proc Expr
 	first := pair.Car()
 	if sym, isSymbol := sx.GetSymbol(first); isSymbol {
@@ -89,3 +88,29 @@ func (*defaultParser) parsePair(pf *ParseFrame, pair *sx.Pair) (Expr, error) {
 	}
 	return &ce, nil
 }
+
+func (pf *ParseFrame) ParseAgain(form sx.Object) error {
+	return errParseAgain{pf: pf, form: form}
+}
+
+// errParseAgain is a non-error error signalling that the given form should be
+// parsed again in the given environment.
+type errParseAgain struct {
+	pf   *ParseFrame
+	form sx.Object
+}
+
+func (e errParseAgain) Error() string { return fmt.Sprintf("Again: %T/%v", e.form, e.form) }
+
+func (pf *ParseFrame) MakeChildFrame(name string, baseSize int) *ParseFrame {
+	return &ParseFrame{
+		binding: MakeChildBinding(pf.binding, name, baseSize),
+	}
+}
+
+func (pf *ParseFrame) Bind(sym sx.Symbol, obj sx.Object) error { return pf.binding.Bind(sym, obj) }
+
+func (pf *ParseFrame) Resolve(sym sx.Symbol) (sx.Object, bool) {
+	return pf.binding.Resolve(sym)
+}
+func (pf *ParseFrame) Binding() *Binding { return pf.binding }
