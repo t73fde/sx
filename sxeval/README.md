@@ -32,37 +32,26 @@ This separation allowed to pre-compute the structure of an object, resulting in
 possibly faster execution time or less memory to store. Parsing an reworking
 can be done in advance, while computing can be done much later.
 
-To make the steps of evaluation easier to handle, `sxeval` defines an "engine"
-type (`sxeval.Engine`) that provides appropriate functions. In addition, it
-provides function to create an initial environment to evaluate symbols.
+To make the steps of evaluation easier to handle, `sxeval` defines an
+"environment" type (`sxeval.Environment`) that provides appropriate functions.
+Its central attribute is the current "binding".
 
-`sxeval.Environment`s are effectively just a mapping of `sx.Symbol`s to an
+`sxeval.Binding`s are effectively just a mapping of `sx.Symbol`s to an
 `sx.Object`. A `sx.Symbol` is *bound* to a `sx.Object`.
 
 The are two types of bindings: a *constant binding* does not allow to update
 the `sx.Object` that is bound to the `sx.Symbol`. A *variable binding* allows
 this update.
 
-`sxeval.Environment`s form a hierarchy: all but one have a *parent
-environment*. This allows to overwrite constant bindings somehow: create a
+`sxeval.Binding`s form a hierarchy: all but one have a *parent
+binding*. This allows to overwrite constant bindings somehow: create a
 child parent and bind the `sx.Symbol` to another `sx.Object`, and evaluate a
-`sx.Object` in the new child environment.
+`sx.Object` in the new child binding.
 
 Resolving a `sx.Symbol` works as follows: when a `sx.Symbol` is looked up in a
-given environment, and it is not bound in that environment, the `sx.Symbol` is
-resolved in the parent environment.
+given environment, and it is not bound in that environments binding, the
+`sx.Symbol` is resolved in the parent binding.
 
-Of course, there is an environment that does not have a parent environment: the
-*root environment*. If a `sx.Symbol` is not bound in the root environment, the
+Of course, there is a binding that does not have a parent binding: the
+*root binding*. If a `sx.Symbol` is not bound in the root binding, the
 lookup operation fails.
-
-If a symbol cannot be resolved w.r.t an environment, one of two predefined
-symbols are resolved to a callable that takes the symbol and the appropriate
-environment as arguments. The result of a call to the callable is the resolved
-value.
-
-* `*RESOLVE-CALLABLE` is called to resolve a symbol that was used as the
-  first object of a list.
-* `*RESOLVE-SYMBOL` is called to resolve other unbound symbols.
-
-The default callables for both symbols will produce an error.

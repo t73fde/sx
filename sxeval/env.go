@@ -21,7 +21,7 @@ import (
 
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
-	executor Executor // most of the time: engine.exec, but could be updated for interactive debugging
+	executor Executor
 	binding  *Binding
 	caller   *Environment // the dynamic call stack
 }

@@ -58,12 +58,12 @@ func (e CallError) Error() string {
 // Executor is about controlling the execution of expressions.
 // Do not call the method `Expr.Execute` directly, call the executor to do this.
 type Executor interface {
-	// Reset prepares for a new execution cylcle. It is typically call by the
-	// engine.
+	// Reset prepares for a new execution cylcle. It is typically called by the
+	// environment.
 	Reset()
 
-	// Execute the expression in a frame and return the result.
-	// It may have side-effects, on the given frame, or on the
+	// Execute the expression in an environment and return the result.
+	// It may have side-effects, on the given environment, or on the
 	// general environment of the system.
 	Execute(*Environment, Expr) (sx.Object, error)
 }

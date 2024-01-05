@@ -154,8 +154,7 @@ func (mb *Binding) BindSpecial(syn *Special) error {
 	return mb.BindConst(sx.Symbol(syn.Name), syn)
 }
 
-// BindBuiltin binds the given builtin with its given name in the engine's
-// root binding.
+// BindBuiltin binds the given builtin with its given name.
 func (mb *Binding) BindBuiltin(b *Builtin) error {
 	return mb.BindConst(sx.Symbol(b.Name), b)
 }

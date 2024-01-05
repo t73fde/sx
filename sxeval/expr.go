@@ -16,7 +16,6 @@ package sxeval
 import (
 	"fmt"
 	"io"
-	"slices"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -33,11 +32,6 @@ type Expr interface {
 
 	// Print the expression on the given writer.
 	Print(io.Writer) (int, error)
-}
-
-// EqualSymbolSlice compares two `sx.Symbol` slices if they are `IsEqual`.
-func EqualSymbolSlice(s1, s2 []sx.Symbol) bool {
-	return slices.EqualFunc(s1, s2, func(e1, e2 sx.Symbol) bool { return e1.IsEqual(e2) })
 }
 
 // PrintExprs is a helper method to implement Expr.Print.
