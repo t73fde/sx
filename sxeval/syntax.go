@@ -22,7 +22,7 @@ import (
 // It is not the same as interface `Parser`, because the second parameter is a pair.
 type Syntax interface {
 	// Parse the args.
-	Parse(pf *ParseFrame, args *sx.Pair) (Expr, error)
+	Parse(pf *ParseEnvironment, args *sx.Pair) (Expr, error)
 }
 
 // GetSyntax returns the object as a syntax value, if possible.
@@ -37,7 +37,7 @@ func GetSyntax(obj sx.Object) (Syntax, bool) {
 // Special represents all predefined syntax constructing functions implemented in Go.
 type Special struct {
 	Name string
-	Fn   func(*ParseFrame, *sx.Pair) (Expr, error)
+	Fn   func(*ParseEnvironment, *sx.Pair) (Expr, error)
 }
 
 func (sp *Special) IsNil() bool  { return sp == nil }
@@ -64,7 +64,7 @@ func (sp *Special) Print(w io.Writer) (int, error) {
 }
 
 // Parse the args by calling the syntax function.
-func (sp *Special) Parse(pf *ParseFrame, args *sx.Pair) (Expr, error) {
+func (sp *Special) Parse(pf *ParseEnvironment, args *sx.Pair) (Expr, error) {
 	res, err := sp.Fn(pf, args)
 	if err != nil {
 		if _, ok := err.(CallError); !ok {

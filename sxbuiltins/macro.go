@@ -23,7 +23,7 @@ import (
 // DefMacroS parses a macro specfication.
 var DefMacroS = sxeval.Special{
 	Name: "defmacro",
-	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		sym, le, err := parseDefProc(pf, args)
 		if err != nil {
 			return nil, err
@@ -66,7 +66,7 @@ func (m *Macro) Repr() string   { return sx.Repr(m) }
 func (m *Macro) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<macro:", m.Name, ">")
 }
-func (m *Macro) Parse(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+func (m *Macro) Parse(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 	form, err := m.Expand(pf, args)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (m *Macro) Parse(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error)
 	return nil, pf.ParseAgain(form)
 }
 
-func (m *Macro) Expand(_ *sxeval.ParseFrame, args *sx.Pair) (sx.Object, error) {
+func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, error) {
 	var macroArgs []sx.Object
 	arg := sx.Object(args)
 	for {

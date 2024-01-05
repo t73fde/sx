@@ -27,7 +27,7 @@ import (
 // `(TEST EXPR ...)`.
 var CondS = sxeval.Special{
 	Name: "cond",
-	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {
 			return sxeval.NilExpr, nil
 		}

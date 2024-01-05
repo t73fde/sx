@@ -36,7 +36,7 @@ var CallableP = sxeval.Builtin{
 // DefunS parses a procedure/function specfication.
 var DefunS = sxeval.Special{
 	Name: "defun",
-	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		sym, le, err := parseDefProc(pf, args)
 		if err != nil {
 			return nil, err
@@ -45,7 +45,7 @@ var DefunS = sxeval.Special{
 	},
 }
 
-func parseDefProc(pf *sxeval.ParseFrame, args *sx.Pair) (sx.Symbol, *LambdaExpr, error) {
+func parseDefProc(pf *sxeval.ParseEnvironment, args *sx.Pair) (sx.Symbol, *LambdaExpr, error) {
 	if args == nil {
 		return "", nil, sxeval.ErrNoArgs
 	}
@@ -64,7 +64,7 @@ func parseDefProc(pf *sxeval.ParseFrame, args *sx.Pair) (sx.Symbol, *LambdaExpr,
 // LambdaS parses a procedure specification.
 var LambdaS = sxeval.Special{
 	Name: "lambda",
-	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, fmt.Errorf("parameter spec and body missing")
 		}
@@ -74,7 +74,7 @@ var LambdaS = sxeval.Special{
 }
 
 // ParseProcedure parses a procedure definition, where some parsing is already done.
-func ParseProcedure(pf *sxeval.ParseFrame, name string, paramSpec, bodySpec sx.Object) (*LambdaExpr, error) {
+func ParseProcedure(pf *sxeval.ParseEnvironment, name string, paramSpec, bodySpec sx.Object) (*LambdaExpr, error) {
 	var params []sx.Symbol
 	var rest sx.Symbol
 	if !sx.IsNil(paramSpec) {

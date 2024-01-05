@@ -65,8 +65,8 @@ func (env *Environment) Run(expr Expr) (sx.Object, error) {
 	return env.Execute(expr)
 }
 
-func (env *Environment) MakeParseFrame() *ParseFrame {
-	return &ParseFrame{
+func (env *Environment) MakeParseFrame() *ParseEnvironment {
+	return &ParseEnvironment{
 		binding: env.binding,
 	}
 }

@@ -19,12 +19,12 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// ParseFrame is a parsing environment.
-type ParseFrame struct {
+// ParseEnvironment is a parsing environment.
+type ParseEnvironment struct {
 	binding *Binding
 }
 
-func (pf *ParseFrame) Parse(form sx.Object) (Expr, error) {
+func (pf *ParseEnvironment) Parse(form sx.Object) (Expr, error) {
 restart:
 	if sx.IsNil(form) {
 		return NilExpr, nil
@@ -46,7 +46,7 @@ restart:
 	return ObjExpr{Obj: form}, nil
 }
 
-func (pf *ParseFrame) parsePair(pair *sx.Pair) (Expr, error) {
+func (pf *ParseEnvironment) parsePair(pair *sx.Pair) (Expr, error) {
 	var proc Expr
 	first := pair.Car()
 	if sym, isSymbol := sx.GetSymbol(first); isSymbol {
@@ -89,28 +89,30 @@ func (pf *ParseFrame) parsePair(pair *sx.Pair) (Expr, error) {
 	return &ce, nil
 }
 
-func (pf *ParseFrame) ParseAgain(form sx.Object) error {
+func (pf *ParseEnvironment) ParseAgain(form sx.Object) error {
 	return errParseAgain{pf: pf, form: form}
 }
 
 // errParseAgain is a non-error error signalling that the given form should be
 // parsed again in the given environment.
 type errParseAgain struct {
-	pf   *ParseFrame
+	pf   *ParseEnvironment
 	form sx.Object
 }
 
 func (e errParseAgain) Error() string { return fmt.Sprintf("Again: %T/%v", e.form, e.form) }
 
-func (pf *ParseFrame) MakeChildFrame(name string, baseSize int) *ParseFrame {
-	return &ParseFrame{
+func (pf *ParseEnvironment) MakeChildFrame(name string, baseSize int) *ParseEnvironment {
+	return &ParseEnvironment{
 		binding: MakeChildBinding(pf.binding, name, baseSize),
 	}
 }
 
-func (pf *ParseFrame) Bind(sym sx.Symbol, obj sx.Object) error { return pf.binding.Bind(sym, obj) }
+func (pf *ParseEnvironment) Bind(sym sx.Symbol, obj sx.Object) error {
+	return pf.binding.Bind(sym, obj)
+}
 
-func (pf *ParseFrame) Resolve(sym sx.Symbol) (sx.Object, bool) {
+func (pf *ParseEnvironment) Resolve(sym sx.Symbol) (sx.Object, bool) {
 	return pf.binding.Resolve(sym)
 }
-func (pf *ParseFrame) Binding() *Binding { return pf.binding }
+func (pf *ParseEnvironment) Binding() *Binding { return pf.binding }

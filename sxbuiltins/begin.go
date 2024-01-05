@@ -27,7 +27,7 @@ var BeginS = sxeval.Special{
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func ParseExprSeq(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+func ParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return sxeval.NilExpr, nil
 	}

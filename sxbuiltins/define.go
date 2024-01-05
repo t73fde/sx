@@ -26,7 +26,7 @@ import (
 // DefVarS parses a (defvar name value) form.
 var DefVarS = sxeval.Special{
 	Name: "defvar",
-	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		sym, val, err := parseSymValue(pf, args)
 		if err != nil {
 			return nil, err
@@ -38,7 +38,7 @@ var DefVarS = sxeval.Special{
 // DefConstS parses a (defconst name value) form.
 var DefConstS = sxeval.Special{
 	Name: "defconst",
-	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		sym, val, err := parseSymValue(pf, args)
 		if err != nil {
 			return nil, err
@@ -47,7 +47,7 @@ var DefConstS = sxeval.Special{
 	},
 }
 
-func parseSymValue(pf *sxeval.ParseFrame, args *sx.Pair) (sx.Symbol, sxeval.Expr, error) {
+func parseSymValue(pf *sxeval.ParseEnvironment, args *sx.Pair) (sx.Symbol, sxeval.Expr, error) {
 	if args == nil {
 		return "", nil, fmt.Errorf("need at least two arguments")
 	}
@@ -139,7 +139,7 @@ func (de *DefineExpr) Print(w io.Writer) (int, error) {
 // SetXS parses a (set! name value) form.
 var SetXS = sxeval.Special{
 	Name: "set!",
-	Fn: func(pf *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, fmt.Errorf("need at least two arguments")
 		}

@@ -104,7 +104,7 @@ func TestEval(t *testing.T) {
 	root := createTestBinding()
 	root.BindSpecial(&sxeval.Special{
 		Name: "quote",
-		Fn: func(_ *sxeval.ParseFrame, args *sx.Pair) (sxeval.Expr, error) {
+		Fn: func(_ *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 			return sxeval.ObjExpr{Obj: args.Car()}, nil
 		},
 	})
