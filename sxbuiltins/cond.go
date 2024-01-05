@@ -113,7 +113,7 @@ func (ce *CondExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 		newCases := make([]CondCase, len(ce.Cases)-missing)
 		j := 0
 		for _, cas := range ce.Cases {
-			if !sxeval.NilExpr.IsEqual(cas.Test) {
+			if cas.Test != sxeval.NilExpr {
 				newCases[j] = cas
 				j++
 			}
@@ -142,23 +142,6 @@ func (ce *CondExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 		}
 	}
 	return sx.Nil(), nil
-}
-func (ce *CondExpr) IsEqual(other sxeval.Expr) bool {
-	if ce == other {
-		return true
-	}
-	if otherC, ok := other.(*CondExpr); ok && otherC != nil {
-		if c1, c2 := ce.Cases, otherC.Cases; len(c1) == len(c2) {
-			for i, cas1 := range c1 {
-				cas2 := c2[i]
-				if !cas1.Test.IsEqual(cas2.Test) || !cas1.Expr.IsEqual(cas2.Expr) {
-					return false
-				}
-			}
-			return true
-		}
-	}
-	return false
 }
 func (ce *CondExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{COND")

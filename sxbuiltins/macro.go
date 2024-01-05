@@ -43,26 +43,11 @@ type Macro struct {
 	Expr    sxeval.Expr
 }
 
-func (m *Macro) IsNil() bool  { return m == nil }
-func (m *Macro) IsAtom() bool { return m == nil }
-func (m *Macro) IsEqual(other sx.Object) bool {
-	if m == other {
-		return true
-	}
-	if m.IsNil() {
-		return sx.IsNil(other)
-	}
-	if otherM, ok := other.(*Macro); ok {
-		// Don't compare Name, because they are always different, but that does not matter.
-		return m.Binding.IsEqual(otherM.Binding) &&
-			sxeval.EqualSymbolSlice(m.Params, otherM.Params) &&
-			m.Rest.IsEqual(otherM.Rest) &&
-			m.Expr.IsEqual(otherM.Expr)
-	}
-	return false
-}
-func (m *Macro) String() string { return m.Repr() }
-func (m *Macro) Repr() string   { return sx.Repr(m) }
+func (m *Macro) IsNil() bool                  { return m == nil }
+func (m *Macro) IsAtom() bool                 { return m == nil }
+func (m *Macro) IsEqual(other sx.Object) bool { return m == other }
+func (m *Macro) String() string               { return m.Repr() }
+func (m *Macro) Repr() string                 { return sx.Repr(m) }
 func (m *Macro) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<macro:", m.Name, ">")
 }

@@ -31,16 +31,8 @@ type Expr interface {
 	// general environment of the system.
 	Compute(*Environment) (sx.Object, error)
 
-	// IsEqual compare two expressions for deep equality.
-	IsEqual(Expr) bool
-
 	// Print the expression on the given writer.
 	Print(io.Writer) (int, error)
-}
-
-// EqualExprSlice compares two `Expr` slices if they are `IsEqual`.
-func EqualExprSlice(s1, s2 []Expr) bool {
-	return slices.EqualFunc(s1, s2, func(e1, e2 Expr) bool { return e1.IsEqual(e2) })
 }
 
 // EqualSymbolSlice compares two `sx.Symbol` slices if they are `IsEqual`.
@@ -78,7 +70,6 @@ type nilExpr struct{}
 
 func (nilExpr) Rework(*ReworkFrame) Expr                { return NilExpr }
 func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
-func (nilExpr) IsEqual(other Expr) bool                 { return other == NilExpr }
 func (nilExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{NIL}") }
 func (nilExpr) Object() sx.Object                       { return sx.Nil() }
 
@@ -93,7 +84,9 @@ func (oe ObjExpr) Rework(rf *ReworkFrame) Expr {
 	}
 	return oe
 }
+
 func (oe ObjExpr) Compute(*Environment) (sx.Object, error) { return oe.Obj, nil }
+
 func (oe ObjExpr) IsEqual(other Expr) bool {
 	if oe == other {
 		return true
@@ -103,6 +96,7 @@ func (oe ObjExpr) IsEqual(other Expr) bool {
 	}
 	return false
 }
+
 func (oe ObjExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{OBJ ")
 	if err != nil {
@@ -130,21 +124,14 @@ func (re ResolveSymbolExpr) Rework(rf *ReworkFrame) Expr {
 	}
 	return re
 }
+
 func (re ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	if obj, found := env.Resolve(re.Symbol); found {
 		return obj, nil
 	}
 	return nil, env.MakeNotBoundError(re.Symbol)
 }
-func (re ResolveSymbolExpr) IsEqual(other Expr) bool {
-	if re == other {
-		return true
-	}
-	if otherR, ok := other.(ResolveSymbolExpr); ok {
-		return re.Symbol.IsEqual(otherR.Symbol)
-	}
-	return false
-}
+
 func (re ResolveSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{RESOLVE %v}", re.Symbol)
 }
@@ -156,6 +143,7 @@ type CallExpr struct {
 }
 
 func (ce *CallExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
+
 func (ce *CallExpr) Rework(rf *ReworkFrame) Expr {
 	// If the ce.Proc is a builtin, rework to a BuiltinCallExpr.
 
@@ -175,6 +163,7 @@ func (ce *CallExpr) Rework(rf *ReworkFrame) Expr {
 	}
 	return ce
 }
+
 func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {
 	subEnv := env.NewDynamicEnvironment()
 	val, err := subEnv.Execute(ce.Proc)
@@ -191,18 +180,7 @@ func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {
 
 	return computeCallable(env, proc, ce.Args)
 }
-func (ce *CallExpr) IsEqual(other Expr) bool {
-	if ce == other {
-		return true
-	}
-	if otherC, ok := other.(*CallExpr); ok && otherC != nil {
-		if !ce.Proc.IsEqual(otherC.Proc) {
-			return false
-		}
-		return EqualExprSlice(ce.Args, otherC.Args)
-	}
-	return false
-}
+
 func (ce *CallExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{CALL ")
 	if err != nil {
@@ -257,6 +235,7 @@ type BuiltinCallExpr struct {
 }
 
 func (bce *BuiltinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
+
 func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 	// Rework checks if the Builtin is pure and if all args are
 	// constant sx.Object's. If this is true, it will call the builtin with
@@ -283,22 +262,12 @@ func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 	}
 	return ObjExpr{Obj: result}.Rework(rf)
 }
+
 func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
 	subEnv := env.NewDynamicEnvironment()
 	return computeCallable(subEnv, bce.Proc, bce.Args)
 }
-func (bce *BuiltinCallExpr) IsEqual(other Expr) bool {
-	if bce == other {
-		return true
-	}
-	if otherB, ok := other.(*BuiltinCallExpr); ok && otherB != nil {
-		if !bce.Proc.IsEqual(otherB.Proc) {
-			return false
-		}
-		return EqualExprSlice(bce.Args, otherB.Args)
-	}
-	return false
-}
+
 func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{BCALL ")
 	if err != nil {

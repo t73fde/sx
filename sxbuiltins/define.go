@@ -79,6 +79,7 @@ func (de *DefineExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	de.Val = de.Val.Rework(rf)
 	return de
 }
+
 func (de *DefineExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	subEnv := env.NewDynamicEnvironment()
 	val, err := subEnv.Execute(de.Val)
@@ -90,17 +91,6 @@ func (de *DefineExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 		}
 	}
 	return val, err
-}
-func (de *DefineExpr) IsEqual(other sxeval.Expr) bool {
-	if de == other {
-		return true
-	}
-	if otherD, ok := other.(*DefineExpr); ok && otherD != nil {
-		return de.Sym.IsEqual(otherD.Sym) &&
-			de.Val.IsEqual(otherD.Val) &&
-			de.Const == otherD.Const
-	}
-	return false
 }
 
 func (de *DefineExpr) Print(w io.Writer) (int, error) {
@@ -186,16 +176,6 @@ func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	}
 	return val, err
 }
-func (se *SetXExpr) IsEqual(other sxeval.Expr) bool {
-	if se == other {
-		return true
-	}
-	if otherM, ok := other.(*SetXExpr); ok && otherM != nil {
-		return se.Sym.IsEqual(otherM.Sym) && se.Val.IsEqual(otherM.Val)
-	}
-	return false
-}
-
 func (se *SetXExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{SET! ")
 	if err != nil {

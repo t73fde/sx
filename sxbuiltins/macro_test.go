@@ -35,9 +35,4 @@ var tcsMacro = tTestCases{
 		src:  "(defmacro inc1 (var) `(set! ,var (+ ,var 1))) (== inc1 inc1) (= inc1 inc1)",
 		exp:  "#<macro:inc1> 1 1",
 	},
-	{
-		name: "defmacro-eq",
-		src:  "(defmacro inc1 (var) `(set! ,var (+ ,var 1))) (defmacro inc2 (var) `(set! ,var (+ ,var 1))) (== inc1 inc2) (= inc1 inc2)",
-		exp:  "#<macro:inc1> #<macro:inc2> () 1",
-	},
 }

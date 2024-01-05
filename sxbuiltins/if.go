@@ -88,6 +88,7 @@ func (ife *IfExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	ife.False = falseExpr
 	return ife
 }
+
 func (ife *IfExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	subEnv := env.NewDynamicEnvironment()
 	test, err := subEnv.Execute(ife.Test)
@@ -98,15 +99,6 @@ func (ife *IfExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 		return env.ExecuteTCO(ife.True)
 	}
 	return env.ExecuteTCO(ife.False)
-}
-func (ife *IfExpr) IsEqual(other sxeval.Expr) bool {
-	if ife == other {
-		return true
-	}
-	if otherI, ok := other.(*IfExpr); ok && otherI != nil {
-		return ife.Test.IsEqual(otherI.Test) && ife.True.IsEqual(otherI.True) && ife.False.IsEqual(otherI.False)
-	}
-	return false
 }
 
 func (ife *IfExpr) Print(w io.Writer) (int, error) {

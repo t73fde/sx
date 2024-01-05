@@ -106,16 +106,6 @@ func (be *BeginExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	return env.ExecuteTCO(be.Last)
 }
 
-func (be *BeginExpr) IsEqual(other sxeval.Expr) bool {
-	if be == other {
-		return true
-	}
-	if otherB, ok := other.(*BeginExpr); ok && otherB != nil {
-		return sxeval.EqualExprSlice(be.Front, otherB.Front) &&
-			be.Last.IsEqual(otherB.Last)
-	}
-	return false
-}
 func (be *BeginExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{BEGIN")
 	if err != nil {

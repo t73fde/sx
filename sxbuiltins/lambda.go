@@ -191,6 +191,7 @@ func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	le.Expr = le.Expr.Rework(fnFrame)
 	return le
 }
+
 func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	if le.IsMacro {
 		return &Macro{
@@ -210,18 +211,7 @@ func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 		Expr:    le.Expr,
 	}, nil
 }
-func (le *LambdaExpr) IsEqual(other sxeval.Expr) bool {
-	if le == other {
-		return true
-	}
-	if otherL, ok := other.(*LambdaExpr); ok && otherL != nil {
-		return le.Name == otherL.Name &&
-			sxeval.EqualSymbolSlice(le.Params, otherL.Params) &&
-			le.Rest.IsEqual(otherL.Rest) &&
-			le.Expr.IsEqual(otherL.Expr)
-	}
-	return false
-}
+
 func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{LAMBDA ")
 	if err != nil {
@@ -268,26 +258,11 @@ type Procedure struct {
 	Expr    sxeval.Expr
 }
 
-func (p *Procedure) IsNil() bool  { return p == nil }
-func (p *Procedure) IsAtom() bool { return p == nil }
-func (p *Procedure) IsEqual(other sx.Object) bool {
-	if p == other {
-		return true
-	}
-	if p.IsNil() {
-		return sx.IsNil(other)
-	}
-	if otherP, ok := other.(*Procedure); ok {
-		// Don't compare Name, because they are always different, but that does not matter.
-		return p.Binding.IsEqual(otherP.Binding) &&
-			sxeval.EqualSymbolSlice(p.Params, otherP.Params) &&
-			p.Rest.IsEqual(otherP.Rest) &&
-			p.Expr.IsEqual(otherP.Expr)
-	}
-	return false
-}
-func (p *Procedure) String() string { return p.Repr() }
-func (p *Procedure) Repr() string   { return sx.Repr(p) }
+func (p *Procedure) IsNil() bool                  { return p == nil }
+func (p *Procedure) IsAtom() bool                 { return p == nil }
+func (p *Procedure) IsEqual(other sx.Object) bool { return p == other }
+func (p *Procedure) String() string               { return p.Repr() }
+func (p *Procedure) Repr() string                 { return sx.Repr(p) }
 func (p *Procedure) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<lambda:", p.Name, ">")
 }

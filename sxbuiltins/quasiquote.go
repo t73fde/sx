@@ -372,6 +372,7 @@ func (mle MakeListExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 	mle.Elem = mle.Elem.Rework(rf)
 	return mle
 }
+
 func (mle MakeListExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	subEnv := env.NewDynamicEnvironment()
 	elem, err := subEnv.Execute(mle.Elem)
@@ -379,15 +380,6 @@ func (mle MakeListExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 		return nil, err
 	}
 	return sx.Cons(elem, nil), nil
-}
-func (mle MakeListExpr) IsEqual(other sxeval.Expr) bool {
-	if mle == other {
-		return true
-	}
-	if otherM, ok := other.(*MakeListExpr); ok && otherM != nil {
-		return mle.Elem.IsEqual(otherM.Elem)
-	}
-	return false
 }
 
 func (mle MakeListExpr) Print(w io.Writer) (int, error) {
