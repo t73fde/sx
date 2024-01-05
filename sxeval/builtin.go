@@ -14,6 +14,7 @@
 package sxeval
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -117,7 +118,8 @@ func (b *Builtin) Call(env *Environment, args []sx.Object) (sx.Object, error) {
 		if _, ok := (err).(executeAgain); ok {
 			return obj, err
 		}
-		if _, ok := err.(CallError); !ok {
+		var callError CallError
+		if !errors.As(err, &callError) {
 			err = CallError{Name: b.Name, Err: err}
 		}
 	}

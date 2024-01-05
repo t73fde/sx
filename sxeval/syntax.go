@@ -67,7 +67,8 @@ func (sp *Special) Print(w io.Writer) (int, error) {
 func (sp *Special) Parse(pf *ParseEnvironment, args *sx.Pair) (Expr, error) {
 	res, err := sp.Fn(pf, args)
 	if err != nil {
-		if _, ok := err.(CallError); !ok {
+		var callError CallError
+		if !errors.As(err, &callError) {
 			err = CallError{Name: sp.Name, Err: err}
 		}
 	}

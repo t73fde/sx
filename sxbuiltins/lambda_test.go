@@ -50,7 +50,7 @@ var tcsLambda = tTestCases{
 	{
 		name:    "err-lambda-1",
 		src:     "(lambda 1)",
-		exp:     "{[{lambda: only symbol and list allowed in parameter spec: 1,1}]}",
+		exp:     "{[{lambda: only symbol and list allowed in parameter spec, but got: sx.Int64/1}]}",
 		withErr: true,
 	},
 	{name: "lambda-1", src: "((lambda x 1))", exp: "1"},

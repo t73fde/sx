@@ -88,7 +88,7 @@ func ParseProcedure(pf *sxeval.ParseEnvironment, name string, paramSpec, bodySpe
 			}
 			params, rest = ps, r
 		default:
-			return nil, fmt.Errorf("only symbol and list allowed in parameter spec: %v,%v", p, p)
+			return nil, fmt.Errorf("only symbol and list allowed in parameter spec, but got: %T/%v", p, p)
 		}
 	}
 	if sx.IsNil(bodySpec) {
