@@ -21,17 +21,31 @@ import (
 
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
-	executor Executor
 	binding  *Binding
+	executor Executor
 	caller   *Environment // the dynamic call stack
 }
 
 // MakeExecutionEnvironment creates an environment for later execution of an expression.
-func MakeExecutionEnvironment(bind *Binding, exec Executor) *Environment {
-	return &Environment{
-		executor: exec,
+func MakeExecutionEnvironment(bind *Binding, options ...Option) *Environment {
+	env := &Environment{
 		binding:  bind,
+		executor: nil,
 		caller:   nil,
+	}
+	for _, opt := range options {
+		opt(env)
+	}
+	return env
+}
+
+// Option is an option for creating environments.
+type Option func(*Environment)
+
+// WithExecutor sets the given executor.
+func WithExecutor(exec Executor) Option {
+	return func(env *Environment) {
+		env.executor = exec
 	}
 }
 
@@ -79,16 +93,16 @@ func (env *Environment) MakeReworkFrame() *ReworkFrame {
 
 func (env *Environment) NewDynamicEnvironment() *Environment {
 	return &Environment{
-		executor: env.executor,
 		binding:  env.binding,
+		executor: env.executor,
 		caller:   env,
 	}
 }
 
 func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
 	return &Environment{
-		executor: env.executor,
 		binding:  MakeChildBinding(parent, name, numBindings),
+		executor: env.executor,
 		caller:   env,
 	}
 }

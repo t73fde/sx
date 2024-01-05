@@ -209,7 +209,7 @@ func repl(rd *sxreader.Reader, me *mainExecutor, bind *sxeval.Binding, wg *sync.
 	}()
 
 	for {
-		env := sxeval.MakeExecutionEnvironment(bind, me)
+		env := sxeval.MakeExecutionEnvironment(bind, sxeval.WithExecutor(me))
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {
@@ -317,7 +317,7 @@ var prelude string
 
 func readPrelude(root *sxeval.Binding) error {
 	rd := sxreader.MakeReader(strings.NewReader(prelude))
-	env := sxeval.MakeExecutionEnvironment(root, nil)
+	env := sxeval.MakeExecutionEnvironment(root)
 	for {
 		form, err := rd.Read()
 		if err != nil {
