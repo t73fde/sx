@@ -163,3 +163,12 @@ func TestTailCallOptimization(t *testing.T) {
 	root := createBindingForTCO()
 	testcases.Run(t, root)
 }
+
+// func TestExecuteError(t *testing.T) {
+// 	t.Parallel()
+// 	testcases := testCases{
+// 		{name: "nested", src: "(a)"},
+// 	}
+// 	root := createTestBinding()
+// 	testcases.Run(t, root)
+// }

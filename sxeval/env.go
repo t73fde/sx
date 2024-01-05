@@ -14,7 +14,9 @@
 package sxeval
 
 import (
+	"errors"
 	"fmt"
+	"io"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -26,6 +28,8 @@ type Environment struct {
 	observer ParseObserver
 	caller   *Environment // the dynamic call stack
 }
+
+func (env *Environment) String() string { return env.binding.name }
 
 // MakeExecutionEnvironment creates an environment for later execution of an expression.
 func MakeExecutionEnvironment(bind *Binding, options ...Option) *Environment {
@@ -119,6 +123,7 @@ func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numB
 	}
 }
 
+// Execute the given expression.
 func (env *Environment) Execute(expr Expr) (sx.Object, error) {
 	if exec := env.executor; exec != nil {
 		for {
@@ -131,7 +136,7 @@ func (env *Environment) Execute(expr Expr) (sx.Object, error) {
 				expr = again.expr
 				continue
 			}
-			return res, err
+			return res, env.addExecuteError(expr, err)
 		}
 	}
 
@@ -145,9 +150,12 @@ func (env *Environment) Execute(expr Expr) (sx.Object, error) {
 			expr = again.expr
 			continue
 		}
-		return res, err
+		return res, env.addExecuteError(expr, err)
 	}
 }
+
+// ExecuteTCO is called when the expression should be executed at last
+// position, aka as tail call order.
 func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 	// Uncomment this line to test for non-TCO
 	// subEnv := env.NewDynamicEnvironment()
@@ -157,6 +165,7 @@ func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 	return nil, executeAgain{binding: env.binding, expr: expr}
 }
 
+// Call the given Callable with the arguments.
 func (env *Environment) Call(fn Callable, args []sx.Object) (sx.Object, error) {
 	dynamicEnv := env.NewDynamicEnvironment()
 	res, err := fn.Call(dynamicEnv, args)
@@ -167,7 +176,25 @@ func (env *Environment) Call(fn Callable, args []sx.Object) (sx.Object, error) {
 		dynamicEnv.binding = again.binding
 		return dynamicEnv.Execute(again.expr)
 	}
-	return nil, err
+	return nil, env.addExecuteError(&callableExpr{Proc: fn, Args: args}, err)
+}
+
+type callableExpr struct {
+	Proc Callable
+	Args []sx.Object
+}
+
+func (ce *callableExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
+
+func (ce *callableExpr) Rework(rf *ReworkFrame) Expr { return ce }
+
+func (ce *callableExpr) Compute(env *Environment) (sx.Object, error) {
+	subEnv := env.NewDynamicEnvironment()
+	return subEnv.Call(ce.Proc, ce.Args)
+}
+
+func (ce *callableExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{call %v %v}", ce.Proc, ce.Args)
 }
 
 // executeAgain is a non-error error signalling that the given expression should be
@@ -178,6 +205,30 @@ type executeAgain struct {
 }
 
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }
+
+func (env *Environment) addExecuteError(expr Expr, err error) error {
+	var execError *ExecuteError
+	if errors.As(err, &execError) {
+		execError.Stack = append(execError.Stack, EnvironmentExpr{env, expr})
+		return execError
+	}
+	return &ExecuteError{
+		Stack: []EnvironmentExpr{{env, expr}},
+		err:   err,
+	}
+}
+
+type ExecuteError struct {
+	Stack []EnvironmentExpr
+	err   error
+}
+type EnvironmentExpr struct {
+	Env  *Environment
+	Expr Expr
+}
+
+func (ee ExecuteError) Error() string { return ee.err.Error() }
+func (ee ExecuteError) Unwrap() error { return ee.err }
 
 func (env *Environment) Bind(sym sx.Symbol, obj sx.Object) error {
 	return env.binding.Bind(sym, obj)
@@ -199,6 +250,9 @@ func (env *Environment) FindBinding(sym sx.Symbol) *Binding {
 	}
 	return nil
 }
+
+func (env *Environment) Binding() *Binding { return env.binding }
+
 func (env *Environment) MakeNotBoundError(sym sx.Symbol) NotBoundError {
 	return NotBoundError{Binding: env.binding, Sym: sym}
 }
@@ -212,5 +266,3 @@ type NotBoundError struct {
 func (e NotBoundError) Error() string {
 	return fmt.Sprintf("symbol %q not bound in %q", e.Sym.Name(), e.Binding.String())
 }
-func (env *Environment) Binding() *Binding  { return env.binding }
-func (env *Environment) Bindings() *sx.Pair { return env.binding.Bindings() }

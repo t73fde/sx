@@ -15,6 +15,7 @@ package main
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -287,6 +288,12 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 		}
 		if err != nil {
 			fmt.Println(";e", err)
+			var execErr *sxeval.ExecuteError
+			if errors.As(err, &execErr) {
+				for i, elem := range execErr.Stack {
+					fmt.Printf(";n%d env: %v, expr: %v\n", i, elem.Env, elem.Expr)
+				}
+			}
 			continue
 		}
 		fmt.Println(sx.Repr(res))
