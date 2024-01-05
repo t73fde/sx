@@ -28,29 +28,61 @@ import (
 	"zettelstore.de/sx.fossil/sxreader"
 )
 
-type mainExecutor struct {
+type mainEngine struct {
 	baseExecutor sxeval.Executor
 	logReader    bool
+	logParse     bool
 	logExpr      bool
 	logExecutor  bool
+	parseLevel   int
+	execLevel    int
+	execCount    int
 }
 
-func (me *mainExecutor) Reset() { me.baseExecutor.Reset() }
+// ----- Executor methods
 
-func (me *mainExecutor) Execute(env *sxeval.Environment, expr sxeval.Expr) (sx.Object, error) {
+// Reset the executor.
+func (me *mainEngine) Reset() { me.baseExecutor.Reset(); me.execCount = 0 }
+
+func (me *mainEngine) Execute(env *sxeval.Environment, expr sxeval.Expr) (sx.Object, error) {
 	if !me.logExecutor {
 		return me.baseExecutor.Execute(env, expr)
 	}
+	spaces := strings.Repeat(" ", me.execLevel)
+	me.execLevel++
 	bind := env.Binding()
-	fmt.Printf(";X %v<-%v ", bind, bind.Parent())
+	fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
 	expr.Print(os.Stdout)
 	fmt.Println()
 	obj, err := me.baseExecutor.Execute(env, expr)
-	if err != nil {
-		return nil, err
+	me.execCount++
+	if err == nil {
+		fmt.Printf("%v;O%d %T %v\n", spaces, me.execLevel, obj, obj)
 	}
-	fmt.Printf(";O %T %v\n", obj, obj)
-	return obj, nil
+	me.execLevel--
+	return obj, err
+}
+
+// ----- ParseObserver methods
+
+// BeforeParse logs everythinf before the parsing happens.
+func (me *mainEngine) BeforeParse(pe *sxeval.ParseEnvironment, form sx.Object) sx.Object {
+	if me.logParse {
+		spaces := strings.Repeat(" ", me.parseLevel)
+		me.parseLevel++
+		bind := pe.Binding()
+		fmt.Printf("%v;P%v %v<-%v %T %v\n", spaces, me.parseLevel, bind, bind.Parent(), form, form)
+	}
+	return form
+}
+
+func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, form sx.Object, expr sxeval.Expr, err error) {
+	if me.logParse {
+		spaces := strings.Repeat(" ", me.parseLevel-1)
+		bind := pe.Binding()
+		fmt.Printf("%v;Q%v %v<-%v %v %v\n", spaces, me.parseLevel, bind, bind.Parent(), err, expr)
+		me.parseLevel--
+	}
 }
 
 var specials = []*sxeval.Special{
@@ -112,7 +144,7 @@ var builtins = []*sxeval.Builtin{
 func main() {
 	rd := sxreader.MakeReader(os.Stdin)
 
-	me := mainExecutor{baseExecutor: &sxeval.SimpleExecutor{}}
+	me := mainEngine{baseExecutor: &sxeval.SimpleExecutor{}}
 	root := sxeval.MakeRootBinding(len(specials) + len(builtins) + 16)
 	for _, synDef := range specials {
 		root.BindSpecial(synDef)
@@ -129,6 +161,17 @@ func main() {
 		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			res := me.logReader
 			me.logReader = !res
+			return sx.MakeBoolean(res), nil
+		},
+	})
+	root.BindBuiltin(&sxeval.Builtin{
+		Name:     "log-parse",
+		MinArity: 0,
+		MaxArity: 0,
+		TestPure: nil,
+		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
+			res := me.logParse
+			me.logParse = !res
 			return sx.MakeBoolean(res), nil
 		},
 	})
@@ -161,6 +204,7 @@ func main() {
 		TestPure: nil,
 		Fn: func(*sxeval.Environment, []sx.Object) (sx.Object, error) {
 			me.logReader = false
+			me.logParse = false
 			me.logExecutor = false
 			return sx.Nil(), nil
 		},
@@ -188,6 +232,7 @@ func main() {
 	bind.Bind(sx.Symbol("repl-binding"), bind)
 
 	me.logReader = true
+	me.logParse = true
 	me.logExpr = false
 	me.logExecutor = true
 
@@ -197,7 +242,7 @@ func main() {
 	wg.Wait()
 }
 
-func repl(rd *sxreader.Reader, me *mainExecutor, bind *sxeval.Binding, wg *sync.WaitGroup) {
+func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.WaitGroup) {
 	defer func() {
 		if val := recover(); val != nil {
 			stack := debug.Stack()
@@ -209,7 +254,7 @@ func repl(rd *sxreader.Reader, me *mainExecutor, bind *sxeval.Binding, wg *sync.
 	}()
 
 	for {
-		env := sxeval.MakeExecutionEnvironment(bind, sxeval.WithExecutor(me))
+		env := sxeval.MakeExecutionEnvironment(bind, sxeval.WithExecutor(me), sxeval.WithParseObserver(me))
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {
@@ -237,6 +282,9 @@ func repl(rd *sxreader.Reader, me *mainExecutor, bind *sxeval.Binding, wg *sync.
 			fmt.Println()
 		}
 		res, err := env.Run(expr)
+		if me.logExecutor {
+			fmt.Println(";#", me.execCount)
+		}
 		if err != nil {
 			fmt.Println(";e", err)
 			continue

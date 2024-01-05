@@ -21,10 +21,31 @@ import (
 
 // ParseEnvironment is a parsing environment.
 type ParseEnvironment struct {
-	binding *Binding
+	binding  *Binding
+	observer ParseObserver
+}
+
+// ParseObserver monitors the parsing process.
+type ParseObserver interface {
+	// BeforeParse is called immediate before the given form is parsed.
+	// The observer may change the form.
+	BeforeParse(*ParseEnvironment, sx.Object) sx.Object
+
+	// AfterParse is called immediate after the given form was parsed to the expression.
+	AfterParse(*ParseEnvironment, sx.Object, Expr, error)
 }
 
 func (pf *ParseEnvironment) Parse(form sx.Object) (Expr, error) {
+	if observer := pf.observer; observer != nil {
+		obj := observer.BeforeParse(pf, form)
+		expr, err := pf.parseForm(obj)
+		observer.AfterParse(pf, obj, expr, err)
+		return expr, err
+	}
+	return pf.parseForm(form)
+}
+
+func (pf *ParseEnvironment) parseForm(form sx.Object) (Expr, error) {
 restart:
 	if sx.IsNil(form) {
 		return NilExpr, nil
@@ -104,7 +125,8 @@ func (e errParseAgain) Error() string { return fmt.Sprintf("Again: %T/%v", e.for
 
 func (pf *ParseEnvironment) MakeChildFrame(name string, baseSize int) *ParseEnvironment {
 	return &ParseEnvironment{
-		binding: MakeChildBinding(pf.binding, name, baseSize),
+		binding:  MakeChildBinding(pf.binding, name, baseSize),
+		observer: pf.observer,
 	}
 }
 

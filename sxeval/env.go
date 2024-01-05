@@ -23,6 +23,7 @@ import (
 type Environment struct {
 	binding  *Binding
 	executor Executor
+	observer ParseObserver
 	caller   *Environment // the dynamic call stack
 }
 
@@ -31,6 +32,7 @@ func MakeExecutionEnvironment(bind *Binding, options ...Option) *Environment {
 	env := &Environment{
 		binding:  bind,
 		executor: nil,
+		observer: nil,
 		caller:   nil,
 	}
 	for _, opt := range options {
@@ -46,6 +48,13 @@ type Option func(*Environment)
 func WithExecutor(exec Executor) Option {
 	return func(env *Environment) {
 		env.executor = exec
+	}
+}
+
+// WithExecutor sets the given executor.
+func WithParseObserver(observe ParseObserver) Option {
+	return func(env *Environment) {
+		env.observer = observe
 	}
 }
 
@@ -81,7 +90,8 @@ func (env *Environment) Run(expr Expr) (sx.Object, error) {
 
 func (env *Environment) MakeParseFrame() *ParseEnvironment {
 	return &ParseEnvironment{
-		binding: env.binding,
+		binding:  env.binding,
+		observer: env.observer,
 	}
 }
 
@@ -95,6 +105,7 @@ func (env *Environment) NewDynamicEnvironment() *Environment {
 	return &Environment{
 		binding:  env.binding,
 		executor: env.executor,
+		observer: env.observer,
 		caller:   env,
 	}
 }
@@ -103,6 +114,7 @@ func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numB
 	return &Environment{
 		binding:  MakeChildBinding(parent, name, numBindings),
 		executor: env.executor,
+		observer: env.observer,
 		caller:   env,
 	}
 }
