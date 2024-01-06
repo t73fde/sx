@@ -30,24 +30,23 @@ import (
 )
 
 type mainEngine struct {
-	baseExecutor sxeval.Executor
-	logReader    bool
-	logParse     bool
-	logExpr      bool
-	logExecutor  bool
-	parseLevel   int
-	execLevel    int
-	execCount    int
+	logReader   bool
+	logParse    bool
+	logExpr     bool
+	logExecutor bool
+	parseLevel  int
+	execLevel   int
+	execCount   int
 }
 
 // ----- Executor methods
 
 // Reset the executor.
-func (me *mainEngine) Reset() { me.baseExecutor.Reset(); me.execCount = 0 }
+func (me *mainEngine) Reset() { me.execCount = 0 }
 
 func (me *mainEngine) Execute(env *sxeval.Environment, expr sxeval.Expr) (sx.Object, error) {
 	if !me.logExecutor {
-		return me.baseExecutor.Execute(env, expr)
+		return expr.Compute(env)
 	}
 	spaces := strings.Repeat(" ", me.execLevel)
 	me.execLevel++
@@ -55,7 +54,7 @@ func (me *mainEngine) Execute(env *sxeval.Environment, expr sxeval.Expr) (sx.Obj
 	fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
 	expr.Print(os.Stdout)
 	fmt.Println()
-	obj, err := me.baseExecutor.Execute(env, expr)
+	obj, err := expr.Compute(env)
 	me.execCount++
 	if err == nil {
 		fmt.Printf("%v;O%d %T %v\n", spaces, me.execLevel, obj, obj)
@@ -140,20 +139,21 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Pretty,         // pp
 	&sxbuiltins.Error,          // error
 	&sxbuiltins.NotBoundError,  // not-bound-error
+	{
+		Name:     "panic",
+		MinArity: 0,
+		MaxArity: 1,
+		TestPure: nil,
+		Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+			if len(args) == 0 {
+				panic("common panic")
+			}
+			panic(args[0])
+		},
+	},
 }
 
-func main() {
-	rd := sxreader.MakeReader(os.Stdin)
-
-	me := mainEngine{baseExecutor: &sxeval.SimpleExecutor{}}
-	root := sxeval.MakeRootBinding(len(specials) + len(builtins) + 16)
-	for _, synDef := range specials {
-		root.BindSpecial(synDef)
-	}
-	for _, b := range builtins {
-		root.BindBuiltin(b)
-	}
-	root.Bind("UNDEFINED", sx.MakeUndefined())
+func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 	root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-reader",
 		MinArity: 0,
@@ -210,18 +210,22 @@ func main() {
 			return sx.Nil(), nil
 		},
 	})
-	root.BindBuiltin(&sxeval.Builtin{
-		Name:     "panic",
-		MinArity: 0,
-		MaxArity: 1,
-		TestPure: nil,
-		Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
-			if len(args) == 0 {
-				panic("common panic")
-			}
-			panic(args[0])
-		},
-	})
+
+}
+
+func main() {
+	rd := sxreader.MakeReader(os.Stdin)
+
+	root := sxeval.MakeRootBinding(len(specials) + len(builtins) + 16)
+	for _, synDef := range specials {
+		root.BindSpecial(synDef)
+	}
+	for _, b := range builtins {
+		root.BindBuiltin(b)
+	}
+	root.Bind("UNDEFINED", sx.MakeUndefined())
+	me := mainEngine{}
+	me.bindOwn(root)
 	err := readPrelude(root)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to read prelude: %v\n", err)
