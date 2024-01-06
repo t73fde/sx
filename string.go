@@ -6,12 +6,16 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sx
 
 import (
 	"io"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -31,11 +35,12 @@ func (s String) IsEqual(other Object) bool {
 
 }
 
-// String returns the Go string representation.
-func (s String) String() string { return string(s) }
-
-// Repr returns the value representation.
-func (s String) Repr() string { return Repr(s) }
+// String returns the string representation.
+func (s String) String() string {
+	var sb strings.Builder
+	s.Print(&sb)
+	return sb.String()
+}
 
 var (
 	quote        = []byte{'"'}

@@ -16,6 +16,7 @@ package sxbuiltins
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
@@ -57,7 +58,7 @@ func parseDefProc(pf *sxeval.ParseEnvironment, args *sx.Pair) (sx.Symbol, *Lambd
 	if args == nil {
 		return "", nil, fmt.Errorf("parameter spec and body missing")
 	}
-	le, err := ParseProcedure(pf, sx.Repr(sym), args.Car(), args.Cdr())
+	le, err := ParseProcedure(pf, string(sym), args.Car(), args.Cdr())
 	return sym, le, err
 }
 
@@ -69,7 +70,7 @@ var LambdaS = sxeval.Special{
 			return nil, fmt.Errorf("parameter spec and body missing")
 		}
 		car := args.Car()
-		return ParseProcedure(pf, sx.Repr(car), car, args.Cdr())
+		return ParseProcedure(pf, car.String(), car, args.Cdr())
 	},
 }
 
@@ -261,8 +262,11 @@ type Procedure struct {
 func (p *Procedure) IsNil() bool                  { return p == nil }
 func (p *Procedure) IsAtom() bool                 { return p == nil }
 func (p *Procedure) IsEqual(other sx.Object) bool { return p == other }
-func (p *Procedure) String() string               { return p.Repr() }
-func (p *Procedure) Repr() string                 { return sx.Repr(p) }
+func (p *Procedure) String() string {
+	var sb strings.Builder
+	p.Print(&sb)
+	return sb.String()
+}
 func (p *Procedure) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<lambda:", p.Name, ">")
 }

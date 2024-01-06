@@ -15,6 +15,7 @@ package sxbuiltins
 
 import (
 	"io"
+	"strings"
 
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
@@ -46,8 +47,11 @@ type Macro struct {
 func (m *Macro) IsNil() bool                  { return m == nil }
 func (m *Macro) IsAtom() bool                 { return m == nil }
 func (m *Macro) IsEqual(other sx.Object) bool { return m == other }
-func (m *Macro) String() string               { return m.Repr() }
-func (m *Macro) Repr() string                 { return sx.Repr(m) }
+func (m *Macro) String() string {
+	var sb strings.Builder
+	m.Print(&sb)
+	return sb.String()
+}
 func (m *Macro) Print(w io.Writer) (int, error) {
 	return sx.WriteStrings(w, "#<macro:", m.Name, ">")
 }

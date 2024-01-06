@@ -296,7 +296,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			}
 			continue
 		}
-		fmt.Println(sx.Repr(res))
+		fmt.Println(res)
 	}
 }
 

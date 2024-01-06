@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins
@@ -28,7 +31,7 @@ var ToString = sxeval.Builtin{
 		if s, isString := sx.GetString(obj); isString {
 			return s, nil
 		}
-		return sx.String(obj.Repr()), nil
+		return sx.String(obj.String()), nil
 	},
 }
 
@@ -50,13 +53,13 @@ var StringAppend = sxeval.Builtin{
 			return s, nil
 		}
 		var sb strings.Builder
-		sb.WriteString(s.String())
+		sb.WriteString(string(s))
 		for i := 1; i < len(args); i++ {
 			s, err = GetString(args, i)
 			if err != nil {
 				return nil, err
 			}
-			sb.WriteString(s.String())
+			sb.WriteString(string(s))
 		}
 		return sx.String(sb.String()), nil
 	},

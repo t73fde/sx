@@ -356,14 +356,14 @@ func getUnquoteObj(sym sx.Symbol, lst *sx.Pair) (sx.Object, error) {
 		return nil, sx.ErrImproper{Pair: lst}
 	}
 	if args == nil {
-		return nil, fmt.Errorf("missing argument for %s", sym.Name())
+		return nil, fmt.Errorf("missing argument for %s", sym)
 	}
 	obj := args.Car()
 	rest := args.Cdr()
 	if sx.IsNil(rest) {
 		return obj, nil
 	}
-	return nil, fmt.Errorf("additional arguments %v for %s", rest.Repr(), sym.Name())
+	return nil, fmt.Errorf("additional arguments %v for %s", rest.String(), sym)
 }
 
 type MakeListExpr struct{ Elem sxeval.Expr }

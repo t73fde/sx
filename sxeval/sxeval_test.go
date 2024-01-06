@@ -81,7 +81,7 @@ func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 				t.Error(err) // TODO: temp
 				return
 			}
-			if got := res.Repr(); got != tc.exp {
+			if got := res.String(); got != tc.exp {
 				t.Errorf("%s should result in %q, but got %q", tc.src, tc.exp, got)
 			}
 		})

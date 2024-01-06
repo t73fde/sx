@@ -15,8 +15,6 @@ package sxeval
 
 import (
 	"fmt"
-	"io"
-	"strconv"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -30,7 +28,7 @@ func (err ErrBindingFrozen) Error() string { return fmt.Sprintf("binding is froz
 type ErrConstBinding struct{ Sym sx.Symbol }
 
 func (err ErrConstBinding) Error() string {
-	return fmt.Sprintf("constant bindung for symbol %v", err.Sym.Repr())
+	return fmt.Sprintf("constant bindung for symbol %v", err.Sym)
 }
 
 type mapSymObj = map[sx.Symbol]sx.Object
@@ -94,13 +92,12 @@ func (mb *Binding) IsEqual(other sx.Object) bool {
 	}
 	return false
 }
-func (mb *Binding) Repr() string { return sx.Repr(mb) }
-func (mb *Binding) Print(w io.Writer) (int, error) {
-	return sx.WriteStrings(w, "#<binding:", mb.name, "/", strconv.Itoa(len(mb.vars)), ">")
+func (mb *Binding) String() string {
+	return fmt.Sprintf("#<binding:%s/%d>", mb.name, len(mb.vars))
 }
 
-// String returns the local name of this binding.
-func (mb *Binding) String() string { return mb.name }
+// Name returns the local name of this binding.
+func (mb *Binding) Name() string { return mb.name }
 
 // Parent returns the parent binding.
 func (mb *Binding) Parent() *Binding {

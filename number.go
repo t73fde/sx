@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2024-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sx
@@ -52,9 +55,6 @@ func (i Int64) IsEqual(other Object) bool {
 
 // String returns the Go string representation.
 func (i Int64) String() string { return strconv.FormatInt(int64(i), 10) }
-
-// Repr returns the value representation.
-func (i Int64) Repr() string { return i.String() }
 
 // GetNumber returns the object as a number, if possible.
 func GetNumber(obj Object) (Number, bool) {

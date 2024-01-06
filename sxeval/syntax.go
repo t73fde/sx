@@ -6,13 +6,15 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxeval
 
 import (
 	"errors"
-	"io"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -57,11 +59,7 @@ func (sp *Special) IsEqual(other sx.Object) bool {
 	}
 	return false
 }
-func (sp *Special) String() string { return sp.Repr() }
-func (sp *Special) Repr() string   { return sx.Repr(sp) }
-func (sp *Special) Print(w io.Writer) (int, error) {
-	return sx.WriteStrings(w, "#<special:", sp.Name, ">")
-}
+func (sp *Special) String() string { return "#<special:" + sp.Name + ">" }
 
 // Parse the args by calling the syntax function.
 func (sp *Special) Parse(pf *ParseEnvironment, args *sx.Pair) (Expr, error) {

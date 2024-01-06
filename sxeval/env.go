@@ -264,5 +264,5 @@ type NotBoundError struct {
 }
 
 func (e NotBoundError) Error() string {
-	return fmt.Sprintf("symbol %q not bound in %q", e.Sym.Name(), e.Binding.String())
+	return fmt.Sprintf("symbol %q not bound in %q", string(e.Sym), e.Binding.Name())
 }

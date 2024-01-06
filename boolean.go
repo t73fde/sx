@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sx
@@ -25,7 +28,7 @@ func IsTrue(obj Object) bool {
 	if IsNil(obj) {
 		return false
 	}
-	if s, ok := GetString(obj); ok && s.String() == "" {
+	if s, ok := GetString(obj); ok && string(s) == "" {
 		return false
 	}
 	return !IsUndefined(obj)
@@ -36,7 +39,7 @@ func IsFalse(obj Object) bool {
 	if IsNil(obj) {
 		return true
 	}
-	if s, ok := GetString(obj); ok && s.String() == "" {
+	if s, ok := GetString(obj); ok && string(s) == "" {
 		return true
 	}
 	return IsUndefined(obj)

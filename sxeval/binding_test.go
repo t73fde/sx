@@ -90,7 +90,7 @@ func TestAlist(t *testing.T) {
 		cons := elem.Car().(*sx.Pair)
 		sym := cons.Car().(sx.Symbol)
 		str := cons.Cdr().(sx.String)
-		if got := sx.Symbol(str.String()); !sym.IsEqual(got) {
+		if got := sx.Symbol(string(str)); !sym.IsEqual(got) {
 			t.Error("Symbol", sym, "is not equal to", str, "but to", got)
 		}
 	}

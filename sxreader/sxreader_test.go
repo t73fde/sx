@@ -177,7 +177,7 @@ func performReaderTestCases(t *testing.T, testcases []readerTestCase) {
 					t.Errorf("Input: %q resulted in unexpected error:\n%s", tc.src, fmt.Sprintf("%#s", err))
 				}
 			} else {
-				got := val.Repr()
+				got := val.String()
 				if tc.mustErr {
 					t.Errorf("Input: %q should result in error %q, but got value %q", tc.src, tc.exp, got)
 				} else if got != tc.exp {

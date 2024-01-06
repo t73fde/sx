@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL // (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 // Package sx provides the basic objects to work with symbolic expressions.
@@ -14,7 +17,6 @@ package sx
 import (
 	"fmt"
 	"io"
-	"strings"
 )
 
 // Object is the generic value all s-expressions must fulfill.
@@ -29,9 +31,6 @@ type Object interface {
 
 	// IsEqual compare two objects for deep equality.
 	IsEqual(Object) bool
-
-	// Repr returns the object representation.
-	Repr() string
 }
 
 // IsNil returns true, if the given object is the nil object.
@@ -51,7 +50,7 @@ func Print(w io.Writer, obj Object) (int, error) {
 	if IsNil(obj) {
 		return Nil().Print(w)
 	}
-	return io.WriteString(w, obj.Repr())
+	return io.WriteString(w, obj.String())
 }
 
 // WriteStrings is a helper function to write multiple strings at once.
@@ -65,19 +64,4 @@ func WriteStrings(w io.Writer, sl ...string) (int, error) {
 		}
 	}
 	return length, nil
-}
-
-// Repr returns the string representation of the given object.
-func Repr(obj Object) string {
-	if IsNil(obj) {
-		return "()"
-	}
-	if probj, ok := obj.(Printable); ok {
-		var sb strings.Builder
-		if _, err := probj.Print(&sb); err != nil {
-			return err.Error()
-		}
-		return sb.String()
-	}
-	return obj.Repr()
 }

@@ -16,7 +16,6 @@ package sxeval
 import (
 	"errors"
 	"fmt"
-	"io"
 	"math"
 
 	"zettelstore.de/sx.fossil"
@@ -66,15 +65,8 @@ func (b *Builtin) IsEqual(other sx.Object) bool {
 
 }
 
-// Repr returns the object representation.
-func (b *Builtin) Repr() string { return sx.Repr(b) }
-
 // String returns go representation.
-func (b *Builtin) String() string { return b.Repr() }
-
-func (b *Builtin) Print(w io.Writer) (int, error) {
-	return sx.WriteStrings(w, "#<builtin:", b.Name, ">")
-}
+func (b *Builtin) String() string { return "#<builtin:" + b.Name + ">" }
 
 // --- Builtin methods to implement sxeval.Callable
 

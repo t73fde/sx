@@ -127,7 +127,7 @@ type myEncoder struct {
 func (enc *myEncoder) generate(obj sx.Object) {
 	switch o := obj.(type) {
 	case sx.String:
-		enc.pr.printHTML(o.String())
+		enc.pr.printHTML(string(o))
 		enc.lastWasTag = false
 	case *sx.Pair:
 		if o.IsNil() {
@@ -179,7 +179,7 @@ func (enc *myEncoder) writeCDATA(elems *sx.Pair) {
 func (enc *myEncoder) writeNoEscape(elems *sx.Pair) {
 	for n := elems; n != nil; n = n.Tail() {
 		if s, isString := sx.GetString(n.Car()); isString {
-			enc.pr.printString(s.String())
+			enc.pr.printString(string(s))
 		}
 	}
 }
@@ -187,20 +187,28 @@ func (enc *myEncoder) writeNoEscape(elems *sx.Pair) {
 func (enc *myEncoder) writeComment(elems *sx.Pair) {
 	enc.pr.printString("<!--")
 	for n := elems; n != nil; n = n.Tail() {
-		commentVal := n.Car() // TODO: check for valid node types
 		enc.pr.printString(" ")
-		enc.pr.printComment(commentVal.String())
+		enc.printCommentObj(n.Car())
 	}
 	enc.pr.printString(" -->")
 }
 func (enc *myEncoder) writeCommentML(elems *sx.Pair) {
 	enc.pr.printString("<!--")
 	for n := elems; n != nil; n = n.Tail() {
-		commentVal := n.Car() // TODO: check for valid node types
 		enc.pr.printString("\n")
-		enc.pr.printComment(commentVal.String())
+		enc.printCommentObj(n.Car())
 	}
 	enc.pr.printString("\n-->\n")
+}
+func (enc *myEncoder) printCommentObj(obj sx.Object) {
+	switch o := obj.(type) {
+	case sx.String:
+		enc.pr.printComment(string(o))
+	case sx.Symbol:
+		enc.pr.printComment(string(o))
+	default:
+		enc.pr.printComment(obj.String())
+	}
 }
 
 func (enc *myEncoder) writeDoctype(elems *sx.Pair) {
@@ -286,10 +294,16 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 			} else {
 				obj = cdr
 			}
-			if sx.IsNil(obj) || sx.IsList(obj) {
+			var s string
+			switch o := obj.(type) {
+			case sx.String:
+				s = string(o)
+			case sx.Symbol:
+				s = string(o)
+			default:
 				continue
 			}
-			a[key] = strings.TrimSpace(getAttributeValue(sym, obj))
+			a[key] = strings.TrimSpace(getAttributeValue(sym, s))
 		} else {
 			a[key] = ""
 			empty[key] = struct{}{}
@@ -311,12 +325,12 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 	}
 }
 
-func getAttributeValue(sym sx.Symbol, value sx.Object) string {
+func getAttributeValue(sym sx.Symbol, value string) string {
 	switch getAttributeType(sym) {
 	case attrURL:
-		return urlEscape(value.String())
+		return urlEscape(value)
 	default:
-		return value.String()
+		return value
 	}
 }
 

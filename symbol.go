@@ -32,9 +32,6 @@ func (sy Symbol) IsEqual(other Object) bool {
 // String returns the Go string representation.
 func (sy Symbol) String() string { return string(sy) }
 
-// Repr returns the object representation.
-func (sy Symbol) Repr() string { return Repr(sy) }
-
 // Print write the string representation to the given Writer.
 func (sy Symbol) Print(w io.Writer) (int, error) {
 	// TODO: provide escape of symbol contains non-printable chars.

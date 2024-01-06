@@ -33,15 +33,19 @@ var Error = sxeval.Builtin{
 		if len(args) == 0 {
 			return nil, fmt.Errorf("unspecified user error")
 		}
-		if len(args) == 1 {
-			return nil, fmt.Errorf("%v", args[0])
-		}
 		var sb strings.Builder
 		for i, arg := range args {
 			if i > 0 {
 				sb.WriteByte(' ')
 			}
-			sb.WriteString(arg.String())
+			switch o := arg.(type) {
+			case sx.String:
+				sb.WriteString(string(o))
+			case sx.Symbol:
+				sb.WriteString(string(o))
+			default:
+				sb.WriteString(arg.String())
+			}
 		}
 		return nil, fmt.Errorf("%s", sb.String())
 	},
