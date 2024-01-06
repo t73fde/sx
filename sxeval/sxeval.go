@@ -17,9 +17,7 @@
 package sxeval
 
 import (
-	"fmt"
 	"strings"
-	"time"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -66,70 +64,4 @@ type Executor interface {
 	// It may have side-effects, on the given environment, or on the
 	// general environment of the system.
 	Execute(*Environment, Expr) (sx.Object, error)
-}
-
-// SimpleExecutor just computes an expression.
-type SimpleExecutor struct{}
-
-// Reset the simple executor.
-func (*SimpleExecutor) Reset() {}
-
-// Execute the given expression in the given frame.
-func (*SimpleExecutor) Execute(env *Environment, expr Expr) (sx.Object, error) {
-	return expr.Compute(env)
-}
-
-// limitExecutor computes just some steps and/or for a given time limit.
-type limitExecutor struct {
-	stepCount   uint
-	maxSteps    uint
-	deadline    time.Time
-	maxDuration time.Duration
-}
-
-// MakeLimitExecutor creates a new Executor with the given limits.
-func MakeLimitExecutor(maxDuration time.Duration, maxSteps uint) Executor {
-	if maxDuration <= 0 && maxSteps == 0 {
-		return &SimpleExecutor{}
-	}
-	return &limitExecutor{
-		stepCount:   0,
-		maxSteps:    maxSteps,
-		deadline:    time.Now().Add(maxDuration),
-		maxDuration: maxDuration,
-	}
-}
-
-// Reset all current execution statistics.
-func (lex *limitExecutor) Reset() {
-	lex.stepCount = 0
-	lex.deadline = time.Now().Add(lex.maxDuration)
-}
-
-// Execute the given expression in the given frame within the limits of this executor.
-func (lex *limitExecutor) Execute(env *Environment, expr Expr) (sx.Object, error) {
-	stepCount := lex.stepCount
-	stepCount++
-	if stepCount > lex.maxSteps {
-		return nil, &LimitError{MaxSteps: lex.maxSteps, MaxDuration: 0}
-	}
-	if stepCount%1000 == 0 && time.Now().After(lex.deadline) {
-		return nil, &LimitError{MaxSteps: 0, MaxDuration: lex.maxDuration}
-	}
-	lex.stepCount = stepCount
-	return expr.Compute(env)
-}
-
-// LimitError is signaled when execution limits are exceeded.
-type LimitError struct {
-	MaxSteps    uint
-	MaxDuration time.Duration
-}
-
-// Error returns a string representation of this error.
-func (limErr *LimitError) Error() string {
-	if maxSteps := limErr.MaxSteps; maxSteps > 0 {
-		return fmt.Sprintf("execution limit of %v steps exceeded", maxSteps)
-	}
-	return fmt.Sprintf("execution time limit of %v exceeded", limErr.MaxDuration)
 }
