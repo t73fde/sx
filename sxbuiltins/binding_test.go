@@ -15,12 +15,12 @@ package sxbuiltins_test
 
 import "testing"
 
-func TestEnv(t *testing.T) {
+func TestBinding(t *testing.T) {
 	t.Parallel()
-	tcsEnv.Run(t)
+	tcsBinding.Run(t)
 }
 
-var tcsEnv = tTestCases{
+var tcsBinding = tTestCases{
 	{
 		name:    "err-current-binding-1",
 		src:     "(current-binding 1)",
@@ -73,8 +73,8 @@ var tcsEnv = tTestCases{
 		withErr: true,
 	},
 	{name: "bound?-a", src: "(bound? 'a)", exp: "()"},
-	{name: "bound?-b", src: "(bound? 'b)", exp: "1"},
-	{name: "bound?-bound?", src: "(bound? 'bound?)", exp: "1"},
+	{name: "bound?-b", src: "(bound? 'b)", exp: "T"},
+	{name: "bound?-bound?", src: "(bound? 'bound?)", exp: "T"},
 
 	{
 		name:    "err-lookup-0",

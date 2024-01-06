@@ -16,10 +16,13 @@ package sx
 // MakeBoolean creates a new Boolean object.
 func MakeBoolean(b bool) Object {
 	if b {
-		return Int64(1)
+		return T
 	}
 	return Nil()
 }
+
+// T is the default true object.
+const T = Symbol("T")
 
 // IsTrue returns true, if object is a true value.
 //

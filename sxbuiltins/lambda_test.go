@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins_test
@@ -25,9 +28,9 @@ var tcsLambda = tTestCases{
 		withErr: true,
 	},
 	{name: "callable?-1", src: "(callable? 1)", exp: "()"},
-	{name: "callable?-callable?", src: "(callable? callable?)", exp: "1"},
-	{name: "callable?-map", src: "(callable? map)", exp: "1"},
-	{name: "callable-lambda", src: "(callable? (lambda x 0))", exp: "1"},
+	{name: "callable?-callable?", src: "(callable? callable?)", exp: "T"},
+	{name: "callable?-map", src: "(callable? map)", exp: "T"},
+	{name: "callable-lambda", src: "(callable? (lambda x 0))", exp: "T"},
 
 	{name: "err-defun-0", src: "(defun)", exp: "{[{defun: no arguments given}]}", withErr: true},
 	{name: "err-defun-nosym", src: "(defun 1)", exp: "{[{defun: not a symbol: sx.Int64/1}]}", withErr: true},

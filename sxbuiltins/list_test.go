@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins_test
@@ -45,8 +48,8 @@ var tcsList = tTestCases{
 	},
 	{name: "pair?-nil", src: "(pair? ())", exp: "()"},
 	{name: "pair?-1", src: "(pair? 1)", exp: "()"},
-	{name: "pair?-cons", src: "(pair? (cons 1 2))", exp: "1"},
-	{name: "pair?-list", src: "(pair? (list 1 2))", exp: "1"},
+	{name: "pair?-cons", src: "(pair? (cons 1 2))", exp: "T"},
+	{name: "pair?-list", src: "(pair? (list 1 2))", exp: "T"},
 
 	{
 		name:    "err-null?-0",
@@ -55,7 +58,7 @@ var tcsList = tTestCases{
 		withErr: true,
 	},
 	{name: "null?-1", src: "(null? 1)", exp: "()"},
-	{name: "null?-nil", src: "(null? ())", exp: "1"},
+	{name: "null?-nil", src: "(null? ())", exp: "T"},
 	{name: "null?-cons", src: "(null? (cons 1 2))", exp: "()"},
 
 	{
@@ -64,10 +67,10 @@ var tcsList = tTestCases{
 		exp:     "{[{list?: exactly 1 arguments required, but 0 given: []}]}",
 		withErr: true,
 	},
-	{name: "list?-nil", src: "(list? ())", exp: "1"},
+	{name: "list?-nil", src: "(list? ())", exp: "T"},
 	{name: "list?-1", src: "(list? 1)", exp: "()"},
 	{name: "list?-cons", src: "(list? (cons 1 2))", exp: "()"},
-	{name: "list?-list", src: "(list? (list 1 2))", exp: "1"},
+	{name: "list?-list", src: "(list? (list 1 2))", exp: "T"},
 
 	{
 		name:    "err-car-0",
@@ -239,14 +242,14 @@ var tcsList = tTestCases{
 		exp:     "{[{all: exactly 1 arguments required, but 2 given: [() ()]}]}",
 		withErr: true,
 	},
-	{name: "all-nil", src: "(all ())", exp: "1"},
+	{name: "all-nil", src: "(all ())", exp: "T"},
 	{name: "all-false-1", src: "(all '(() 2 3))", exp: "()"},
 	{name: "all-false-2", src: "(all '(1 () 3))", exp: "()"},
 	{name: "all-false-3", src: "(all '(1 2 ()))", exp: "()"},
 	{name: "all-false-cons", src: "(all '(1 . \"\"))", exp: "()"},
-	{name: "all-true-1", src: "(all '(1))", exp: "1"},
-	{name: "all-true-2", src: "(all '(1 2))", exp: "1"},
-	{name: "all-true-cons", src: "(all (cons 1 2))", exp: "1"},
+	{name: "all-true-1", src: "(all '(1))", exp: "T"},
+	{name: "all-true-2", src: "(all '(1 T))", exp: "T"},
+	{name: "all-true-cons", src: "(all (cons 1 2))", exp: "T"},
 
 	{
 		name:    "err-any-0",
@@ -267,10 +270,10 @@ var tcsList = tTestCases{
 		withErr: true,
 	},
 	{name: "any-nil", src: "(any ())", exp: "()"},
-	{name: "any-true-1", src: "(any '(() 2 3))", exp: "1"},
-	{name: "any-true-2", src: "(any '(1 ()))", exp: "1"},
-	{name: "any-true-cons-1", src: "(any '(1 . \"\"))", exp: "1"},
-	{name: "any-true-cons-1", src: "(any (cons () 1))", exp: "1"},
+	{name: "any-true-1", src: "(any '(() 2 3))", exp: "T"},
+	{name: "any-true-2", src: "(any '(1 ()))", exp: "T"},
+	{name: "any-true-cons-1", src: "(any '(1 . \"\"))", exp: "T"},
+	{name: "any-true-cons-1", src: "(any (cons () 1))", exp: "T"},
 	{name: "any-false-1", src: "(any '(()))", exp: "()"},
 	{name: "any-false-2", src: "(any '(() ()))", exp: "()"},
 	{name: "any-false-cons", src: "(any (cons () \"\"))", exp: "()"},

@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sxbuiltins_test
@@ -33,6 +36,6 @@ var tcsMacro = tTestCases{
 	{
 		name: "defmacro-eq-same",
 		src:  "(defmacro inc1 (var) `(set! ,var (+ ,var 1))) (== inc1 inc1) (= inc1 inc1)",
-		exp:  "#<macro:inc1> 1 1",
+		exp:  "#<macro:inc1> T T",
 	},
 }
