@@ -136,7 +136,7 @@ func (enc *myEncoder) generate(obj sx.Object) {
 		}
 		if sym, isSymbol := sx.GetSymbol(o.Car()); isSymbol {
 			tail := o.Tail()
-			if s := sym.Name(); s[0] == '@' {
+			if s := string(sym); s[0] == '@' {
 				switch sym {
 				case SymCDATA:
 					enc.writeCDATA(tail)

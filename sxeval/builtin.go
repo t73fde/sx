@@ -51,19 +51,7 @@ func (b *Builtin) IsNil() bool { return b == nil }
 func (b *Builtin) IsAtom() bool { return b == nil }
 
 // IsEqual compare two objects for deep equality.
-func (b *Builtin) IsEqual(other sx.Object) bool {
-	if b == other {
-		return true
-	}
-	if b == nil {
-		return sx.IsNil(other)
-	}
-	if otherB, ok := other.(*Builtin); ok {
-		return b.Name == otherB.Name
-	}
-	return false
-
-}
+func (b *Builtin) IsEqual(other sx.Object) bool { return b == other }
 
 // String returns go representation.
 func (b *Builtin) String() string { return "#<builtin:" + b.Name + ">" }

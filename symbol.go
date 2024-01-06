@@ -13,7 +13,10 @@
 
 package sx
 
-import "io"
+import (
+	"io"
+	"strings"
+)
 
 // Symbol represent a symbol value.
 type Symbol string
@@ -29,17 +32,18 @@ func (sy Symbol) IsEqual(other Object) bool {
 	return isSymbol && string(sy) == string(otherSy)
 }
 
-// String returns the Go string representation.
-func (sy Symbol) String() string { return string(sy) }
+// String returns the string representation.
+func (sy Symbol) String() string {
+	var sb strings.Builder
+	sy.Print(&sb)
+	return sb.String()
+}
 
 // Print write the string representation to the given Writer.
 func (sy Symbol) Print(w io.Writer) (int, error) {
 	// TODO: provide escape of symbol contains non-printable chars.
 	return io.WriteString(w, string(sy))
 }
-
-// Name returns the canonical name.
-func (sy Symbol) Name() string { return string(sy) }
 
 // GetSymbol returns the object as a symbol if possible.
 func GetSymbol(obj Object) (Symbol, bool) {

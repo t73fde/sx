@@ -27,7 +27,7 @@ import (
 
 // QuasiquoteS parses a form that is quasi-quotated
 var QuasiquoteS = sxeval.Special{
-	Name: sx.SymbolQuasiquote.Name(),
+	Name: string(sx.SymbolQuasiquote),
 	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs
@@ -45,7 +45,7 @@ var QuasiquoteS = sxeval.Special{
 // UnquoteS parses the unquote symbol (and returns an error, because it is
 // not allowed outside a quasiquote).
 var UnquoteS = sxeval.Special{
-	Name: sx.SymbolUnquote.Name(),
+	Name: string(sx.SymbolUnquote),
 	Fn: func(*sxeval.ParseEnvironment, *sx.Pair) (sxeval.Expr, error) {
 		return nil, errNotAllowedOutsideQQ
 	},
@@ -54,13 +54,13 @@ var UnquoteS = sxeval.Special{
 // UnquoteSplicingS parses the unquote-splicing symbol (and returns an error,
 // because it is not allowed outside a quasiquote).
 var UnquoteSplicingS = sxeval.Special{
-	Name: sx.SymbolUnquoteSplicing.Name(),
+	Name: string(sx.SymbolUnquoteSplicing),
 	Fn: func(*sxeval.ParseEnvironment, *sx.Pair) (sxeval.Expr, error) {
 		return nil, errNotAllowedOutsideQQ
 	},
 }
 
-var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.SymbolQuasiquote.Name())
+var errNotAllowedOutsideQQ = errors.New("not allowed outside " + string(sx.SymbolQuasiquote))
 
 type qqParser struct {
 	pframe *sxeval.ParseEnvironment

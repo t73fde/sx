@@ -16,7 +16,6 @@ package sxbuiltins
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
@@ -262,18 +261,12 @@ type Procedure struct {
 func (p *Procedure) IsNil() bool                  { return p == nil }
 func (p *Procedure) IsAtom() bool                 { return p == nil }
 func (p *Procedure) IsEqual(other sx.Object) bool { return p == other }
-func (p *Procedure) String() string {
-	var sb strings.Builder
-	p.Print(&sb)
-	return sb.String()
-}
-func (p *Procedure) Print(w io.Writer) (int, error) {
-	return sx.WriteStrings(w, "#<lambda:", p.Name, ">")
-}
+func (p *Procedure) String() string               { return "#<lambda:" + p.Name + ">" }
 
 // --- Builtin methods to implement sxeval.Callable
 
-// IsPure tests if the Procedure needs a Frame value and does not produce any other side effects.
+// IsPure tests if the Procedure needs an environment value and does not
+// produce any other side effects.
 func (p *Procedure) IsPure([]sx.Object) bool { return false }
 
 // Call the Procedure.

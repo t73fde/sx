@@ -42,24 +42,10 @@ type Special struct {
 	Fn   func(*ParseEnvironment, *sx.Pair) (Expr, error)
 }
 
-func (sp *Special) IsNil() bool  { return sp == nil }
-func (sp *Special) IsAtom() bool { return sp == nil }
-func (sp *Special) IsEqual(other sx.Object) bool {
-	if sp == other {
-		return true
-	}
-	if sp.IsNil() {
-		return sx.IsNil(other)
-	}
-	if otherSp, ok := other.(*Special); ok {
-		if sp.Fn == nil {
-			return otherSp.Fn == nil
-		}
-		return sp.Name == otherSp.Name
-	}
-	return false
-}
-func (sp *Special) String() string { return "#<special:" + sp.Name + ">" }
+func (sp *Special) IsNil() bool                  { return sp == nil }
+func (sp *Special) IsAtom() bool                 { return sp == nil }
+func (sp *Special) IsEqual(other sx.Object) bool { return sp == other }
+func (sp *Special) String() string               { return "#<special:" + sp.Name + ">" }
 
 // Parse the args by calling the syntax function.
 func (sp *Special) Parse(pf *ParseEnvironment, args *sx.Pair) (Expr, error) {
