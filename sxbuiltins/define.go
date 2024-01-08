@@ -75,8 +75,8 @@ type DefineExpr struct {
 	Const bool
 }
 
-func (de *DefineExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	de.Val = de.Val.Rework(rf)
+func (de *DefineExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
+	de.Val = de.Val.Rework(re)
 	return de
 }
 
@@ -160,8 +160,8 @@ type SetXExpr struct {
 	Val sxeval.Expr
 }
 
-func (se *SetXExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	se.Val = se.Val.Rework(rf)
+func (se *SetXExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
+	se.Val = se.Val.Rework(re)
 	return se
 }
 func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {

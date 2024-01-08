@@ -175,12 +175,12 @@ type LambdaExpr struct {
 	IsMacro bool
 }
 
-func (le *LambdaExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+func (le *LambdaExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	bindSize := len(le.Params)
 	if le.Rest != "" {
 		bindSize++
 	}
-	fnFrame := rf.MakeChildFrame(le.Name+"-rework", bindSize)
+	fnFrame := re.MakeChildFrame(le.Name+"-rework", bindSize)
 	for _, sym := range le.Params {
 		fnFrame.Bind(sym)
 	}

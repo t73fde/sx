@@ -99,8 +99,8 @@ func (env *Environment) MakeParseFrame() *ParseEnvironment {
 	}
 }
 
-func (env *Environment) MakeReworkFrame() *ReworkFrame {
-	return &ReworkFrame{
+func (env *Environment) MakeReworkFrame() *ReworkEnvironment {
+	return &ReworkEnvironment{
 		binding: env.binding,
 	}
 }
@@ -186,7 +186,7 @@ type callableExpr struct {
 
 func (ce *callableExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
 
-func (ce *callableExpr) Rework(rf *ReworkFrame) Expr { return ce }
+func (ce *callableExpr) Rework(*ReworkEnvironment) Expr { return ce }
 
 func (ce *callableExpr) Compute(env *Environment) (sx.Object, error) {
 	subEnv := env.NewDynamicEnvironment()

@@ -70,10 +70,10 @@ type IfExpr struct {
 	False sxeval.Expr
 }
 
-func (ife *IfExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	testExpr := ife.Test.Rework(rf)
-	trueExpr := ife.True.Rework(rf)
-	falseExpr := ife.False.Rework(rf)
+func (ife *IfExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
+	testExpr := ife.Test.Rework(re)
+	trueExpr := ife.True.Rework(re)
+	falseExpr := ife.False.Rework(re)
 
 	// Check for constant condition
 	if objectExpr, isObjectExpr := testExpr.(sxeval.ObjExpr); isObjectExpr {

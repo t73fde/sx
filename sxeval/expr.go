@@ -23,7 +23,7 @@ import (
 // Expr are values that are computed for evaluation in an environment.
 type Expr interface {
 	// Rework the expressions to a possible simpler one.
-	Rework(*ReworkFrame) Expr
+	Rework(*ReworkEnvironment) Expr
 
 	// Compute the expression in a frame and return the result.
 	// It may have side-effects, on the given environment, or on the
@@ -62,7 +62,7 @@ var NilExpr = nilExpr{}
 
 type nilExpr struct{}
 
-func (nilExpr) Rework(*ReworkFrame) Expr                { return NilExpr }
+func (nilExpr) Rework(*ReworkEnvironment) Expr          { return NilExpr }
 func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
 func (nilExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{NIL}") }
 func (nilExpr) Object() sx.Object                       { return sx.Nil() }
@@ -72,9 +72,9 @@ type ObjExpr struct {
 	Obj sx.Object
 }
 
-func (oe ObjExpr) Rework(rf *ReworkFrame) Expr {
+func (oe ObjExpr) Rework(re *ReworkEnvironment) Expr {
 	if obj := oe.Obj; sx.IsNil(obj) {
-		return NilExpr.Rework(rf)
+		return NilExpr.Rework(re)
 	}
 	return oe
 }
@@ -112,22 +112,22 @@ type ResolveSymbolExpr struct {
 	Symbol sx.Symbol
 }
 
-func (re ResolveSymbolExpr) Rework(rf *ReworkFrame) Expr {
-	if obj, found := rf.ResolveConst(re.Symbol); found {
-		return ObjExpr{Obj: obj}.Rework(rf)
+func (rse ResolveSymbolExpr) Rework(re *ReworkEnvironment) Expr {
+	if obj, found := re.ResolveConst(rse.Symbol); found {
+		return ObjExpr{Obj: obj}.Rework(re)
 	}
-	return re
+	return rse
 }
 
-func (re ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	if obj, found := env.Resolve(re.Symbol); found {
+func (rse ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
+	if obj, found := env.Resolve(rse.Symbol); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(re.Symbol)
+	return nil, env.MakeNotBoundError(rse.Symbol)
 }
 
-func (re ResolveSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{RESOLVE %v}", re.Symbol)
+func (rse ResolveSymbolExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{RESOLVE %v}", rse.Symbol)
 }
 
 // CallExpr calls a procedure and returns the resulting objects.
@@ -138,22 +138,22 @@ type CallExpr struct {
 
 func (ce *CallExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
 
-func (ce *CallExpr) Rework(rf *ReworkFrame) Expr {
+func (ce *CallExpr) Rework(re *ReworkEnvironment) Expr {
 	// If the ce.Proc is a builtin, rework to a BuiltinCallExpr.
 
-	proc := ce.Proc.Rework(rf)
+	proc := ce.Proc.Rework(re)
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
 		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
 			bce := &BuiltinCallExpr{
 				Proc: b,
 				Args: ce.Args,
 			}
-			return bce.Rework(rf)
+			return bce.Rework(re)
 		}
 	}
 	ce.Proc = proc
 	for i, arg := range ce.Args {
-		ce.Args[i] = arg.Rework(rf)
+		ce.Args[i] = arg.Rework(re)
 	}
 	return ce
 }
@@ -230,16 +230,16 @@ type BuiltinCallExpr struct {
 
 func (bce *BuiltinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
 
-func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
+func (bce *BuiltinCallExpr) Rework(re *ReworkEnvironment) Expr {
 	// Rework checks if the Builtin is pure and if all args are
 	// constant sx.Object's. If this is true, it will call the builtin with
 	// the args. If no error was signaled, the result object will be used
 	// instead the BuiltinCallExpr. This assumes that there is no side effect
-	// when the builtin is called.
+	// when the builtin is called. This is checked with `Builtin.IsPure`.
 	mayInline := true
 	args := make([]sx.Object, len(bce.Args))
 	for i, arg := range bce.Args {
-		expr := arg.Rework(rf)
+		expr := arg.Rework(re)
 		if objExpr, isObjectExpr := expr.(ObjectExpr); isObjectExpr {
 			args[i] = objExpr.Object()
 		} else {
@@ -250,11 +250,11 @@ func (bce *BuiltinCallExpr) Rework(rf *ReworkFrame) Expr {
 	if !mayInline || !bce.Proc.IsPure(args) {
 		return bce
 	}
-	result, err := rf.Call(bce.Proc, args)
+	result, err := re.Call(bce.Proc, args)
 	if err != nil {
 		return bce
 	}
-	return ObjExpr{Obj: result}.Rework(rf)
+	return ObjExpr{Obj: result}.Rework(re)
 }
 
 func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {

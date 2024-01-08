@@ -86,11 +86,11 @@ type CondCase struct {
 	Expr sxeval.Expr
 }
 
-func (ce *CondExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
+func (ce *CondExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	missing := 0
 	for i, cas := range ce.Cases {
-		ce.Cases[i].Expr = cas.Expr.Rework(rf)
-		test := cas.Test.Rework(rf)
+		ce.Cases[i].Expr = cas.Expr.Rework(re)
+		test := cas.Test.Rework(re)
 		if objExpr, isObjExpr := test.(sxeval.ObjectExpr); isObjExpr {
 			if sx.IsTrue(objExpr.Object()) {
 				if i == missing {
@@ -121,7 +121,7 @@ func (ce *CondExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
 		ce.Cases = newCases
 	}
 	if len(ce.Cases) == 0 {
-		return sxeval.NilExpr.Rework(rf)
+		return sxeval.NilExpr.Rework(re)
 	}
 	return ce
 }

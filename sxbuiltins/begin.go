@@ -67,15 +67,15 @@ type BeginExpr struct {
 	Last  sxeval.Expr
 }
 
-func (be *BeginExpr) Rework(rf *sxeval.ReworkFrame) sxeval.Expr {
-	last := be.Last.Rework(rf)
+func (be *BeginExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
+	last := be.Last.Rework(re)
 	frontLen := len(be.Front)
 	if frontLen == 0 {
 		return last
 	}
 	seq := make([]sxeval.Expr, 0, frontLen)
 	for _, expr := range be.Front {
-		re := expr.Rework(rf)
+		re := expr.Rework(re)
 		if _, isObj := re.(sxeval.ObjectExpr); isObj {
 			// An object has no side effect, there it can be ignored in the sequence
 			continue
