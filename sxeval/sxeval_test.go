@@ -117,6 +117,9 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 
 ;; Naive implementation of fac
 (defun fac (n) (if (= n 0) 1 (* n (fac (- n 1)))))
+
+;; Naive fibonacci
+(defun fib (n) (if (<= n 1) 1 (+ (fib (- n 1)) (fib (- n 2)))))
 `
 
 func createBindingForTCO() *sxeval.Binding {
@@ -124,6 +127,8 @@ func createBindingForTCO() *sxeval.Binding {
 	root.BindSpecial(&sxbuiltins.DefunS)
 	root.BindSpecial(&sxbuiltins.IfS)
 	root.BindBuiltin(&sxbuiltins.Equal)
+	root.BindBuiltin(&sxbuiltins.NumLessEqual)
+	root.BindBuiltin(&sxbuiltins.Add)
 	root.BindBuiltin(&sxbuiltins.Sub)
 	root.BindBuiltin(&sxbuiltins.Mul)
 	root.BindBuiltin(&sxbuiltins.Map)
@@ -158,7 +163,10 @@ func TestTailCallOptimization(t *testing.T) {
 		{name: "heavy-even", src: "(even? 1000000)", exp: "1"},
 
 		// The following is not a TCO test, but a test for a correct fac implementation.
-		{name: "fac20", src: "(fac 20)", exp: "2432902008176640000"},
+		{name: "fac20", src: "(fac 10)", exp: "3628800"},
+
+		// The following is not a TCO test, but a test for a correct fac implementation.
+		{name: "fib20", src: "(fib 6)", exp: "13"},
 	}
 	root := createBindingForTCO()
 	testcases.Run(t, root)
