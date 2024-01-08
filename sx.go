@@ -52,16 +52,3 @@ func Print(w io.Writer, obj Object) (int, error) {
 	}
 	return io.WriteString(w, obj.String())
 }
-
-// WriteStrings is a helper function to write multiple strings at once.
-func WriteStrings(w io.Writer, sl ...string) (int, error) {
-	length := 0
-	for _, s := range sl {
-		l, err := io.WriteString(w, s)
-		length += l
-		if err != nil {
-			return length, err
-		}
-	}
-	return length, nil
-}
