@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxhtml"
 	"zettelstore.de/sx.fossil/sxreader"
 )
@@ -100,6 +101,18 @@ func checkTestcases(t *testing.T, testcases []testcase, newGen func() *sxhtml.Ge
 
 			if got := sb.String(); tc.exp != got {
 				t.Errorf("\nSexpr:    %v\nExpected: %v\nGot:      %v", tc.src, tc.exp, got)
+			}
+
+			sb.Reset()
+			_, err = gen.WriteListHTML(&sb, sx.MakeList(val, sx.String("/"), val))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			exp := tc.exp + "/" + tc.exp
+			if got := sb.String(); exp != got {
+				t.Errorf("\nSexpr:    %v\nExpected: %v\nGot:      %v", tc.src, exp, got)
 			}
 		})
 	}
