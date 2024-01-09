@@ -76,7 +76,7 @@ func (be *BeginExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	seq := make([]sxeval.Expr, 0, frontLen)
 	for _, expr := range be.Front {
 		re := expr.Rework(re)
-		if _, isObj := re.(sxeval.ObjectExpr); isObj {
+		if _, isConstObject := re.(sxeval.ConstObjectExpr); isConstObject {
 			// An object has no side effect, there it can be ignored in the sequence
 			continue
 		}

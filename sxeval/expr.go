@@ -52,9 +52,9 @@ func PrintExprs(w io.Writer, exprs []Expr) (int, error) {
 	return length, nil
 }
 
-// ObjectExpr is an Expr that results in a specific, constant sx.Object.
-type ObjectExpr interface {
-	Object() sx.Object
+// ConstObjectExpr is an Expr that results in a specific, constant sx.Object.
+type ConstObjectExpr interface {
+	ConstObject() sx.Object
 }
 
 // NilExpr returns always Nil
@@ -65,7 +65,7 @@ type nilExpr struct{}
 func (nilExpr) Rework(*ReworkEnvironment) Expr          { return NilExpr }
 func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
 func (nilExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{NIL}") }
-func (nilExpr) Object() sx.Object                       { return sx.Nil() }
+func (nilExpr) ConstObject() sx.Object                  { return sx.Nil() }
 
 // ObjExpr returns the stored object.
 type ObjExpr struct {
@@ -105,7 +105,7 @@ func (oe ObjExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
-func (oe ObjExpr) Object() sx.Object { return oe.Obj }
+func (oe ObjExpr) ConstObject() sx.Object { return oe.Obj }
 
 // ResolveSymbolExpr resolves the given symbol in an environment and returns the value.
 type ResolveSymbolExpr struct {
@@ -240,8 +240,8 @@ func (bce *BuiltinCallExpr) Rework(re *ReworkEnvironment) Expr {
 	args := make([]sx.Object, len(bce.Args))
 	for i, arg := range bce.Args {
 		expr := arg.Rework(re)
-		if objExpr, isObjectExpr := expr.(ObjectExpr); isObjectExpr {
-			args[i] = objExpr.Object()
+		if objExpr, isConstObject := expr.(ConstObjectExpr); isConstObject {
+			args[i] = objExpr.ConstObject()
 		} else {
 			mayInline = false
 		}

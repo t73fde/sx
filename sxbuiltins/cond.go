@@ -91,8 +91,8 @@ func (ce *CondExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	for i, cas := range ce.Cases {
 		ce.Cases[i].Expr = cas.Expr.Rework(re)
 		test := cas.Test.Rework(re)
-		if objExpr, isObjExpr := test.(sxeval.ObjectExpr); isObjExpr {
-			if sx.IsTrue(objExpr.Object()) {
+		if objExpr, isConstObject := test.(sxeval.ConstObjectExpr); isConstObject {
+			if sx.IsTrue(objExpr.ConstObject()) {
 				if i == missing {
 					// Only False tests in front, this is definitely the first one that is True
 					return ce.Cases[i].Expr

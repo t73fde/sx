@@ -76,8 +76,8 @@ func (ife *IfExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	falseExpr := ife.False.Rework(re)
 
 	// Check for constant condition
-	if objectExpr, isObjectExpr := testExpr.(sxeval.ObjExpr); isObjectExpr {
-		if sx.IsTrue(objectExpr.Object()) {
+	if objectExpr, isConstObject := testExpr.(sxeval.ObjExpr); isConstObject {
+		if sx.IsTrue(objectExpr.ConstObject()) {
 			return trueExpr
 		}
 		return falseExpr
