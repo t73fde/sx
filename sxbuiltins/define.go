@@ -23,9 +23,11 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
+const defvarName = "defvar"
+
 // DefVarS parses a (defvar name value) form.
 var DefVarS = sxeval.Special{
-	Name: "defvar",
+	Name: defvarName,
 	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		sym, val, err := parseSymValue(pf, args)
 		if err != nil {
@@ -35,9 +37,11 @@ var DefVarS = sxeval.Special{
 	},
 }
 
+const defconstName = "defconst"
+
 // DefConstS parses a (defconst name value) form.
 var DefConstS = sxeval.Special{
-	Name: "defconst",
+	Name: defconstName,
 	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		sym, val, err := parseSymValue(pf, args)
 		if err != nil {
@@ -73,6 +77,14 @@ type DefineExpr struct {
 	Sym   sx.Symbol
 	Val   sxeval.Expr
 	Const bool
+}
+
+func (de *DefineExpr) Unparse() sx.Object {
+	sym := sx.Symbol(defvarName)
+	if de.Const {
+		sym = sx.Symbol(defconstName)
+	}
+	return sx.MakeList(sym, de.Sym, de.Val.Unparse())
 }
 
 func (de *DefineExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
@@ -126,9 +138,11 @@ func (de *DefineExpr) Print(w io.Writer) (int, error) {
 	return length, err
 }
 
+const setXName = "set!"
+
 // SetXS parses a (set! name value) form.
 var SetXS = sxeval.Special{
-	Name: "set!",
+	Name: setXName,
 	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, fmt.Errorf("need at least two arguments")
@@ -158,6 +172,10 @@ var SetXS = sxeval.Special{
 type SetXExpr struct {
 	Sym sx.Symbol
 	Val sxeval.Expr
+}
+
+func (se *SetXExpr) Unparse() sx.Object {
+	return sx.MakeList(sx.Symbol(setXName), se.Sym, se.Val.Unparse())
 }
 
 func (se *SetXExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {

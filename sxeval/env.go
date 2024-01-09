@@ -186,6 +186,11 @@ type callableExpr struct {
 
 func (ce *callableExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
 
+func (ce *callableExpr) Unparse() sx.Object {
+	args := sx.MakeList(ce.Args...)
+	return args.Cons(ce.Proc.(sx.Object))
+}
+
 func (ce *callableExpr) Rework(*ReworkEnvironment) Expr { return ce }
 
 func (ce *callableExpr) Compute(env *Environment) (sx.Object, error) {

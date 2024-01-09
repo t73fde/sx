@@ -22,11 +22,12 @@ import (
 )
 
 // Contains all syntaxes for generic condition handling.
+const condName = "cond"
 
 // CondS parses a cond form: `(cond CLAUSE ...)`, where CLAUSE is
 // `(TEST EXPR ...)`.
 var CondS = sxeval.Special{
-	Name: "cond",
+	Name: condName,
 	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {
 			return sxeval.NilExpr, nil
@@ -84,6 +85,14 @@ type CondExpr struct {
 type CondCase struct {
 	Test sxeval.Expr
 	Expr sxeval.Expr
+}
+
+func (ce *CondExpr) Unparse() sx.Object {
+	var obj sx.Object
+	for i := len(ce.Cases) - 1; i >= 0; i-- {
+		obj = sx.Cons(sx.MakeList(ce.Cases[i].Test.Unparse(), ce.Cases[i].Expr.Unparse()), obj)
+	}
+	return sx.Cons(sx.Symbol(condName), obj)
 }
 
 func (ce *CondExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {

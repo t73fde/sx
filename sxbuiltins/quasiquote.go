@@ -368,6 +368,8 @@ func getUnquoteObj(sym sx.Symbol, lst *sx.Pair) (sx.Object, error) {
 
 type MakeListExpr struct{ Elem sxeval.Expr }
 
+func (mle MakeListExpr) Unparse() sx.Object { return sx.MakeList(mle.Elem.Unparse()) }
+
 func (mle MakeListExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	mle.Elem = mle.Elem.Rework(re)
 	return mle

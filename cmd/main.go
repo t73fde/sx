@@ -295,7 +295,8 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			var execErr *sxeval.ExecuteError
 			if errors.As(err, &execErr) {
 				for i, elem := range execErr.Stack {
-					fmt.Printf(";n%d env: %v, expr: %v\n", i, elem.Env, elem.Expr)
+					obj := elem.Expr.Unparse()
+					fmt.Printf(";n%d env: %v, expr: %T/%v\n", i, elem.Env, obj, obj)
 				}
 			}
 			continue

@@ -61,9 +61,11 @@ func parseDefProc(pf *sxeval.ParseEnvironment, args *sx.Pair) (sx.Symbol, *Lambd
 	return sym, le, err
 }
 
+const lambdaName = "lambda"
+
 // LambdaS parses a procedure specification.
 var LambdaS = sxeval.Special{
-	Name: "lambda",
+	Name: lambdaName,
 	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, fmt.Errorf("parameter spec and body missing")
@@ -173,6 +175,15 @@ type LambdaExpr struct {
 	Rest    sx.Symbol
 	Expr    sxeval.Expr
 	IsMacro bool
+}
+
+func (le *LambdaExpr) Unparse() sx.Object {
+	expr := le.Expr.Unparse()
+	var params sx.Object = le.Rest
+	for i := len(le.Params) - 1; i >= 0; i-- {
+		params = sx.Cons(le.Params[i], params)
+	}
+	return sx.MakeList(sx.Symbol(lambdaName), params, expr)
 }
 
 func (le *LambdaExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {

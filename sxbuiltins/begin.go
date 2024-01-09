@@ -20,9 +20,11 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
+const beginName = "begin"
+
 // BeginS parses a sequence of expressions.
 var BeginS = sxeval.Special{
-	Name: "begin",
+	Name: beginName,
 	Fn:   ParseExprSeq,
 }
 
@@ -65,6 +67,14 @@ func ParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, erro
 type BeginExpr struct {
 	Front []sxeval.Expr
 	Last  sxeval.Expr
+}
+
+func (be *BeginExpr) Unparse() sx.Object {
+	obj := be.Last.Unparse()
+	for i := len(be.Front) - 1; i >= 0; i-- {
+		obj = sx.Cons(be.Front[i].Unparse(), obj)
+	}
+	return sx.Cons(sx.Symbol(beginName), obj)
 }
 
 func (be *BeginExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {

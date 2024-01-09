@@ -22,6 +22,9 @@ import (
 
 // Expr are values that are computed for evaluation in an environment.
 type Expr interface {
+	// Unparse the expression as an sx.Object
+	Unparse() sx.Object
+
 	// Rework the expressions to a possible simpler one.
 	Rework(*ReworkEnvironment) Expr
 
@@ -62,6 +65,7 @@ var NilExpr = nilExpr{}
 
 type nilExpr struct{}
 
+func (nilExpr) Unparse() sx.Object                      { return sx.Nil() }
 func (nilExpr) Rework(*ReworkEnvironment) Expr          { return NilExpr }
 func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
 func (nilExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{NIL}") }
@@ -71,6 +75,8 @@ func (nilExpr) ConstObject() sx.Object                  { return sx.Nil() }
 type ObjExpr struct {
 	Obj sx.Object
 }
+
+func (oe ObjExpr) Unparse() sx.Object { return oe.Obj }
 
 func (oe ObjExpr) Rework(re *ReworkEnvironment) Expr {
 	if obj := oe.Obj; sx.IsNil(obj) {
@@ -112,6 +118,8 @@ type ResolveSymbolExpr struct {
 	Symbol sx.Symbol
 }
 
+func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.Symbol }
+
 func (rse ResolveSymbolExpr) Rework(re *ReworkEnvironment) Expr {
 	if obj, found := re.ResolveConst(rse.Symbol); found {
 		return ObjExpr{Obj: obj}.Rework(re)
@@ -137,6 +145,15 @@ type CallExpr struct {
 }
 
 func (ce *CallExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
+
+func (ce *CallExpr) Unparse() sx.Object {
+	lst := make([]sx.Object, len(ce.Args)+1)
+	lst[0] = ce.Proc.Unparse()
+	for i, arg := range ce.Args {
+		lst[i+1] = arg.Unparse()
+	}
+	return sx.MakeList(lst...)
+}
 
 func (ce *CallExpr) Rework(re *ReworkEnvironment) Expr {
 	// If the ce.Proc is a builtin, rework to a BuiltinCallExpr.
@@ -229,6 +246,11 @@ type BuiltinCallExpr struct {
 }
 
 func (bce *BuiltinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
+
+func (bce *BuiltinCallExpr) Unparse() sx.Object {
+	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: bce.Args}
+	return ce.Unparse()
+}
 
 func (bce *BuiltinCallExpr) Rework(re *ReworkEnvironment) Expr {
 	// Rework checks if the Builtin is pure and if all args are

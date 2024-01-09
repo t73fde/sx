@@ -21,9 +21,11 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
+const ifName = "if"
+
 // IfS parses an if-statement: (if cond then else). If else is missing, a nil is assumed.
 var IfS = sxeval.Special{
-	Name: "if",
+	Name: ifName,
 	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, fmt.Errorf("requires 2 or 3 arguments, got none")
@@ -68,6 +70,10 @@ type IfExpr struct {
 	Test  sxeval.Expr
 	True  sxeval.Expr
 	False sxeval.Expr
+}
+
+func (ife *IfExpr) Unparse() sx.Object {
+	return sx.MakeList(sx.Symbol(ifName), ife.Test.Unparse(), ife.True.Unparse(), ife.False.Unparse())
 }
 
 func (ife *IfExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
