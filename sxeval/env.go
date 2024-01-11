@@ -212,12 +212,12 @@ type executeAgain struct {
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }
 
 func (env *Environment) addExecuteError(expr Expr, err error) error {
-	var execError *ExecuteError
+	var execError ExecuteError
 	if errors.As(err, &execError) {
 		execError.Stack = append(execError.Stack, EnvironmentExpr{env, expr})
 		return execError
 	}
-	return &ExecuteError{
+	return ExecuteError{
 		Stack: []EnvironmentExpr{{env, expr}},
 		err:   err,
 	}
