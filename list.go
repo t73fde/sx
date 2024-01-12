@@ -180,6 +180,13 @@ func (pair *Pair) Cdr() Object {
 	return pair.cdr
 }
 
+// SetCar sets the car of the pair to the given object.
+func (pair *Pair) SetCar(obj Object) {
+	if pair != nil {
+		pair.car = obj
+	}
+}
+
 // SetCdr sets the cdr of the pair to the given object.
 func (pair *Pair) SetCdr(obj Object) {
 	if pair != nil {
