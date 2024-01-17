@@ -130,6 +130,65 @@ func TestListAssoc(t *testing.T) {
 	}
 }
 
+func TestListRemoveAssoc(t *testing.T) {
+	testcases := []struct {
+		name string
+		list *sx.Pair
+		obj  sx.Object
+		exp  *sx.Pair
+	}{
+		{name: "AllEmpty", list: nil, obj: nil, exp: nil},
+		{
+			name: "RemoveFirstOnly",
+			list: sx.MakeList(sx.Cons(sx.Int64(3), nil)),
+			obj:  sx.Int64(3),
+			exp:  nil,
+		},
+		{
+			name: "RemoveFirstOnlyMultiple",
+			list: sx.MakeList(sx.Cons(sx.Int64(3), nil), sx.Cons(sx.Int64(3), nil)),
+			obj:  sx.Int64(3),
+			exp:  nil,
+		},
+		{
+			name: "RemoveFirstRest",
+			list: sx.MakeList(sx.Cons(sx.Int64(3), nil), sx.Cons(sx.Int64(5), nil)),
+			obj:  sx.Int64(3),
+			exp:  sx.MakeList(sx.Cons(sx.Int64(5), nil)),
+		},
+		{
+			name: "RemoveFirstRestMultiple",
+			list: sx.MakeList(sx.Cons(sx.Int64(3), nil), sx.Cons(sx.Int64(3), nil), sx.Cons(sx.Int64(5), nil)),
+			obj:  sx.Int64(3),
+			exp:  sx.MakeList(sx.Cons(sx.Int64(5), nil)),
+		},
+		{
+			name: "RemoveFirstLastMultiple",
+			list: sx.MakeList(sx.Cons(sx.Int64(3), nil), sx.Cons(sx.Int64(5), nil), sx.Cons(sx.Int64(3), nil)),
+			obj:  sx.Int64(3),
+			exp:  sx.MakeList(sx.Cons(sx.Int64(5), nil)),
+		},
+		{
+			name: "RemoveFirstLastMultipleLeaveMultiple",
+			list: sx.MakeList(
+				sx.Cons(sx.Int64(3), nil),
+				sx.Cons(sx.Int64(5), nil),
+				sx.Cons(sx.Int64(3), nil),
+				sx.Cons(sx.Int64(5), nil),
+			),
+			obj: sx.Int64(3),
+			exp: sx.MakeList(sx.Cons(sx.Int64(5), nil), sx.Cons(sx.Int64(5), nil)),
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.list.RemoveAssoc(tc.obj); !tc.exp.IsEqual(got) {
+				t.Errorf("%v.RemoveAssoc(%v) is %v, but got %v", tc.list, tc.obj, tc.exp, got)
+			}
+		})
+	}
+}
+
 func TestListReverse(t *testing.T) {
 	t.Parallel()
 

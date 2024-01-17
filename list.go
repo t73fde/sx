@@ -274,6 +274,26 @@ func (pair *Pair) Assoc(obj Object) *Pair {
 	return nil
 }
 
+// RemoveAssoc deletes all pairs from the association list, where the car
+// IsEqual to the given object. A new list is created.
+func (pair *Pair) RemoveAssoc(obj Object) *Pair {
+	var result, curr *Pair
+	for node := pair; node != nil; node = node.Tail() {
+		if p, isPair := node.car.(*Pair); isPair {
+			if p.car.IsEqual(obj) {
+				continue
+			}
+			if result == nil {
+				result = Cons(p, nil)
+				curr = result
+			} else {
+				curr = curr.AppendBang(p)
+			}
+		}
+	}
+	return result
+}
+
 // AppendBang updates the given pair by setting a new pair with the given
 // object and nil as its new second object.
 func (pair *Pair) AppendBang(obj Object) *Pair {
