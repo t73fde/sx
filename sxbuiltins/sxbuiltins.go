@@ -22,7 +22,7 @@ import (
 )
 
 // GetSymbol returns the given argument as a symbol, and checks for errors.
-func GetSymbol(args []sx.Object, pos int) (sx.Symbol, error) {
+func GetSymbol(args sx.Vector, pos int) (sx.Symbol, error) {
 	obj := args[pos]
 	if sym, ok := sx.GetSymbol(obj); ok {
 		return sym, nil
@@ -31,7 +31,7 @@ func GetSymbol(args []sx.Object, pos int) (sx.Symbol, error) {
 }
 
 // GetString returns the given argument as a string, and checks for errors.
-func GetString(args []sx.Object, pos int) (sx.String, error) {
+func GetString(args sx.Vector, pos int) (sx.String, error) {
 	obj := args[pos]
 	if s, isString := sx.GetString(obj); isString {
 		return s, nil
@@ -40,7 +40,7 @@ func GetString(args []sx.Object, pos int) (sx.String, error) {
 }
 
 // GetNumber returns the given argument as a number, and checks for errors.
-func GetNumber(args []sx.Object, pos int) (sx.Number, error) {
+func GetNumber(args sx.Vector, pos int) (sx.Number, error) {
 	obj := args[pos]
 	if num, ok := sx.GetNumber(obj); ok {
 		return num, nil
@@ -49,7 +49,7 @@ func GetNumber(args []sx.Object, pos int) (sx.Number, error) {
 }
 
 // GetList returns the given argument as a list, and checks for errors.
-func GetList(args []sx.Object, pos int) (*sx.Pair, error) {
+func GetList(args sx.Vector, pos int) (*sx.Pair, error) {
 	obj := args[pos]
 	if sx.IsNil(obj) {
 		return nil, nil
@@ -61,7 +61,7 @@ func GetList(args []sx.Object, pos int) (*sx.Pair, error) {
 }
 
 // GetPair returns the given argument as a non-nil list, and checks for errors.
-func GetPair(args []sx.Object, pos int) (*sx.Pair, error) {
+func GetPair(args sx.Vector, pos int) (*sx.Pair, error) {
 	obj := args[pos]
 	if !sx.IsNil(obj) {
 		if pair, isPair := sx.GetPair(obj); isPair {
@@ -72,7 +72,7 @@ func GetPair(args []sx.Object, pos int) (*sx.Pair, error) {
 }
 
 // GetBinding returns the given argument as a binding, and checks for errors.
-func GetBinding(args []sx.Object, pos int) (*sxeval.Binding, error) {
+func GetBinding(args sx.Vector, pos int) (*sxeval.Binding, error) {
 	obj := args[pos]
 	if bind, ok := sxeval.GetBinding(obj); ok {
 		return bind, nil
@@ -81,7 +81,7 @@ func GetBinding(args []sx.Object, pos int) (*sxeval.Binding, error) {
 }
 
 // GetCallable returns the given argument as a callable, and checks for errors.
-func GetCallable(args []sx.Object, pos int) (sxeval.Callable, error) {
+func GetCallable(args sx.Vector, pos int) (sxeval.Callable, error) {
 	obj := args[pos]
 	if fn, ok := sxeval.GetCallable(obj); ok {
 		return fn, nil

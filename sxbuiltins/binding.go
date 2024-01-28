@@ -25,7 +25,7 @@ var CurrentBinding = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: 0,
 	TestPure: nil,
-	Fn:       func(env *sxeval.Environment, _ []sx.Object) (sx.Object, error) { return env.Binding(), nil },
+	Fn:       func(env *sxeval.Environment, _ sx.Vector) (sx.Object, error) { return env.Binding(), nil },
 }
 
 var ParentBinding = sxeval.Builtin{
@@ -33,7 +33,7 @@ var ParentBinding = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		bind, err := GetBinding(args, 0)
 		if err != nil {
 			return nil, err
@@ -50,7 +50,7 @@ var Bindings = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		bind, err := GetBinding(args, 0)
 		if err != nil {
 			return nil, err
@@ -65,7 +65,7 @@ var BoundP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		sym, err := GetSymbol(args, 0)
 		if err != nil {
 			return nil, err
@@ -82,7 +82,7 @@ var BindingLookup = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		sym, bind, err := envGetSymBinding(env, args)
 		if err != nil {
 			return nil, err
@@ -101,7 +101,7 @@ var BindingResolve = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		sym, bind, err := envGetSymBinding(env, args)
 		if err != nil {
 			return nil, err
@@ -113,7 +113,7 @@ var BindingResolve = sxeval.Builtin{
 	},
 }
 
-func envGetSymBinding(env *sxeval.Environment, args []sx.Object) (sx.Symbol, *sxeval.Binding, error) {
+func envGetSymBinding(env *sxeval.Environment, args sx.Vector) (sx.Symbol, *sxeval.Binding, error) {
 	sym, err := GetSymbol(args, 0)
 	if err != nil {
 		return "", nil, err

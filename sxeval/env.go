@@ -166,7 +166,7 @@ func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 }
 
 // Call the given Callable with the arguments.
-func (env *Environment) Call(fn Callable, args []sx.Object) (sx.Object, error) {
+func (env *Environment) Call(fn Callable, args sx.Vector) (sx.Object, error) {
 	dynamicEnv := env.NewDynamicEnvironment()
 	res, err := fn.Call(dynamicEnv, args)
 	if err == nil {
@@ -181,7 +181,7 @@ func (env *Environment) Call(fn Callable, args []sx.Object) (sx.Object, error) {
 
 type callableExpr struct {
 	Proc Callable
-	Args []sx.Object
+	Args sx.Vector
 }
 
 func (ce *callableExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }

@@ -222,7 +222,7 @@ func (rd *Reader) Read() (sx.Object, error) {
 }
 
 // ReadAll s-expressions until EOF.
-func (rd *Reader) ReadAll() (objs []sx.Object, _ error) {
+func (rd *Reader) ReadAll() (objs sx.Vector, _ error) {
 	for {
 		val, err := rd.Read()
 		if err != nil {

@@ -182,7 +182,7 @@ func listArgs(args []sxeval.Expr) sxeval.Expr {
 		lstArgs := resolveMakeListQuoted(args)
 		return &sxeval.BuiltinCallExpr{Proc: &List, Args: lstArgs}
 	}
-	lstArgs := make([]sx.Object, len(args))
+	lstArgs := make(sx.Vector, len(args))
 	for i, arg := range args {
 		if oe, isObj := arg.(sxeval.ObjExpr); isObj {
 			lstArgs[i] = oe.Obj

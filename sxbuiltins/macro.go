@@ -54,7 +54,7 @@ func (m *Macro) Parse(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, 
 }
 
 func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, error) {
-	var macroArgs []sx.Object
+	var macroArgs sx.Vector
 	arg := sx.Object(args)
 	for {
 		if sx.IsNil(arg) {
@@ -86,7 +86,7 @@ var Macroexpand0 = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		lst, err := GetList(args, 0)
 		if err == nil && lst != nil {
 			if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {

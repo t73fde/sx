@@ -26,7 +26,7 @@ var ToString = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		obj := args[0]
 		if s, isString := sx.GetString(obj); isString {
 			return s, nil
@@ -41,7 +41,7 @@ var StringAppend = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		if len(args) == 0 {
 			return sx.String(""), nil
 		}

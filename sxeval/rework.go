@@ -44,7 +44,7 @@ func (re *ReworkEnvironment) Bind(sym sx.Symbol) error {
 // Call a function for constant folding.
 //
 // It is only called, if no full execution environment is needed, only a binding.
-func (re *ReworkEnvironment) Call(fn Callable, args []sx.Object) (sx.Object, error) {
+func (re *ReworkEnvironment) Call(fn Callable, args sx.Vector) (sx.Object, error) {
 	env := MakeExecutionEnvironment(re.binding)
 	return fn.Call(env, args)
 }

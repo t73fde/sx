@@ -147,7 +147,7 @@ type CallExpr struct {
 func (ce *CallExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
 
 func (ce *CallExpr) Unparse() sx.Object {
-	lst := make([]sx.Object, len(ce.Args)+1)
+	lst := make(sx.Vector, len(ce.Args)+1)
 	lst[0] = ce.Proc.Unparse()
 	for i, arg := range ce.Args {
 		lst[i+1] = arg.Unparse()
@@ -216,7 +216,7 @@ func computeCallable(env *Environment, proc Callable, args []Expr) (sx.Object, e
 	if len(args) == 0 {
 		return proc.Call(env, nil)
 	}
-	objArgs := make([]sx.Object, len(args))
+	objArgs := make(sx.Vector, len(args))
 	for i, exprArg := range args {
 		subEnv := env.NewDynamicEnvironment()
 		val, err := subEnv.Execute(exprArg)
@@ -259,7 +259,7 @@ func (bce *BuiltinCallExpr) Rework(re *ReworkEnvironment) Expr {
 	// instead the BuiltinCallExpr. This assumes that there is no side effect
 	// when the builtin is called. This is checked with `Builtin.IsPure`.
 	mayInline := true
-	args := make([]sx.Object, len(bce.Args))
+	args := make(sx.Vector, len(bce.Args))
 	for i, arg := range bce.Args {
 		expr := arg.Rework(re)
 		if objExpr, isConstObject := expr.(ConstObjectExpr); isConstObject {

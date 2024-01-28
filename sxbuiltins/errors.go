@@ -29,7 +29,7 @@ var Error = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: nil,
-	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		if len(args) == 0 {
 			return nil, fmt.Errorf("unspecified user error")
 		}
@@ -58,7 +58,7 @@ var NotBoundError = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		sym, err := GetSymbol(args, 0)
 		if err != nil {
 			return nil, err

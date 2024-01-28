@@ -26,10 +26,10 @@ import (
 type Callable interface {
 	// IsPure checks if the callable is independent of a full environment and
 	// does not produce any side effects.
-	IsPure([]sx.Object) bool
+	IsPure(sx.Vector) bool
 
 	// Call the value with the given args in the given environment.
-	Call(*Environment, []sx.Object) (sx.Object, error)
+	Call(*Environment, sx.Vector) (sx.Object, error)
 }
 
 // GetCallable returns the object as a Callable, if possible.

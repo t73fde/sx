@@ -24,7 +24,7 @@ func TestBuiltinSimple(t *testing.T) {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 			if len(args) == 0 {
 				return nil, nil
 			}
@@ -50,7 +50,7 @@ func TestBuiltinSimple(t *testing.T) {
 		}
 	}
 
-	args := []sx.Object{}
+	args := sx.Vector{}
 	for i := 0; i < 10; i++ {
 		res, err := b.Call(nil, args)
 		if err != nil {

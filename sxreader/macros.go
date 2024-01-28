@@ -184,7 +184,7 @@ func readList(endCh rune) macroFn {
 }
 
 func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
-	objs := make([]sx.Object, 0, 32)
+	objs := make(sx.Vector, 0, 32)
 
 	var dotObj sx.Object
 	hasDotObj := false

@@ -89,7 +89,7 @@ func TestListLength(t *testing.T) {
 	if got := sx.Nil().Length(); got != 0 {
 		t.Error("Nil().Length() != 0, but", got)
 	}
-	objs := make([]sx.Object, 0, 100)
+	objs := make(sx.Vector, 0, 100)
 	for i := 0; i < cap(objs); i++ {
 		objs = append(objs, sx.Nil())
 		l := sx.MakeList(objs...)

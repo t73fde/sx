@@ -27,7 +27,7 @@ var CallableP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		_, ok := sxeval.GetCallable(args[0])
 		return sx.MakeBoolean(ok), nil
 	},
@@ -278,10 +278,10 @@ func (p *Procedure) String() string               { return "#<lambda:" + p.Name 
 
 // IsPure tests if the Procedure needs an environment value and does not
 // produce any other side effects.
-func (p *Procedure) IsPure([]sx.Object) bool { return false }
+func (p *Procedure) IsPure(sx.Vector) bool { return false }
 
 // Call the Procedure.
-func (p *Procedure) Call(env *sxeval.Environment, args []sx.Object) (sx.Object, error) {
+func (p *Procedure) Call(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 	numParams := len(p.Params)
 	if len(args) < numParams {
 		return nil, fmt.Errorf("%s: missing arguments: %v", p.Name, p.Params[len(args):])

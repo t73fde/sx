@@ -30,17 +30,17 @@ type Builtin struct {
 	MinArity, MaxArity int16
 
 	// Test builtin to be independent of the environment and does not produce some side effect
-	TestPure func([]sx.Object) bool
+	TestPure func(sx.Vector) bool
 
 	// The actual builtin function
-	Fn func(*Environment, []sx.Object) (sx.Object, error)
+	Fn func(*Environment, sx.Vector) (sx.Object, error)
 
 	// Do not add a CallError
 	NoCallError bool
 }
 
 // AssertPure is a TestPure function that alsways returns true.
-func AssertPure([]sx.Object) bool { return true }
+func AssertPure(sx.Vector) bool { return true }
 
 // --- Builtin methods to implement sx.Object
 
@@ -59,7 +59,7 @@ func (b *Builtin) String() string { return "#<builtin:" + b.Name + ">" }
 // --- Builtin methods to implement sxeval.Callable
 
 // IsPure returns true if builtin is a pure function.
-func (b *Builtin) IsPure(objs []sx.Object) bool {
+func (b *Builtin) IsPure(objs sx.Vector) bool {
 	if testPure := b.TestPure; testPure != nil {
 		return testPure(objs)
 	}
@@ -67,7 +67,7 @@ func (b *Builtin) IsPure(objs []sx.Object) bool {
 }
 
 // Call the builtin function with the given environment and arguments.
-func (b *Builtin) Call(env *Environment, args []sx.Object) (sx.Object, error) {
+func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
 	// Check arity
 	nargs := len(args)
 	if nargs > math.MaxInt16 {
