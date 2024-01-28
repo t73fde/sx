@@ -368,6 +368,21 @@ func (pair *Pair) Copy() *Pair {
 	}
 }
 
+// AsVector returns a proper list as a vector
+func (pair *Pair) AsVector() Vector {
+	if pair == nil {
+		return nil
+	}
+	if IsNil(pair.cdr) {
+		return Vector{pair.car}
+	}
+	v := make(Vector, 0, 2)
+	for node := pair; node != nil; node = node.Tail() {
+		v = append(v, node.car)
+	}
+	return v
+}
+
 // ErrImproper is signalled if an improper list is found where it is not
 // appropriate.
 type ErrImproper struct{ Pair *Pair }

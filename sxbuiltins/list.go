@@ -344,3 +344,18 @@ func anyAll(args sx.Vector, pred func(sx.Object) bool, found bool) (sx.Object, e
 	}
 	return sx.MakeBoolean(!found), nil
 }
+
+// List2Vector returns the given proper list as a vector.
+var List2Vector = sxeval.Builtin{
+	Name:     "list->vector",
+	MinArity: 1,
+	MaxArity: 1,
+	TestPure: sxeval.AssertPure,
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		lst, err := GetList(args, 0)
+		if err != nil {
+			return nil, err
+		}
+		return lst.AsVector(), nil
+	},
+}

@@ -34,6 +34,10 @@ Y)`, where the car references S and the cdr references Y (Y is not a list).
 
 All other types supported by Sx cannot be specified via the reader.
 
+* **Vector** is a mutable sequence of values, to be used if direct access to
+  values of a longer sequence is needed. A list has only O(n) access. Vectors
+  are typically more memory efficient, compared to pair lists. However, they
+  cannot be process recursively and they are not able to share elements.
 * **Undefined** contains just the _undefined_ value.
   It is signalled by some functions that should not abort with an error.
 

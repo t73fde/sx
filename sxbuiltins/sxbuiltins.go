@@ -71,6 +71,15 @@ func GetPair(args sx.Vector, pos int) (*sx.Pair, error) {
 	return nil, fmt.Errorf("argument %d is not a pair, but %T/%v", pos+1, obj, obj)
 }
 
+// GetVector returns the given argument as a vector, and checks for errors.
+func GetVector(args sx.Vector, pos int) (sx.Vector, error) {
+	obj := args[pos]
+	if v, ok := sx.GetVector(obj); ok {
+		return v, nil
+	}
+	return nil, fmt.Errorf("argument %d is not a vector, but %T/%v", pos+1, obj, obj)
+}
+
 // GetBinding returns the given argument as a binding, and checks for errors.
 func GetBinding(args sx.Vector, pos int) (*sxeval.Binding, error) {
 	obj := args[pos]
