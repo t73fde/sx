@@ -31,7 +31,7 @@ var tcsBinding = tTestCases{
 	{
 		name:    "err-parent-binding-0",
 		src:     "(parent-binding)",
-		exp:     "{[{parent-binding: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{parent-binding: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -44,7 +44,7 @@ var tcsBinding = tTestCases{
 	{
 		name:    "err-bindings-0",
 		src:     "(bindings)",
-		exp:     "{[{bindings: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{bindings: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -63,7 +63,7 @@ var tcsBinding = tTestCases{
 	{
 		name:    "err-bound?-0",
 		src:     "(bound?)",
-		exp:     "{[{bound?: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{bound?: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -79,7 +79,7 @@ var tcsBinding = tTestCases{
 	{
 		name:    "err-lookup-0",
 		src:     "(binding-lookup)",
-		exp:     "{[{binding-lookup: between 1 and 2 arguments required, but 0 given: []}]}",
+		exp:     "{[{binding-lookup: between 1 and 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -110,7 +110,7 @@ var tcsBinding = tTestCases{
 	{
 		name:    "err-resolve-0",
 		src:     "(binding-resolve)",
-		exp:     "{[{binding-resolve: between 1 and 2 arguments required, but 0 given: []}]}",
+		exp:     "{[{binding-resolve: between 1 and 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{

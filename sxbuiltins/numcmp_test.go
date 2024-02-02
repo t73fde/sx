@@ -24,7 +24,7 @@ var tcsNumCmp = tTestCases{
 	{
 		name:    "err-less-0",
 		src:     "(<)",
-		exp:     "{[{<: at least 2 arguments required, but only 0 given: []}]}",
+		exp:     "{[{<: at least 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -40,7 +40,7 @@ var tcsNumCmp = tTestCases{
 	{
 		name:    "err-less-equal-0",
 		src:     "(<=)",
-		exp:     "{[{<=: at least 2 arguments required, but only 0 given: []}]}",
+		exp:     "{[{<=: at least 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -56,7 +56,7 @@ var tcsNumCmp = tTestCases{
 	{
 		name:    "err-equal-0",
 		src:     "(=)",
-		exp:     "{[{=: at least 2 arguments required, but only 0 given: []}]}",
+		exp:     "{[{=: at least 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{name: "equal-nonum", src: "(= 0 0 ())", exp: "()"},
@@ -68,7 +68,7 @@ var tcsNumCmp = tTestCases{
 	{
 		name:    "err-greater-equal-0",
 		src:     "(>=)",
-		exp:     "{[{>=: at least 2 arguments required, but only 0 given: []}]}",
+		exp:     "{[{>=: at least 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -84,7 +84,7 @@ var tcsNumCmp = tTestCases{
 	{
 		name:    "err-greater-0",
 		src:     "(>)",
-		exp:     "{[{>: at least 2 arguments required, but only 0 given: []}]}",
+		exp:     "{[{>: at least 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{

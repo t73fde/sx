@@ -303,7 +303,7 @@ func (p *Procedure) Call(env *sxeval.Environment, args sx.Vector) (sx.Object, er
 			return nil, err
 		}
 	} else if len(args) > numParams {
-		return nil, fmt.Errorf("%s: excess arguments: %v", p.Name, args[numParams:])
+		return nil, fmt.Errorf("%s: excess arguments: %v", p.Name, []sx.Object(args[numParams:]))
 	}
 	return lexicalEnv.ExecuteTCO(p.Expr)
 }

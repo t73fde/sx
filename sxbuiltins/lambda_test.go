@@ -24,7 +24,7 @@ var tcsLambda = tTestCases{
 	{
 		name:    "err-callable?-0",
 		src:     "(callable?)",
-		exp:     "{[{callable?: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{callable?: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{name: "callable?-1", src: "(callable? 1)", exp: "()"},

@@ -21,6 +21,7 @@ import (
 	"strings"
 	"testing"
 
+	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxreader"
 )
 
@@ -206,7 +207,7 @@ func TestReadAll(t *testing.T) {
 			t.Errorf("%d: error while reading: %v", i, err)
 			continue
 		}
-		if got := fmt.Sprintf("%v", objs); got != tc.exp {
+		if got := fmt.Sprintf("%v", []sx.Object(objs)); got != tc.exp {
 			t.Errorf("%d: %q expected, but got %q", i, tc.exp, got)
 		}
 	}

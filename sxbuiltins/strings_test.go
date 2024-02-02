@@ -18,7 +18,7 @@ func TestStrings(t *testing.T) {
 }
 
 var tcsStrings = tTestCases{
-	{name: "err->string-0", src: "(->string)", exp: "{[{->string: exactly 1 arguments required, but 0 given: []}]}", withErr: true},
+	{name: "err->string-0", src: "(->string)", exp: "{[{->string: exactly 1 arguments required, but none given}]}", withErr: true},
 	{name: "->string-1", src: "(->string 1)", exp: `"1"`},
 	{name: "->string-2", src: "(->string 1 2)", exp: "{[{->string: exactly 1 arguments required, but 2 given: [1 2]}]}", withErr: true},
 	{name: "->string-cons", src: "(->string (cons 1 2))", exp: `"(1 . 2)"`},

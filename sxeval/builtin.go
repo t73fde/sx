@@ -77,16 +77,31 @@ func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
 	numArgs, minArity, maxArity := int16(nargs), b.MinArity, b.MaxArity
 	if minArity == maxArity {
 		if numArgs != minArity {
-			err := fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, args)
+			var err error
+			if numArgs == 0 {
+				err = fmt.Errorf("exactly %d arguments required, but none given", minArity)
+			} else {
+				err = fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, []sx.Object(args))
+			}
 			return nil, CallError{Name: b.Name, Err: err}
 		}
 	} else if maxArity < 0 {
 		if numArgs < minArity {
-			err := fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, args)
+			var err error
+			if numArgs == 0 {
+				err = fmt.Errorf("at least %d arguments required, but none given", minArity)
+			} else {
+				err = fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, []sx.Object(args))
+			}
 			return nil, CallError{Name: b.Name, Err: err}
 		}
 	} else if numArgs < minArity || maxArity < numArgs {
-		err := fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, args)
+		var err error
+		if numArgs == 0 {
+			err = fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
+		} else {
+			err = fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, []sx.Object(args))
+		}
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 

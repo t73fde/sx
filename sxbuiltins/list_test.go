@@ -24,7 +24,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-cons-0",
 		src:     "(cons)",
-		exp:     "{[{cons: exactly 2 arguments required, but 0 given: []}]}",
+		exp:     "{[{cons: exactly 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -43,7 +43,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-pair?-0",
 		src:     "(pair?)",
-		exp:     "{[{pair?: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{pair?: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{name: "pair?-nil", src: "(pair? ())", exp: "()"},
@@ -54,7 +54,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-null?-0",
 		src:     "(null?)",
-		exp:     "{[{null?: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{null?: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{name: "null?-1", src: "(null? 1)", exp: "()"},
@@ -64,7 +64,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-list?-0",
 		src:     "(list?)",
-		exp:     "{[{list?: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{list?: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{name: "list?-nil", src: "(list? ())", exp: "T"},
@@ -75,7 +75,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-car-0",
 		src:     "(car)",
-		exp:     "{[{car: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{car: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -96,7 +96,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-cdr-0",
 		src:     "(cdr)",
-		exp:     "{[{cdr: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{cdr: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -116,7 +116,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-last-0",
 		src:     "(last)",
-		exp:     "{[{last: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{last: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -145,7 +145,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-list*-0",
 		src:     "(list*)",
-		exp:     "{[{list*: at least 1 arguments required, but only 0 given: []}]}",
+		exp:     "{[{list*: at least 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{name: "list*-1", src: "(list* 1)", exp: "1"},
@@ -164,7 +164,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-reverse-0",
 		src:     "(reverse)",
-		exp:     "{[{reverse: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{reverse: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -185,7 +185,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-length-0",
 		src:     "(length)",
-		exp:     "{[{length: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{length: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -200,7 +200,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-assoc-0",
 		src:     "(assoc)",
-		exp:     "{[{assoc: exactly 2 arguments required, but 0 given: []}]}",
+		exp:     "{[{assoc: exactly 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -227,7 +227,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-all-0",
 		src:     "(all)",
-		exp:     "{[{all: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{all: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -254,7 +254,7 @@ var tcsList = tTestCases{
 	{
 		name:    "err-any-0",
 		src:     "(any)",
-		exp:     "{[{any: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{any: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{

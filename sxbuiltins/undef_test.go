@@ -24,7 +24,7 @@ var tcsUndefined = tTestCases{
 	{
 		name:    "err-defined-0",
 		src:     "(defined?)",
-		exp:     "{[{defined?: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{defined?: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{

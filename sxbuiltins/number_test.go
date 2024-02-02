@@ -24,7 +24,7 @@ var tcsNumber = tTestCases{
 	{
 		name:    "err-number?-0",
 		src:     "(number?)",
-		exp:     "{[{number?: exactly 1 arguments required, but 0 given: []}]}",
+		exp:     "{[{number?: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{name: "number?-1", src: "(number? 1)", exp: "T"},
@@ -45,7 +45,7 @@ var tcsNumber = tTestCases{
 	{
 		name:    "err-sub-0",
 		src:     "(-)",
-		exp:     "{[{-: at least 1 arguments required, but only 0 given: []}]}",
+		exp:     "{[{-: at least 1 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{name: "sub-1", src: "(- 1)", exp: "-1"},
@@ -72,7 +72,7 @@ var tcsNumber = tTestCases{
 	{
 		name:    "err-div-0",
 		src:     "(div)",
-		exp:     "{[{div: exactly 2 arguments required, but 0 given: []}]}",
+		exp:     "{[{div: exactly 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -93,7 +93,7 @@ var tcsNumber = tTestCases{
 	{
 		name:    "err-mod-0",
 		src:     "(mod)",
-		exp:     "{[{mod: exactly 2 arguments required, but 0 given: []}]}",
+		exp:     "{[{mod: exactly 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{

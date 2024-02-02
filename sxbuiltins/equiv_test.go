@@ -24,7 +24,7 @@ var tcsEquiv = tTestCases{
 	{
 		name:    "err-==-0",
 		src:     "(==)",
-		exp:     "{[{==: at least 2 arguments required, but only 0 given: []}]}",
+		exp:     "{[{==: at least 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -39,7 +39,7 @@ var tcsEquiv = tTestCases{
 	{
 		name:    "err-=-0",
 		src:     "(=)",
-		exp:     "{[{=: at least 2 arguments required, but only 0 given: []}]}",
+		exp:     "{[{=: at least 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{

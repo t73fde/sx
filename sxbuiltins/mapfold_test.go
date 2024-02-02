@@ -21,7 +21,7 @@ var tcsMapFold = tTestCases{
 	{
 		name:    "err-map-0",
 		src:     "(map)",
-		exp:     "{[{map: exactly 2 arguments required, but 0 given: []}]}",
+		exp:     "{[{map: exactly 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -49,7 +49,7 @@ var tcsMapFold = tTestCases{
 	{
 		name:    "err-apply-0",
 		src:     "(apply)",
-		exp:     "{[{apply: exactly 2 arguments required, but 0 given: []}]}",
+		exp:     "{[{apply: exactly 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{name: "apply-nil", src: "(apply + ())", exp: "0"},
@@ -64,7 +64,7 @@ var tcsMapFold = tTestCases{
 	{
 		name:    "err-fold-0",
 		src:     "(fold)",
-		exp:     "{[{fold: exactly 3 arguments required, but 0 given: []}]}",
+		exp:     "{[{fold: exactly 3 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
@@ -88,7 +88,7 @@ var tcsMapFold = tTestCases{
 	{
 		name:    "err-fold-reverse-0",
 		src:     "(fold-reverse)",
-		exp:     "{[{fold-reverse: exactly 3 arguments required, but 0 given: []}]}",
+		exp:     "{[{fold-reverse: exactly 3 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{
