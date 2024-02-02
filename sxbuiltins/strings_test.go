@@ -24,9 +24,9 @@ var tcsStrings = tTestCases{
 	{name: "->string-cons", src: "(->string (cons 1 2))", exp: `"(1 . 2)"`},
 	{name: "->string-string", src: `(->string "a")`, exp: `"a"`},
 
-	{name: "string-append-0", src: "(string-append)", exp: `""`},
-	{name: "err-string-append-1", src: "(string-append 1)", exp: "{[{string-append: argument 1 is not a string, but sx.Int64/1}]}", withErr: true},
-	{name: "err-string-append-2", src: `(string-append "1" 2)`, exp: "{[{string-append: argument 2 is not a string, but sx.Int64/2}]}", withErr: true},
-	{name: "string-append-1", src: `(string-append "a")`, exp: `"a"`},
-	{name: "string-append-3", src: `(string-append "3" " " "4")`, exp: `"3 4"`},
+	{name: "concat-0", src: "(concat)", exp: `""`},
+	{name: "err-concat-1", src: "(concat 1)", exp: "{[{concat: argument 1 is not a string, but sx.Int64/1}]}", withErr: true},
+	{name: "err-concat-2", src: `(concat "1" 2)`, exp: "{[{concat: argument 2 is not a string, but sx.Int64/2}]}", withErr: true},
+	{name: "concat-1", src: `(concat "a")`, exp: `"a"`},
+	{name: "concat-3", src: `(concat "3" " " "4")`, exp: `"3 4"`},
 }

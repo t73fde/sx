@@ -36,8 +36,8 @@ var ToString = sxeval.Builtin{
 }
 
 // StringAppend append all its string arguments.
-var StringAppend = sxeval.Builtin{
-	Name:     "string-append",
+var Concat = sxeval.Builtin{
+	Name:     "concat",
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
