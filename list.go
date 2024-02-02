@@ -413,6 +413,27 @@ func (lb *ListBuilder) Add(obj Object) {
 	lb.last = elem
 }
 
+// ExtendBang the list by the given list, reusing the given list
+func (lb *ListBuilder) ExtendBang(lst *Pair) {
+	if lst == nil {
+		return
+	}
+	if lb.first == nil {
+		lb.first = lst
+		lb.last = lst.LastPair()
+		return
+	}
+	lb.last.cdr = lst
+	for {
+		t := lst.Tail()
+		if t == nil {
+			lb.last = lst
+			return
+		}
+		lst = t
+	}
+}
+
 // List the result, resetting the builder.
 func (lb *ListBuilder) List() *Pair {
 	result := lb.first

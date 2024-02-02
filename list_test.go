@@ -254,4 +254,16 @@ func TestListBuilder(t *testing.T) {
 	if got, exp := lb.List(), sx.MakeList(sx.Symbol("a"), sx.String("b")); !got.IsEqual(exp) {
 		t.Errorf("expected %v, but got %v", exp, got)
 	}
+
+	lst := sx.MakeList(sx.Symbol("a"))
+	lb.ExtendBang(lst)
+	lb.ExtendBang(nil)
+	lb.ExtendBang(sx.MakeList(sx.String("b"), sx.Symbol("c")))
+	exp := sx.MakeList(sx.Symbol("a"), sx.String("b"), sx.Symbol("c"))
+	if got := lb.List(); !got.IsEqual(exp) {
+		t.Errorf("expected %v, but got %v", exp, got)
+	}
+	if !lst.IsEqual(exp) {
+		t.Errorf("%v!=%v", lst, exp)
+	}
 }
