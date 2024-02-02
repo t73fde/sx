@@ -389,3 +389,36 @@ type ErrImproper struct{ Pair *Pair }
 
 // Error returns a textual representation for this error.
 func (err ErrImproper) Error() string { return fmt.Sprintf("improper list: %v", err.Pair) }
+
+// ListBuilder is a helper to build a list sequentially from start to end.
+type ListBuilder struct {
+	first, last *Pair
+}
+
+// Reset the list builder.
+func (lb *ListBuilder) Reset() {
+	lb.first = nil
+	lb.last = nil
+}
+
+// Add an object to the list.
+func (lb *ListBuilder) Add(obj Object) {
+	elem := Cons(obj, nil)
+	if lb.first == nil {
+		lb.first = elem
+		lb.last = lb.first
+		return
+	}
+	lb.last.cdr = elem
+	lb.last = elem
+}
+
+// List the result, resetting the builder.
+func (lb *ListBuilder) List() *Pair {
+	result := lb.first
+	lb.Reset()
+	return result
+}
+
+// IsEmpty returns true, if no element was added.
+func (lb *ListBuilder) IsEmpty() bool { return lb.first == nil }

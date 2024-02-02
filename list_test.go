@@ -236,3 +236,22 @@ func TestListCopy(t *testing.T) {
 		}
 	}
 }
+
+func TestListBuilder(t *testing.T) {
+	var lb sx.ListBuilder
+	if !lb.IsEmpty() {
+		t.Errorf("initial list is not empty, but: %v", lb.List())
+	}
+	lb.Add(sx.Symbol("a"))
+	if got, exp := lb.List(), sx.MakeList(sx.Symbol("a")); !got.IsEqual(exp) {
+		t.Errorf("expected %v, but got %v", exp, got)
+	}
+	if !lb.IsEmpty() {
+		t.Errorf("list is not empty, but: %v", lb.List())
+	}
+	lb.Add(sx.Symbol("a"))
+	lb.Add(sx.String("b"))
+	if got, exp := lb.List(), sx.MakeList(sx.Symbol("a"), sx.String("b")); !got.IsEqual(exp) {
+		t.Errorf("expected %v, but got %v", exp, got)
+	}
+}
