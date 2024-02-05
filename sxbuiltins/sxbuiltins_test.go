@@ -150,9 +150,11 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.NumGreater, &sxbuiltins.NumGreaterEqual, // >, >=
 	&sxbuiltins.ToString, &sxbuiltins.Concat, // ->string, concat
 	&sxbuiltins.Vector, &sxbuiltins.VectorP, // vector, vector?
-	&sxbuiltins.VectorSetBang,                        // vset!
-	&sxbuiltins.Vector2List, &sxbuiltins.List2Vector, // vector->list, list->vector
-	&sxbuiltins.Length, &sxbuiltins.Nth, // length, nth
+	&sxbuiltins.VectorSetBang,           // vset!
+	&sxbuiltins.List2Vector,             // list->vector
+	&sxbuiltins.Nth, &sxbuiltins.Length, // nth, length
+	&sxbuiltins.LengthLess,     // length<
+	&sxbuiltins.Sequence2List,  // ->list
 	&sxbuiltins.CallableP,      // callable?
 	&sxbuiltins.Macroexpand0,   // macroexpand-0
 	&sxbuiltins.Defined,        // defined?

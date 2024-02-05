@@ -88,12 +88,16 @@ func (v Vector) Print(w io.Writer) (int, error) {
 
 func (v Vector) Length() int { return len(v) }
 
+func (v Vector) LengthLess(l int) bool { return len(v) < l }
+
 func (v Vector) Nth(n int) (Object, error) {
 	if n < 0 || len(v) <= n {
 		return Nil(), fmt.Errorf("index out of range: %d (max: %d)", n, len(v)-1)
 	}
 	return v[n], nil
 }
+
+func (v Vector) MakeList() *Pair { return MakeList(v...) }
 
 func (v Vector) Iterator() SequenceIterator {
 	return &vectorIterator{v, 0}

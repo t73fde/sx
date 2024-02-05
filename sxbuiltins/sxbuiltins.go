@@ -84,6 +84,9 @@ func GetVector(args sx.Vector, pos int) (sx.Vector, error) {
 func GetSequence(args sx.Vector, pos int) (sx.Sequence, error) {
 	obj := args[pos]
 	if seq, ok := sx.GetSequence(obj); ok {
+		if sx.IsNil(seq) {
+			return sx.Nil(), nil
+		}
 		return seq, nil
 	}
 	return nil, fmt.Errorf("argument %d is not a sequence, but %T/%v", pos+1, obj, obj)

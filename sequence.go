@@ -17,11 +17,18 @@ package sx
 type Sequence interface {
 	Object
 
-	// Length retruns the length of the sequence.
+	// Length returns the length of the sequence.
 	Length() int
+
+	// LengthLess returns true if the legth is less than the given one.
+	LengthLess(l int) bool
 
 	// Nth returns the n-th element of a sequence.
 	Nth(n int) (Object, error)
+
+	// MakeList returns the sequence as a pair list. If sequence is already a
+	// pair list, it is returned without copying it.
+	MakeList() *Pair
 
 	// Iterator return an SequenceIterator to iterate over all elements of
 	// the sequence in natural order.

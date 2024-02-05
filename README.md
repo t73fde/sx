@@ -41,8 +41,13 @@ All other types supported by Sx cannot be specified via the reader.
 * **Undefined** contains just the _undefined_ value.
   It is signalled by some functions that should not abort with an error.
 
-There is no special boolean value. The empty list `()`, the empty string `""`,
-and the undefined value are considered as a "false" value. All other values are
-treated as a "true" value. Most functions that return a boolean value currently
-return the empty list to signal a "false" value or return either the number `1`
-or the symbol `T` as a "true" value.
+There is no special **boolean** value. The empty list `()`, the empty string
+`""`, and the undefined value are considered as a "false" value. All other
+values are treated as a "true" value. Most functions that return a boolean
+value currently return the empty list to signal a "false" value or return
+either the number `1` or the symbol `T` as a "true" value.
+
+Vectors and lists are both **sequence**s and share some common functions /
+methods. You can calculate the length of a sequence, check for a length less
+than a value, fetch the n-th element of a sequence, convert a sequence to a
+pair list, and iterate over the elements in a ordered way.

@@ -70,18 +70,3 @@ var VectorSetBang = sxeval.Builtin{
 		return v, nil
 	},
 }
-
-// Vector2List returns the vector as a (pair) list.
-var Vector2List = sxeval.Builtin{
-	Name:     "vector->list",
-	MinArity: 1,
-	MaxArity: 1,
-	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		v, err := GetVector(args, 0)
-		if err != nil {
-			return nil, err
-		}
-		return sx.MakeList(v...), nil
-	},
-}

@@ -14,8 +14,6 @@
 package sxbuiltins
 
 import (
-	"fmt"
-
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
 )
@@ -38,6 +36,25 @@ var Length = sxeval.Builtin{
 	},
 }
 
+// LengthLess returns true if the length of the sequence is less than the given number.
+var LengthLess = sxeval.Builtin{
+	Name:     "length<",
+	MinArity: 2,
+	MaxArity: 2,
+	TestPure: sxeval.AssertPure,
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		seq, err := GetSequence(args, 0)
+		if err != nil {
+			return nil, err
+		}
+		n, err := GetNumber(args, 1)
+		if err != nil {
+			return nil, err
+		}
+		return sx.MakeBoolean(seq.LengthLess(int(n.(sx.Int64)))), nil
+	},
+}
+
 // Nth returns the n-th element of the sequence.
 var Nth = sxeval.Builtin{
 	Name:     "nth",
@@ -49,13 +66,25 @@ var Nth = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		if sx.IsNil(seq) {
-			return nil, fmt.Errorf("sequence is nil")
-		}
 		n, err := GetNumber(args, 1)
 		if err != nil {
 			return nil, err
 		}
 		return seq.Nth(int(n.(sx.Int64)))
+	},
+}
+
+// Sequence2List returns the sequence as a (pair) list.
+var Sequence2List = sxeval.Builtin{
+	Name:     "->list",
+	MinArity: 1,
+	MaxArity: 1,
+	TestPure: sxeval.AssertPure,
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		seq, err := GetSequence(args, 0)
+		if err != nil {
+			return nil, err
+		}
+		return seq.MakeList(), nil
 	},
 }

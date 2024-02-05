@@ -141,6 +141,17 @@ func (pair *Pair) Length() int {
 	return result
 }
 
+func (pair *Pair) LengthLess(l int) bool {
+	result := 0
+	for node := pair; node != nil; node = node.Tail() {
+		result++
+		if result >= l {
+			return false
+		}
+	}
+	return result < l
+}
+
 func (pair *Pair) Nth(n int) (Object, error) {
 	if n < 0 {
 		return Nil(), fmt.Errorf("negative index %d", n)
@@ -154,6 +165,8 @@ func (pair *Pair) Nth(n int) (Object, error) {
 	}
 	return Nil(), fmt.Errorf("index too large: %d for %v", n, pair)
 }
+
+func (pair *Pair) MakeList() *Pair { return pair }
 
 func (pair *Pair) Iterator() SequenceIterator {
 	return &pairIterator{pair}
