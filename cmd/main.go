@@ -115,7 +115,6 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.List, &sxbuiltins.ListStar, // list, list*
 	&sxbuiltins.Append,               // append
 	&sxbuiltins.Reverse,              // reverse
-	&sxbuiltins.Length,               // length
 	&sxbuiltins.Assoc,                // assoc
 	&sxbuiltins.All, &sxbuiltins.Any, // all, any
 	&sxbuiltins.Map,                           // map
@@ -128,9 +127,9 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.NumGreater, &sxbuiltins.NumGreaterEqual, // >, >=
 	&sxbuiltins.ToString, &sxbuiltins.Concat, // ->string, concat
 	&sxbuiltins.Vector, &sxbuiltins.VectorP, // vector, vector?
-	&sxbuiltins.VectorLength,                         // vector-length
-	&sxbuiltins.VectorGet, &sxbuiltins.VectorSetBang, // vget, vset
+	&sxbuiltins.VectorSetBang,                        // vset!
 	&sxbuiltins.Vector2List, &sxbuiltins.List2Vector, // vector->list, list->vector
+	&sxbuiltins.Length, &sxbuiltins.Nth, // length, nth
 	&sxbuiltins.CallableP,      // callable?
 	&sxbuiltins.Macroexpand0,   // macroexpand-0
 	&sxbuiltins.Defined,        // defined?

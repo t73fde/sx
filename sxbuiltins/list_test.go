@@ -183,21 +183,6 @@ var tcsList = tTestCases{
 	{name: "reverse-list", src: "(reverse (list 1 2))", exp: "(2 1)"},
 
 	{
-		name:    "err-length-0",
-		src:     "(length)",
-		exp:     "{[{length: exactly 1 arguments required, but none given}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-length-1",
-		src:     "(length 1)",
-		exp:     "{[{length: argument 1 is not a list, but sx.Int64/1}]}",
-		withErr: true},
-	{name: "length-cons", src: "(length (cons 1 2))", exp: "1"},
-	{name: "length-list-1", src: "(length (list 1))", exp: "1"},
-	{name: "length-list-3", src: "(length (list 1 2 3))", exp: "3"},
-
-	{
 		name:    "err-assoc-0",
 		src:     "(assoc)",
 		exp:     "{[{assoc: exactly 2 arguments required, but none given}]}",

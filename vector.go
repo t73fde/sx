@@ -14,6 +14,7 @@
 package sx
 
 import (
+	"fmt"
 	"io"
 	"strings"
 )
@@ -82,6 +83,41 @@ func (v Vector) Print(w io.Writer) (int, error) {
 	len += len2
 	return len, err
 }
+
+// --- Sequence methods
+
+func (v Vector) Length() int { return len(v) }
+
+func (v Vector) Nth(n int) (Object, error) {
+	if n < 0 || len(v) <= n {
+		return Nil(), fmt.Errorf("index out of range: %d (max: %d)", n, len(v)-1)
+	}
+	return v[n], nil
+}
+
+func (v Vector) Iterator() SequenceIterator {
+	return &vectorIterator{v, 0}
+}
+
+// --- vectorIterator implements SequenceIterator
+type vectorIterator struct {
+	vec Vector
+	pos int
+}
+
+func (vi *vectorIterator) HasElement() bool { return vi.pos < len(vi.vec) }
+func (vi *vectorIterator) Element() Object {
+	if pos, vec := vi.pos, vi.vec; pos < len(vec) {
+		return vec[pos]
+	}
+	return MakeUndefined()
+}
+func (vi *vectorIterator) Advance() bool {
+	vi.pos++
+	return vi.pos < len(vi.vec)
+}
+
+// --- Vector functions
 
 // GetVector returns the object as a vector, if possible.
 func GetVector(obj Object) (Vector, bool) {

@@ -270,21 +270,6 @@ var Reverse = sxeval.Builtin{
 	},
 }
 
-// Length returns the length of the given list.
-var Length = sxeval.Builtin{
-	Name:     "length",
-	MinArity: 1,
-	MaxArity: 1,
-	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		lst, err := GetList(args, 0)
-		if err != nil {
-			return nil, err
-		}
-		return sx.Int64(int64(lst.Length())), nil
-	},
-}
-
 // Assoc returns the first pair of the a-list where the second argument is
 // equal (e.g. '=) to the pair's car. Otherwise, nil is returned.
 var Assoc = sxeval.Builtin{

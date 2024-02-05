@@ -43,36 +43,6 @@ var VectorP = sxeval.Builtin{
 	},
 }
 
-// VectorLength returns the length of the vector.
-var VectorLength = sxeval.Builtin{
-	Name:     "vector-length",
-	MinArity: 1,
-	MaxArity: 1,
-	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		v, err := GetVector(args, 0)
-		if err != nil {
-			return nil, err
-		}
-		return sx.Int64(len(v)), nil
-	},
-}
-
-// VectorGet returns the object at the given position.
-var VectorGet = sxeval.Builtin{
-	Name:     "vget",
-	MinArity: 2,
-	MaxArity: 2,
-	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		v, pos, err := getVectorIndex(args, 0, 1)
-		if err != nil {
-			return nil, err
-		}
-		return v[pos], nil
-	},
-}
-
 // VectorSetBang overwrites the object at the given position.
 var VectorSetBang = sxeval.Builtin{
 	Name:     "vset!",
@@ -80,32 +50,25 @@ var VectorSetBang = sxeval.Builtin{
 	MaxArity: 3,
 	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		v, pos, err := getVectorIndex(args, 0, 1)
+		v, err := GetVector(args, 0)
 		if err != nil {
 			return nil, err
 		}
+		num, err := GetNumber(args, 1)
+		if err != nil {
+			return nil, err
+		}
+		pos := num.(sx.Int64)
+		if pos < 0 {
+			return nil, fmt.Errorf("negative vector index not allowed: %v", pos)
+		}
+		if sx.Int64(len(v)) <= pos {
+			return nil, fmt.Errorf("vector index out of range: %v", pos)
+		}
+
 		v[pos] = args[2]
 		return v, nil
 	},
-}
-
-func getVectorIndex(args sx.Vector, posV, posI int) (sx.Vector, sx.Int64, error) {
-	v, err := GetVector(args, posV)
-	if err != nil {
-		return nil, 0, err
-	}
-	num, err := GetNumber(args, posI)
-	if err != nil {
-		return nil, 0, err
-	}
-	pos := num.(sx.Int64)
-	if pos < 0 {
-		return nil, 0, fmt.Errorf("negative vector index not allowed: %v", pos)
-	}
-	if sx.Int64(len(v)) <= pos {
-		return nil, 0, fmt.Errorf("vector index out of range: %v", pos)
-	}
-	return v, pos, nil
 }
 
 // Vector2List returns the vector as a (pair) list.

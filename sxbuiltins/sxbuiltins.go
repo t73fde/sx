@@ -80,6 +80,15 @@ func GetVector(args sx.Vector, pos int) (sx.Vector, error) {
 	return nil, fmt.Errorf("argument %d is not a vector, but %T/%v", pos+1, obj, obj)
 }
 
+// GetSequence returns the given argument as a sequence, and checks for errors.
+func GetSequence(args sx.Vector, pos int) (sx.Sequence, error) {
+	obj := args[pos]
+	if seq, ok := sx.GetSequence(obj); ok {
+		return seq, nil
+	}
+	return nil, fmt.Errorf("argument %d is not a sequence, but %T/%v", pos+1, obj, obj)
+}
+
 // GetBinding returns the given argument as a binding, and checks for errors.
 func GetBinding(args sx.Vector, pos int) (*sxeval.Binding, error) {
 	obj := args[pos]

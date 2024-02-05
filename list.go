@@ -131,6 +131,54 @@ func (pair *Pair) Print(w io.Writer) (int, error) {
 	return len, err
 }
 
+// --- Sequence methods
+
+func (pair *Pair) Length() int {
+	result := 0
+	for n := pair; n != nil; n = n.Tail() {
+		result++
+	}
+	return result
+}
+
+func (pair *Pair) Nth(n int) (Object, error) {
+	if n < 0 {
+		return Nil(), fmt.Errorf("negative index %d", n)
+	}
+	cnt := 0
+	for node := pair; node != nil; node = node.Tail() {
+		if cnt == n {
+			return node.Car(), nil
+		}
+		cnt++
+	}
+	return Nil(), fmt.Errorf("index too large: %d for %v", n, pair)
+}
+
+func (pair *Pair) Iterator() SequenceIterator {
+	return &pairIterator{pair}
+}
+
+// --- pairIterator implements SequenceIterator
+type pairIterator struct {
+	curr *Pair
+}
+
+func (pi *pairIterator) HasElement() bool { return pi.curr != nil }
+func (pi *pairIterator) Element() Object {
+	if node := pi.curr; node != nil {
+		return node.Car()
+	}
+	return MakeUndefined()
+}
+func (pi *pairIterator) Advance() bool {
+	tail := pi.curr.Tail()
+	pi.curr = tail
+	return tail != nil
+}
+
+// --- Pair / list methods
+
 // GetPair returns the object as a pair.
 func GetPair(obj Object) (*Pair, bool) {
 	if IsNil(obj) {
@@ -252,14 +300,14 @@ func (pair *Pair) Tail() *Pair {
 	return nil
 }
 
-// Length returns the length of the pair list.
-func (pair *Pair) Length() int {
-	result := 0
-	for n := pair; n != nil; n = n.Tail() {
-		result++
-	}
-	return result
-}
+// UnsafeLength returns the length of the pair list.
+// func (pair *Pair) UnsafeLength() int {
+// 	result := 0
+// 	for n := pair; n != nil; n = n.Tail() {
+// 		result++
+// 	}
+// 	return result
+// }
 
 // Assoc returns the first pair of a list where the car IsEqual to the given
 // object.
