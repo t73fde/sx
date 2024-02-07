@@ -61,6 +61,10 @@ func TestSXHTML(t *testing.T) {
 		{name: "DeletedAttr", src: `(p (@ (a ()) (z z) (a a)))`, exp: `<p z="z"></p>`},
 		{name: "EmptyAttrKey", src: `(p (@ ("" . a)))`, exp: `<p></p>`},
 		{name: "NilAttrKey", src: `(p (@ (() . a)))`, exp: `<p></p>`},
+		{name: "StringAttr", src: `(p (@ (a . "b")))`, exp: `<p a="b"></p>`},
+		{name: "SymbolAttr", src: `(p (@ (a . b)))`, exp: `<p a="b"></p>`},
+		{name: "NumberAttr", src: `(p (@ (a . 7)))`, exp: `<p a="7"></p>`},
+		{name: "ListAttr", src: `(p (@ (a (1))))`, exp: `<p></p>`},
 
 		{name: "IgnoreEmptyTag", src: `(p)`, exp: ``},
 		{name: "IgnoreTagWithEmptyString", src: `(div "")`, exp: ``},

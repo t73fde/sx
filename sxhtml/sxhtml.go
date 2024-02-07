@@ -300,6 +300,8 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 				s = string(o)
 			case sx.Symbol:
 				s = string(o)
+			case sx.Number:
+				s = o.String()
 			default:
 				continue
 			}
