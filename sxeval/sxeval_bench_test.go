@@ -36,7 +36,7 @@ func BenchmarkEvenTCO(b *testing.B) {
 			}
 			expr = env.Rework(expr)
 			b.ResetTimer()
-			for n := 0; n < b.N; n++ {
+			for range b.N {
 				env.Run(expr)
 			}
 		})
@@ -54,7 +54,7 @@ func BenchmarkFac(b *testing.B) {
 	}
 	expr = env.Rework(expr)
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		env.Run(expr)
 	}
 }
@@ -70,7 +70,7 @@ func BenchmarkFib(b *testing.B) {
 	}
 	expr = env.Rework(expr)
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		env.Run(expr)
 	}
 }

@@ -127,7 +127,7 @@ func readString(rd *Reader, _ rune) (sx.Object, error) {
 
 func readRune(rd *Reader, numDigits int) (rune, error) {
 	result := rune(0)
-	for i := 0; i < numDigits; i++ {
+	for range numDigits {
 		ch, err := rd.nextRune()
 		if err != nil {
 			return result, err

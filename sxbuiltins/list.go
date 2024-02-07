@@ -231,7 +231,7 @@ var Append = sxeval.Builtin{
 		}
 		lastList := len(args) - 1
 		lsts := make([]*sx.Pair, lastList)
-		for i := 0; i < lastList; i++ {
+		for i := range lastList {
 			lst, err := GetList(args, i)
 			if err != nil {
 				return nil, err

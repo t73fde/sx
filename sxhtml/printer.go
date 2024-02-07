@@ -81,8 +81,7 @@ func (pr *printer) printComment(s string) {
 func (pr *printer) printAttributeValue(s string) {
 	last := 0
 	var html string
-	lenS := len(s)
-	for i := 0; i < lenS; i++ {
+	for i := range len(s) {
 		switch s[i] {
 		case '\000':
 			html = htmlNull

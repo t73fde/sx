@@ -131,7 +131,7 @@ func combineArgs(args []sxeval.Expr) sxeval.Expr {
 		return &sxeval.BuiltinCallExpr{Proc: &Append, Args: newArgs}
 	}
 	newArgs := make([]sxeval.Expr, len(args))
-	for i := 0; i < mleCount; i++ {
+	for i := range mleCount {
 		newArgs[i] = args[i].(MakeListExpr).Elem
 	}
 	if mleCount < len(args) {
@@ -141,7 +141,7 @@ func combineArgs(args []sxeval.Expr) sxeval.Expr {
 	return listArgs(newArgs)
 }
 func countMLE(args []sxeval.Expr) int {
-	for i := 0; i < len(args); i++ {
+	for i := range len(args) {
 		if _, isMLE := args[i].(MakeListExpr); !isMLE {
 			return i
 		}
@@ -284,7 +284,8 @@ func (qqp *qqParser) parseList(lst *sx.Pair) ([]sxeval.Expr, error) {
 	}
 
 	args := make([]sxeval.Expr, numArgs)
-	for node, i := lst, 0; i < realArgs; i++ {
+	node := lst
+	for i := range realArgs {
 		elem := node.Car()
 		node = node.Tail()
 		if elemList, isPair := sx.GetPair(elem); isPair && elemList != nil {

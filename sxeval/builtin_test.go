@@ -51,7 +51,7 @@ func TestBuiltinSimple(t *testing.T) {
 	}
 
 	args := sx.Vector{}
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		res, err := b.Call(nil, args)
 		if err != nil {
 			t.Error(err)

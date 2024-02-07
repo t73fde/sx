@@ -41,7 +41,7 @@ var Add = sxeval.Builtin{
 			return acc, nil
 		}
 
-		for i := 0; i < len(args); i++ {
+		for i := range len(args) {
 			num, err := GetNumber(args, i)
 			if err != nil {
 				return nil, err
@@ -85,7 +85,7 @@ var Mul = sxeval.Builtin{
 	TestPure: sxeval.AssertPure,
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(1))
-		for i := 0; i < len(args); i++ {
+		for i := range len(args) {
 			num, err := GetNumber(args, i)
 			if err != nil {
 				return nil, err

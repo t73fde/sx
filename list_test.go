@@ -6,6 +6,9 @@
 // sx is licensed under the latest version of the EUPL (European Union
 // Public License). Please see file LICENSE.txt for your rights and obligations
 // under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sx_test
@@ -90,7 +93,7 @@ func TestListLength(t *testing.T) {
 		t.Error("Nil().Length() != 0, but", got)
 	}
 	objs := make(sx.Vector, 0, 100)
-	for i := 0; i < cap(objs); i++ {
+	for i := range cap(objs) {
 		objs = append(objs, sx.Nil())
 		l := sx.MakeList(objs...)
 		if got := l.Length(); got != len(objs) {
