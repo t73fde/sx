@@ -129,6 +129,9 @@ func (enc *myEncoder) generate(obj sx.Object) {
 	case sx.String:
 		enc.pr.printHTML(string(o))
 		enc.lastWasTag = false
+	case sx.Number:
+		enc.pr.printHTML(string(o.String()))
+		enc.lastWasTag = false
 	case *sx.Pair:
 		if o.IsNil() {
 			enc.lastWasTag = false

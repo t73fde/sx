@@ -21,7 +21,7 @@ For example, the following simple HTML text:
 A s-expression representation could be:
 
     (html
-      (head (title "Example))
+      (head (title "Example"))
       (body
         (h1 (@ {id "main}) "Title")
         (p "This is some example text.")
@@ -57,7 +57,7 @@ replacement characters only for HTML content, but not even for HTML attributes.
 Similar for Jinja. The html/template library for Go requires the developer to
 correctly specify the adequate escaping mode.
 
-This is because string template libraries operates on, well, the string level.
+This is because string template libraries operates just at the string level.
 All structure of the HTML text is lost.
 
 By using a structured representation of HTML, the HTML generator knows about
@@ -156,3 +156,11 @@ If you want to prohibit the generation of some attribute while still exntending
 the list of attributes at the front, use the nil value *()* as the value of the
 attribute. For example, `(input (@ (disabled ()) (disabled . "yes")))` will be
 transformed to `<input>`.
+
+## Content
+
+HTML is not just about tags and attributes. These are there to structure the
+content. To specify content, use preferabily strings. Numbers are allowed
+too, you don't habe to convert them into a string. Symbols are ignored,
+because their string representation may change (for example if symbols are
+case-insensitive).
