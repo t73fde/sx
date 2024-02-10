@@ -46,6 +46,7 @@ func (sp *Special) IsNil() bool                  { return sp == nil }
 func (sp *Special) IsAtom() bool                 { return sp == nil }
 func (sp *Special) IsEqual(other sx.Object) bool { return sp == other }
 func (sp *Special) String() string               { return "#<special:" + sp.Name + ">" }
+func (sp *Special) GoString() string             { return sp.String() }
 
 // Parse the args by calling the syntax function.
 func (sp *Special) Parse(pf *ParseEnvironment, args *sx.Pair) (Expr, error) {

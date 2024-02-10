@@ -53,8 +53,11 @@ func (i Int64) IsEqual(other Object) bool {
 	return false
 }
 
-// String returns the Go string representation.
+// String returns the string representation.
 func (i Int64) String() string { return strconv.FormatInt(int64(i), 10) }
+
+// GoString returns the Go string representation.
+func (i Int64) GoString() string { return i.String() }
 
 // GetNumber returns the object as a number, if possible.
 func GetNumber(obj Object) (Number, bool) {

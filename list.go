@@ -79,6 +79,9 @@ func (pair *Pair) String() string {
 	return sb.String()
 }
 
+// GoString returns the go string representation.
+func (pair *Pair) GoString() string { return pair.String() }
+
 // Print write the string representation to the given Writer.
 func (pair *Pair) Print(w io.Writer) (int, error) {
 	if pair == nil {

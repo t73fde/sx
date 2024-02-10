@@ -42,6 +42,9 @@ func (s String) String() string {
 	return sb.String()
 }
 
+// GoString returns the go string representation.
+func (s String) GoString() string { return string(s) }
+
 var (
 	quote        = []byte{'"'}
 	escQuote     = []byte{'\\', '"'}

@@ -22,6 +22,7 @@ import (
 // Object is the generic value all s-expressions must fulfill.
 type Object interface {
 	fmt.Stringer
+	fmt.GoStringer
 
 	// IsNil checks if the concrete object is nil.
 	IsNil() bool

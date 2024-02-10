@@ -53,8 +53,11 @@ func (b *Builtin) IsAtom() bool { return b == nil }
 // IsEqual compare two objects for deep equality.
 func (b *Builtin) IsEqual(other sx.Object) bool { return b == other }
 
-// String returns go representation.
+// String returns the string representation.
 func (b *Builtin) String() string { return "#<builtin:" + b.Name + ">" }
+
+// GoString returns the go string representation.
+func (b *Builtin) GoString() string { return b.String() }
 
 // --- Builtin methods to implement sxeval.Callable
 

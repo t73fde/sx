@@ -19,10 +19,11 @@ type Undefined struct{}
 // MakeUndefined creates an undefined objact.
 func MakeUndefined() Undefined { return Undefined{} }
 
-func (Undefined) IsNil() bool                    { return false }
-func (Undefined) IsAtom() bool                   { return false }
-func (udef Undefined) IsEqual(other Object) bool { return IsUndefined(other) }
-func (udef Undefined) String() string            { return "#<undefined>" }
+func (Undefined) IsNil() bool               { return false }
+func (Undefined) IsAtom() bool              { return false }
+func (Undefined) IsEqual(other Object) bool { return IsUndefined(other) }
+func (Undefined) String() string            { return "#<undefined>" }
+func (udef Undefined) GoString() string     { return udef.String() }
 
 // IsUndefined returns true iff the object is a undefined value
 func IsUndefined(obj Object) bool {

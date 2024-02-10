@@ -51,6 +51,8 @@ func (v Vector) String() string {
 	return sb.String()
 }
 
+func (v Vector) GoString() string { return v.String() }
+
 // Print write the string representation to the given Writer.
 func (v Vector) Print(w io.Writer) (int, error) {
 	if len(v) == 0 {

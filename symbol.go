@@ -39,6 +39,9 @@ func (sy Symbol) String() string {
 	return sb.String()
 }
 
+// GoString returns the go string representation.
+func (sy Symbol) GoString() string { return string(sy) }
+
 // Print write the string representation to the given Writer.
 func (sy Symbol) Print(w io.Writer) (int, error) {
 	// TODO: provide escape of symbol contains non-printable chars.

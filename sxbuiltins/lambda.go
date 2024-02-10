@@ -273,6 +273,7 @@ func (p *Procedure) IsNil() bool                  { return p == nil }
 func (p *Procedure) IsAtom() bool                 { return p == nil }
 func (p *Procedure) IsEqual(other sx.Object) bool { return p == other }
 func (p *Procedure) String() string               { return "#<lambda:" + p.Name + ">" }
+func (p *Procedure) GoString() string             { return p.String() }
 
 // --- Builtin methods to implement sxeval.Callable
 

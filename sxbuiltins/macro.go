@@ -45,6 +45,8 @@ func (m *Macro) IsNil() bool                  { return m == nil }
 func (m *Macro) IsAtom() bool                 { return m == nil }
 func (m *Macro) IsEqual(other sx.Object) bool { return m == other }
 func (m *Macro) String() string               { return "#<macro:" + m.Name + ">" }
+func (m *Macro) GoString() string             { return m.String() }
+
 func (m *Macro) Parse(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 	form, err := m.Expand(pf, args)
 	if err != nil {

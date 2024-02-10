@@ -68,17 +68,17 @@ type Binding struct {
 	frozen bool
 }
 
-func (mb *Binding) IsNil() bool  { return mb == nil }
-func (mb *Binding) IsAtom() bool { return mb == nil }
-func (mb *Binding) IsEqual(other sx.Object) bool {
-	if mb == other {
+func (b *Binding) IsNil() bool  { return b == nil }
+func (b *Binding) IsAtom() bool { return b == nil }
+func (b *Binding) IsEqual(other sx.Object) bool {
+	if b == other {
 		return true
 	}
-	if mb.IsNil() {
+	if b.IsNil() {
 		return sx.IsNil(other)
 	}
 	if omb, ok := other.(*Binding); ok {
-		mvars, ovars := mb.vars, omb.vars
+		mvars, ovars := b.vars, omb.vars
 		if len(mvars) != len(ovars) {
 			return false
 		}
@@ -92,119 +92,121 @@ func (mb *Binding) IsEqual(other sx.Object) bool {
 	}
 	return false
 }
-func (mb *Binding) String() string {
-	return fmt.Sprintf("#<binding:%s/%d>", mb.name, len(mb.vars))
+func (b *Binding) String() string {
+	return fmt.Sprintf("#<binding:%s/%d>", b.name, len(b.vars))
 }
 
+func (b *Binding) GoString() string { return b.String() }
+
 // Name returns the local name of this binding.
-func (mb *Binding) Name() string { return mb.name }
+func (b *Binding) Name() string { return b.name }
 
 // Parent returns the parent binding.
-func (mb *Binding) Parent() *Binding {
-	if mb == nil {
+func (b *Binding) Parent() *Binding {
+	if b == nil {
 		return nil
 	}
-	return mb.parent
+	return b.parent
 }
 
 // Bind creates a local mapping with a given symbol and object.
 //
 // A previous, non-const mapping will be overwritten.
-func (mb *Binding) Bind(sym sx.Symbol, val sx.Object) error {
-	if mb.frozen {
-		return ErrBindingFrozen{Binding: mb}
+func (b *Binding) Bind(sym sx.Symbol, val sx.Object) error {
+	if b.frozen {
+		return ErrBindingFrozen{Binding: b}
 	}
-	if mb.IsConst(sym) {
+	if b.IsConst(sym) {
 		return ErrConstBinding{Sym: sym}
 	}
-	if _, found := mb.vars[sym]; found {
-		mb.vars[sym] = val
+	if _, found := b.vars[sym]; found {
+		b.vars[sym] = val
 		return nil
 	}
-	mb.vars[sym] = val
+	b.vars[sym] = val
 	return nil
 }
 
 // BindConst creates a local mapping of the symbol to the object, which
 // cannot be changed afterwards.
-func (mb *Binding) BindConst(sym sx.Symbol, val sx.Object) error {
-	if mb.frozen {
-		return ErrBindingFrozen{Binding: mb}
+func (b *Binding) BindConst(sym sx.Symbol, val sx.Object) error {
+	if b.frozen {
+		return ErrBindingFrozen{Binding: b}
 	}
-	if mb.IsConst(sym) {
+	if b.IsConst(sym) {
 		return ErrConstBinding{Sym: sym}
 	}
-	if mb.consts == nil {
-		mb.consts = map[sx.Symbol]struct{}{sym: {}}
+	if b.consts == nil {
+		b.consts = map[sx.Symbol]struct{}{sym: {}}
 	} else {
-		mb.consts[sym] = struct{}{}
+		b.consts[sym] = struct{}{}
 	}
-	if _, found := mb.vars[sym]; found {
-		mb.vars[sym] = val
+	if _, found := b.vars[sym]; found {
+		b.vars[sym] = val
 		return nil
 	}
-	mb.vars[sym] = val
+	b.vars[sym] = val
 	return nil
 }
 
-func (mb *Binding) BindSpecial(syn *Special) error {
-	return mb.BindConst(sx.Symbol(syn.Name), syn)
+func (b *Binding) BindSpecial(syn *Special) error {
+	return b.BindConst(sx.Symbol(syn.Name), syn)
 }
 
 // BindBuiltin binds the given builtin with its given name.
-func (mb *Binding) BindBuiltin(b *Builtin) error {
-	return mb.BindConst(sx.Symbol(b.Name), b)
+func (b *Binding) BindBuiltin(bi *Builtin) error {
+	return b.BindConst(sx.Symbol(bi.Name), bi)
 }
 
 // Lookup will search for a local binding of the given symbol. If not
 // found, the search will *not* be continued in the parent binding.
 // Use the global `Resolve` function, if you want a search up to the parent.
-func (mb *Binding) Lookup(sym sx.Symbol) (sx.Object, bool) {
-	obj, found := mb.vars[sym]
+func (b *Binding) Lookup(sym sx.Symbol) (sx.Object, bool) {
+	obj, found := b.vars[sym]
 	return obj, found
 }
 
 // IsConst returns true if the binding of the symbol is a constant binding.
-func (mb *Binding) IsConst(sym sx.Symbol) bool {
-	if mb == nil {
+func (b *Binding) IsConst(sym sx.Symbol) bool {
+	if b == nil {
 		return false
 	}
-	if mb.frozen {
-		if _, found := mb.vars[sym]; found {
+	if b.frozen {
+		if _, found := b.vars[sym]; found {
 			return true
 		}
 	}
-	if mb.consts == nil {
+	if b.consts == nil {
 		return false
 	}
-	_, found := mb.consts[sym]
+	_, found := b.consts[sym]
 	return found
 }
 
 // Bindings returns all bindings as an a-list in some random order.
-func (mb *Binding) Bindings() *sx.Pair {
+func (b *Binding) Bindings() *sx.Pair {
 	result := sx.Nil()
-	for k, v := range mb.vars {
+	for k, v := range b.vars {
 		result = result.Cons(sx.Cons(k, v))
 	}
 	return result
 }
 
 // Unbind removes the mapping of the given symbol to an object.
-func (mb *Binding) Unbind(sym sx.Symbol) error {
-	if mb.frozen {
-		return ErrBindingFrozen{Binding: mb}
+func (b *Binding) Unbind(sym sx.Symbol) error {
+	if b.frozen {
+		return ErrBindingFrozen{Binding: b}
 	}
-	delete(mb.vars, sym)
+	delete(b.vars, sym)
 	return nil
 }
 
 // Freeze sets the binding in a read-only state.
-func (mb *Binding) Freeze() { mb.frozen = true }
+func (b *Binding) Freeze() { b.frozen = true }
 
 // Resolve a symbol in a binding and all of its parent bindings.
-func (mb *Binding) Resolve(sym sx.Symbol) (sx.Object, bool) {
-	for curr := mb; curr != nil; curr = curr.parent {
+func (b *Binding) Resolve(sym sx.Symbol) (sx.Object, bool) {
+	for curr := b; curr != nil; curr = curr.parent {
 		if obj, found := curr.Lookup(sym); found {
 			return obj, true
 		}
@@ -214,8 +216,8 @@ func (mb *Binding) Resolve(sym sx.Symbol) (sx.Object, bool) {
 
 // isConstBinding returns true if the symbol is defined with a constant
 // binding in the given binding or its parent bindings.
-func (mb *Binding) isConstantBind(sym sx.Symbol) bool {
-	for curr := mb; curr != nil; curr = curr.parent {
+func (b *Binding) isConstantBind(sym sx.Symbol) bool {
+	for curr := b; curr != nil; curr = curr.parent {
 		if curr.IsConst(sym) {
 			return true
 		}
@@ -231,6 +233,6 @@ func GetBinding(obj sx.Object) (*Binding, bool) {
 	if sx.IsNil(obj) {
 		return nil, false
 	}
-	env, ok := obj.(*Binding)
-	return env, ok
+	b, ok := obj.(*Binding)
+	return b, ok
 }
