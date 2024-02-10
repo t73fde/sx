@@ -115,7 +115,7 @@ func (oe ObjExpr) ConstObject() sx.Object { return oe.Obj }
 
 // ResolveSymbolExpr resolves the given symbol in an environment and returns the value.
 type ResolveSymbolExpr struct {
-	Symbol sx.Symbol
+	Symbol *sx.Symbol
 }
 
 func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.Symbol }

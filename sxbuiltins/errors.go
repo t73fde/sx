@@ -41,7 +41,7 @@ var Error = sxeval.Builtin{
 			switch o := arg.(type) {
 			case sx.String:
 				sb.WriteString(string(o))
-			case sx.Symbol:
+			case *sx.Symbol:
 				sb.WriteString(o.GoString())
 			default:
 				sb.WriteString(arg.String())

@@ -351,7 +351,7 @@ func analyseList(lst *sx.Pair) (int, *sx.Pair, *sx.Pair) {
 	return length, prevObj, lastPair
 }
 
-func getUnquoteObj(sym sx.Symbol, lst *sx.Pair) (sx.Object, error) {
+func getUnquoteObj(sym *sx.Symbol, lst *sx.Pair) (sx.Object, error) {
 	args, isPair := sx.GetPair(lst.Cdr())
 	if !isPair {
 		return nil, sx.ErrImproper{Pair: lst}

@@ -51,7 +51,7 @@ restart:
 		return NilExpr, nil
 	}
 	switch f := form.(type) {
-	case sx.Symbol:
+	case *sx.Symbol:
 		return ResolveSymbolExpr{Symbol: f}, nil
 	case *sx.Pair:
 		expr, err := pf.parsePair(f)
@@ -130,11 +130,11 @@ func (pf *ParseEnvironment) MakeChildFrame(name string, baseSize int) *ParseEnvi
 	}
 }
 
-func (pf *ParseEnvironment) Bind(sym sx.Symbol, obj sx.Object) error {
+func (pf *ParseEnvironment) Bind(sym *sx.Symbol, obj sx.Object) error {
 	return pf.binding.Bind(sym, obj)
 }
 
-func (pf *ParseEnvironment) Resolve(sym sx.Symbol) (sx.Object, bool) {
+func (pf *ParseEnvironment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return pf.binding.Resolve(sym)
 }
 func (pf *ParseEnvironment) Binding() *Binding { return pf.binding }

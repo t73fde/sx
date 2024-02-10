@@ -33,14 +33,24 @@ const (
 )
 
 // Names for special symbols.
+const (
+	nameAttr          = "@"
+	nameCDATA         = "@C"
+	nameNoEscape      = "@H"
+	nameListSplice    = "@L"
+	nameInlineComment = "@@"
+	nameBlockComment  = "@@@"
+	nameDoctype       = "@@@@"
+)
+
 var (
-	SymAttr          = sx.MakeSymbol("@")
-	SymCDATA         = sx.MakeSymbol("@C")
-	SymNoEscape      = sx.MakeSymbol("@H")
-	SymListSplice    = sx.MakeSymbol("@L")
-	SymInlineComment = sx.MakeSymbol("@@")
-	SymBlockComment  = sx.MakeSymbol("@@@")
-	SymDoctype       = sx.MakeSymbol("@@@@")
+	SymAttr          = sx.MakeSymbol(nameAttr)
+	SymCDATA         = sx.MakeSymbol(nameCDATA)
+	SymNoEscape      = sx.MakeSymbol(nameNoEscape)
+	SymListSplice    = sx.MakeSymbol(nameListSplice)
+	SymInlineComment = sx.MakeSymbol(nameInlineComment)
+	SymBlockComment  = sx.MakeSymbol(nameBlockComment)
+	SymDoctype       = sx.MakeSymbol(nameDoctype)
 )
 
 // Generator is the object that allows to generate HTML.
@@ -66,43 +76,33 @@ func NewGenerator(opts ...Option) *Generator {
 // Special elements / attributes
 var (
 	// Void elements: https://html.spec.whatwg.org/multipage/syntax.html#void-elements
-	voidTags = map[sx.Symbol]bool{
-		sx.MakeSymbol("area"): true, sx.MakeSymbol("base"): true, sx.MakeSymbol("br"): true,
-		sx.MakeSymbol("col"): true, sx.MakeSymbol("embed"): true, sx.MakeSymbol("hr"): true,
-		sx.MakeSymbol("img"): true, sx.MakeSymbol("input"): true, sx.MakeSymbol("link"): true,
-		sx.MakeSymbol("meta"): true, sx.MakeSymbol("source"): true,
-		sx.MakeSymbol("track"): true, sx.MakeSymbol("wbr"): true,
+	voidTags = map[string]bool{
+		"area": true, "base": true, "br": true, "col": true, "embed": true, "hr": true,
+		"img": true, "input": true, "link": true, "meta": true, "source": true,
+		"track": true, "wbr": true,
 	}
 	// Attributes with URL values: https://html.spec.whatwg.org/multipage/indices.html#attributes-1
-	urlAttrs = map[sx.Symbol]bool{
-		sx.MakeSymbol("action"): true, sx.MakeSymbol("cite"): true, sx.MakeSymbol("data"): true,
-		sx.MakeSymbol("formaction"): true, sx.MakeSymbol("href"): true,
-		sx.MakeSymbol("itemid"): true, sx.MakeSymbol("itemprop"): true,
-		sx.MakeSymbol("itemtype"): true, sx.MakeSymbol("ping"): true,
-		sx.MakeSymbol("poster"): true, sx.MakeSymbol("src"): true,
+	urlAttrs = map[string]bool{
+		"action": true, "cite": true, "data": true, "formaction": true, "href": true,
+		"itemid": true, "itemprop": true, "itemtype": true, "ping": true,
+		"poster": true, "src": true,
 	}
-	allNLTags = map[sx.Symbol]bool{
-		sx.MakeSymbol("head"): true, sx.MakeSymbol("link"): true, sx.MakeSymbol("meta"): true,
-		sx.MakeSymbol("title"): true, sx.MakeSymbol("div"): true,
+	allNLTags = map[string]bool{
+		"head": true, "link": true, "meta": true, "title": true, "div": true,
 	}
-	nlTags = map[sx.Symbol]bool{
-		SymCDATA:              true,
-		sx.MakeSymbol("head"): true, sx.MakeSymbol("link"): true, sx.MakeSymbol("meta"): true,
-		sx.MakeSymbol("title"): true, sx.MakeSymbol("script"): true, sx.MakeSymbol("body"): true,
-		sx.MakeSymbol("article"): true, sx.MakeSymbol("details"): true, sx.MakeSymbol("div"): true,
-		sx.MakeSymbol("header"): true, sx.MakeSymbol("footer"): true, sx.MakeSymbol("form"): true,
-		sx.MakeSymbol("main"): true, sx.MakeSymbol("summary"): true,
-		sx.MakeSymbol("h1"): true, sx.MakeSymbol("h2"): true, sx.MakeSymbol("h3"): true,
-		sx.MakeSymbol("h4"): true, sx.MakeSymbol("h5"): true, sx.MakeSymbol("h6"): true,
-		sx.MakeSymbol("li"): true, sx.MakeSymbol("ol"): true, sx.MakeSymbol("ul"): true,
-		sx.MakeSymbol("dd"): true, sx.MakeSymbol("dt"): true, sx.MakeSymbol("dl"): true,
-		sx.MakeSymbol("table"): true, sx.MakeSymbol("thead"): true, sx.MakeSymbol("tbody"): true,
-		sx.MakeSymbol("tr"): true, sx.MakeSymbol("section"): true, sx.MakeSymbol("input"): true,
+	nlTags = map[string]bool{
+		nameCDATA: true,
+		"head":    true, "link": true, "meta": true, "title": true, "script": true, "body": true,
+		"article": true, "details": true, "div": true, "header": true, "footer": true, "form": true,
+		"main": true, "summary": true,
+		"h1": true, "h2": true, "h3": true, "h4": true, "h5": true, "h6": true,
+		"li": true, "ol": true, "ul": true, "dd": true, "dt": true, "dl": true,
+		"table": true, "thead": true, "tbody": true, "tr": true,
+		"section": true, "input": true,
 	}
 	// Elements that may be ignored if empty.
-	emptyTags = map[sx.Symbol]bool{
-		sx.MakeSymbol("div"): true, sx.MakeSymbol("span"): true, sx.MakeSymbol("code"): true,
-		sx.MakeSymbol("kbd"): true, sx.MakeSymbol("p"): true, sx.MakeSymbol("samp"): true,
+	emptyTags = map[string]bool{
+		"div": true, "span": true, "code": true, "kbd": true, "p": true, "samp": true,
 	}
 )
 
@@ -144,18 +144,18 @@ func (enc *myEncoder) generate(obj sx.Object) {
 		if sym, isSymbol := sx.GetSymbol(o.Car()); isSymbol {
 			tail := o.Tail()
 			if s := sym.GoString(); s[0] == '@' {
-				switch sym {
-				case SymCDATA:
+				switch s {
+				case nameCDATA:
 					enc.writeCDATA(tail)
-				case SymNoEscape:
+				case nameNoEscape:
 					enc.writeNoEscape(tail)
-				case SymInlineComment:
+				case nameInlineComment:
 					enc.writeComment(tail)
-				case SymBlockComment:
+				case nameBlockComment:
 					enc.writeCommentML(tail)
-				case SymListSplice:
+				case nameListSplice:
 					enc.generateList(tail)
-				case SymDoctype:
+				case nameDoctype:
 					enc.writeDoctype(tail)
 				default:
 					enc.writeTag(sym, tail)
@@ -217,13 +217,14 @@ func (enc *myEncoder) writeDoctype(elems *sx.Pair) {
 	enc.generateList(elems)
 }
 
-func (enc *myEncoder) writeTag(sym sx.Symbol, elems *sx.Pair) {
-	if emptyTags[sym] && ignoreEmptyStrings(elems) == nil {
+func (enc *myEncoder) writeTag(sym *sx.Symbol, elems *sx.Pair) {
+	symVal := sym.GoString()
+	if emptyTags[symVal] && ignoreEmptyStrings(elems) == nil {
 		return
 	}
-	withNewline := enc.gen.withNewline && nlTags[sym]
+	withNewline := enc.gen.withNewline && nlTags[symVal]
 	tagName := sym.String()
-	if withNewline && (!enc.lastWasTag || allNLTags[sym]) {
+	if withNewline && (!enc.lastWasTag || allNLTags[symVal]) {
 		enc.pr.printStrings("\n<", tagName)
 	} else {
 		enc.pr.printStrings("<", tagName)
@@ -233,7 +234,7 @@ func (enc *myEncoder) writeTag(sym sx.Symbol, elems *sx.Pair) {
 		elems = elems.Tail()
 	}
 	enc.pr.printString(">")
-	if voidTags[sym] {
+	if voidTags[symVal] {
 		enc.lastWasTag = withNewline
 		return
 	}
@@ -298,7 +299,7 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 			switch o := obj.(type) {
 			case sx.String:
 				s = string(o)
-			case sx.Symbol:
+			case *sx.Symbol:
 				s = o.GoString()
 			case sx.Number:
 				s = o.GoString()
@@ -327,7 +328,7 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 	}
 }
 
-func getAttributeValue(sym sx.Symbol, value string) string {
+func getAttributeValue(sym *sx.Symbol, value string) string {
 	switch getAttributeType(sym) {
 	case attrURL:
 		return urlEscape(value)
@@ -336,7 +337,7 @@ func getAttributeValue(sym sx.Symbol, value string) string {
 	}
 }
 
-func getAttributeType(sym sx.Symbol) attrType {
+func getAttributeType(sym *sx.Symbol) attrType {
 	name := sym.String()
 	if dataName, isData := strings.CutPrefix(name, "data-"); isData {
 		name = dataName
@@ -349,7 +350,7 @@ func getAttributeType(sym sx.Symbol) attrType {
 		sym = sx.MakeSymbol(name)
 	}
 
-	if urlAttrs[sym] {
+	if urlAttrs[sym.GoString()] {
 		return attrURL
 	}
 	if sym.IsEqual(sx.MakeSymbol("style")) {

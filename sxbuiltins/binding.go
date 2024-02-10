@@ -113,10 +113,10 @@ var BindingResolve = sxeval.Builtin{
 	},
 }
 
-func envGetSymBinding(env *sxeval.Environment, args sx.Vector) (sx.Symbol, *sxeval.Binding, error) {
+func envGetSymBinding(env *sxeval.Environment, args sx.Vector) (*sx.Symbol, *sxeval.Binding, error) {
 	sym, err := GetSymbol(args, 0)
 	if err != nil {
-		return sx.MakeSymbol(""), nil, err
+		return nil, nil, err
 	}
 	if len(args) == 1 {
 		return sym, env.Binding(), err

@@ -235,19 +235,19 @@ type EnvironmentExpr struct {
 func (ee ExecuteError) Error() string { return ee.err.Error() }
 func (ee ExecuteError) Unwrap() error { return ee.err }
 
-func (env *Environment) Bind(sym sx.Symbol, obj sx.Object) error {
+func (env *Environment) Bind(sym *sx.Symbol, obj sx.Object) error {
 	return env.binding.Bind(sym, obj)
 }
-func (env *Environment) BindConst(sym sx.Symbol, obj sx.Object) error {
+func (env *Environment) BindConst(sym *sx.Symbol, obj sx.Object) error {
 	return env.binding.BindConst(sym, obj)
 }
-func (env *Environment) Lookup(sym sx.Symbol) (sx.Object, bool) {
+func (env *Environment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Lookup(sym)
 }
-func (env *Environment) Resolve(sym sx.Symbol) (sx.Object, bool) {
+func (env *Environment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Resolve(sym)
 }
-func (env *Environment) FindBinding(sym sx.Symbol) *Binding {
+func (env *Environment) FindBinding(sym *sx.Symbol) *Binding {
 	for curr := env.binding; curr != nil; curr = curr.parent {
 		if _, found := curr.Lookup(sym); found {
 			return curr
@@ -258,14 +258,14 @@ func (env *Environment) FindBinding(sym sx.Symbol) *Binding {
 
 func (env *Environment) Binding() *Binding { return env.binding }
 
-func (env *Environment) MakeNotBoundError(sym sx.Symbol) NotBoundError {
+func (env *Environment) MakeNotBoundError(sym *sx.Symbol) NotBoundError {
 	return NotBoundError{Binding: env.binding, Sym: sym}
 }
 
 // NotBoundError signals that a symbol was not found in a binding.
 type NotBoundError struct {
 	Binding *Binding
-	Sym     sx.Symbol
+	Sym     *sx.Symbol
 }
 
 func (e NotBoundError) Error() string {
