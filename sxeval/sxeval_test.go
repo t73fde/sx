@@ -27,7 +27,7 @@ import (
 func createTestBinding() *sxeval.Binding {
 	bind := sxeval.MakeRootBinding(2)
 
-	symCat := sx.Symbol("cat")
+	symCat := sx.MakeSymbol("cat")
 	bind.Bind(symCat, &sxeval.Builtin{
 		Name:     "cat",
 		MinArity: 0,
@@ -52,7 +52,7 @@ func createTestBinding() *sxeval.Binding {
 		},
 	})
 
-	symHello := sx.Symbol("hello")
+	symHello := sx.MakeSymbol("hello")
 	bind.Bind(symHello, sx.String("Hello, World"))
 	return bind
 }

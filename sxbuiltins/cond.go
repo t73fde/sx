@@ -92,7 +92,7 @@ func (ce *CondExpr) Unparse() sx.Object {
 	for i := len(ce.Cases) - 1; i >= 0; i-- {
 		obj = sx.Cons(sx.MakeList(ce.Cases[i].Test.Unparse(), ce.Cases[i].Expr.Unparse()), obj)
 	}
-	return sx.Cons(sx.Symbol(condName), obj)
+	return sx.Cons(sx.MakeSymbol(condName), obj)
 }
 
 func (ce *CondExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {

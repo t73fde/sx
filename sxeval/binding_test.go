@@ -22,8 +22,8 @@ import (
 
 func TestBindLookupUnbind(t *testing.T) {
 	t.Parallel()
-	sym1 := sx.Symbol("sym1")
-	sym2 := sx.Symbol("sym2")
+	sym1 := sx.MakeSymbol("sym1")
+	sym2 := sx.MakeSymbol("sym2")
 	root := sxeval.MakeRootBinding(1)
 	root.Bind(sym1, sym2)
 
@@ -72,13 +72,13 @@ func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 sx.S
 func TestAlist(t *testing.T) {
 	t.Parallel()
 	bind := sxeval.MakeRootBinding(7)
-	bind.Bind(sx.Symbol("sym1"), sx.String("sym1"))
-	bind.Bind(sx.Symbol("sym2"), sx.String("sym2"))
-	bind.Bind(sx.Symbol("sym3"), sx.String("sym3"))
-	bind.Bind(sx.Symbol("sym4"), sx.String("sym4"))
-	bind.Bind(sx.Symbol("sym5"), sx.String("sym5"))
-	bind.Bind(sx.Symbol("sym6"), sx.String("sym6"))
-	bind.Bind(sx.Symbol("sym7"), sx.String("sym7"))
+	bind.Bind(sx.MakeSymbol("sym1"), sx.String("sym1"))
+	bind.Bind(sx.MakeSymbol("sym2"), sx.String("sym2"))
+	bind.Bind(sx.MakeSymbol("sym3"), sx.String("sym3"))
+	bind.Bind(sx.MakeSymbol("sym4"), sx.String("sym4"))
+	bind.Bind(sx.MakeSymbol("sym5"), sx.String("sym5"))
+	bind.Bind(sx.MakeSymbol("sym6"), sx.String("sym6"))
+	bind.Bind(sx.MakeSymbol("sym7"), sx.String("sym7"))
 	alist := bind.Bindings()
 	if alist.Length() != 7 {
 		t.Error("Not 7 elements:", alist)
@@ -90,7 +90,7 @@ func TestAlist(t *testing.T) {
 		cons := elem.Car().(*sx.Pair)
 		sym := cons.Car().(sx.Symbol)
 		str := cons.Cdr().(sx.String)
-		if got := sx.Symbol(string(str)); !sym.IsEqual(got) {
+		if got := sx.MakeSymbol(string(str)); !sym.IsEqual(got) {
 			t.Error("Symbol", sym, "is not equal to", str, "but to", got)
 		}
 	}
@@ -117,13 +117,13 @@ func checkBindingEqual(t *testing.T, bind1, bind2 *sxeval.Binding) {
 		t.Error("empty", bind1, "is not equal to empty", bind2)
 		return
 	}
-	sym1 := sx.Symbol("sym1")
+	sym1 := sx.MakeSymbol("sym1")
 	bind1.Bind(sym1, sym1)
 	if bind1.IsEqual(bind2) {
 		t.Error("after adding sym1 just to", bind1, "both bindings are equal")
 		return
 	}
-	sym2 := sx.Symbol("sym2")
+	sym2 := sx.MakeSymbol("sym2")
 	bind2.Bind(sym2, sym2)
 	if bind1.IsEqual(bind2) {
 		t.Error("after adding sym2 just to", bind2, "both bindings are equal")
@@ -145,7 +145,7 @@ func checkBindingEqual(t *testing.T, bind1, bind2 *sxeval.Binding) {
 func TestConstBinding(t *testing.T) {
 	t.Parallel()
 	bind := sxeval.MakeRootBinding(2)
-	symVar, symConst := sx.Symbol("sym-var"), sx.Symbol("sym-const")
+	symVar, symConst := sx.MakeSymbol("sym-var"), sx.MakeSymbol("sym-const")
 	err := bind.Bind(symVar, sx.Int64(0))
 	if err != nil {
 		t.Errorf("error in symVar.Bind(1): %v", err)

@@ -73,7 +73,7 @@ type IfExpr struct {
 }
 
 func (ife *IfExpr) Unparse() sx.Object {
-	return sx.MakeList(sx.Symbol(ifName), ife.Test.Unparse(), ife.True.Unparse(), ife.False.Unparse())
+	return sx.MakeList(sx.MakeSymbol(ifName), ife.Test.Unparse(), ife.True.Unparse(), ife.False.Unparse())
 }
 
 func (ife *IfExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {

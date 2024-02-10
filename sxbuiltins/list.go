@@ -187,7 +187,7 @@ var Last = sxeval.Builtin{
 
 // List returns a list of all arguments.
 var List = sxeval.Builtin{
-	Name:     string(sx.SymbolList),
+	Name:     sx.SymbolList.String(),
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,

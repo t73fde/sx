@@ -102,7 +102,7 @@ func createBinding() *sxeval.Binding {
 	root.Freeze()
 	env := sxeval.MakeChildBinding(root, "vars", len(objects))
 	for _, obj := range objects {
-		if err := env.Bind(sx.Symbol(obj.name), obj.obj); err != nil {
+		if err := env.Bind(sx.MakeSymbol(obj.name), obj.obj); err != nil {
 			panic(err)
 		}
 	}

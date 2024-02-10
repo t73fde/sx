@@ -19,7 +19,12 @@ import (
 )
 
 // Symbol represent a symbol value.
-type Symbol string
+type Symbol struct {
+	val string
+}
+
+// MakeSymbol creates a symbol from a string.
+func MakeSymbol(val string) Symbol { return Symbol{val} }
 
 // IsNil return false, since a symbol is never nil.
 func (sy Symbol) IsNil() bool { return false }
@@ -29,7 +34,7 @@ func (sy Symbol) IsAtom() bool { return true }
 // IsEqual compare two symbols.
 func (sy Symbol) IsEqual(other Object) bool {
 	otherSy, isSymbol := other.(Symbol)
-	return isSymbol && string(sy) == string(otherSy)
+	return isSymbol && sy.val == otherSy.val
 }
 
 // String returns the string representation.
@@ -39,19 +44,19 @@ func (sy Symbol) String() string {
 	return sb.String()
 }
 
-// GoString returns the go string representation.
-func (sy Symbol) GoString() string { return string(sy) }
-
 // Print write the string representation to the given Writer.
 func (sy Symbol) Print(w io.Writer) (int, error) {
 	// TODO: provide escape of symbol contains non-printable chars.
-	return io.WriteString(w, string(sy))
+	return io.WriteString(w, sy.val)
 }
+
+// GoString returns the go string representation.
+func (sy Symbol) GoString() string { return sy.val }
 
 // GetSymbol returns the object as a symbol if possible.
 func GetSymbol(obj Object) (Symbol, bool) {
 	if IsNil(obj) {
-		return "", false
+		return Symbol{""}, false
 	}
 	sym, ok := obj.(Symbol)
 	return sym, ok

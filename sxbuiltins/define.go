@@ -53,20 +53,20 @@ var DefConstS = sxeval.Special{
 
 func parseSymValue(pf *sxeval.ParseEnvironment, args *sx.Pair) (sx.Symbol, sxeval.Expr, error) {
 	if args == nil {
-		return "", nil, fmt.Errorf("need at least two arguments")
+		return sx.MakeSymbol(""), nil, fmt.Errorf("need at least two arguments")
 	}
 	car := args.Car()
 	sym, isSymbol := sx.GetSymbol(car)
 	if !isSymbol {
-		return "", nil, fmt.Errorf("argument 1 must be a symbol, but is: %T/%v", car, car)
+		return sx.MakeSymbol(""), nil, fmt.Errorf("argument 1 must be a symbol, but is: %T/%v", car, car)
 	}
 	cdr := args.Cdr()
 	if sx.IsNil(cdr) {
-		return "", nil, fmt.Errorf("argument 2 missing")
+		return sx.MakeSymbol(""), nil, fmt.Errorf("argument 2 missing")
 	}
 	pair, isPair := sx.GetPair(cdr)
 	if !isPair {
-		return "", nil, fmt.Errorf("argument 2 must be a proper list")
+		return sx.MakeSymbol(""), nil, fmt.Errorf("argument 2 must be a proper list")
 	}
 	val, err := pf.Parse(pair.Car())
 	return sym, val, err
@@ -80,9 +80,9 @@ type DefineExpr struct {
 }
 
 func (de *DefineExpr) Unparse() sx.Object {
-	sym := sx.Symbol(defvarName)
+	sym := sx.MakeSymbol(defvarName)
 	if de.Const {
-		sym = sx.Symbol(defconstName)
+		sym = sx.MakeSymbol(defconstName)
 	}
 	return sx.MakeList(sym, de.Sym, de.Val.Unparse())
 }
@@ -175,7 +175,7 @@ type SetXExpr struct {
 }
 
 func (se *SetXExpr) Unparse() sx.Object {
-	return sx.MakeList(sx.Symbol(setXName), se.Sym, se.Val.Unparse())
+	return sx.MakeList(sx.MakeSymbol(setXName), se.Sym, se.Val.Unparse())
 }
 
 func (se *SetXExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {

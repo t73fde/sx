@@ -47,17 +47,17 @@ var DefunS = sxeval.Special{
 
 func parseDefProc(pf *sxeval.ParseEnvironment, args *sx.Pair) (sx.Symbol, *LambdaExpr, error) {
 	if args == nil {
-		return "", nil, sxeval.ErrNoArgs
+		return sx.MakeSymbol(""), nil, sxeval.ErrNoArgs
 	}
 	sym, isSymbol := sx.GetSymbol(args.Car())
 	if !isSymbol {
-		return "", nil, fmt.Errorf("not a symbol: %T/%v", args.Car(), args.Car())
+		return sx.MakeSymbol(""), nil, fmt.Errorf("not a symbol: %T/%v", args.Car(), args.Car())
 	}
 	args = args.Tail()
 	if args == nil {
-		return "", nil, fmt.Errorf("parameter spec and body missing")
+		return sx.MakeSymbol(""), nil, fmt.Errorf("parameter spec and body missing")
 	}
-	le, err := ParseProcedure(pf, string(sym), args.Car(), args.Cdr())
+	le, err := ParseProcedure(pf, sym.String(), args.Car(), args.Cdr())
 	return sym, le, err
 }
 
@@ -101,7 +101,7 @@ func ParseProcedure(pf *sxeval.ParseEnvironment, name string, paramSpec, bodySpe
 		return nil, fmt.Errorf("body must not be a dotted pair")
 	}
 	bindSize := len(params)
-	if rest != "" {
+	if !rest.IsEqual(sx.MakeSymbol("")) {
 		bindSize++
 	}
 	fnFrame := pf.MakeChildFrame(name+"-def", bindSize)
@@ -111,7 +111,7 @@ func ParseProcedure(pf *sxeval.ParseEnvironment, name string, paramSpec, bodySpe
 			return nil, err
 		}
 	}
-	if rest != "" {
+	if !rest.IsEqual(sx.MakeSymbol("")) {
 		err := fnFrame.Bind(rest, sx.MakeUndefined())
 		if err != nil {
 			return nil, err
@@ -135,13 +135,13 @@ func parseProcHead(plist *sx.Pair) (params []sx.Symbol, _ sx.Symbol, _ error) {
 	for node := plist; ; {
 		sym, err := GetParameterSymbol(params, node.Car())
 		if err != nil {
-			return nil, "", err
+			return nil, sx.MakeSymbol(""), err
 		}
 		params = append(params, sym)
 
 		cdr := node.Cdr()
 		if sx.IsNil(cdr) {
-			return params, "", nil
+			return params, sx.MakeSymbol(""), nil
 		}
 		if next, isPair := sx.GetPair(cdr); isPair {
 			node = next
@@ -150,7 +150,7 @@ func parseProcHead(plist *sx.Pair) (params []sx.Symbol, _ sx.Symbol, _ error) {
 
 		sym, err = GetParameterSymbol(params, cdr)
 		if err != nil {
-			return nil, "", err
+			return nil, sx.MakeSymbol(""), err
 		}
 		return params, sym, nil
 	}
@@ -159,11 +159,11 @@ func parseProcHead(plist *sx.Pair) (params []sx.Symbol, _ sx.Symbol, _ error) {
 func GetParameterSymbol(params []sx.Symbol, obj sx.Object) (sx.Symbol, error) {
 	sym, isSymbol := sx.GetSymbol(obj)
 	if !isSymbol {
-		return "", fmt.Errorf("symbol in list expected, but got %T/%v", obj, obj)
+		return sx.MakeSymbol(""), fmt.Errorf("symbol in list expected, but got %T/%v", obj, obj)
 	}
 	for _, p := range params {
 		if sym.IsEqual(p) {
-			return "", fmt.Errorf("symbol %v already defined", sym)
+			return sx.MakeSymbol(""), fmt.Errorf("symbol %v already defined", sym)
 		}
 	}
 	return sym, nil
@@ -183,19 +183,19 @@ func (le *LambdaExpr) Unparse() sx.Object {
 	for i := len(le.Params) - 1; i >= 0; i-- {
 		params = sx.Cons(le.Params[i], params)
 	}
-	return sx.MakeList(sx.Symbol(lambdaName), params, expr)
+	return sx.MakeList(sx.MakeSymbol(lambdaName), params, expr)
 }
 
 func (le *LambdaExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	bindSize := len(le.Params)
-	if le.Rest != "" {
+	if !le.Rest.IsEqual(sx.MakeSymbol("")) {
 		bindSize++
 	}
 	fnFrame := re.MakeChildFrame(le.Name+"-rework", bindSize)
 	for _, sym := range le.Params {
 		fnFrame.Bind(sym)
 	}
-	if rest := le.Rest; rest != "" {
+	if rest := le.Rest; !rest.IsEqual(sx.MakeSymbol("")) {
 		fnFrame.Bind(rest)
 	}
 
@@ -240,7 +240,7 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 			return length, err2
 		}
 	}
-	if le.Rest == "" {
+	if le.Rest.IsEqual(sx.MakeSymbol("")) {
 		l, err = io.WriteString(w, " none ")
 	} else {
 		l, err = fmt.Fprintf(w, " %v ", le.Rest)
@@ -288,7 +288,7 @@ func (p *Procedure) Call(env *sxeval.Environment, args sx.Vector) (sx.Object, er
 		return nil, fmt.Errorf("%s: missing arguments: %v", p.Name, p.Params[len(args):])
 	}
 	bindSize := numParams
-	if p.Rest != "" {
+	if !p.Rest.IsEqual(sx.MakeSymbol("")) {
 		bindSize++
 	}
 	lexicalEnv := env.NewLexicalEnvironment(p.Binding, p.Name, bindSize)
@@ -298,7 +298,7 @@ func (p *Procedure) Call(env *sxeval.Environment, args sx.Vector) (sx.Object, er
 			return nil, err
 		}
 	}
-	if p.Rest != "" {
+	if !p.Rest.IsEqual(sx.MakeSymbol("")) {
 		err := lexicalEnv.Bind(p.Rest, sx.MakeList(args[numParams:]...))
 		if err != nil {
 			return nil, err

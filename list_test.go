@@ -245,24 +245,24 @@ func TestListBuilder(t *testing.T) {
 	if !lb.IsEmpty() {
 		t.Errorf("initial list is not empty, but: %v", lb.List())
 	}
-	lb.Add(sx.Symbol("a"))
-	if got, exp := lb.List(), sx.MakeList(sx.Symbol("a")); !got.IsEqual(exp) {
+	lb.Add(sx.MakeSymbol("a"))
+	if got, exp := lb.List(), sx.MakeList(sx.MakeSymbol("a")); !got.IsEqual(exp) {
 		t.Errorf("expected %v, but got %v", exp, got)
 	}
 	if !lb.IsEmpty() {
 		t.Errorf("list is not empty, but: %v", lb.List())
 	}
-	lb.Add(sx.Symbol("a"))
+	lb.Add(sx.MakeSymbol("a"))
 	lb.Add(sx.String("b"))
-	if got, exp := lb.List(), sx.MakeList(sx.Symbol("a"), sx.String("b")); !got.IsEqual(exp) {
+	if got, exp := lb.List(), sx.MakeList(sx.MakeSymbol("a"), sx.String("b")); !got.IsEqual(exp) {
 		t.Errorf("expected %v, but got %v", exp, got)
 	}
 
-	lst := sx.MakeList(sx.Symbol("a"))
+	lst := sx.MakeList(sx.MakeSymbol("a"))
 	lb.ExtendBang(lst)
 	lb.ExtendBang(nil)
-	lb.ExtendBang(sx.MakeList(sx.String("b"), sx.Symbol("c")))
-	exp := sx.MakeList(sx.Symbol("a"), sx.String("b"), sx.Symbol("c"))
+	lb.ExtendBang(sx.MakeList(sx.String("b"), sx.MakeSymbol("c")))
+	exp := sx.MakeList(sx.MakeSymbol("a"), sx.String("b"), sx.MakeSymbol("c"))
 	if got := lb.List(); !got.IsEqual(exp) {
 		t.Errorf("expected %v, but got %v", exp, got)
 	}

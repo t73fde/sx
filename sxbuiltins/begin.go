@@ -74,7 +74,7 @@ func (be *BeginExpr) Unparse() sx.Object {
 	for i := len(be.Front) - 1; i >= 0; i-- {
 		obj = sx.Cons(be.Front[i].Unparse(), obj)
 	}
-	return sx.Cons(sx.Symbol(beginName), obj)
+	return sx.Cons(sx.MakeSymbol(beginName), obj)
 }
 
 func (be *BeginExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {

@@ -27,7 +27,7 @@ func GetSymbol(args sx.Vector, pos int) (sx.Symbol, error) {
 	if sym, ok := sx.GetSymbol(obj); ok {
 		return sym, nil
 	}
-	return "", fmt.Errorf("argument %d is not a symbol, but %T/%v", pos+1, obj, obj)
+	return sx.MakeSymbol(""), fmt.Errorf("argument %d is not a symbol, but %T/%v", pos+1, obj, obj)
 }
 
 // GetString returns the given argument as a string, and checks for errors.

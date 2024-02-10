@@ -228,7 +228,7 @@ func main() {
 	for _, b := range builtins {
 		root.BindBuiltin(b)
 	}
-	root.Bind("UNDEFINED", sx.MakeUndefined())
+	root.Bind(sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined())
 	me := mainEngine{}
 	me.bindOwn(root)
 	err := readPrelude(root)
@@ -238,8 +238,8 @@ func main() {
 	}
 	root.Freeze()
 	bind := sxeval.MakeChildBinding(root, "repl", 1024)
-	bind.Bind(sx.Symbol("root-binding"), root)
-	bind.Bind(sx.Symbol("repl-binding"), bind)
+	bind.Bind(sx.MakeSymbol("root-binding"), root)
+	bind.Bind(sx.MakeSymbol("repl-binding"), bind)
 
 	me.logReader = true
 	me.logParse = true
@@ -338,7 +338,7 @@ func printExpr(expr sxeval.Expr, level int) {
 		for _, sym := range e.Params {
 			fmt.Printf(" %v", sym)
 		}
-		if e.Rest != "" {
+		if !e.Rest.IsEqual(sx.MakeSymbol("")) {
 			fmt.Printf(" . %v", e.Rest)
 		}
 		fmt.Println()

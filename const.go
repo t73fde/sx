@@ -16,12 +16,12 @@ package sx
 // Names of quotation symbols.
 //
 // Used in packages sxbuiltins, sxreader.
-const (
-	SymbolQuote           = Symbol("quote")
-	SymbolQuasiquote      = Symbol("quasiquote")
-	SymbolUnquote         = Symbol("unquote")
-	SymbolUnquoteSplicing = Symbol("unquote-splicing")
+var (
+	SymbolQuote           = MakeSymbol("quote")
+	SymbolQuasiquote      = MakeSymbol("quasiquote")
+	SymbolUnquote         = MakeSymbol("unquote")
+	SymbolUnquoteSplicing = MakeSymbol("unquote-splicing")
 )
 
 // SymbolList is the symbol of the (list ...) function.
-const SymbolList = Symbol("list")
+var SymbolList = MakeSymbol("list")

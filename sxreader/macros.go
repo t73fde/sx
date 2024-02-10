@@ -51,7 +51,7 @@ func readNumber(rd *Reader, firstCh rune) (sx.Object, error) {
 	if err == nil {
 		return num, nil
 	}
-	sym := sx.Symbol(tok)
+	sym := sx.MakeSymbol(tok)
 	return sym, nil
 }
 
@@ -71,7 +71,7 @@ func readSymbol(rd *Reader, firstCh rune) (sx.Object, error) {
 	if err != nil {
 		return nil, rd.annotateError(err, beginPos)
 	}
-	sym := sx.Symbol(tok)
+	sym := sx.MakeSymbol(tok)
 	return sym, nil
 }
 

@@ -22,7 +22,7 @@ func MakeBoolean(b bool) Object {
 }
 
 // T is the default true object.
-const T = Symbol("T")
+var T = MakeSymbol("T")
 
 // IsTrue returns true, if object is a true value.
 //

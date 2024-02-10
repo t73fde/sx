@@ -150,12 +150,12 @@ func (b *Binding) BindConst(sym sx.Symbol, val sx.Object) error {
 }
 
 func (b *Binding) BindSpecial(syn *Special) error {
-	return b.BindConst(sx.Symbol(syn.Name), syn)
+	return b.BindConst(sx.MakeSymbol(syn.Name), syn)
 }
 
 // BindBuiltin binds the given builtin with its given name.
 func (b *Binding) BindBuiltin(bi *Builtin) error {
-	return b.BindConst(sx.Symbol(bi.Name), bi)
+	return b.BindConst(sx.MakeSymbol(bi.Name), bi)
 }
 
 // Lookup will search for a local binding of the given symbol. If not
