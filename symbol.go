@@ -31,6 +31,9 @@ func MakeSymbol(val string) *Symbol {
 	return &Symbol{val}
 }
 
+// GetValue return the string value of the symbol.
+func (sym *Symbol) GetValue() string { return sym.val }
+
 // IsNil return false, since a symbol is never nil.
 func (sy *Symbol) IsNil() bool { return sy == nil }
 

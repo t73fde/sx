@@ -119,7 +119,7 @@ func (b *Binding) Bind(sym *sx.Symbol, val sx.Object) error {
 	if b.IsConst(sym) {
 		return ErrConstBinding{Sym: sym}
 	}
-	b.vars[sym.GoString()] = val
+	b.vars[sym.GetValue()] = val
 	return nil
 }
 
@@ -132,13 +132,13 @@ func (b *Binding) BindConst(sym *sx.Symbol, val sx.Object) error {
 	if b.IsConst(sym) {
 		return ErrConstBinding{Sym: sym}
 	}
-	s := sym.GoString()
+	symVal := sym.GetValue()
 	if b.consts == nil {
-		b.consts = map[string]struct{}{s: {}}
+		b.consts = map[string]struct{}{symVal: {}}
 	} else {
-		b.consts[s] = struct{}{}
+		b.consts[symVal] = struct{}{}
 	}
-	b.vars[s] = val
+	b.vars[symVal] = val
 	return nil
 }
 
@@ -155,7 +155,7 @@ func (b *Binding) BindBuiltin(bi *Builtin) error {
 // found, the search will *not* be continued in the parent binding.
 // Use the global `Resolve` function, if you want a search up to the parent.
 func (b *Binding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
-	obj, found := b.vars[sym.GoString()]
+	obj, found := b.vars[sym.GetValue()]
 	return obj, found
 }
 
@@ -165,14 +165,14 @@ func (b *Binding) IsConst(sym *sx.Symbol) bool {
 		return false
 	}
 	if b.frozen {
-		if _, found := b.vars[sym.GoString()]; found {
+		if _, found := b.vars[sym.GetValue()]; found {
 			return true
 		}
 	}
 	if b.consts == nil {
 		return false
 	}
-	_, found := b.consts[sym.GoString()]
+	_, found := b.consts[sym.GetValue()]
 	return found
 }
 
@@ -190,7 +190,7 @@ func (b *Binding) Unbind(sym *sx.Symbol) error {
 	if b.frozen {
 		return ErrBindingFrozen{Binding: b}
 	}
-	delete(b.vars, sym.GoString())
+	delete(b.vars, sym.GetValue())
 	return nil
 }
 

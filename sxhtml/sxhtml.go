@@ -143,7 +143,7 @@ func (enc *myEncoder) generate(obj sx.Object) {
 		}
 		if sym, isSymbol := sx.GetSymbol(o.Car()); isSymbol {
 			tail := o.Tail()
-			if s := sym.GoString(); s[0] == '@' {
+			if s := sym.GetValue(); s[0] == '@' {
 				switch s {
 				case nameCDATA:
 					enc.writeCDATA(tail)
@@ -218,7 +218,7 @@ func (enc *myEncoder) writeDoctype(elems *sx.Pair) {
 }
 
 func (enc *myEncoder) writeTag(sym *sx.Symbol, elems *sx.Pair) {
-	symVal := sym.GoString()
+	symVal := sym.GetValue()
 	if emptyTags[symVal] && ignoreEmptyStrings(elems) == nil {
 		return
 	}
@@ -300,7 +300,7 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 			case sx.String:
 				s = string(o)
 			case *sx.Symbol:
-				s = o.GoString()
+				s = o.GetValue()
 			case sx.Number:
 				s = o.GoString()
 			default:
@@ -350,7 +350,7 @@ func getAttributeType(sym *sx.Symbol) attrType {
 		sym = sx.MakeSymbol(name)
 	}
 
-	if urlAttrs[sym.GoString()] {
+	if urlAttrs[sym.GetValue()] {
 		return attrURL
 	}
 	if sym.IsEqual(sx.MakeSymbol("style")) {

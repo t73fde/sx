@@ -60,7 +60,7 @@ var UnquoteSplicingS = sxeval.Special{
 	},
 }
 
-var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.SymbolQuasiquote.GoString())
+var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.SymbolQuasiquote.GetValue())
 
 type qqParser struct {
 	pframe *sxeval.ParseEnvironment

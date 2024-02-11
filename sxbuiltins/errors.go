@@ -42,7 +42,7 @@ var Error = sxeval.Builtin{
 			case sx.String:
 				sb.WriteString(string(o))
 			case *sx.Symbol:
-				sb.WriteString(o.GoString())
+				sb.WriteString(o.GetValue())
 			default:
 				sb.WriteString(arg.String())
 			}
