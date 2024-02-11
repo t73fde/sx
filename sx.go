@@ -45,11 +45,11 @@ type Printable interface {
 
 // Print writes the string representation to a io.Writer.
 func Print(w io.Writer, obj Object) (int, error) {
-	if pr, ok := obj.(Printable); ok {
-		return pr.Print(w)
-	}
 	if IsNil(obj) {
 		return Nil().Print(w)
+	}
+	if pr, ok := obj.(Printable); ok {
+		return pr.Print(w)
 	}
 	return io.WriteString(w, obj.String())
 }

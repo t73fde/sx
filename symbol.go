@@ -34,7 +34,7 @@ func MakeSymbol(val string) *Symbol {
 // GetValue return the string value of the symbol.
 func (sym *Symbol) GetValue() string { return sym.val }
 
-// IsNil return false, since a symbol is never nil.
+// IsNil may return true if a symbol pointer is nil.
 func (sy *Symbol) IsNil() bool { return sy == nil }
 
 func (*Symbol) IsAtom() bool { return true }
