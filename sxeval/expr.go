@@ -16,6 +16,7 @@ package sxeval
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -310,4 +311,60 @@ func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {
 	l, err = io.WriteString(w, "}")
 	length += l
 	return length, err
+}
+
+// --- ExprObj ---------------------------------------------------------------
+
+// ExprObj encapsulates an Expr in an sx.Object.
+type ExprObj struct {
+	expr Expr
+}
+
+// MakeExprObj creates an ExprObj from an Expr.
+func MakeExprObj(expr Expr) *ExprObj {
+	return &ExprObj{expr}
+}
+
+func (eo *ExprObj) IsNil() bool { return eo == nil }
+func (*ExprObj) IsAtom() bool   { return false }
+
+func (eo *ExprObj) IsEqual(other sx.Object) bool {
+	if eo == nil {
+		return sx.IsNil(other)
+	}
+	if sx.IsNil(other) {
+		return false
+	}
+	otherEo, isEO := other.(*ExprObj)
+	return isEO && (eo == otherEo || eo.expr == otherEo.expr)
+}
+
+func (eo *ExprObj) String() string {
+	var sb strings.Builder
+	sb.WriteString("#<")
+	eo.expr.Print(&sb)
+	sb.WriteByte('>')
+	return sb.String()
+}
+
+func (eo *ExprObj) GoString() string {
+	var sb strings.Builder
+	eo.expr.Print(&sb)
+	return sb.String()
+}
+
+func (eo *ExprObj) GetExpr() Expr {
+	if eo == nil {
+		return nil
+	}
+	return eo.expr
+}
+
+// GetExprObj returns the object as a expression object, if possible.
+func GetExprObj(obj sx.Object) (*ExprObj, bool) {
+	if sx.IsNil(obj) {
+		return nil, false
+	}
+	eo, ok := obj.(*ExprObj)
+	return eo, ok
 }

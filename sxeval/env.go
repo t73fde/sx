@@ -62,6 +62,17 @@ func WithParseObserver(observe ParseObserver) Option {
 	}
 }
 
+// RebindExecutionEnvironment clones the original environment, but uses the
+// given binding.
+func (env *Environment) RebindExecutionEnvironment(bind *Binding) *Environment {
+	return &Environment{
+		binding:  bind,
+		executor: env.executor,
+		observer: env.observer,
+		caller:   env.caller,
+	}
+}
+
 // Eval parses the given object and runs it in the environment.
 func (env *Environment) Eval(obj sx.Object) (sx.Object, error) {
 	expr, err := env.Parse(obj)

@@ -109,3 +109,12 @@ func GetCallable(args sx.Vector, pos int) (sxeval.Callable, error) {
 	}
 	return nil, fmt.Errorf("argument %d is not a function, but %T/%v", pos+1, obj, obj)
 }
+
+// GetExprObj returns the given argument as a expression object, and checks for errors.
+func GetExprObj(args sx.Vector, pos int) (*sxeval.ExprObj, error) {
+	obj := args[pos]
+	if fn, ok := sxeval.GetExprObj(obj); ok {
+		return fn, nil
+	}
+	return nil, fmt.Errorf("argument %d is not an expression, but %T/%v", pos+1, obj, obj)
+}

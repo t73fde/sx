@@ -63,6 +63,8 @@ restart:
 			goto restart
 		}
 		return nil, err
+	case *ExprObj:
+		return f.expr, nil
 	}
 	return ObjExpr{Obj: form}, nil
 }
