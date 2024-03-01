@@ -37,6 +37,20 @@
                   (let* ,(cdr bindings) ,@body))
                   ,(cadar bindings))))
 
+;; cond macro
+;;
+;; (cond ((COND EXPR) ...))
+(defmacro cond clauses
+    (if (null? clauses)
+        ()
+        (let* ((clause (car clauses))
+               (the-cond (car clause)))
+              (if (= the-cond T)
+                  (cadr clause)
+                  `(if ,the-cond
+                       ,(cadr clause)
+                       (cond ,@(cdr clauses)))))))
+
 ;; and macro
 ;;
 ;; (and EXPR ...)

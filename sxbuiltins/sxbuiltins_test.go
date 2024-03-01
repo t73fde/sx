@@ -115,7 +115,6 @@ var specials = []*sxeval.Special{
 	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
 	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
 	&sxbuiltins.SetXS,     // set!
-	&sxbuiltins.CondS,     // cond
 	&sxbuiltins.IfS,       // if
 	&sxbuiltins.BeginS,    // begin
 	&sxbuiltins.DefMacroS, // defmacro

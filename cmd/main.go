@@ -91,7 +91,6 @@ var specials = []*sxeval.Special{
 	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
 	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
 	&sxbuiltins.SetXS,     // set!
-	&sxbuiltins.CondS,     // cond
 	&sxbuiltins.IfS,       // if
 	&sxbuiltins.BeginS,    // begin
 	&sxbuiltins.DefMacroS, // defmacro
@@ -343,12 +342,6 @@ func printExpr(expr sxeval.Expr, level int) {
 		}
 		fmt.Println()
 		printExpr(e.Expr, level+1)
-	case *sxbuiltins.CondExpr:
-		fmt.Println("COND")
-		for _, clause := range e.Cases {
-			printExpr(clause.Test, level+1)
-			printExpr(clause.Expr, level+1)
-		}
 	case *sxbuiltins.IfExpr:
 		fmt.Println("IF")
 		printExpr(e.Test, level+1)

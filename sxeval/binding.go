@@ -28,7 +28,7 @@ func (err ErrBindingFrozen) Error() string { return fmt.Sprintf("binding is froz
 type ErrConstBinding struct{ Sym *sx.Symbol }
 
 func (err ErrConstBinding) Error() string {
-	return fmt.Sprintf("constant bindung for symbol %v", err.Sym)
+	return fmt.Sprintf("constant binding for symbol %v", err.Sym)
 }
 
 type mapSymObj = map[string]sx.Object
