@@ -60,6 +60,14 @@ type ConstObjectExpr interface {
 	ConstObject() sx.Object
 }
 
+// GetConstExpr returns the Expr as a ConstObjectExpr, if possible.
+func GetConstExpr(expr Expr) (ConstObjectExpr, bool) {
+	if coe, isCoe := expr.(ConstObjectExpr); isCoe {
+		return coe, true
+	}
+	return nil, false
+}
+
 // NilExpr returns always Nil
 var NilExpr = nilExpr{}
 

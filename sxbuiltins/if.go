@@ -81,8 +81,42 @@ func (ife *IfExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	trueExpr := ife.True.Rework(re)
 	falseExpr := ife.False.Rework(re)
 
+	// Check for nested IfExpr in testExpr
+	//
+	// This might occur when macros are used, e.g.
+	// "(if (!= a b) c d)"
+	// --> "(if (not (= a b)) c d)"
+	// --> "(if (if (= a b) NIL T) c d)"
+	// =HERE=> "(if (= a b) d c)"
+	//
+	// trueExpr and falseExpr of nested IfExpr must be checked:
+	// * if one is not a constant, ignore this optimization
+	// * if both are true, evaluate to c
+	// * if both are false, evaluate do d
+	// * if trueExpr is true (and falseExpr is false), lift embedded testExpr up
+	// * id trueExpr is false (and falseExpr is true), lift embedded testExpr up and switch c and d
+	if nestedIfe, isIfExpr := testExpr.(*IfExpr); isIfExpr {
+		nestedTrueExpr, hasTrue := sxeval.GetConstExpr(nestedIfe.True)
+		nestedFalseExpr, hasFalse := sxeval.GetConstExpr(nestedIfe.False)
+		if hasTrue && hasFalse {
+			trueIsTrue := sx.IsTrue(nestedTrueExpr.ConstObject())
+			falseIsTrue := sx.IsTrue(nestedFalseExpr.ConstObject())
+			switch {
+			case trueIsTrue && falseIsTrue:
+				return trueExpr
+			case !trueIsTrue && !falseIsTrue:
+				return falseExpr
+			case trueIsTrue && !falseIsTrue:
+				testExpr = nestedIfe.Test
+			default /* !trueIsTrue && falseIsTrue */ :
+				testExpr = nestedIfe.Test
+				trueExpr, falseExpr = falseExpr, trueExpr
+			}
+		}
+	}
+
 	// Check for constant condition
-	if objectExpr, isConstObject := testExpr.(sxeval.ObjExpr); isConstObject {
+	if objectExpr, isConstObject := sxeval.GetConstExpr(testExpr); isConstObject {
 		if sx.IsTrue(objectExpr.ConstObject()) {
 			return trueExpr
 		}

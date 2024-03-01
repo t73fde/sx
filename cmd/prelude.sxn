@@ -12,11 +12,13 @@
 (defconst NIL ())
 (defconst T   'T)
 
-;; Functions boolean and not
-(defun boolean (x) (if x T NIL))
-(defconst boolean boolean)
-(defun not (x) (if x NIL T))
-(defconst not not)
+;; Macros boolean and not
+(defmacro boolean (x) `(if ,x T NIL))
+(defmacro not (x) `(if ,x NIL T))
+
+;; Macros !== and != to negate an equivalence
+(defmacro !== args `(not (== ,@args)))
+(defmacro != args `(not (= ,@args)))
 
 ;; let macro
 ;;
