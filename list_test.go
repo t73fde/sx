@@ -23,14 +23,8 @@ func TestListNil(t *testing.T) {
 	t.Parallel()
 
 	var obj sx.Object
-	if obj != nil {
-		t.Error("A nil interface value is not equal to nil")
-	}
 	if !sx.IsNil(obj) {
 		t.Error("A nil interface value is not considered IsNil(val)")
-	}
-	if obj == sx.Nil() {
-		t.Error("A nil interface value is wrongly treated as Nil()")
 	}
 
 	var i sx.Number

@@ -57,27 +57,27 @@ func doPrint(w io.Writer, obj sx.Object, indent int) (int, error) {
 }
 
 func doPrintList(w io.Writer, lst *sx.Pair, indent int) (int, error) {
-	written, err := w.Write(bOpen)
-	if err != nil {
-		return written, err
+	written, errWrite := w.Write(bOpen)
+	if errWrite != nil {
+		return written, errWrite
 	}
 
 	pos := 0
 	mustIndent := false
 	for node := lst; ; pos++ {
 		if mustIndent {
-			n, errNode := writeIndent(w, indent+4)
+			n, err := writeIndent(w, indent+4)
 			written += n
 			if err != nil {
-				return written, errNode
+				return written, err
 			}
 			mustIndent = false
 		}
 
-		n, errNode := doPrint(w, node.Car(), indent+1)
+		n, err := doPrint(w, node.Car(), indent+1)
 		written += n
 		if err != nil {
-			return written, errNode
+			return written, err
 		}
 
 		cdr := node.Cdr()
@@ -97,21 +97,21 @@ func doPrintList(w io.Writer, lst *sx.Pair, indent int) (int, error) {
 			continue
 		}
 
-		n, errNode = w.Write(bDot)
+		n, err = w.Write(bDot)
 		written += n
 		if err != nil {
-			return written, errNode
+			return written, err
 		}
 
-		n, errNode = doPrint(w, cdr, indent)
+		n, err = doPrint(w, cdr, indent)
 		written += n
 		if err != nil {
-			return written, errNode
+			return written, err
 		}
 		break
 	}
-	n, err := w.Write(bClose)
-	return written + n, err
+	n, errWrite := w.Write(bClose)
+	return written + n, errWrite
 }
 
 func calcContinuation(next *sx.Pair, pos int) ([]byte, bool) {

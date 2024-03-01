@@ -219,7 +219,7 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 					return nil, err
 				}
 				if ch3 != endCh {
-					return nil, fmt.Errorf("'%v' expected, but got %v", endCh, ch3)
+					return nil, fmt.Errorf("'%c' (%v) expected, but got '%c' (%v)", endCh, endCh, ch3, ch3)
 				}
 				break
 			}
