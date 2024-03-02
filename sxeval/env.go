@@ -83,6 +83,17 @@ func (env *Environment) Eval(obj sx.Object) (sx.Object, error) {
 	return env.Run(expr)
 }
 
+// Compile the given object and return the reworked expression.
+func (env *Environment) Compile(obj sx.Object) (Expr, error) {
+	pf := env.MakeParseFrame()
+	expr, err := pf.Parse(obj)
+	if err != nil {
+		return nil, err
+	}
+	rf := env.MakeReworkFrame()
+	return expr.Rework(rf), nil
+}
+
 // Parse the given object.
 func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 	pf := env.MakeParseFrame()

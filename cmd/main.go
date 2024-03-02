@@ -129,23 +129,24 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.VectorSetBang,           // vset!
 	&sxbuiltins.List2Vector,             // list->vector
 	&sxbuiltins.Nth, &sxbuiltins.Length, // nth, length
-	&sxbuiltins.LengthLess,       // length<
-	&sxbuiltins.Sequence2List,    // ->list
-	&sxbuiltins.CallableP,        // callable?
-	&sxbuiltins.Macroexpand0,     // macroexpand-0
-	&sxbuiltins.Defined,          // defined?
-	&sxbuiltins.CurrentBinding,   // current-environment
-	&sxbuiltins.ParentBinding,    // parent-environment
-	&sxbuiltins.Bindings,         // environment-bindings
-	&sxbuiltins.BoundP,           // bound?
-	&sxbuiltins.BindingLookup,    // environment-lookup
-	&sxbuiltins.BindingResolve,   // environment-resolve
-	&sxbuiltins.Pretty,           // pp
-	&sxbuiltins.Error,            // error
-	&sxbuiltins.NotBoundError,    // not-bound-error
-	&sxbuiltins.ParseExpression,  // parse-expression
-	&sxbuiltins.ReworkExpression, // rework-expression
-	&sxbuiltins.RunExpression,    //run-expression
+	&sxbuiltins.LengthLess,                // length<
+	&sxbuiltins.Sequence2List,             // ->list
+	&sxbuiltins.CallableP,                 // callable?
+	&sxbuiltins.Macroexpand0,              // macroexpand-0
+	&sxbuiltins.Defined,                   // defined?
+	&sxbuiltins.CurrentBinding,            // current-environment
+	&sxbuiltins.ParentBinding,             // parent-environment
+	&sxbuiltins.Bindings,                  // environment-bindings
+	&sxbuiltins.BoundP,                    // bound?
+	&sxbuiltins.BindingLookup,             // environment-lookup
+	&sxbuiltins.BindingResolve,            // environment-resolve
+	&sxbuiltins.Pretty,                    // pp
+	&sxbuiltins.Error,                     // error
+	&sxbuiltins.NotBoundError,             // not-bound-error
+	&sxbuiltins.ParseExpression,           // parse-expression
+	&sxbuiltins.ReworkExpression,          // rework-expression
+	&sxbuiltins.RunExpression,             // run-expression
+	&sxbuiltins.Compile, &sxbuiltins.Eval, // compile, eval
 	{
 		Name:     "panic",
 		MinArity: 0,

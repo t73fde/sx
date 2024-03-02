@@ -74,6 +74,51 @@ var RunExpression = sxeval.Builtin{
 	},
 }
 
+var Compile = sxeval.Builtin{
+	Name:     "compile",
+	MinArity: 1,
+	MaxArity: 2,
+	TestPure: nil,
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		realEnv, err := adaptEnvironment(env, args, 1)
+		if err != nil {
+			return nil, err
+		}
+		expr, err := realEnv.Compile(args[0])
+		if err != nil {
+			return nil, err
+		}
+		return sxeval.MakeExprObj(expr), nil
+	},
+}
+
+var Eval = sxeval.Builtin{
+	Name:     "eval",
+	MinArity: 1,
+	MaxArity: 2,
+	TestPure: nil,
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		realEnv, err := adaptEnvironment(env, args, 1)
+		if err != nil {
+			return nil, err
+		}
+
+		var expr sxeval.Expr
+		exprObj, isExpr := sxeval.GetExprObj(args[0])
+		if isExpr {
+			expr = exprObj.GetExpr()
+		} else {
+			expr, err = realEnv.Compile(args[0])
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		obj, err := realEnv.Run(expr)
+		return obj, err
+	},
+}
+
 func adaptEnvironment(env *sxeval.Environment, args sx.Vector, pos int) (*sxeval.Environment, error) {
 	if pos < len(args) {
 		if sx.IsNil(args[pos]) {
