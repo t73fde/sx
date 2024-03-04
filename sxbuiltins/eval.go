@@ -24,7 +24,7 @@ var ParseExpression = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil,
 	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		realEnv, err := adaptEnvironment(env, args, 1)
+		realEnv, err := adaptEnvironment(env, args)
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +46,7 @@ var ReworkExpression = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		realEnv, err := adaptEnvironment(env, args, 1)
+		realEnv, err := adaptEnvironment(env, args)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ var RunExpression = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		realEnv, err := adaptEnvironment(env, args, 1)
+		realEnv, err := adaptEnvironment(env, args)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +94,7 @@ var Compile = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil,
 	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		realEnv, err := adaptEnvironment(env, args, 1)
+		realEnv, err := adaptEnvironment(env, args)
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +112,7 @@ var Eval = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil,
 	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		realEnv, err := adaptEnvironment(env, args, 1)
+		realEnv, err := adaptEnvironment(env, args)
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +133,8 @@ var Eval = sxeval.Builtin{
 	},
 }
 
-func adaptEnvironment(env *sxeval.Environment, args sx.Vector, pos int) (*sxeval.Environment, error) {
+func adaptEnvironment(env *sxeval.Environment, args sx.Vector) (*sxeval.Environment, error) {
+	pos := 1
 	if pos < len(args) {
 		if sx.IsNil(args[pos]) {
 			return env, nil

@@ -50,10 +50,10 @@ func (e Error) Error() string {
 
 func (e Error) Format(s fmt.State, _ rune) {
 	if s.Flag('#') {
-		fmt.Fprintf(s, "File \"%s\" line %d, column %d to line %d, column %d\n",
+		_, _ = fmt.Fprintf(s, "File \"%s\" line %d, column %d to line %d, column %d\n",
 			e.Begin.Name, e.Begin.Line, e.Begin.Col, e.End.Line, e.End.Col)
 	}
-	fmt.Fprint(s, e.Error())
+	_, _ = fmt.Fprint(s, e.Error())
 }
 
 type delimiterError rune

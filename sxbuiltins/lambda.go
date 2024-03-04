@@ -193,10 +193,10 @@ func (le *LambdaExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	}
 	fnFrame := re.MakeChildFrame(le.Name+"-rework", bindSize)
 	for _, sym := range le.Params {
-		fnFrame.Bind(sym)
+		_ = fnFrame.Bind(sym)
 	}
 	if rest := le.Rest; rest != nil {
-		fnFrame.Bind(rest)
+		_ = fnFrame.Bind(rest)
 	}
 
 	le.Expr = le.Expr.Rework(fnFrame)

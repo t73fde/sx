@@ -75,7 +75,9 @@ func (pair *Pair) IsEqual(other Object) bool {
 // String returns the string representation.
 func (pair *Pair) String() string {
 	var sb strings.Builder
-	pair.Print(&sb)
+	if _, err := pair.Print(&sb); err != nil {
+		return err.Error()
+	}
 	return sb.String()
 }
 

@@ -54,7 +54,9 @@ func (sy *Symbol) IsEqual(other Object) bool {
 // String returns the string representation.
 func (sy *Symbol) String() string {
 	var sb strings.Builder
-	sy.Print(&sb)
+	if _, err := sy.Print(&sb); err != nil {
+		return err.Error()
+	}
 	return sb.String()
 }
 

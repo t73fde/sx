@@ -38,7 +38,9 @@ func (s String) IsEqual(other Object) bool {
 // String returns the string representation.
 func (s String) String() string {
 	var sb strings.Builder
-	s.Print(&sb)
+	if _, err := s.Print(&sb); err != nil {
+		return err.Error()
+	}
 	return sb.String()
 }
 

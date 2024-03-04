@@ -52,7 +52,7 @@ func (me *mainEngine) Execute(env *sxeval.Environment, expr sxeval.Expr) (sx.Obj
 	me.execLevel++
 	bind := env.Binding()
 	fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
-	expr.Print(os.Stdout)
+	_, _ = expr.Print(os.Stdout)
 	fmt.Println()
 	obj, err := expr.Compute(env)
 	me.execCount++
@@ -163,7 +163,7 @@ var builtins = []*sxeval.Builtin{
 }
 
 func (me *mainEngine) bindOwn(root *sxeval.Binding) {
-	root.BindBuiltin(&sxeval.Builtin{
+	_ = root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-reader",
 		MinArity: 0,
 		MaxArity: 0,
@@ -174,7 +174,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			return sx.MakeBoolean(res), nil
 		},
 	})
-	root.BindBuiltin(&sxeval.Builtin{
+	_ = root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-parse",
 		MinArity: 0,
 		MaxArity: 0,
@@ -185,7 +185,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			return sx.MakeBoolean(res), nil
 		},
 	})
-	root.BindBuiltin(&sxeval.Builtin{
+	_ = root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-expr",
 		MinArity: 0,
 		MaxArity: 0,
@@ -196,7 +196,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			return sx.MakeBoolean(res), nil
 		},
 	})
-	root.BindBuiltin(&sxeval.Builtin{
+	_ = root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-executor",
 		MinArity: 0,
 		MaxArity: 0,
@@ -207,7 +207,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			return sx.MakeBoolean(res), nil
 		},
 	})
-	root.BindBuiltin(&sxeval.Builtin{
+	_ = root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-off",
 		MinArity: 0,
 		MaxArity: 0,
@@ -227,12 +227,12 @@ func main() {
 
 	root := sxeval.MakeRootBinding(len(specials) + len(builtins) + 16)
 	for _, synDef := range specials {
-		root.BindSpecial(synDef)
+		_ = root.BindSpecial(synDef)
 	}
 	for _, b := range builtins {
-		root.BindBuiltin(b)
+		_ = root.BindBuiltin(b)
 	}
-	root.Bind(sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined())
+	_ = root.Bind(sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined())
 	me := mainEngine{}
 	me.bindOwn(root)
 	err := readPrelude(root)
@@ -242,8 +242,8 @@ func main() {
 	}
 	root.Freeze()
 	bind := sxeval.MakeChildBinding(root, "repl", 1024)
-	bind.Bind(sx.MakeSymbol("root-binding"), root)
-	bind.Bind(sx.MakeSymbol("repl-binding"), bind)
+	_ = bind.Bind(sx.MakeSymbol("root-binding"), root)
+	_ = bind.Bind(sx.MakeSymbol("repl-binding"), bind)
 
 	me.logReader = true
 	me.logParse = true
@@ -292,7 +292,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			continue
 		} else if me.logReader {
 			fmt.Printf(";= ")
-			expr.Print(os.Stdout)
+			_, _ = expr.Print(os.Stdout)
 			fmt.Println()
 		}
 		res, err := env.Run(expr)

@@ -76,33 +76,33 @@ func NewGenerator(opts ...Option) *Generator {
 // Special elements / attributes
 var (
 	// Void elements: https://html.spec.whatwg.org/multipage/syntax.html#void-elements
-	voidTags = map[string]bool{
-		"area": true, "base": true, "br": true, "col": true, "embed": true, "hr": true,
-		"img": true, "input": true, "link": true, "meta": true, "source": true,
-		"track": true, "wbr": true,
+	voidTags = map[string]struct{}{
+		"area": {}, "base": {}, "br": {}, "col": {}, "embed": {}, "hr": {},
+		"img": {}, "input": {}, "link": {}, "meta": {}, "source": {},
+		"track": {}, "wbr": {},
 	}
 	// Attributes with URL values: https://html.spec.whatwg.org/multipage/indices.html#attributes-1
-	urlAttrs = map[string]bool{
-		"action": true, "cite": true, "data": true, "formaction": true, "href": true,
-		"itemid": true, "itemprop": true, "itemtype": true, "ping": true,
-		"poster": true, "src": true,
+	urlAttrs = map[string]struct{}{
+		"action": {}, "cite": {}, "data": {}, "formaction": {}, "href": {},
+		"itemid": {}, "itemprop": {}, "itemtype": {}, "ping": {},
+		"poster": {}, "src": {},
 	}
-	allNLTags = map[string]bool{
-		"head": true, "link": true, "meta": true, "title": true, "div": true,
+	allNLTags = map[string]struct{}{
+		"head": {}, "link": {}, "meta": {}, "title": {}, "div": {},
 	}
-	nlTags = map[string]bool{
-		nameCDATA: true,
-		"head":    true, "link": true, "meta": true, "title": true, "script": true, "body": true,
-		"article": true, "details": true, "div": true, "header": true, "footer": true, "form": true,
-		"main": true, "summary": true,
-		"h1": true, "h2": true, "h3": true, "h4": true, "h5": true, "h6": true,
-		"li": true, "ol": true, "ul": true, "dd": true, "dt": true, "dl": true,
-		"table": true, "thead": true, "tbody": true, "tr": true,
-		"section": true, "input": true,
+	nlTags = map[string]struct{}{
+		nameCDATA: {},
+		"head":    {}, "link": {}, "meta": {}, "title": {}, "script": {}, "body": {},
+		"article": {}, "details": {}, "div": {}, "header": {}, "footer": {}, "form": {},
+		"main": {}, "summary": {},
+		"h1": {}, "h2": {}, "h3": {}, "h4": {}, "h5": {}, "h6": {},
+		"li": {}, "ol": {}, "ul": {}, "dd": {}, "dt": {}, "dl": {},
+		"table": {}, "thead": {}, "tbody": {}, "tr": {},
+		"section": {}, "input": {},
 	}
 	// Elements that may be ignored if empty.
-	emptyTags = map[string]bool{
-		"div": true, "span": true, "code": true, "kbd": true, "p": true, "samp": true,
+	ignoreEmptyTags = map[string]struct{}{
+		"div": {}, "span": {}, "code": {}, "kbd": {}, "p": {}, "samp": {},
 	}
 )
 
@@ -219,12 +219,13 @@ func (enc *myEncoder) writeDoctype(elems *sx.Pair) {
 
 func (enc *myEncoder) writeTag(sym *sx.Symbol, elems *sx.Pair) {
 	symVal := sym.GetValue()
-	if emptyTags[symVal] && ignoreEmptyStrings(elems) == nil {
+	if _, ignoreEmptyTag := ignoreEmptyTags[symVal]; ignoreEmptyTag && ignoreEmptyStrings(elems) == nil {
 		return
 	}
-	withNewline := enc.gen.withNewline && nlTags[symVal]
+	_, isNLTag := nlTags[symVal]
+	withNewline := enc.gen.withNewline && isNLTag
 	tagName := sym.String()
-	if withNewline && (!enc.lastWasTag || allNLTags[symVal]) {
+	if _, isAllNLTags := allNLTags[symVal]; withNewline && (!enc.lastWasTag || isAllNLTags) {
 		enc.pr.printStrings("\n<", tagName)
 	} else {
 		enc.pr.printStrings("<", tagName)
@@ -234,7 +235,7 @@ func (enc *myEncoder) writeTag(sym *sx.Symbol, elems *sx.Pair) {
 		elems = elems.Tail()
 	}
 	enc.pr.printString(">")
-	if voidTags[symVal] {
+	if _, isVoid := voidTags[symVal]; isVoid {
 		enc.lastWasTag = withNewline
 		return
 	}
@@ -350,7 +351,7 @@ func getAttributeType(sym *sx.Symbol) attrType {
 		sym = sx.MakeSymbol(name)
 	}
 
-	if urlAttrs[sym.GetValue()] {
+	if _, isUrlAttr := urlAttrs[sym.GetValue()]; isUrlAttr {
 		return attrURL
 	}
 	if sym.IsEqual(sx.MakeSymbol("style")) {

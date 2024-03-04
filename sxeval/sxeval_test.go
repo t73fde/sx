@@ -28,7 +28,7 @@ func createTestBinding() *sxeval.Binding {
 	bind := sxeval.MakeRootBinding(2)
 
 	symCat := sx.MakeSymbol("cat")
-	bind.Bind(symCat, &sxeval.Builtin{
+	_ = bind.Bind(symCat, &sxeval.Builtin{
 		Name:     "cat",
 		MinArity: 0,
 		MaxArity: -1,
@@ -53,7 +53,7 @@ func createTestBinding() *sxeval.Binding {
 	})
 
 	symHello := sx.MakeSymbol("hello")
-	bind.Bind(symHello, sx.String("Hello, World"))
+	_ = bind.Bind(symHello, sx.String("Hello, World"))
 	return bind
 }
 
@@ -102,7 +102,7 @@ func TestEval(t *testing.T) {
 		// {name: "err-callable", src: "(hello)", mustErr: true},
 	}
 	root := createTestBinding()
-	root.BindSpecial(&sxeval.Special{
+	_ = root.BindSpecial(&sxeval.Special{
 		Name: "quote",
 		Fn: func(_ *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 			return sxeval.ObjExpr{Obj: args.Car()}, nil
@@ -124,15 +124,15 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 
 func createBindingForTCO() *sxeval.Binding {
 	root := sxeval.MakeRootBinding(6)
-	root.BindSpecial(&sxbuiltins.DefunS)
-	root.BindSpecial(&sxbuiltins.IfS)
-	root.BindBuiltin(&sxbuiltins.Equal)
-	root.BindBuiltin(&sxbuiltins.NumLessEqual)
-	root.BindBuiltin(&sxbuiltins.Add)
-	root.BindBuiltin(&sxbuiltins.Sub)
-	root.BindBuiltin(&sxbuiltins.Mul)
-	root.BindBuiltin(&sxbuiltins.Map)
-	root.BindBuiltin(&sxbuiltins.List)
+	_ = root.BindSpecial(&sxbuiltins.DefunS)
+	_ = root.BindSpecial(&sxbuiltins.IfS)
+	_ = root.BindBuiltin(&sxbuiltins.Equal)
+	_ = root.BindBuiltin(&sxbuiltins.NumLessEqual)
+	_ = root.BindBuiltin(&sxbuiltins.Add)
+	_ = root.BindBuiltin(&sxbuiltins.Sub)
+	_ = root.BindBuiltin(&sxbuiltins.Mul)
+	_ = root.BindBuiltin(&sxbuiltins.Map)
+	_ = root.BindBuiltin(&sxbuiltins.List)
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxPrelude))
 	bind := sxeval.MakeChildBinding(root, "TCO", 128)
@@ -171,12 +171,3 @@ func TestTailCallOptimization(t *testing.T) {
 	root := createBindingForTCO()
 	testcases.Run(t, root)
 }
-
-// func TestExecuteError(t *testing.T) {
-// 	t.Parallel()
-// 	testcases := testCases{
-// 		{name: "nested", src: "(a)"},
-// 	}
-// 	root := createTestBinding()
-// 	testcases.Run(t, root)
-// }

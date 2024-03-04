@@ -79,7 +79,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 				if sb.Len() > 0 {
 					sb.WriteByte(' ')
 				}
-				sx.Print(&sb, res)
+				_, _ = sx.Print(&sb, res)
 			}
 			if got := sb.String(); got != tc.exp {
 				t.Errorf("%s should result in %q, but got %q", tc.src, tc.exp, got)
@@ -94,10 +94,10 @@ func createBinding() *sxeval.Binding {
 	root := sxeval.MakeRootBinding(numBuiltins)
 
 	for _, syntax := range specials {
-		root.BindSpecial(syntax)
+		_ = root.BindSpecial(syntax)
 	}
 	for _, b := range builtins {
-		root.BindBuiltin(b)
+		_ = root.BindBuiltin(b)
 	}
 	root.Freeze()
 	env := sxeval.MakeChildBinding(root, "vars", len(objects))

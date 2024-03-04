@@ -332,14 +332,18 @@ func (eo *ExprObj) IsEqual(other sx.Object) bool {
 func (eo *ExprObj) String() string {
 	var sb strings.Builder
 	sb.WriteString("#<")
-	eo.expr.Print(&sb)
+	if _, err := eo.expr.Print(&sb); err != nil {
+		return err.Error()
+	}
 	sb.WriteByte('>')
 	return sb.String()
 }
 
 func (eo *ExprObj) GoString() string {
 	var sb strings.Builder
-	eo.expr.Print(&sb)
+	if _, err := eo.expr.Print(&sb); err != nil {
+		return err.Error()
+	}
 	return sb.String()
 }
 

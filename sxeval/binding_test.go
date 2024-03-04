@@ -25,7 +25,7 @@ func TestBindLookupUnbind(t *testing.T) {
 	sym1 := sx.MakeSymbol("sym1")
 	sym2 := sx.MakeSymbol("sym2")
 	root := sxeval.MakeRootBinding(1)
-	root.Bind(sym1, sym2)
+	_ = root.Bind(sym1, sym2)
 
 	if val, found := root.Lookup(sym2); found {
 		t.Errorf("Symbol %v should not be found, but resolves to %v", sym2, val)
@@ -33,14 +33,14 @@ func TestBindLookupUnbind(t *testing.T) {
 
 	t.Run("child", func(t *testing.T) {
 		newRoot := sxeval.MakeRootBinding(1)
-		newRoot.Bind(sym1, sym2)
+		_ = newRoot.Bind(sym1, sym2)
 		child := sxeval.MakeChildBinding(newRoot, "assoc", 30)
 		bindLookupUnbind(t, newRoot, child, sym1, sym2)
 	})
 }
 
 func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.Symbol) {
-	child.Bind(sym2, sym1)
+	_ = child.Bind(sym2, sym1)
 
 	if _, found := child.Lookup(sym1); found {
 		t.Error("Symbol", sym1, "was found in child")
@@ -59,11 +59,11 @@ func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.
 		t.Error("Symbol", sym2, "not found in child bindings")
 	}
 
-	root.Unbind(sym1)
+	_ = root.Unbind(sym1)
 	if _, found := root.Lookup(sym1); found {
 		t.Error("Symbol", sym1, "was found in root")
 	}
-	child.Unbind(sym2)
+	_ = child.Unbind(sym2)
 	if _, found := child.Lookup(sym2); found {
 		t.Error("Symbol", sym2, "was found in child")
 	}
@@ -72,13 +72,13 @@ func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.
 func TestAlist(t *testing.T) {
 	t.Parallel()
 	bind := sxeval.MakeRootBinding(7)
-	bind.Bind(sx.MakeSymbol("sym1"), sx.String("sym1"))
-	bind.Bind(sx.MakeSymbol("sym2"), sx.String("sym2"))
-	bind.Bind(sx.MakeSymbol("sym3"), sx.String("sym3"))
-	bind.Bind(sx.MakeSymbol("sym4"), sx.String("sym4"))
-	bind.Bind(sx.MakeSymbol("sym5"), sx.String("sym5"))
-	bind.Bind(sx.MakeSymbol("sym6"), sx.String("sym6"))
-	bind.Bind(sx.MakeSymbol("sym7"), sx.String("sym7"))
+	_ = bind.Bind(sx.MakeSymbol("sym1"), sx.String("sym1"))
+	_ = bind.Bind(sx.MakeSymbol("sym2"), sx.String("sym2"))
+	_ = bind.Bind(sx.MakeSymbol("sym3"), sx.String("sym3"))
+	_ = bind.Bind(sx.MakeSymbol("sym4"), sx.String("sym4"))
+	_ = bind.Bind(sx.MakeSymbol("sym5"), sx.String("sym5"))
+	_ = bind.Bind(sx.MakeSymbol("sym6"), sx.String("sym6"))
+	_ = bind.Bind(sx.MakeSymbol("sym7"), sx.String("sym7"))
 	alist := bind.Bindings()
 	if alist.Length() != 7 {
 		t.Error("Not 7 elements:", alist)
@@ -118,25 +118,25 @@ func checkBindingEqual(t *testing.T, bind1, bind2 *sxeval.Binding) {
 		return
 	}
 	sym1 := sx.MakeSymbol("sym1")
-	bind1.Bind(sym1, sym1)
+	_ = bind1.Bind(sym1, sym1)
 	if bind1.IsEqual(bind2) {
 		t.Error("after adding sym1 just to", bind1, "both bindings are equal")
 		return
 	}
 	sym2 := sx.MakeSymbol("sym2")
-	bind2.Bind(sym2, sym2)
+	_ = bind2.Bind(sym2, sym2)
 	if bind1.IsEqual(bind2) {
 		t.Error("after adding sym2 just to", bind2, "both bindings are equal")
 		return
 	}
-	bind1.Bind(sym2, sym1)
-	bind2.Bind(sym1, sym2)
+	_ = bind1.Bind(sym2, sym1)
+	_ = bind2.Bind(sym1, sym2)
 	if bind1.IsEqual(bind2) {
 		t.Error("bindings are equal, but bindings differ")
 		return
 	}
-	bind1.Bind(sym2, sym2)
-	bind2.Bind(sym1, sym1)
+	_ = bind1.Bind(sym2, sym2)
+	_ = bind2.Bind(sym1, sym1)
 	if !bind1.IsEqual(bind2) {
 		t.Error("equal bindings differ")
 	}

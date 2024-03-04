@@ -47,7 +47,9 @@ func (v Vector) IsEqual(other Object) bool {
 
 func (v Vector) String() string {
 	var sb strings.Builder
-	v.Print(&sb)
+	if _, err := v.Print(&sb); err != nil {
+		return err.Error()
+	}
 	return sb.String()
 }
 
