@@ -127,7 +127,7 @@ func (e errParseAgain) Error() string { return fmt.Sprintf("Again: %T/%v", e.for
 
 func (pf *ParseEnvironment) MakeChildFrame(name string, baseSize int) *ParseEnvironment {
 	return &ParseEnvironment{
-		binding:  MakeChildBinding(pf.binding, name, baseSize),
+		binding:  pf.binding.MakeChildBinding(name, baseSize),
 		observer: pf.observer,
 	}
 }

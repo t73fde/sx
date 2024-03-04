@@ -33,39 +33,36 @@ func (err ErrConstBinding) Error() string {
 
 type mapSymObj = map[string]sx.Object
 
-// MakeRootBinding creates a new root binding.
-func MakeRootBinding(sizeHint int) *Binding {
+// Binding is a binding based on maps.
+type Binding struct {
+	vars   mapSymObj
+	parent *Binding
+	consts map[string]struct{}
+	name   string
+	frozen bool
+}
+
+func makeBinding(name string, parent *Binding, sizeHint int) *Binding {
 	return &Binding{
-		name:   "root",
-		parent: nil,
 		vars:   make(mapSymObj, sizeHint),
-		isRoot: true,
+		parent: parent,
+		consts: nil,
+		name:   name,
 		frozen: false,
 	}
+}
+
+// MakeRootBinding creates a new root binding.
+func MakeRootBinding(sizeHint int) *Binding {
+	return makeBinding("root", nil, sizeHint)
 }
 
 // MakeChildBinding creates a new binding with a given parent.
-func MakeChildBinding(parent *Binding, name string, sizeHint int) *Binding {
+func (b *Binding) MakeChildBinding(name string, sizeHint int) *Binding {
 	if sizeHint <= 0 {
-		sizeHint = 3
+		return makeBinding(name, b, 3)
 	}
-	return &Binding{
-		name:   name,
-		parent: parent,
-		vars:   make(mapSymObj, sizeHint),
-		isRoot: false,
-		frozen: false,
-	}
-}
-
-// Binding is a binding based on maps.
-type Binding struct {
-	name   string
-	parent *Binding
-	vars   mapSymObj
-	consts map[string]struct{}
-	isRoot bool
-	frozen bool
+	return makeBinding(name, b, sizeHint)
 }
 
 func (b *Binding) IsNil() bool  { return b == nil }
@@ -197,6 +194,20 @@ func (b *Binding) Unbind(sym *sx.Symbol) error {
 // Freeze sets the binding in a read-only state.
 func (b *Binding) Freeze() { b.frozen = true }
 
+// resolveFull resolves a symbol and returns its possible binding, an
+// indication about its const-ness and a reference to the binding where
+// the symbol was bound.
+func (b *Binding) resolveFull(sym *sx.Symbol) (sx.Object, *Binding, int, bool) {
+	depth := 0
+	for curr := b; curr != nil; curr = curr.parent {
+		if obj, found := curr.Lookup(sym); found {
+			return obj, curr, depth, curr.IsConst(sym)
+		}
+		depth++
+	}
+	return nil, nil, depth, false
+}
+
 // Resolve a symbol in a binding and all of its parent bindings.
 func (b *Binding) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	for curr := b; curr != nil; curr = curr.parent {
@@ -205,20 +216,6 @@ func (b *Binding) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 		}
 	}
 	return nil, false
-}
-
-// isConstBinding returns true if the symbol is defined with a constant
-// binding in the given binding or its parent bindings.
-func (b *Binding) isConstantBind(sym *sx.Symbol) bool {
-	for curr := b; curr != nil; curr = curr.parent {
-		if curr.IsConst(sym) {
-			return true
-		}
-		if _, found := curr.Lookup(sym); found {
-			return false
-		}
-	}
-	return false
 }
 
 // GetBinding returns the object as a binding, if possible.

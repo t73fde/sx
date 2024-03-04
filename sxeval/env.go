@@ -85,24 +85,24 @@ func (env *Environment) Eval(obj sx.Object) (sx.Object, error) {
 
 // Compile the given object and return the reworked expression.
 func (env *Environment) Compile(obj sx.Object) (Expr, error) {
-	pf := env.MakeParseFrame()
+	pf := env.MakeParseEnvironment()
 	expr, err := pf.Parse(obj)
 	if err != nil {
 		return nil, err
 	}
-	rf := env.MakeReworkFrame()
+	rf := env.MakeReworkEnvironment()
 	return expr.Rework(rf), nil
 }
 
 // Parse the given object.
 func (env *Environment) Parse(obj sx.Object) (Expr, error) {
-	pf := env.MakeParseFrame()
+	pf := env.MakeParseEnvironment()
 	return pf.Parse(obj)
 }
 
 // Rework the given expression.
 func (env *Environment) Rework(expr Expr) Expr {
-	rf := env.MakeReworkFrame()
+	rf := env.MakeReworkEnvironment()
 	return expr.Rework(rf)
 }
 
@@ -114,17 +114,20 @@ func (env *Environment) Run(expr Expr) (sx.Object, error) {
 	return env.Execute(expr)
 }
 
-func (env *Environment) MakeParseFrame() *ParseEnvironment {
+func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 	return &ParseEnvironment{
 		binding:  env.binding,
 		observer: env.observer,
 	}
 }
 
-func (env *Environment) MakeReworkFrame() *ReworkEnvironment {
-	return &ReworkEnvironment{
+func (env *Environment) MakeReworkEnvironment() *ReworkEnvironment {
+	re := &ReworkEnvironment{
 		binding: env.binding,
+		height:  0,
 	}
+	re.base = re
+	return re
 }
 
 func (env *Environment) NewDynamicEnvironment() *Environment {
@@ -138,7 +141,7 @@ func (env *Environment) NewDynamicEnvironment() *Environment {
 
 func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
 	return &Environment{
-		binding:  MakeChildBinding(parent, name, numBindings),
+		binding:  parent.MakeChildBinding(name, numBindings),
 		executor: env.executor,
 		observer: env.observer,
 		caller:   env,

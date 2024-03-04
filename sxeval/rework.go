@@ -13,27 +13,42 @@
 
 package sxeval
 
-import "zettelstore.de/sx.fossil"
+import (
+	"math"
+
+	"zettelstore.de/sx.fossil"
+)
 
 // ReworkEnvironment guides the Expr.Rework operation.
 type ReworkEnvironment struct {
+	base    *ReworkEnvironment
 	binding *Binding // Current binding
+	height  int      // Height of current binding.
 }
 
 // MakeChildFrame creates a subordinate rework environment with a new binding.
 func (re *ReworkEnvironment) MakeChildFrame(name string, baseSize int) *ReworkEnvironment {
 	return &ReworkEnvironment{
-		binding: MakeChildBinding(re.binding, name, baseSize),
+		base:    re.base,
+		binding: re.binding.MakeChildBinding(name, baseSize),
+		height:  re.height + 1,
 	}
 }
 
-// ResolveConst will resolve the symbol, which is assumed not
-// to be changed afterwards.
-func (re *ReworkEnvironment) ResolveConst(sym *sx.Symbol) (sx.Object, bool) {
-	if bind := re.binding; bind.isConstantBind(sym) {
-		return bind.Resolve(sym)
+// Resolve the symbol into an object, and return the binding depth plus an
+// indication about the const-ness of the value. If the symbol could not be
+// resolved, depth has the value of `math.MinInt`. If the symbol was found
+// in the base environment, depth is set to -1, to indicate a possible unbound
+// situation.
+func (re *ReworkEnvironment) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
+	obj, b, depth, isConst := re.binding.resolveFull(sym)
+	if b == nil {
+		return nil, math.MinInt, false
 	}
-	return nil, false
+	if base := re.base; re == base || depth >= (re.height-base.height) {
+		return obj, -1, isConst
+	}
+	return obj, depth, isConst
 }
 
 // Bind the undefined value to the symbol in the current environment.

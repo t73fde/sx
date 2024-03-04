@@ -241,7 +241,7 @@ func main() {
 		os.Exit(17)
 	}
 	root.Freeze()
-	bind := sxeval.MakeChildBinding(root, "repl", 1024)
+	bind := root.MakeChildBinding("repl", 1024)
 	_ = bind.Bind(sx.MakeSymbol("root-binding"), root)
 	_ = bind.Bind(sx.MakeSymbol("repl-binding"), bind)
 

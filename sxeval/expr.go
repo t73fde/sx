@@ -16,6 +16,7 @@ package sxeval
 import (
 	"fmt"
 	"io"
+	"math"
 	"strings"
 
 	"zettelstore.de/sx.fossil"
@@ -120,8 +121,16 @@ type ResolveSymbolExpr struct {
 func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.Symbol }
 
 func (rse ResolveSymbolExpr) Rework(re *ReworkEnvironment) Expr {
-	if obj, found := re.ResolveConst(rse.Symbol); found {
+	obj, depth, isConst := re.Resolve(rse.Symbol)
+	if depth == math.MinInt {
+		return rse
+	}
+	if isConst {
 		return ObjExpr{Obj: obj}.Rework(re)
+	}
+	if depth >= 0 {
+		lse := LookupSymbolExpr{Symbol: rse.Symbol, Level: depth}
+		return lse.Rework(re)
 	}
 	return rse
 }
@@ -135,6 +144,31 @@ func (rse ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 
 func (rse ResolveSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{RESOLVE %v}", rse.Symbol)
+}
+
+// LookupSymbolExpr is a special ResolveSymbolExpr that gives an indication
+// about the nesting level of `Binding`s, where the symbol will be bound.
+type LookupSymbolExpr struct {
+	Symbol *sx.Symbol
+	Level  int
+}
+
+func (lse *LookupSymbolExpr) Unparse() sx.Object             { return lse.Symbol }
+func (lse *LookupSymbolExpr) Rework(*ReworkEnvironment) Expr { return lse }
+
+func (lse *LookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
+	// Currently, lse.Level is not used. This wil change.
+
+	if obj, found := env.Resolve(lse.Symbol); found {
+		return obj, nil
+	}
+
+	// Should not happen
+	return nil, env.MakeNotBoundError(lse.Symbol)
+}
+
+func (lse LookupSymbolExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{LOOKUP/%d %v}", lse.Level, lse.Symbol)
 }
 
 // CallExpr calls a procedure and returns the resulting objects.

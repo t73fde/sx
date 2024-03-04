@@ -34,7 +34,7 @@ func TestBindLookupUnbind(t *testing.T) {
 	t.Run("child", func(t *testing.T) {
 		newRoot := sxeval.MakeRootBinding(1)
 		_ = newRoot.Bind(sym1, sym2)
-		child := sxeval.MakeChildBinding(newRoot, "assoc", 30)
+		child := newRoot.MakeChildBinding("assoc", 30)
 		bindLookupUnbind(t, newRoot, child, sym1, sym2)
 	})
 }
@@ -106,8 +106,8 @@ func TestRootBindingEqual(t *testing.T) {
 	checkBindingEqual(t, root1, root2)
 
 	root := sxeval.MakeRootBinding(3)
-	child1 := sxeval.MakeChildBinding(root, "child1", 17)
-	child2 := sxeval.MakeChildBinding(root, "child22", 11)
+	child1 := root.MakeChildBinding("child1", 17)
+	child2 := root.MakeChildBinding("child22", 11)
 	checkBindingEqual(t, child1, child2)
 }
 

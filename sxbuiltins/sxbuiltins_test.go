@@ -49,7 +49,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 			rd := sxreader.MakeReader(strings.NewReader(tc.src))
 
 			var sb strings.Builder
-			bind := sxeval.MakeChildBinding(root, tc.name, 0)
+			bind := root.MakeChildBinding(tc.name, 0)
 			env := sxeval.MakeExecutionEnvironment(bind)
 			for {
 				obj, err := rd.Read()
@@ -100,7 +100,7 @@ func createBinding() *sxeval.Binding {
 		_ = root.BindBuiltin(b)
 	}
 	root.Freeze()
-	env := sxeval.MakeChildBinding(root, "vars", len(objects))
+	env := root.MakeChildBinding("vars", len(objects))
 	for _, obj := range objects {
 		if err := env.Bind(sx.MakeSymbol(obj.name), obj.obj); err != nil {
 			panic(err)

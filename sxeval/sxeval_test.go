@@ -74,7 +74,7 @@ func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 				t.Errorf("Error %v while reading %s", err, tc.src)
 				return
 			}
-			bind := sxeval.MakeChildBinding(root, tc.name, 0)
+			bind := root.MakeChildBinding(tc.name, 0)
 			env := sxeval.MakeExecutionEnvironment(bind)
 			res, err := env.Eval(obj)
 			if err != nil {
@@ -135,7 +135,7 @@ func createBindingForTCO() *sxeval.Binding {
 	_ = root.BindBuiltin(&sxbuiltins.List)
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxPrelude))
-	bind := sxeval.MakeChildBinding(root, "TCO", 128)
+	bind := root.MakeChildBinding("TCO", 128)
 	env := sxeval.MakeExecutionEnvironment(bind)
 	for {
 		obj, err := rd.Read()
