@@ -8,7 +8,7 @@
 // under this license.
 //
 // SPDX-License-Identifier: EUPL-1.2
-// SPDX-FileCopyrightText: 2024-present Detlef Stern
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package sx

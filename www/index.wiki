@@ -78,4 +78,4 @@ where <code>HASH</code> is the hash value of the commit you want to use.
 
 Go currently seems not to support software versions when the software is
 managed by Fossil. This explains the need for the hash value. However, this
-methods works and you can use the client software to access a Zettelstore.
+methods works.
