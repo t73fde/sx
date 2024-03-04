@@ -55,6 +55,20 @@ var ReworkExpression = sxeval.Builtin{
 	},
 }
 
+var UnparseExpression = sxeval.Builtin{
+	Name:     "unparse-expression",
+	MinArity: 1,
+	MaxArity: 1,
+	TestPure: nil,
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		expr, err := GetExprObj(args, 0)
+		if err != nil {
+			return nil, err
+		}
+		return expr.GetExpr().Unparse(), nil
+	},
+}
+
 var RunExpression = sxeval.Builtin{
 	Name:     "run-expression",
 	MinArity: 1,

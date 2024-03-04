@@ -145,6 +145,7 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.NotBoundError,             // not-bound-error
 	&sxbuiltins.ParseExpression,           // parse-expression
 	&sxbuiltins.ReworkExpression,          // rework-expression
+	&sxbuiltins.UnparseExpression,         // unparse-expression
 	&sxbuiltins.RunExpression,             // run-expression
 	&sxbuiltins.Compile, &sxbuiltins.Eval, // compile, eval
 	{
