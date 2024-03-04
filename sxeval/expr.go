@@ -96,16 +96,6 @@ func (oe ObjExpr) Rework(re *ReworkEnvironment) Expr {
 
 func (oe ObjExpr) Compute(*Environment) (sx.Object, error) { return oe.Obj, nil }
 
-func (oe ObjExpr) IsEqual(other Expr) bool {
-	if oe == other {
-		return true
-	}
-	if otherO, ok := other.(ObjExpr); ok {
-		return oe.Obj.IsEqual(otherO.Obj)
-	}
-	return false
-}
-
 func (oe ObjExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{OBJ ")
 	if err != nil {
