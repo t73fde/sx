@@ -27,9 +27,6 @@ import (
 
 // Contains tests of all builtins in sub-packages.
 
-// letMacro is the text to define a simple let macro.
-const letMacro = "(defmacro let (bindings . body) `((lambda ,(map car bindings) ,@body) ,@(map cadr bindings)))"
-
 type (
 	tTestCase struct {
 		name    string
@@ -114,6 +111,7 @@ var specials = []*sxeval.Special{
 	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
 	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
 	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
+	&sxbuiltins.LetS,      // let
 	&sxbuiltins.SetXS,     // set!
 	&sxbuiltins.IfS,       // if
 	&sxbuiltins.BeginS,    // begin

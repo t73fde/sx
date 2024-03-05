@@ -79,7 +79,9 @@ func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, form sx.Object, ex
 		spaces := strings.Repeat(" ", me.parseLevel-1)
 		bind := pe.Binding()
 		fmt.Printf("%v;Q%v %v<-%v %v ", spaces, me.parseLevel, bind, bind.Parent(), err)
-		_, _ = expr.Print(os.Stdout)
+		if err == nil {
+			_, _ = expr.Print(os.Stdout)
+		}
 		fmt.Println()
 		me.parseLevel--
 	}
@@ -90,6 +92,7 @@ var specials = []*sxeval.Special{
 	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
 	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
 	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
+	&sxbuiltins.LetS,      // let
 	&sxbuiltins.SetXS,     // set!
 	&sxbuiltins.IfS,       // if
 	&sxbuiltins.BeginS,    // begin
@@ -287,13 +290,14 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			continue
 		}
 		expr = env.Rework(expr)
-		if me.logExpr {
-			printExpr(expr, 0)
-			continue
-		} else if me.logReader {
+		if me.logReader {
 			fmt.Printf(";= ")
 			_, _ = expr.Print(os.Stdout)
 			fmt.Println()
+		}
+		if me.logExpr {
+			printExpr(expr, 0)
+			continue
 		}
 		res, err := env.Run(expr)
 		if me.logExecutor {
@@ -351,6 +355,22 @@ func printExpr(expr sxeval.Expr, level int) {
 		}
 		fmt.Println()
 		printExpr(e.Expr, level+1)
+	case *sxbuiltins.LetExpr:
+		fmt.Println("LET")
+		level++
+		for i, sym := range e.Symbols {
+			fmt.Print(strings.Repeat(" ", level*2))
+			fmt.Print(sym, ":")
+			printExpr(e.Vals[i], -level)
+		}
+		printExpr(e.Body, level)
+	case *sxbuiltins.Let1Expr:
+		fmt.Println("LET1")
+		level++
+		fmt.Print(strings.Repeat(" ", level*2))
+		fmt.Print(e.Symbol, ":")
+		printExpr(e.Value, -level)
+		printExpr(e.Body, level)
 	case *sxbuiltins.IfExpr:
 		fmt.Println("IF")
 		printExpr(e.Test, level+1)

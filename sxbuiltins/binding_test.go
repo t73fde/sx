@@ -56,8 +56,8 @@ var tcsBinding = tTestCases{
 	{name: "current-bindings", src: "(bindings (current-binding))", exp: "()"},
 	{
 		name: "let-bindings",
-		src:  letMacro + "(let ((a 3)) (bindings (current-binding)))",
-		exp:  "#<macro:let> ((a . 3))",
+		src:  "(let ((a 3)) (bindings (current-binding)))",
+		exp:  "((a . 3))",
 	},
 
 	{

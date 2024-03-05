@@ -148,7 +148,7 @@ var tcsQuasiQuote = tTestCases{
 	{name: "lang-true-alt", src: "`(html ,@(if lang1 (list lang1)))", exp: "(html \"de-DE\")"},
 	{name: "lang-false", src: "`(html ,@(if lang0 `((@ lang ,lang0))))", exp: "(html)"},
 
-	{name: "let-in-qq", src: letMacro + "`(0 ,@(let ((a 1)) `(,a)))", exp: "#<macro:let> (0 1)"},
+	{name: "let-in-qq", src: "`(0 ,@(let ((a 1)) `(,a)))", exp: "(0 1)"},
 }
 
 func TestQuasiQuoteExt(t *testing.T) {

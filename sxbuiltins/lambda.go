@@ -46,7 +46,7 @@ var DefunS = sxeval.Special{
 	},
 }
 
-var errNoSpecAndbody = errors.New("parameter spec and body missing")
+var errNoParameterSpecAndBody = errors.New("parameter spec and body missing")
 
 func parseDefProc(pf *sxeval.ParseEnvironment, args *sx.Pair) (*sx.Symbol, *LambdaExpr, error) {
 	if args == nil {
@@ -58,7 +58,7 @@ func parseDefProc(pf *sxeval.ParseEnvironment, args *sx.Pair) (*sx.Symbol, *Lamb
 	}
 	args = args.Tail()
 	if args == nil {
-		return nil, nil, errNoSpecAndbody
+		return nil, nil, errNoParameterSpecAndBody
 	}
 	le, err := ParseProcedure(pf, sym.String(), args.Car(), args.Cdr())
 	return sym, le, err
@@ -71,7 +71,7 @@ var LambdaS = sxeval.Special{
 	Name: lambdaName,
 	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {
-			return nil, errNoSpecAndbody
+			return nil, errNoParameterSpecAndBody
 		}
 		car := args.Car()
 		return ParseProcedure(pf, car.String(), car, args.Cdr())
