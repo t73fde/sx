@@ -24,6 +24,7 @@ import (
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
 	binding  *Binding
+	base     *Environment
 	executor Executor
 	observer ParseObserver
 	caller   *Environment // the dynamic call stack
@@ -39,6 +40,7 @@ func MakeExecutionEnvironment(bind *Binding, options ...Option) *Environment {
 		observer: nil,
 		caller:   nil,
 	}
+	env.base = env
 	for _, opt := range options {
 		opt(env)
 	}
@@ -65,12 +67,9 @@ func WithParseObserver(observe ParseObserver) Option {
 // RebindExecutionEnvironment clones the original environment, but uses the
 // given binding.
 func (env *Environment) RebindExecutionEnvironment(bind *Binding) *Environment {
-	return &Environment{
-		binding:  bind,
-		executor: env.executor,
-		observer: env.observer,
-		caller:   env.caller,
-	}
+	result := *env
+	result.binding = bind
+	return &result
 }
 
 // Eval parses the given object and runs it in the environment.
@@ -131,21 +130,16 @@ func (env *Environment) MakeReworkEnvironment() *ReworkEnvironment {
 }
 
 func (env *Environment) NewDynamicEnvironment() *Environment {
-	return &Environment{
-		binding:  env.binding,
-		executor: env.executor,
-		observer: env.observer,
-		caller:   env,
-	}
+	result := *env
+	result.caller = env
+	return &result
 }
 
 func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
-	return &Environment{
-		binding:  parent.MakeChildBinding(name, numBindings),
-		executor: env.executor,
-		observer: env.observer,
-		caller:   env,
-	}
+	result := *env
+	result.binding = parent.MakeChildBinding(name, numBindings)
+	result.caller = env
+	return &result
 }
 
 // Execute the given expression.
@@ -273,6 +267,9 @@ func (env *Environment) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
 	return env.binding.LookupN(sym, n)
 }
 func (env *Environment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
+	return env.base.binding.Resolve(sym)
+}
+func (env *Environment) ResolveUnbound(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Resolve(sym)
 }
 func (env *Environment) FindBinding(sym *sx.Symbol) *Binding {

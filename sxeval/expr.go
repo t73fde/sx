@@ -121,42 +121,56 @@ type SymbolExpr interface {
 	GetSymbol() *sx.Symbol
 }
 
-// ResolveSymbolExpr resolves the given symbol in an environment and returns the value.
-type ResolveSymbolExpr struct {
-	sym *sx.Symbol
-}
+// UnboundSymbolExpr resolves the given symbol in an environment and returns its value.
+type UnboundSymbolExpr struct{ sym *sx.Symbol }
 
-func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
-
-func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.sym }
-
-func (rse ResolveSymbolExpr) Rework(re *ReworkEnvironment) Expr {
-	obj, depth, isConst := re.Resolve(rse.sym)
+func (use UnboundSymbolExpr) GetSymbol() *sx.Symbol { return use.sym }
+func (use UnboundSymbolExpr) Unparse() sx.Object    { return use.sym }
+func (use UnboundSymbolExpr) Rework(re *ReworkEnvironment) Expr {
+	obj, depth, isConst := re.Resolve(use.sym)
 	if depth == math.MinInt {
-		return rse
+		return use
 	}
 	if isConst {
 		return ObjExpr{Obj: obj}.Rework(re)
 	}
 	if depth >= 0 {
-		lse := &LookupSymbolExpr{sym: rse.sym, lvl: depth}
-		return lse.Rework(re)
+		return (&LookupSymbolExpr{sym: use.sym, lvl: depth}).Rework(re)
 	}
-	return rse
+	return ResolveSymbolExpr(use).Rework(re)
 }
 
-func (rse ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	if obj, found := env.Resolve(rse.sym); found {
+func (use UnboundSymbolExpr) Compute(env *Environment) (sx.Object, error) {
+	if obj, found := env.ResolveUnbound(use.sym); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(rse.sym)
+	return nil, env.MakeNotBoundError(use.sym)
 }
 
-func (rse ResolveSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{RESOLVE %v}", rse.sym)
+func (use UnboundSymbolExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{UNBOUND %v}", use.sym)
 }
 
-// LookupSymbolExpr is a special ResolveSymbolExpr that gives an indication
+// ResolveSymbolExpr is a special `UnboundSymbolExpr` that must be resolved in
+// the base environment. Traversal through all nested lexical bindings is not
+// needed.
+type ResolveSymbolExpr struct{ sym *sx.Symbol }
+
+func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol             { return rse.sym }
+func (rse ResolveSymbolExpr) Unparse() sx.Object                { return rse.sym }
+func (rse ResolveSymbolExpr) Rework(re *ReworkEnvironment) Expr { return rse }
+func (use ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
+	if obj, found := env.Resolve(use.sym); found {
+		return obj, nil
+	}
+	return nil, env.MakeNotBoundError(use.sym)
+}
+
+func (use ResolveSymbolExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{RESOLVE %v}", use.sym)
+}
+
+// LookupSymbolExpr is a special UnboundSymbolExpr that gives an indication
 // about the nesting level of `Binding`s, where the symbol will be bound.
 type LookupSymbolExpr struct {
 	sym *sx.Symbol

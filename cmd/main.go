@@ -333,6 +333,8 @@ func printExpr(expr sxeval.Expr, level int) {
 		for _, arg := range e.Args {
 			printExpr(arg, level+1)
 		}
+	case sxeval.UnboundSymbolExpr:
+		fmt.Printf("UNBOUND %v\n", e.GetSymbol())
 	case sxeval.ResolveSymbolExpr:
 		fmt.Printf("RESOLVE %v\n", e.GetSymbol())
 	case *sxeval.LookupSymbolExpr:

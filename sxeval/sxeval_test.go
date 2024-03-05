@@ -112,6 +112,7 @@ func TestEval(t *testing.T) {
 }
 
 var sxPrelude = `;; Indirekt recursive definition of even/odd
+(defvar odd? ()) ; make symbol known to reworker
 (defun even? (n) (if (= n 0) 1 (odd? (- n 1))))
 (defun odd? (n) (if (= n 0) () (even? (- n 1))))
 
@@ -124,6 +125,7 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 
 func createBindingForTCO() *sxeval.Binding {
 	root := sxeval.MakeRootBinding(6)
+	_ = root.BindSpecial(&sxbuiltins.DefVarS)
 	_ = root.BindSpecial(&sxbuiltins.DefunS)
 	_ = root.BindSpecial(&sxbuiltins.IfS)
 	_ = root.BindBuiltin(&sxbuiltins.Equal)

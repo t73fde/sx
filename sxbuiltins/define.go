@@ -88,6 +88,7 @@ func (de *DefineExpr) Unparse() sx.Object {
 }
 
 func (de *DefineExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
+	_ = re.Bind(de.Sym)
 	de.Val = de.Val.Rework(re)
 	return de
 }
