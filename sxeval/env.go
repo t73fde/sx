@@ -269,6 +269,9 @@ func (env *Environment) BindConst(sym *sx.Symbol, obj sx.Object) error {
 func (env *Environment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Lookup(sym)
 }
+func (env *Environment) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
+	return env.binding.LookupN(sym, n)
+}
 func (env *Environment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Resolve(sym)
 }

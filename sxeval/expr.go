@@ -170,9 +170,7 @@ func (lse *LookupSymbolExpr) Unparse() sx.Object             { return lse.sym }
 func (lse *LookupSymbolExpr) Rework(*ReworkEnvironment) Expr { return lse }
 
 func (lse *LookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	// Currently, lse.Level is not used. This wil change.
-
-	if obj, found := env.Resolve(lse.sym); found {
+	if obj, found := env.LookupN(lse.sym, lse.lvl); found {
 		return obj, nil
 	}
 
@@ -183,6 +181,8 @@ func (lse *LookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 func (lse LookupSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{LOOKUP/%d %v}", lse.lvl, lse.sym)
 }
+
+// --- CallExpr ---------------------------------------------------------------
 
 // CallExpr calls a procedure and returns the resulting objects.
 type CallExpr struct {

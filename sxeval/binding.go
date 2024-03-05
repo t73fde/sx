@@ -156,6 +156,14 @@ func (b *Binding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	return obj, found
 }
 
+// LookupN will lookup the symbol in the N-th parent.
+func (b *Binding) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
+	for i := 0; i < n; i++ {
+		b = b.parent
+	}
+	return b.Lookup(sym)
+}
+
 // IsConst returns true if the binding of the symbol is a constant binding.
 func (b *Binding) IsConst(sym *sx.Symbol) bool {
 	if b == nil {
