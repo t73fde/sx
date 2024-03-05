@@ -98,7 +98,12 @@ var Compile = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		expr, err := realEnv.Compile(args[0])
+		arg := args[0]
+		if proc, isProc := arg.(*Procedure); isProc {
+			proc.Expr = realEnv.Rework(proc.Expr)
+			return proc, nil
+		}
+		expr, err := realEnv.Compile(arg)
 		if err != nil {
 			return nil, err
 		}
