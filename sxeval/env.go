@@ -263,15 +263,28 @@ func (env *Environment) BindConst(sym *sx.Symbol, obj sx.Object) error {
 func (env *Environment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Lookup(sym)
 }
-func (env *Environment) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
-	return env.binding.LookupN(sym, n)
-}
 func (env *Environment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
-	return env.base.binding.Resolve(sym)
-}
-func (env *Environment) ResolveUnbound(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Resolve(sym)
 }
+func (env *Environment) LookupNWithError(sym *sx.Symbol, n int) (sx.Object, error) {
+	if obj, found := env.binding.LookupN(sym, n); found {
+		return obj, nil
+	}
+	return nil, env.MakeNotBoundError(sym)
+}
+func (env *Environment) ResolveWithError(sym *sx.Symbol) (sx.Object, error) {
+	if obj, found := env.base.binding.Resolve(sym); found {
+		return obj, nil
+	}
+	return nil, env.base.MakeNotBoundError(sym)
+}
+func (env *Environment) ResolveUnboundWithError(sym *sx.Symbol) (sx.Object, error) {
+	if obj, found := env.binding.Resolve(sym); found {
+		return obj, nil
+	}
+	return nil, env.MakeNotBoundError(sym)
+}
+
 func (env *Environment) FindBinding(sym *sx.Symbol) *Binding {
 	for curr := env.binding; curr != nil; curr = curr.parent {
 		if _, found := curr.Lookup(sym); found {

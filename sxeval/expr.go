@@ -141,10 +141,7 @@ func (use UnboundSymbolExpr) Rework(re *ReworkEnvironment) Expr {
 }
 
 func (use UnboundSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	if obj, found := env.ResolveUnbound(use.sym); found {
-		return obj, nil
-	}
-	return nil, env.MakeNotBoundError(use.sym)
+	return env.ResolveUnboundWithError(use.sym)
 }
 
 func (use UnboundSymbolExpr) Print(w io.Writer) (int, error) {
@@ -160,10 +157,7 @@ func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol             { return rse.sym
 func (rse ResolveSymbolExpr) Unparse() sx.Object                { return rse.sym }
 func (rse ResolveSymbolExpr) Rework(re *ReworkEnvironment) Expr { return rse }
 func (use ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	if obj, found := env.Resolve(use.sym); found {
-		return obj, nil
-	}
-	return nil, env.MakeNotBoundError(use.sym)
+	return env.ResolveWithError(use.sym)
 }
 
 func (use ResolveSymbolExpr) Print(w io.Writer) (int, error) {
@@ -184,12 +178,7 @@ func (lse *LookupSymbolExpr) Unparse() sx.Object             { return lse.sym }
 func (lse *LookupSymbolExpr) Rework(*ReworkEnvironment) Expr { return lse }
 
 func (lse *LookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	if obj, found := env.LookupN(lse.sym, lse.lvl); found {
-		return obj, nil
-	}
-
-	// Should not happen
-	return nil, env.MakeNotBoundError(lse.sym)
+	return env.LookupNWithError(lse.sym, lse.lvl)
 }
 
 func (lse LookupSymbolExpr) Print(w io.Writer) (int, error) {
