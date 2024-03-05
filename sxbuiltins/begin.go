@@ -57,9 +57,6 @@ func ParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, erro
 		last = ex
 		break
 	}
-	if len(front) == 0 {
-		return last, nil
-	}
 	return &BeginExpr{Front: front, Last: last}, nil
 }
 
@@ -87,7 +84,11 @@ func (be *BeginExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	for _, expr := range be.Front {
 		re := expr.Rework(re)
 		if _, isConstObject := re.(sxeval.ConstObjectExpr); isConstObject {
-			// An object has no side effect, there it can be ignored in the sequence
+			// A constant object has no side effect, it can be ignored in the sequence
+			continue
+		}
+		if _, isSymbol := re.(sxeval.SymbolExpr); isSymbol {
+			// A symbol has no side effect, it can be ignored in the sequence
 			continue
 		}
 		seq = append(seq, re)

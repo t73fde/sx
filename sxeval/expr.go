@@ -113,15 +113,25 @@ func (oe ObjExpr) Print(w io.Writer) (int, error) {
 }
 func (oe ObjExpr) ConstObject() sx.Object { return oe.Obj }
 
-// ResolveSymbolExpr resolves the given symbol in an environment and returns the value.
-type ResolveSymbolExpr struct {
-	Symbol *sx.Symbol
+// --- SymbolExpr -------------------------------------------------------------
+
+// SymbolExpr is the common interface of Expr that handles symbols.
+type SymbolExpr interface {
+	Expr
+	GetSymbol() *sx.Symbol
 }
 
-func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.Symbol }
+// ResolveSymbolExpr resolves the given symbol in an environment and returns the value.
+type ResolveSymbolExpr struct {
+	sym *sx.Symbol
+}
+
+func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
+
+func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.sym }
 
 func (rse ResolveSymbolExpr) Rework(re *ReworkEnvironment) Expr {
-	obj, depth, isConst := re.Resolve(rse.Symbol)
+	obj, depth, isConst := re.Resolve(rse.sym)
 	if depth == math.MinInt {
 		return rse
 	}
@@ -129,46 +139,49 @@ func (rse ResolveSymbolExpr) Rework(re *ReworkEnvironment) Expr {
 		return ObjExpr{Obj: obj}.Rework(re)
 	}
 	if depth >= 0 {
-		lse := LookupSymbolExpr{Symbol: rse.Symbol, Level: depth}
+		lse := &LookupSymbolExpr{sym: rse.sym, lvl: depth}
 		return lse.Rework(re)
 	}
 	return rse
 }
 
 func (rse ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	if obj, found := env.Resolve(rse.Symbol); found {
+	if obj, found := env.Resolve(rse.sym); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(rse.Symbol)
+	return nil, env.MakeNotBoundError(rse.sym)
 }
 
 func (rse ResolveSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{RESOLVE %v}", rse.Symbol)
+	return fmt.Fprintf(w, "{RESOLVE %v}", rse.sym)
 }
 
 // LookupSymbolExpr is a special ResolveSymbolExpr that gives an indication
 // about the nesting level of `Binding`s, where the symbol will be bound.
 type LookupSymbolExpr struct {
-	Symbol *sx.Symbol
-	Level  int
+	sym *sx.Symbol
+	lvl int
 }
 
-func (lse *LookupSymbolExpr) Unparse() sx.Object             { return lse.Symbol }
+func (lse *LookupSymbolExpr) GetSymbol() *sx.Symbol { return lse.sym }
+func (lse *LookupSymbolExpr) GetLevel() int         { return lse.lvl }
+
+func (lse *LookupSymbolExpr) Unparse() sx.Object             { return lse.sym }
 func (lse *LookupSymbolExpr) Rework(*ReworkEnvironment) Expr { return lse }
 
 func (lse *LookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	// Currently, lse.Level is not used. This wil change.
 
-	if obj, found := env.Resolve(lse.Symbol); found {
+	if obj, found := env.Resolve(lse.sym); found {
 		return obj, nil
 	}
 
 	// Should not happen
-	return nil, env.MakeNotBoundError(lse.Symbol)
+	return nil, env.MakeNotBoundError(lse.sym)
 }
 
 func (lse LookupSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{LOOKUP/%d %v}", lse.Level, lse.Symbol)
+	return fmt.Fprintf(w, "{LOOKUP/%d %v}", lse.lvl, lse.sym)
 }
 
 // CallExpr calls a procedure and returns the resulting objects.
