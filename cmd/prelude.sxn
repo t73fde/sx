@@ -49,9 +49,9 @@
         (let* ((clause (car clauses))
                (the-cond (car clause)))
               (if (= the-cond T)
-                  (cadr clause)
+                  `(begin ,@(cdr clause))
                   `(if ,the-cond
-                       ,(cadr clause)
+                       (begin ,@(cdr clause))
                        (cond ,@(cdr clauses)))))))
 
 ;; and macro
