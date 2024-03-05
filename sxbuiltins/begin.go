@@ -135,6 +135,11 @@ func (be *BeginExpr) Print(w io.Writer) (int, error) {
 			return length, err
 		}
 	}
+	l, err = io.WriteString(w, " ")
+	length += l
+	if err != nil {
+		return length, err
+	}
 	l, err = be.Last.Print(w)
 	length += l
 	if err != nil {

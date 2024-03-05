@@ -56,9 +56,7 @@ func (me *mainEngine) Execute(env *sxeval.Environment, expr sxeval.Expr) (sx.Obj
 	fmt.Println()
 	obj, err := expr.Compute(env)
 	me.execCount++
-	if err == nil {
-		fmt.Printf("%v;O%d %T %v\n", spaces, me.execLevel, obj, obj)
-	}
+	fmt.Printf("%v;O%d %v %T %v\n", spaces, me.execLevel, err, obj, obj)
 	me.execLevel--
 	return obj, err
 }
@@ -80,7 +78,9 @@ func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, form sx.Object, ex
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel-1)
 		bind := pe.Binding()
-		fmt.Printf("%v;Q%v %v<-%v %v %v\n", spaces, me.parseLevel, bind, bind.Parent(), err, expr)
+		fmt.Printf("%v;Q%v %v<-%v %v ", spaces, me.parseLevel, bind, bind.Parent(), err)
+		_, _ = expr.Print(os.Stdout)
+		fmt.Println()
 		me.parseLevel--
 	}
 }

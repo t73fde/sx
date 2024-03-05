@@ -14,6 +14,7 @@
 package sxbuiltins
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -45,6 +46,8 @@ var DefunS = sxeval.Special{
 	},
 }
 
+var errNoSpecAndbody = errors.New("parameter spec and body missing")
+
 func parseDefProc(pf *sxeval.ParseEnvironment, args *sx.Pair) (*sx.Symbol, *LambdaExpr, error) {
 	if args == nil {
 		return nil, nil, sxeval.ErrNoArgs
@@ -55,7 +58,7 @@ func parseDefProc(pf *sxeval.ParseEnvironment, args *sx.Pair) (*sx.Symbol, *Lamb
 	}
 	args = args.Tail()
 	if args == nil {
-		return nil, nil, fmt.Errorf("parameter spec and body missing")
+		return nil, nil, errNoSpecAndbody
 	}
 	le, err := ParseProcedure(pf, sym.String(), args.Car(), args.Cdr())
 	return sym, le, err
@@ -68,7 +71,7 @@ var LambdaS = sxeval.Special{
 	Name: lambdaName,
 	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if args == nil {
-			return nil, fmt.Errorf("parameter spec and body missing")
+			return nil, errNoSpecAndbody
 		}
 		car := args.Car()
 		return ParseProcedure(pf, car.String(), car, args.Cdr())
@@ -224,26 +227,30 @@ func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 }
 
 func (le *LambdaExpr) Print(w io.Writer) (int, error) {
-	length, err := io.WriteString(w, "{LAMBDA ")
+	length, err := fmt.Fprintf(w, "{LAMBDA %q ", le.Name)
 	if err != nil {
 		return length, err
 	}
-	l, err := io.WriteString(w, le.Name)
-	length += l
-	if err != nil {
-		return length, err
-	}
-	for _, p := range le.Params {
-		l2, err2 := fmt.Fprintf(w, " %v", p)
-		length += l2
-		if err2 != nil {
-			return length, err2
-		}
-	}
-	if le.Rest == nil {
-		l, err = io.WriteString(w, " none ")
+	var l int
+	if params := le.Params; len(params) == 0 {
+		l, err = fmt.Fprintf(w, "%v ", le.Rest)
 	} else {
-		l, err = fmt.Fprintf(w, " %v ", le.Rest)
+		for i, p := range le.Params {
+			if i == 0 {
+				l, err = fmt.Fprintf(w, "(%v", p)
+			} else {
+				l, err = fmt.Fprintf(w, " %v", p)
+			}
+			length += l
+			if err != nil {
+				return length, err
+			}
+		}
+		if rest := le.Rest; rest != nil {
+			l, err = fmt.Fprintf(w, ". %v) ", rest)
+		} else {
+			l, err = io.WriteString(w, ") ")
+		}
 	}
 	length += l
 	if err != nil {
