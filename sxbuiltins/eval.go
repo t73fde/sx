@@ -98,16 +98,20 @@ var Compile = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		arg := args[0]
-		if proc, isProc := arg.(*Procedure); isProc {
-			proc.Expr = realEnv.Rework(proc.Expr)
-			return proc, nil
+		switch arg := args[0].(type) {
+		case *Procedure:
+			arg.Expr = realEnv.Rework(arg.Expr)
+			return arg, nil
+		case *Macro:
+			arg.Expr = realEnv.Rework(arg.Expr)
+			return arg, nil
+		default:
+			expr, err := realEnv.Compile(arg)
+			if err != nil {
+				return nil, err
+			}
+			return sxeval.MakeExprObj(expr), nil
 		}
-		expr, err := realEnv.Compile(arg)
-		if err != nil {
-			return nil, err
-		}
-		return sxeval.MakeExprObj(expr), nil
 	},
 }
 
