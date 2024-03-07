@@ -74,7 +74,18 @@ var LambdaS = sxeval.Special{
 			return nil, errNoParameterSpecAndBody
 		}
 		car := args.Car()
-		return ParseProcedure(pf, car.String(), car, args.Cdr())
+		var name string
+		if sName, isString := sx.GetString(car); isString {
+			name = string(sName)
+			args = args.Tail()
+			if args == nil {
+				return nil, errNoParameterSpecAndBody
+			}
+			car = args.Car()
+		} else {
+			name = car.String()
+		}
+		return ParseProcedure(pf, name, car, args.Cdr())
 	},
 }
 

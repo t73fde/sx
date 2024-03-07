@@ -86,6 +86,20 @@ var tcsLambda = tTestCases{
 		withErr: true,
 	},
 
+	{name: "lambda-name", src: "(lambda \"adbmal\" x x)", exp: "#<lambda:adbmal>"},
+	{
+		name:    "err-lambda-name-body",
+		src:     "(lambda \"adbmal\" x)",
+		exp:     "{[{lambda: missing body}]}",
+		withErr: true,
+	},
+	{
+		name:    "err-lambda-name-param",
+		src:     "(lambda \"adbmal\")",
+		exp:     "{[{lambda: parameter spec and body missing}]}",
+		withErr: true,
+	},
+
 	{
 		name: "lambda-lex-resolve",
 		src:  "(defvar y 3) (defun fn (x) (+ x y)) (let ((y 17)) (fn 4))",
