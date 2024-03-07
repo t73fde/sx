@@ -85,4 +85,15 @@ var tcsLambda = tTestCases{
 		exp:     "{[{lambda: symbol in list expected, but got sx.Int64/1}]}",
 		withErr: true,
 	},
+
+	{
+		name: "lambda-lex-resolve",
+		src:  "(defvar y 3) (defun fn (x) (+ x y)) (let ((y 17)) (fn 4))",
+		exp:  "3 #<lambda:fn> 7",
+	},
+	{
+		name: "lambda-dyn-resolve",
+		src:  "(defvar y 3) (defdyn fn (x) (+ x y)) (let ((y 17)) (fn 4))",
+		exp:  "3 #<dyn-lambda:fn> 21",
+	},
 }
