@@ -125,11 +125,11 @@ func ParseProcedure(pf *sxeval.ParseEnvironment, name string, paramSpec, bodySpe
 		return nil, err
 	}
 	fn := &LambdaExpr{
-		Name:    name,
-		Params:  params,
-		Rest:    rest,
-		Expr:    expr,
-		IsMacro: false,
+		Name:   name,
+		Params: params,
+		Rest:   rest,
+		Expr:   expr,
+		Type:   lexLambdaType,
 	}
 	return fn, nil
 }
@@ -173,12 +173,18 @@ func GetParameterSymbol(params []*sx.Symbol, obj sx.Object) (*sx.Symbol, error) 
 }
 
 type LambdaExpr struct {
-	Name    string
-	Params  []*sx.Symbol
-	Rest    *sx.Symbol
-	Expr    sxeval.Expr
-	IsMacro bool
+	Name   string
+	Params []*sx.Symbol
+	Rest   *sx.Symbol
+	Expr   sxeval.Expr
+	Type   int // <0: Macro, =0: LexLambda, >0: DynLambda
 }
+
+const (
+	macroType     = -1
+	lexLambdaType = 0
+	dynLambdaType = 1
+)
 
 func (le *LambdaExpr) Unparse() sx.Object {
 	expr := le.Expr.Unparse()
@@ -207,9 +213,9 @@ func (le *LambdaExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 }
 
 func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	if le.IsMacro {
-		return &Macro{
-			Env:     env,
+	leType := le.Type
+	if leType == 0 {
+		return &LexLambda{
 			Binding: env.Binding(),
 			Name:    le.Name,
 			Params:  le.Params,
@@ -217,7 +223,16 @@ func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 			Expr:    le.Expr,
 		}, nil
 	}
-	return &Procedure{
+	if leType > 0 {
+		return &DynLambda{
+			Name:   le.Name,
+			Params: le.Params,
+			Rest:   le.Rest,
+			Expr:   le.Expr,
+		}, nil
+	}
+	return &Macro{
+		Env:     env,
 		Binding: env.Binding(),
 		Name:    le.Name,
 		Params:  le.Params,
@@ -227,17 +242,28 @@ func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 }
 
 func (le *LambdaExpr) Print(w io.Writer) (int, error) {
-	length, err := fmt.Fprintf(w, "{LAMBDA %q ", le.Name)
+	var typeString string
+	if leType := le.Type; leType < 0 {
+		typeString = "MACRO-"
+	} else if leType > 0 {
+		typeString = "DYN-"
+	}
+	length, err := fmt.Fprintf(w, "{%sLAMBDA %q ", typeString, le.Name)
 	if err != nil {
 		return length, err
 	}
 	var l int
-	if params := le.Params; len(params) == 0 {
+	if params, rest := le.Params, le.Rest; len(params) == 0 && rest != nil {
 		l, err = fmt.Fprintf(w, "%v ", le.Rest)
 	} else {
+		l, err = io.WriteString(w, "(")
+		length += l
+		if err != nil {
+			return length, err
+		}
 		for i, p := range le.Params {
 			if i == 0 {
-				l, err = fmt.Fprintf(w, "(%v", p)
+				l, err = fmt.Fprintf(w, "%v", p)
 			} else {
 				l, err = fmt.Fprintf(w, " %v", p)
 			}
@@ -246,7 +272,7 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 				return length, err
 			}
 		}
-		if rest := le.Rest; rest != nil {
+		if rest != nil {
 			l, err = fmt.Fprintf(w, ". %v) ", rest)
 		} else {
 			l, err = io.WriteString(w, ") ")
@@ -267,8 +293,8 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 	return length, err
 }
 
-// Procedure represents the procedure definition form (aka lambda).
-type Procedure struct {
+// LexLambda represents the lexical procedure definition form.
+type LexLambda struct {
 	Binding *sxeval.Binding
 	Name    string
 	Params  []*sx.Symbol
@@ -276,42 +302,103 @@ type Procedure struct {
 	Expr    sxeval.Expr
 }
 
-func (p *Procedure) IsNil() bool                  { return p == nil }
-func (p *Procedure) IsAtom() bool                 { return p == nil }
-func (p *Procedure) IsEqual(other sx.Object) bool { return p == other }
-func (p *Procedure) String() string               { return "#<lambda:" + p.Name + ">" }
-func (p *Procedure) GoString() string             { return p.String() }
+func (ll *LexLambda) IsNil() bool                  { return ll == nil }
+func (ll *LexLambda) IsAtom() bool                 { return ll == nil }
+func (ll *LexLambda) IsEqual(other sx.Object) bool { return ll == other }
+func (ll *LexLambda) String() string               { return "#<lambda:" + ll.Name + ">" }
+func (ll *LexLambda) GoString() string             { return ll.String() }
 
 // --- Builtin methods to implement sxeval.Callable
 
 // IsPure tests if the Procedure needs an environment value and does not
 // produce any other side effects.
-func (p *Procedure) IsPure(sx.Vector) bool { return false }
+func (ll *LexLambda) IsPure(sx.Vector) bool { return false }
 
 // Call the Procedure.
-func (p *Procedure) Call(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-	numParams := len(p.Params)
+func (ll *LexLambda) Call(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	numParams := len(ll.Params)
 	if len(args) < numParams {
-		return nil, fmt.Errorf("%s: missing arguments: %v", p.Name, p.Params[len(args):])
+		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[len(args):])
 	}
 	bindSize := numParams
-	if p.Rest != nil {
+	if ll.Rest != nil {
 		bindSize++
 	}
-	lexicalEnv := env.NewLexicalEnvironment(p.Binding, p.Name, bindSize)
-	for i, p := range p.Params {
+	lexicalEnv := env.NewLexicalEnvironment(ll.Binding, ll.Name, bindSize)
+	for i, p := range ll.Params {
 		err := lexicalEnv.Bind(p, args[i])
 		if err != nil {
 			return nil, err
 		}
 	}
-	if p.Rest != nil {
-		err := lexicalEnv.Bind(p.Rest, sx.MakeList(args[numParams:]...))
+	if ll.Rest != nil {
+		err := lexicalEnv.Bind(ll.Rest, sx.MakeList(args[numParams:]...))
 		if err != nil {
 			return nil, err
 		}
 	} else if len(args) > numParams {
-		return nil, fmt.Errorf("%s: excess arguments: %v", p.Name, []sx.Object(args[numParams:]))
+		return nil, fmt.Errorf("%s: excess arguments: %v", ll.Name, []sx.Object(args[numParams:]))
 	}
-	return lexicalEnv.ExecuteTCO(p.Expr)
+	return lexicalEnv.ExecuteTCO(ll.Expr)
+}
+
+// DefDynS parses a procedure definition with dynamic binding.
+var DefDynS = sxeval.Special{
+	Name: "defdyn",
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+		sym, le, err := parseDefProc(pf, args)
+		if err != nil {
+			return nil, err
+		}
+		le.Type = dynLambdaType
+		return &DefineExpr{Sym: sym, Val: le}, nil
+	},
+}
+
+// DynLambda represents the dynamic binding procedure definition form.
+type DynLambda struct {
+	Name   string
+	Params []*sx.Symbol
+	Rest   *sx.Symbol
+	Expr   sxeval.Expr
+}
+
+func (dl *DynLambda) IsNil() bool                  { return dl == nil }
+func (dl *DynLambda) IsAtom() bool                 { return dl == nil }
+func (dl *DynLambda) IsEqual(other sx.Object) bool { return dl == other }
+func (dl *DynLambda) String() string               { return "#<dyn-lambda:" + dl.Name + ">" }
+func (dl *DynLambda) GoString() string             { return dl.String() }
+
+// --- Builtin methods to implement sxeval.Callable
+
+// IsPure tests if the Procedure needs an environment value and does not
+// produce any other side effects.
+func (dl *DynLambda) IsPure(sx.Vector) bool { return false }
+
+// Call the Procedure.
+func (dl *DynLambda) Call(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	numParams := len(dl.Params)
+	if len(args) < numParams {
+		return nil, fmt.Errorf("%s: missing arguments: %v", dl.Name, dl.Params[len(args):])
+	}
+	bindSize := numParams
+	if dl.Rest != nil {
+		bindSize++
+	}
+	dynEnv := env.NewLexicalEnvironment(env.Binding(), dl.Name, bindSize)
+	for i, p := range dl.Params {
+		err := dynEnv.Bind(p, args[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	if dl.Rest != nil {
+		err := dynEnv.Bind(dl.Rest, sx.MakeList(args[numParams:]...))
+		if err != nil {
+			return nil, err
+		}
+	} else if len(args) > numParams {
+		return nil, fmt.Errorf("%s: excess arguments: %v", dl.Name, []sx.Object(args[numParams:]))
+	}
+	return dynEnv.ExecuteTCO(dl.Expr)
 }

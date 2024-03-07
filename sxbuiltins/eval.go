@@ -94,12 +94,15 @@ var Compile = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil,
 	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		realEnv, err := adaptEnvironment(env, args)
-		if err != nil {
-			return nil, err
+		realEnv, errAdapt := adaptEnvironment(env, args)
+		if errAdapt != nil {
+			return nil, errAdapt
 		}
 		switch arg := args[0].(type) {
-		case *Procedure:
+		case *LexLambda:
+			arg.Expr = realEnv.Rework(arg.Expr)
+			return arg, nil
+		case *DynLambda:
 			arg.Expr = realEnv.Rework(arg.Expr)
 			return arg, nil
 		case *Macro:

@@ -26,7 +26,7 @@ var DefMacroS = sxeval.Special{
 		if err != nil {
 			return nil, err
 		}
-		le.IsMacro = true
+		le.Type = macroType
 		return &DefineExpr{Sym: sym, Val: le}, nil
 	},
 }
@@ -70,7 +70,7 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, er
 		arg = pair.Cdr()
 	}
 
-	proc := Procedure{
+	proc := LexLambda{
 		Binding: m.Binding,
 		Name:    m.Name,
 		Params:  m.Params,
