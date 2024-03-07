@@ -56,14 +56,18 @@ func (me *mainEngine) Execute(env *sxeval.Environment, expr sxeval.Expr) (sx.Obj
 	fmt.Println()
 	obj, err := expr.Compute(env)
 	me.execCount++
-	fmt.Printf("%v;O%d %v %T %v\n", spaces, me.execLevel, err, obj, obj)
+	if err == nil {
+		fmt.Printf("%v;O%d %T %v\n", spaces, me.execLevel, obj, obj)
+	} else {
+		fmt.Printf("%v;o%d %v\n", spaces, me.execLevel, err)
+	}
 	me.execLevel--
 	return obj, err
 }
 
 // ----- ParseObserver methods
 
-// BeforeParse logs everythinf before the parsing happens.
+// BeforeParse logs everything before the parsing happens.
 func (me *mainEngine) BeforeParse(pe *sxeval.ParseEnvironment, form sx.Object) sx.Object {
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel)
