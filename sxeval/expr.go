@@ -137,7 +137,7 @@ func (use UnboundSymbolExpr) Rework(re *ReworkEnvironment) Expr {
 	if depth >= 0 {
 		return (&LookupSymbolExpr{sym: use.sym, lvl: depth}).Rework(re)
 	}
-	return ResolveSymbolExpr(use).Rework(re)
+	return (&ResolveSymbolExpr{sym: use.sym, skip: re.Height()}).Rework(re)
 }
 
 func (use UnboundSymbolExpr) Compute(env *Environment) (sx.Object, error) {
@@ -151,17 +151,20 @@ func (use UnboundSymbolExpr) Print(w io.Writer) (int, error) {
 // ResolveSymbolExpr is a special `UnboundSymbolExpr` that must be resolved in
 // the base environment. Traversal through all nested lexical bindings is not
 // needed.
-type ResolveSymbolExpr struct{ sym *sx.Symbol }
+type ResolveSymbolExpr struct {
+	sym  *sx.Symbol
+	skip int
+}
 
 func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol             { return rse.sym }
 func (rse ResolveSymbolExpr) Unparse() sx.Object                { return rse.sym }
 func (rse ResolveSymbolExpr) Rework(re *ReworkEnvironment) Expr { return rse }
 func (use ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	return env.ResolveWithError(use.sym)
+	return env.ResolveNWithError(use.sym, use.skip)
 }
 
 func (use ResolveSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{RESOLVE %v}", use.sym)
+	return fmt.Fprintf(w, "{RESOLVE/%d %v}", use.skip, use.sym)
 }
 
 // LookupSymbolExpr is a special UnboundSymbolExpr that gives an indication

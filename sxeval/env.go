@@ -25,7 +25,6 @@ import (
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
 	binding  *Binding
-	base     *Environment
 	executor Executor
 	observer ParseObserver
 	caller   *Environment // the dynamic call stack
@@ -41,7 +40,6 @@ func MakeExecutionEnvironment(bind *Binding, options ...Option) *Environment {
 		observer: nil,
 		caller:   nil,
 	}
-	env.base = env
 	for _, opt := range options {
 		opt(env)
 	}
@@ -273,11 +271,11 @@ func (env *Environment) LookupNWithError(sym *sx.Symbol, n int) (sx.Object, erro
 	}
 	return nil, env.MakeNotBoundError(sym)
 }
-func (env *Environment) ResolveWithError(sym *sx.Symbol) (sx.Object, error) {
-	if obj, found := env.base.binding.Resolve(sym); found {
+func (env *Environment) ResolveNWithError(sym *sx.Symbol, skip int) (sx.Object, error) {
+	if obj, found := env.binding.ResolveN(sym, skip); found {
 		return obj, nil
 	}
-	return nil, env.base.MakeNotBoundError(sym)
+	return nil, env.MakeNotBoundError(sym)
 }
 func (env *Environment) ResolveUnboundWithError(sym *sx.Symbol) (sx.Object, error) {
 	if obj, found := env.binding.Resolve(sym); found {

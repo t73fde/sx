@@ -226,6 +226,21 @@ func (b *Binding) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return nil, false
 }
 
+// ResolveN resolves a symbol in the N-th parent binding and all of its parent
+// bindings.
+func (b *Binding) ResolveN(sym *sx.Symbol, n int) (sx.Object, bool) {
+	curr := b
+	for i := 0; i < n; i++ {
+		curr = curr.parent
+	}
+	for ; curr != nil; curr = curr.parent {
+		if obj, found := curr.Lookup(sym); found {
+			return obj, true
+		}
+	}
+	return nil, false
+}
+
 // GetBinding returns the object as a binding, if possible.
 func GetBinding(obj sx.Object) (*Binding, bool) {
 	if sx.IsNil(obj) {

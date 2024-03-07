@@ -98,23 +98,11 @@ var Compile = sxeval.Builtin{
 		if errAdapt != nil {
 			return nil, errAdapt
 		}
-		switch arg := args[0].(type) {
-		case *LexLambda:
-			arg.Expr = realEnv.Rework(arg.Expr)
-			return arg, nil
-		case *DynLambda:
-			arg.Expr = realEnv.Rework(arg.Expr)
-			return arg, nil
-		case *Macro:
-			arg.Expr = realEnv.Rework(arg.Expr)
-			return arg, nil
-		default:
-			expr, err := realEnv.Compile(arg)
-			if err != nil {
-				return nil, err
-			}
-			return sxeval.MakeExprObj(expr), nil
+		expr, err := realEnv.Compile(args[0])
+		if err != nil {
+			return nil, err
 		}
+		return sxeval.MakeExprObj(expr), nil
 	},
 }
 

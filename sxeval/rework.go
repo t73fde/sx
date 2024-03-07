@@ -26,14 +26,17 @@ type ReworkEnvironment struct {
 	height  int      // Height of current binding.
 }
 
-// MakeChildFrame creates a subordinate rework environment with a new binding.
-func (re *ReworkEnvironment) MakeChildFrame(name string, baseSize int) *ReworkEnvironment {
+// MakeChildEnvironment creates a subordinate rework environment with a new binding.
+func (re *ReworkEnvironment) MakeChildEnvironment(name string, baseSize int) *ReworkEnvironment {
 	return &ReworkEnvironment{
 		base:    re.base,
 		binding: re.binding.MakeChildBinding(name, baseSize),
 		height:  re.height + 1,
 	}
 }
+
+// Height returns the difference between the acual and the base height.
+func (re *ReworkEnvironment) Height() int { return re.height - re.base.height }
 
 // Resolve the symbol into an object, and return the binding depth plus an
 // indication about the const-ness of the value. If the symbol could not be
@@ -45,7 +48,7 @@ func (re *ReworkEnvironment) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
 	if b == nil {
 		return nil, math.MinInt, false
 	}
-	if base := re.base; re == base || depth >= (re.height-base.height) {
+	if depth >= re.Height() {
 		return obj, -1, isConst
 	}
 	return obj, depth, isConst

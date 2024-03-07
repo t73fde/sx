@@ -112,9 +112,9 @@ func TestEval(t *testing.T) {
 }
 
 var sxPrelude = `;; Indirekt recursive definition of even/odd
+(defvar odd? ()) ; define symbol odd? to make lookup in even? faster, because it is known.
 (defun even? (n) (if (= n 0) 1 (odd? (- n 1))))
 (defun odd? (n) (if (= n 0) () (even? (- n 1))))
-(compile even?) ; resolve symbol odd? in fn even?
 
 ;; Naive implementation of fac
 (defun fac (n) (if (= n 0) 1 (* n (fac (- n 1)))))
@@ -125,6 +125,7 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 
 func createBindingForTCO() *sxeval.Binding {
 	root := sxeval.MakeRootBinding(6)
+	_ = root.BindSpecial(&sxbuiltins.DefVarS)
 	_ = root.BindSpecial(&sxbuiltins.DefunS)
 	_ = root.BindSpecial(&sxbuiltins.IfS)
 	_ = root.BindBuiltin(&sxbuiltins.Equal)
@@ -134,7 +135,6 @@ func createBindingForTCO() *sxeval.Binding {
 	_ = root.BindBuiltin(&sxbuiltins.Mul)
 	_ = root.BindBuiltin(&sxbuiltins.Map)
 	_ = root.BindBuiltin(&sxbuiltins.List)
-	_ = root.BindBuiltin(&sxbuiltins.Compile)
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxPrelude))
 	bind := root.MakeChildBinding("TCO", 128)
