@@ -102,7 +102,7 @@ var tcsSetX = tTestCases{
 	{
 		name:    "set!-unknown-1",
 		src:     "(set! unknown 1)",
-		exp:     `{[{symbol "unknown" not bound in "set!-unknown-1"}]}`,
+		exp:     `{[{symbol "unknown" not bound in "set!-unknown-1"->"vars"->"root"}]}`,
 		withErr: true,
 	},
 	{name: "define-set", src: "(defvar a 1) (set! a 17)", exp: "1 17"},

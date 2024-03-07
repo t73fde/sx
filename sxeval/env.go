@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -307,5 +308,15 @@ type NotBoundError struct {
 }
 
 func (e NotBoundError) Error() string {
-	return fmt.Sprintf("symbol %q not bound in %q", e.Sym.String(), e.Binding.Name())
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "symbol %q not bound in ", e.Sym.String())
+	second := false
+	for binding := e.Binding; binding != nil; binding = binding.Parent() {
+		if second {
+			sb.WriteString("->")
+		}
+		fmt.Fprintf(&sb, "%q", binding.Name())
+		second = true
+	}
+	return sb.String()
 }

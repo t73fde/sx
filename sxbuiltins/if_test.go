@@ -55,7 +55,7 @@ var tcsIf = tTestCases{
 	{
 		name:    "if-3-err-sym",
 		src:     "(if xyz 2 3)",
-		exp:     "{[{symbol \"xyz\" not bound in \"if-3-err-sym\"}]}",
+		exp:     "{[{symbol \"xyz\" not bound in \"if-3-err-sym\"->\"vars\"->\"root\"}]}",
 		withErr: true,
 	},
 }
