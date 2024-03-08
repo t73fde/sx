@@ -39,43 +39,48 @@ type mainEngine struct {
 	execCount   int
 }
 
-// ----- Executor methods
+// ----- ExecuteObserver methods
 
 // Reset the executor.
 func (me *mainEngine) Reset() { me.execCount = 0 }
 
-func (me *mainEngine) Execute(env *sxeval.Environment, expr sxeval.Expr) (sx.Object, error) {
-	if !me.logExecutor {
-		return expr.Compute(env)
+func (me *mainEngine) BeforeExecution(env *sxeval.Environment, expr sxeval.Expr) (sxeval.Expr, error) {
+	if me.logExecutor {
+		spaces := strings.Repeat(" ", me.execLevel)
+		me.execLevel++
+		bind := env.Binding()
+		fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
+		_, _ = expr.Print(os.Stdout)
+		fmt.Println()
 	}
-	spaces := strings.Repeat(" ", me.execLevel)
-	me.execLevel++
-	bind := env.Binding()
-	fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
-	_, _ = expr.Print(os.Stdout)
-	fmt.Println()
-	obj, err := expr.Compute(env)
-	me.execCount++
-	if err == nil {
-		fmt.Printf("%v;O%d %T %v\n", spaces, me.execLevel, obj, obj)
-	} else {
-		fmt.Printf("%v;o%d %v\n", spaces, me.execLevel, err)
+	return expr, nil
+}
+
+func (me *mainEngine) AfterExecution(env *sxeval.Environment, expr sxeval.Expr, obj sx.Object, err error) {
+	if me.logExecutor {
+		lvl := me.execLevel
+		me.execLevel--
+		spaces := strings.Repeat(" ", me.execLevel)
+		me.execCount++
+		if err == nil {
+			fmt.Printf("%v;O%d %T %v\n", spaces, lvl, obj, obj)
+		} else {
+			fmt.Printf("%v;o%d %v\n", spaces, lvl, err)
+		}
 	}
-	me.execLevel--
-	return obj, err
 }
 
 // ----- ParseObserver methods
 
-// BeforeParse logs everything before the parsing happens.
-func (me *mainEngine) BeforeParse(pe *sxeval.ParseEnvironment, form sx.Object) sx.Object {
+// BeforeExecution logs everything before the parsing happens.
+func (me *mainEngine) BeforeParse(pe *sxeval.ParseEnvironment, form sx.Object) (sx.Object, error) {
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel)
 		me.parseLevel++
 		bind := pe.Binding()
 		fmt.Printf("%v;P%v %v<-%v %T %v\n", spaces, me.parseLevel, bind, bind.Parent(), form, form)
 	}
-	return form
+	return form, nil
 }
 
 func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, form sx.Object, expr sxeval.Expr, err error) {

@@ -28,17 +28,20 @@ type ParseEnvironment struct {
 // ParseObserver monitors the parsing process.
 type ParseObserver interface {
 	// BeforeParse is called immediate before the given form is parsed.
-	// The observer may change the form.
-	BeforeParse(*ParseEnvironment, sx.Object) sx.Object
+	// The observer may change the form and abort the parse with an error.
+	BeforeParse(*ParseEnvironment, sx.Object) (sx.Object, error)
 
 	// AfterParse is called immediate after the given form was parsed to the expression.
 	AfterParse(*ParseEnvironment, sx.Object, Expr, error)
 }
 
-func (pf *ParseEnvironment) Parse(form sx.Object) (Expr, error) {
+func (pf *ParseEnvironment) Parse(form sx.Object) (expr Expr, err error) {
 	if observer := pf.observer; observer != nil {
-		obj := observer.BeforeParse(pf, form)
-		expr, err := pf.parseForm(obj)
+		var obj sx.Object
+		obj, err = observer.BeforeParse(pf, form)
+		if err == nil {
+			expr, err = pf.parseForm(obj)
+		}
 		observer.AfterParse(pf, obj, expr, err)
 		return expr, err
 	}

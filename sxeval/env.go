@@ -25,9 +25,24 @@ import (
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
 	binding  *Binding
-	executor Executor
+	executor ExecuteObserver
 	observer ParseObserver
 	caller   *Environment // the dynamic call stack
+}
+
+// ExecuteObserver observes the execution of expressions.
+type ExecuteObserver interface {
+	// Reset prepares for a new execution cylcle. It is typically called by the
+	// environment.
+	Reset()
+
+	// BeforeExecution is called immediate before the given expression is executed.
+	// The observer may change the expression or abort execution with an error.
+	BeforeExecution(*Environment, Expr) (Expr, error)
+
+	// AfterExecution is called immediate after the given expression was executed,
+	// resulting in an `sx.Object` and an error.
+	AfterExecution(*Environment, Expr, sx.Object, error)
 }
 
 func (env *Environment) String() string { return env.binding.name }
@@ -43,7 +58,7 @@ func MakeExecutionEnvironment(bind *Binding) *Environment {
 }
 
 // SetExecutor sets the given executor.
-func (env *Environment) SetExecutor(exec Executor) *Environment {
+func (env *Environment) SetExecutor(exec ExecuteObserver) *Environment {
 	env.executor = exec
 	return env
 }
@@ -133,13 +148,18 @@ func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numB
 }
 
 // Execute the given expression.
-func (env *Environment) Execute(expr Expr) (sx.Object, error) {
+func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 	if exec := env.executor; exec != nil {
 		for {
-			res, err := exec.Execute(env, expr)
+			expr, err = exec.BeforeExecution(env, expr)
 			if err == nil {
-				return res, nil
+				res, err = expr.Compute(env)
+				if err == nil {
+					exec.AfterExecution(env, expr, res, err)
+					return res, nil
+				}
 			}
+			exec.AfterExecution(env, expr, res, err)
 			if again, ok := err.(executeAgain); ok {
 				env.binding = again.binding
 				expr = again.expr
@@ -150,7 +170,7 @@ func (env *Environment) Execute(expr Expr) (sx.Object, error) {
 	}
 
 	for {
-		res, err := expr.Compute(env)
+		res, err = expr.Compute(env)
 		if err == nil {
 			return res, nil
 		}
