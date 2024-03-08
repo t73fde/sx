@@ -37,10 +37,6 @@ type observer struct {
 
 // ExecuteObserver observes the execution of expressions.
 type ExecuteObserver interface {
-	// Reset prepares for a new execution cylcle. It is typically called by the
-	// environment.
-	Reset()
-
 	// BeforeExecution is called immediate before the given expression is executed.
 	// The observer may change the expression or abort execution with an error.
 	BeforeExecution(*Environment, Expr) (Expr, error)
@@ -132,9 +128,6 @@ func (env *Environment) Rework(expr Expr) Expr {
 
 // Run the given expression.
 func (env *Environment) Run(expr Expr) (sx.Object, error) {
-	if exec := env.observer.execute; exec != nil {
-		exec.Reset()
-	}
 	return env.Execute(expr)
 }
 

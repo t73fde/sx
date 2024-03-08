@@ -43,9 +43,6 @@ type mainEngine struct {
 
 // ----- ExecuteObserver methods
 
-// Reset the executor.
-func (me *mainEngine) Reset() { me.execCount = 0 }
-
 func (me *mainEngine) BeforeExecution(env *sxeval.Environment, expr sxeval.Expr) (sxeval.Expr, error) {
 	if me.logExecutor {
 		spaces := strings.Repeat(" ", me.execLevel)
@@ -73,7 +70,6 @@ func (me *mainEngine) AfterExecution(env *sxeval.Environment, expr sxeval.Expr, 
 
 // ----- ParseObserver methods
 
-// BeforeExecution logs everything before the parsing happens.
 func (me *mainEngine) BeforeParse(pe *sxeval.ParseEnvironment, form sx.Object) (sx.Object, error) {
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel)
@@ -283,7 +279,13 @@ func main() {
 		_ = root.BindBuiltin(b)
 	}
 	_ = root.Bind(sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined())
-	me := mainEngine{}
+	me := mainEngine{
+		logReader:   true,
+		logParse:    true,
+		logRework:   true,
+		logExpr:     false,
+		logExecutor: true,
+	}
 	me.bindOwn(root)
 	err := readPrelude(root)
 	if err != nil {
@@ -294,12 +296,6 @@ func main() {
 	bind := root.MakeChildBinding("repl", 1024)
 	_ = bind.Bind(sx.MakeSymbol("root-binding"), root)
 	_ = bind.Bind(sx.MakeSymbol("repl-binding"), bind)
-
-	me.logReader = true
-	me.logParse = true
-	me.logRework = true
-	me.logExpr = false
-	me.logExecutor = true
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -348,6 +344,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			printExpr(expr, 0)
 			continue
 		}
+		me.execCount = 0
 		res, err := env.Run(expr)
 		if me.logExecutor {
 			fmt.Println(";#", me.execCount)
