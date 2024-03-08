@@ -26,7 +26,8 @@ import (
 type Environment struct {
 	binding  *Binding
 	executor ExecuteObserver
-	observer ParseObserver
+	parsor   ParseObserver
+	reworkor ReworkObserver
 	caller   *Environment // the dynamic call stack
 }
 
@@ -52,7 +53,8 @@ func MakeExecutionEnvironment(bind *Binding) *Environment {
 	return &Environment{
 		binding:  bind,
 		executor: nil,
-		observer: nil,
+		parsor:   nil,
+		reworkor: nil,
 		caller:   nil,
 	}
 }
@@ -65,7 +67,13 @@ func (env *Environment) SetExecutor(exec ExecuteObserver) *Environment {
 
 // SetParseObserver sets the given parsing observer.
 func (env *Environment) SetParseObserver(observe ParseObserver) *Environment {
-	env.observer = observe
+	env.parsor = observe
+	return env
+}
+
+// SetReworkObserver sets the given rework observer.
+func (env *Environment) SetReworkObserver(observe ReworkObserver) *Environment {
+	env.reworkor = observe
 	return env
 }
 
@@ -89,25 +97,25 @@ func (env *Environment) Eval(obj sx.Object) (sx.Object, error) {
 
 // Compile the given object and return the reworked expression.
 func (env *Environment) Compile(obj sx.Object) (Expr, error) {
-	pf := env.MakeParseEnvironment()
-	expr, err := pf.Parse(obj)
+	pe := env.MakeParseEnvironment()
+	expr, err := pe.Parse(obj)
 	if err != nil {
 		return nil, err
 	}
-	rf := env.MakeReworkEnvironment()
-	return expr.Rework(rf), nil
+	re := env.MakeReworkEnvironment()
+	return re.Rework(expr), nil
 }
 
 // Parse the given object.
 func (env *Environment) Parse(obj sx.Object) (Expr, error) {
-	pf := env.MakeParseEnvironment()
-	return pf.Parse(obj)
+	pe := env.MakeParseEnvironment()
+	return pe.Parse(obj)
 }
 
 // Rework the given expression.
 func (env *Environment) Rework(expr Expr) Expr {
-	rf := env.MakeReworkEnvironment()
-	return expr.Rework(rf)
+	re := env.MakeReworkEnvironment()
+	return re.Rework(expr)
 }
 
 // Run the given expression.
@@ -121,14 +129,15 @@ func (env *Environment) Run(expr Expr) (sx.Object, error) {
 func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 	return &ParseEnvironment{
 		binding:  env.binding,
-		observer: env.observer,
+		observer: env.parsor,
 	}
 }
 
 func (env *Environment) MakeReworkEnvironment() *ReworkEnvironment {
 	re := &ReworkEnvironment{
-		binding: env.binding,
-		height:  0,
+		binding:  env.binding,
+		height:   0,
+		observer: env.reworkor,
 	}
 	re.base = re
 	return re
@@ -220,7 +229,7 @@ func (ce *callableExpr) Unparse() sx.Object {
 	return args.Cons(ce.Proc.(sx.Object))
 }
 
-func (ce *callableExpr) Rework(*ReworkEnvironment) Expr { return ce }
+func (ce *callableExpr) Improve(*ReworkEnvironment) Expr { return ce }
 
 func (ce *callableExpr) Compute(env *Environment) (sx.Object, error) {
 	subEnv := env.NewDynamicEnvironment()

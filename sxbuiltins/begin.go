@@ -74,15 +74,15 @@ func (be *BeginExpr) Unparse() sx.Object {
 	return sx.Cons(sx.MakeSymbol(beginName), obj)
 }
 
-func (be *BeginExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
-	last := be.Last.Rework(re)
+func (be *BeginExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+	last := re.Rework(be.Last)
 	frontLen := len(be.Front)
 	if frontLen == 0 {
 		return last
 	}
 	seq := make([]sxeval.Expr, 0, frontLen)
 	for _, expr := range be.Front {
-		re := expr.Rework(re)
+		re := re.Rework(expr)
 		if _, isConstObject := re.(sxeval.ConstObjectExpr); isConstObject {
 			// A constant object has no side effect, it can be ignored in the sequence
 			continue

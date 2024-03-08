@@ -87,9 +87,9 @@ func (de *DefineExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(name), de.Sym, de.Val.Unparse())
 }
 
-func (de *DefineExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
+func (de *DefineExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	_ = re.Bind(de.Sym)
-	de.Val = de.Val.Rework(re)
+	de.Val = re.Rework(de.Val)
 	return de
 }
 
@@ -179,8 +179,8 @@ func (se *SetXExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(setXName), se.Sym, se.Val.Unparse())
 }
 
-func (se *SetXExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
-	se.Val = se.Val.Rework(re)
+func (se *SetXExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+	se.Val = re.Rework(se.Val)
 	return se
 }
 func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {

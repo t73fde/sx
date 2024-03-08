@@ -32,9 +32,11 @@ import (
 type mainEngine struct {
 	logReader   bool
 	logParse    bool
+	logRework   bool
 	logExpr     bool
 	logExecutor bool
 	parseLevel  int
+	reworkLevel int
 	execLevel   int
 	execCount   int
 }
@@ -58,15 +60,14 @@ func (me *mainEngine) BeforeExecution(env *sxeval.Environment, expr sxeval.Expr)
 
 func (me *mainEngine) AfterExecution(env *sxeval.Environment, expr sxeval.Expr, obj sx.Object, err error) {
 	if me.logExecutor {
-		lvl := me.execLevel
-		me.execLevel--
-		spaces := strings.Repeat(" ", me.execLevel)
+		spaces := strings.Repeat(" ", me.execLevel-1)
 		me.execCount++
 		if err == nil {
-			fmt.Printf("%v;O%d %T %v\n", spaces, lvl, obj, obj)
+			fmt.Printf("%v;O%d %T %v\n", spaces, me.execLevel, obj, obj)
 		} else {
-			fmt.Printf("%v;o%d %v\n", spaces, lvl, err)
+			fmt.Printf("%v;o%d %v\n", spaces, me.execLevel, err)
 		}
+		me.execLevel--
 	}
 }
 
@@ -93,6 +94,31 @@ func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, form sx.Object, ex
 		}
 		fmt.Println()
 		me.parseLevel--
+	}
+}
+
+//----- ReworkObserver methods
+
+func (me *mainEngine) BeforeRework(re *sxeval.ReworkEnvironment, expr sxeval.Expr) sxeval.Expr {
+	if me.logRework {
+		spaces := strings.Repeat(" ", me.reworkLevel)
+		me.reworkLevel++
+		bind := re.Binding()
+		fmt.Printf("%v;R%v %v<-%v ", spaces, me.reworkLevel, bind, bind.Parent())
+		_, _ = expr.Print(os.Stdout)
+		fmt.Println()
+	}
+	return expr
+}
+
+func (me *mainEngine) AfterRework(re *sxeval.ReworkEnvironment, expr, result sxeval.Expr) {
+	if me.logRework {
+		spaces := strings.Repeat(" ", me.reworkLevel-1)
+		bind := re.Binding()
+		fmt.Printf("%v;S%v %v<-%v ", spaces, me.reworkLevel, bind, bind.Parent())
+		_, _ = result.Print(os.Stdout)
+		fmt.Println()
+		me.reworkLevel--
 	}
 }
 
@@ -198,6 +224,17 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		},
 	})
 	_ = root.BindBuiltin(&sxeval.Builtin{
+		Name:     "log-rework",
+		MinArity: 0,
+		MaxArity: 0,
+		TestPure: nil,
+		Fn: func(*sxeval.Environment, sx.Vector) (sx.Object, error) {
+			res := me.logRework
+			me.logRework = !res
+			return sx.MakeBoolean(res), nil
+		},
+	})
+	_ = root.BindBuiltin(&sxeval.Builtin{
 		Name:     "log-expr",
 		MinArity: 0,
 		MaxArity: 0,
@@ -227,6 +264,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		Fn: func(*sxeval.Environment, sx.Vector) (sx.Object, error) {
 			me.logReader = false
 			me.logParse = false
+			me.logRework = false
 			me.logExecutor = false
 			return sx.Nil(), nil
 		},
@@ -259,6 +297,7 @@ func main() {
 
 	me.logReader = true
 	me.logParse = true
+	me.logRework = true
 	me.logExpr = false
 	me.logExecutor = true
 
@@ -280,7 +319,8 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 	}()
 
 	for {
-		env := sxeval.MakeExecutionEnvironment(bind).SetExecutor(me).SetParseObserver(me)
+		env := sxeval.MakeExecutionEnvironment(bind)
+		env.SetExecutor(me).SetParseObserver(me).SetReworkObserver(me)
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {

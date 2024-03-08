@@ -119,24 +119,24 @@ func (le *LetExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(letName), bindings.List(), body)
 }
 
-func (le *LetExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
+func (le *LetExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	switch len(le.Vals) {
 	case 0:
-		return le.Body.Rework(re)
+		return re.Rework(le.Body)
 	case 1:
 		le1 := &Let1Expr{
 			Symbol: le.Symbols[0],
 			Value:  le.Vals[0],
 			Body:   le.Body,
 		}
-		return le1.Rework(re)
+		return re.Rework(le1)
 	}
 	letEnv := re.MakeChildEnvironment("let-rework", len(le.Vals))
 	for i, val := range le.Vals {
-		le.Vals[i] = val.Rework(re)
+		le.Vals[i] = re.Rework(val)
 		_ = letEnv.Bind(le.Symbols[i])
 	}
-	le.Body = le.Body.Rework(letEnv)
+	le.Body = letEnv.Rework(le.Body)
 	return le
 }
 
@@ -222,11 +222,11 @@ func (le1 *Let1Expr) Unparse() sx.Object {
 	)
 }
 
-func (le1 *Let1Expr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
+func (le1 *Let1Expr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	letEnv := re.MakeChildEnvironment("let1-rework", 1)
-	le1.Value = le1.Value.Rework(re)
+	le1.Value = re.Rework(le1.Value)
 	_ = letEnv.Bind(le1.Symbol)
-	le1.Body = le1.Body.Rework(letEnv)
+	le1.Body = letEnv.Rework(le1.Body)
 	return le1
 }
 

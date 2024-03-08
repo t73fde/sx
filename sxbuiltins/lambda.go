@@ -206,7 +206,7 @@ func (le *LambdaExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(lambdaName), params, expr)
 }
 
-func (le *LambdaExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
+func (le *LambdaExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	bindSize := len(le.Params)
 	if le.Rest != nil {
 		bindSize++
@@ -219,7 +219,7 @@ func (le *LambdaExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
 		_ = fnEnv.Bind(rest)
 	}
 
-	le.Expr = le.Expr.Rework(fnEnv)
+	le.Expr = fnEnv.Rework(le.Expr)
 	return le
 }
 

@@ -27,8 +27,8 @@ type Expr interface {
 	// Unparse the expression as an sx.Object
 	Unparse() sx.Object
 
-	// Rework the expressions to a possible simpler one.
-	Rework(*ReworkEnvironment) Expr
+	// Improve the expressions to a possible simpler one.
+	Improve(*ReworkEnvironment) Expr
 
 	// Compute the expression in a frame and return the result.
 	// It may have side-effects, on the given environment, or on the
@@ -76,7 +76,7 @@ var NilExpr = nilExpr{}
 type nilExpr struct{}
 
 func (nilExpr) Unparse() sx.Object                      { return sx.Nil() }
-func (nilExpr) Rework(*ReworkEnvironment) Expr          { return NilExpr }
+func (nilExpr) Improve(*ReworkEnvironment) Expr         { return NilExpr }
 func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
 func (nilExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{NIL}") }
 func (nilExpr) ConstObject() sx.Object                  { return sx.Nil() }
@@ -88,9 +88,9 @@ type ObjExpr struct {
 
 func (oe ObjExpr) Unparse() sx.Object { return oe.Obj }
 
-func (oe ObjExpr) Rework(re *ReworkEnvironment) Expr {
+func (oe ObjExpr) Improve(re *ReworkEnvironment) Expr {
 	if obj := oe.Obj; sx.IsNil(obj) {
-		return NilExpr.Rework(re)
+		return re.Rework(NilExpr)
 	}
 	return oe
 }
@@ -126,18 +126,18 @@ type UnboundSymbolExpr struct{ sym *sx.Symbol }
 
 func (use UnboundSymbolExpr) GetSymbol() *sx.Symbol { return use.sym }
 func (use UnboundSymbolExpr) Unparse() sx.Object    { return use.sym }
-func (use UnboundSymbolExpr) Rework(re *ReworkEnvironment) Expr {
+func (use UnboundSymbolExpr) Improve(re *ReworkEnvironment) Expr {
 	obj, depth, isConst := re.Resolve(use.sym)
 	if depth == math.MinInt {
 		return use
 	}
 	if isConst {
-		return ObjExpr{Obj: obj}.Rework(re)
+		return re.Rework(ObjExpr{Obj: obj})
 	}
 	if depth >= 0 {
-		return (&LookupSymbolExpr{sym: use.sym, lvl: depth}).Rework(re)
+		return re.Rework(&LookupSymbolExpr{sym: use.sym, lvl: depth})
 	}
-	return (&ResolveSymbolExpr{sym: use.sym, skip: re.Height()}).Rework(re)
+	return re.Rework(&ResolveSymbolExpr{sym: use.sym, skip: re.Height()})
 }
 
 func (use UnboundSymbolExpr) Compute(env *Environment) (sx.Object, error) {
@@ -156,9 +156,9 @@ type ResolveSymbolExpr struct {
 	skip int
 }
 
-func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol             { return rse.sym }
-func (rse ResolveSymbolExpr) Unparse() sx.Object                { return rse.sym }
-func (rse ResolveSymbolExpr) Rework(re *ReworkEnvironment) Expr { return rse }
+func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol              { return rse.sym }
+func (rse ResolveSymbolExpr) Unparse() sx.Object                 { return rse.sym }
+func (rse ResolveSymbolExpr) Improve(re *ReworkEnvironment) Expr { return rse }
 func (use ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.ResolveNWithError(use.sym, use.skip)
 }
@@ -177,8 +177,8 @@ type LookupSymbolExpr struct {
 func (lse *LookupSymbolExpr) GetSymbol() *sx.Symbol { return lse.sym }
 func (lse *LookupSymbolExpr) GetLevel() int         { return lse.lvl }
 
-func (lse *LookupSymbolExpr) Unparse() sx.Object             { return lse.sym }
-func (lse *LookupSymbolExpr) Rework(*ReworkEnvironment) Expr { return lse }
+func (lse *LookupSymbolExpr) Unparse() sx.Object              { return lse.sym }
+func (lse *LookupSymbolExpr) Improve(*ReworkEnvironment) Expr { return lse }
 
 func (lse *LookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.LookupNWithError(lse.sym, lse.lvl)
@@ -207,22 +207,22 @@ func (ce *CallExpr) Unparse() sx.Object {
 	return sx.MakeList(lst...)
 }
 
-func (ce *CallExpr) Rework(re *ReworkEnvironment) Expr {
+func (ce *CallExpr) Improve(re *ReworkEnvironment) Expr {
 	// If the ce.Proc is a builtin, rework to a BuiltinCallExpr.
 
-	proc := ce.Proc.Rework(re)
+	proc := re.Rework(ce.Proc)
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
 		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
 			bce := &BuiltinCallExpr{
 				Proc: b,
 				Args: ce.Args,
 			}
-			return bce.Rework(re)
+			return re.Rework(bce)
 		}
 	}
 	ce.Proc = proc
 	for i, arg := range ce.Args {
-		ce.Args[i] = arg.Rework(re)
+		ce.Args[i] = re.Rework(arg)
 	}
 	return ce
 }
@@ -304,8 +304,8 @@ func (bce *BuiltinCallExpr) Unparse() sx.Object {
 	return ce.Unparse()
 }
 
-func (bce *BuiltinCallExpr) Rework(re *ReworkEnvironment) Expr {
-	// Rework checks if the Builtin is pure and if all args are
+func (bce *BuiltinCallExpr) Improve(re *ReworkEnvironment) Expr {
+	// Improve checks if the Builtin is pure and if all args are
 	// constant sx.Object's. If this is true, it will call the builtin with
 	// the args. If no error was signaled, the result object will be used
 	// instead the BuiltinCallExpr. This assumes that there is no side effect
@@ -313,7 +313,7 @@ func (bce *BuiltinCallExpr) Rework(re *ReworkEnvironment) Expr {
 	mayInline := true
 	args := make(sx.Vector, len(bce.Args))
 	for i, arg := range bce.Args {
-		expr := arg.Rework(re)
+		expr := re.Rework(arg)
 		if objExpr, isConstObject := expr.(ConstObjectExpr); isConstObject {
 			args[i] = objExpr.ConstObject()
 		} else {
@@ -328,7 +328,7 @@ func (bce *BuiltinCallExpr) Rework(re *ReworkEnvironment) Expr {
 	if err != nil {
 		return bce
 	}
-	return ObjExpr{Obj: result}.Rework(re)
+	return re.Rework(ObjExpr{Obj: result})
 }
 
 func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {

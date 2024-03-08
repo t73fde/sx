@@ -21,22 +21,48 @@ import (
 
 // ReworkEnvironment guides the Expr.Rework operation.
 type ReworkEnvironment struct {
-	base    *ReworkEnvironment
-	binding *Binding // Current binding
-	height  int      // Height of current binding.
+	base     *ReworkEnvironment
+	binding  *Binding // Current binding
+	height   int      // Height of current binding.
+	observer ReworkObserver
+}
+
+// ReworkObserver monitors the inner workings of the rework process.
+type ReworkObserver interface {
+	// BeforeRework is called immediate before the given expression is reworked.
+	BeforeRework(*ReworkEnvironment, Expr) Expr
+
+	// AfterRework is called after the given expression was reworked to a
+	// possibly simpler one.
+	AfterRework(*ReworkEnvironment, Expr, Expr)
 }
 
 // MakeChildEnvironment creates a subordinate rework environment with a new binding.
 func (re *ReworkEnvironment) MakeChildEnvironment(name string, baseSize int) *ReworkEnvironment {
 	return &ReworkEnvironment{
-		base:    re.base,
-		binding: re.binding.MakeChildBinding(name, baseSize),
-		height:  re.height + 1,
+		base:     re.base,
+		binding:  re.binding.MakeChildBinding(name, baseSize),
+		height:   re.height + 1,
+		observer: re.observer,
 	}
+}
+
+// Rework the given expression. Do not call `expr.Rework()` directly.
+func (re *ReworkEnvironment) Rework(expr Expr) Expr {
+	if observer := re.observer; observer != nil {
+		expr2 := observer.BeforeRework(re, expr)
+		result := expr2.Improve(re)
+		observer.AfterRework(re, expr2, result)
+		return result
+	}
+	return expr.Improve(re)
 }
 
 // Height returns the difference between the acual and the base height.
 func (re *ReworkEnvironment) Height() int { return re.height - re.base.height }
+
+// Binding returns the binding of this environment.
+func (re *ReworkEnvironment) Binding() *Binding { return re.binding }
 
 // Resolve the symbol into an object, and return the binding depth plus an
 // indication about the const-ness of the value. If the symbol could not be

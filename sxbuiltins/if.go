@@ -76,10 +76,10 @@ func (ife *IfExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(ifName), ife.Test.Unparse(), ife.True.Unparse(), ife.False.Unparse())
 }
 
-func (ife *IfExpr) Rework(re *sxeval.ReworkEnvironment) sxeval.Expr {
-	testExpr := ife.Test.Rework(re)
-	trueExpr := ife.True.Rework(re)
-	falseExpr := ife.False.Rework(re)
+func (ife *IfExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+	testExpr := re.Rework(ife.Test)
+	trueExpr := re.Rework(ife.True)
+	falseExpr := re.Rework(ife.False)
 
 	// Check for nested IfExpr in testExpr
 	//
