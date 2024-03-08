@@ -218,7 +218,7 @@ func TestReaderLimits(t *testing.T) {
 
 func checkNested(maxDepth, depth int) error {
 	inp := strings.Repeat("(", depth) + "1" + strings.Repeat(")", depth)
-	rd := sxreader.MakeReader(strings.NewReader(inp), sxreader.WithNestingLimit(uint(maxDepth)))
+	rd := sxreader.MakeReader(strings.NewReader(inp)).SetNestingLimit(uint(maxDepth))
 	if _, err := rd.Read(); err != nil {
 		return err
 	}
@@ -230,7 +230,7 @@ func checkNested(maxDepth, depth int) error {
 
 func checkLength(maxLength, length int) error {
 	inp := "(" + strings.Repeat(" 7", length) + " )"
-	rd := sxreader.MakeReader(strings.NewReader(inp), sxreader.WithListLimit(uint(maxLength)))
+	rd := sxreader.MakeReader(strings.NewReader(inp)).SetListLimit(uint(maxLength))
 	if _, err := rd.Read(); err != nil {
 		return err
 	}

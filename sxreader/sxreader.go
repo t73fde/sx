@@ -61,17 +61,16 @@ func (rp *Position) String() string {
 	return fmt.Sprintf("%s:%d:%d", name, rp.Line, rp.Col)
 }
 
-// Option is a function to modify the default reader when it is made.
-type Option func(*Reader)
-
-// WithNestingLimit sets the maximum nesting for a object.
-func WithNestingLimit(depth uint) Option {
-	return func(rd *Reader) { rd.maxDepth = depth }
+// SetNestingLimit sets the maximum nesting for a object.
+func (rd *Reader) SetNestingLimit(depth uint) *Reader {
+	rd.maxDepth = depth
+	return rd
 }
 
-// WithListLimit sets the maximum length of a list.
-func WithListLimit(length uint) Option {
-	return func(rd *Reader) { rd.maxLength = length }
+// SetListLimit sets the maximum length of a list.
+func (rd *Reader) SetListLimit(length uint) *Reader {
+	rd.maxLength = length
+	return rd
 }
 
 // DefaultNestingLimit specifies the default value for `WithNestingLimit`.
@@ -81,8 +80,8 @@ const DefaultNestingLimit = 1000
 const DefaultListLimit = 10000
 
 // MakeReader creates a new reader.
-func MakeReader(r io.Reader, opts ...Option) *Reader {
-	rd := Reader{
+func MakeReader(r io.Reader) *Reader {
+	return &Reader{
 		rr:      bufio.NewReader(r),
 		err:     nil,
 		name:    inferReaderName(r),
@@ -104,10 +103,6 @@ func MakeReader(r io.Reader, opts ...Option) *Reader {
 		maxDepth:  DefaultNestingLimit,
 		maxLength: DefaultListLimit,
 	}
-	for _, opt := range opts {
-		opt(&rd)
-	}
-	return &rd
 }
 func inferReaderName(r io.Reader) string {
 	switch tr := r.(type) {

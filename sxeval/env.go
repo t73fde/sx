@@ -33,34 +33,25 @@ type Environment struct {
 func (env *Environment) String() string { return env.binding.name }
 
 // MakeExecutionEnvironment creates an environment for later execution of an expression.
-func MakeExecutionEnvironment(bind *Binding, options ...Option) *Environment {
-	env := &Environment{
+func MakeExecutionEnvironment(bind *Binding) *Environment {
+	return &Environment{
 		binding:  bind,
 		executor: nil,
 		observer: nil,
 		caller:   nil,
 	}
-	for _, opt := range options {
-		opt(env)
-	}
+}
+
+// SetExecutor sets the given executor.
+func (env *Environment) SetExecutor(exec Executor) *Environment {
+	env.executor = exec
 	return env
 }
 
-// Option is an option for creating environments.
-type Option func(*Environment)
-
-// WithExecutor sets the given executor.
-func WithExecutor(exec Executor) Option {
-	return func(env *Environment) {
-		env.executor = exec
-	}
-}
-
-// WithExecutor sets the given executor.
-func WithParseObserver(observe ParseObserver) Option {
-	return func(env *Environment) {
-		env.observer = observe
-	}
+// SetParseObserver sets the given parsing observer.
+func (env *Environment) SetParseObserver(observe ParseObserver) *Environment {
+	env.observer = observe
+	return env
 }
 
 // RebindExecutionEnvironment clones the original environment, but uses the

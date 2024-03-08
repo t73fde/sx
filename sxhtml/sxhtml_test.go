@@ -88,7 +88,7 @@ func TestWithNewline(t *testing.T) {
 		{name: "HeadBody", src: `(@@@@ (html (head (title "T"))))`, exp: "<!DOCTYPE html>\n<html>\n<head>\n<title>T</title>\n</head>\n</html>"},
 	}
 	checkTestcases(t, testcases, func() *sxhtml.Generator {
-		return sxhtml.NewGenerator(sxhtml.WithNewline)
+		return sxhtml.NewGenerator().SetNewline()
 	})
 }
 

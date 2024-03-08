@@ -58,20 +58,11 @@ type Generator struct {
 	withNewline bool
 }
 
-// Option allows to customize the generator.
-type Option func(*Generator)
-
-// WithNewline will add new-line characters before certain tags.
-func WithNewline(gen *Generator) { gen.withNewline = true }
+// SetNewline will add new-line characters before certain tags.
+func (gen *Generator) SetNewline() *Generator { gen.withNewline = true; return gen }
 
 // NewGenerator creates a new generator.
-func NewGenerator(opts ...Option) *Generator {
-	gen := Generator{}
-	for _, opt := range opts {
-		opt(&gen)
-	}
-	return &gen
-}
+func NewGenerator() *Generator { return &Generator{} }
 
 // Special elements / attributes
 var (

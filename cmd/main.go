@@ -275,7 +275,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 	}()
 
 	for {
-		env := sxeval.MakeExecutionEnvironment(bind, sxeval.WithExecutor(me), sxeval.WithParseObserver(me))
+		env := sxeval.MakeExecutionEnvironment(bind).SetExecutor(me).SetParseObserver(me)
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {
