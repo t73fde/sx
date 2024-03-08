@@ -25,10 +25,14 @@ import (
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
 	binding  *Binding
-	executor ExecuteObserver
-	parsor   ParseObserver
-	reworkor ReworkObserver
 	caller   *Environment // the dynamic call stack
+	observer *observer
+}
+
+type observer struct {
+	execute ExecuteObserver
+	parse   ParseObserver
+	rework  ReworkObserver
 }
 
 // ExecuteObserver observes the execution of expressions.
@@ -51,30 +55,38 @@ func (env *Environment) String() string { return env.binding.name }
 // MakeExecutionEnvironment creates an environment for later execution of an expression.
 func MakeExecutionEnvironment(bind *Binding) *Environment {
 	return &Environment{
-		binding:  bind,
-		executor: nil,
-		parsor:   nil,
-		reworkor: nil,
-		caller:   nil,
+		binding: bind,
+		caller:  nil,
+		observer: &observer{
+			execute: nil,
+			parse:   nil,
+			rework:  nil,
+		},
 	}
 }
 
 // SetExecutor sets the given executor.
-func (env *Environment) SetExecutor(exec ExecuteObserver) *Environment {
-	env.executor = exec
+func (env *Environment) SetExecutor(observe ExecuteObserver) *Environment {
+	env.newObserver().execute = observe
 	return env
 }
 
 // SetParseObserver sets the given parsing observer.
 func (env *Environment) SetParseObserver(observe ParseObserver) *Environment {
-	env.parsor = observe
+	env.newObserver().parse = observe
 	return env
 }
 
 // SetReworkObserver sets the given rework observer.
 func (env *Environment) SetReworkObserver(observe ReworkObserver) *Environment {
-	env.reworkor = observe
+	env.newObserver().rework = observe
 	return env
+}
+
+func (env *Environment) newObserver() *observer {
+	ob := *env.observer
+	env.observer = &ob
+	return env.observer
 }
 
 // RebindExecutionEnvironment clones the original environment, but uses the
@@ -120,7 +132,7 @@ func (env *Environment) Rework(expr Expr) Expr {
 
 // Run the given expression.
 func (env *Environment) Run(expr Expr) (sx.Object, error) {
-	if exec := env.executor; exec != nil {
+	if exec := env.observer.execute; exec != nil {
 		exec.Reset()
 	}
 	return env.Execute(expr)
@@ -129,7 +141,7 @@ func (env *Environment) Run(expr Expr) (sx.Object, error) {
 func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 	return &ParseEnvironment{
 		binding:  env.binding,
-		observer: env.parsor,
+		observer: env.observer.parse,
 	}
 }
 
@@ -137,7 +149,7 @@ func (env *Environment) MakeReworkEnvironment() *ReworkEnvironment {
 	re := &ReworkEnvironment{
 		binding:  env.binding,
 		height:   0,
-		observer: env.reworkor,
+		observer: env.observer.rework,
 	}
 	re.base = re
 	return re
@@ -150,15 +162,16 @@ func (env *Environment) NewDynamicEnvironment() *Environment {
 }
 
 func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
-	result := *env
-	result.binding = parent.MakeChildBinding(name, numBindings)
-	result.caller = env
-	return &result
+	return &Environment{
+		binding:  parent.MakeChildBinding(name, numBindings),
+		caller:   env,
+		observer: env.observer,
+	}
 }
 
 // Execute the given expression.
 func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
-	if exec := env.executor; exec != nil {
+	if exec := env.observer.execute; exec != nil {
 		for {
 			expr, err = exec.BeforeExecution(env, expr)
 			if err == nil {
