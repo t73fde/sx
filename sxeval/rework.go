@@ -70,14 +70,14 @@ func (re *ReworkEnvironment) Binding() *Binding { return re.binding }
 // in the base environment, depth is set to -1, to indicate a possible unbound
 // situation.
 func (re *ReworkEnvironment) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
-	obj, b, depth, isConst := re.binding.resolveFull(sym)
+	obj, b, depth := re.binding.resolveFull(sym)
 	if b == nil {
 		return nil, math.MinInt, false
 	}
 	if depth >= re.Height() {
-		return obj, -1, isConst
+		return obj, -1, b.IsFrozen()
 	}
-	return obj, depth, isConst
+	return obj, depth, b.IsFrozen()
 }
 
 // Bind the undefined value to the symbol in the current environment.

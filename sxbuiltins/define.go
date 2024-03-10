@@ -33,21 +33,7 @@ var DefVarS = sxeval.Special{
 		if err != nil {
 			return nil, err
 		}
-		return &DefineExpr{Sym: sym, Val: val, Const: false}, nil
-	},
-}
-
-const defconstName = "defconst"
-
-// DefConstS parses a (defconst name value) form.
-var DefConstS = sxeval.Special{
-	Name: defconstName,
-	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
-		sym, val, err := parseSymValue(pf, args)
-		if err != nil {
-			return nil, err
-		}
-		return &DefineExpr{Sym: sym, Val: val, Const: true}, nil
+		return &DefineExpr{Sym: sym, Val: val}, nil
 	},
 }
 
@@ -74,17 +60,12 @@ func parseSymValue(pf *sxeval.ParseEnvironment, args *sx.Pair) (*sx.Symbol, sxev
 
 // DefineExpr stores data for a define statement.
 type DefineExpr struct {
-	Sym   *sx.Symbol
-	Val   sxeval.Expr
-	Const bool
+	Sym *sx.Symbol
+	Val sxeval.Expr
 }
 
 func (de *DefineExpr) Unparse() sx.Object {
-	name := defvarName
-	if de.Const {
-		name = defconstName
-	}
-	return sx.MakeList(sx.MakeSymbol(name), de.Sym, de.Val.Unparse())
+	return sx.MakeList(sx.MakeSymbol(defvarName), de.Sym, de.Val.Unparse())
 }
 
 func (de *DefineExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
@@ -97,11 +78,7 @@ func (de *DefineExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	subEnv := env.NewDynamicEnvironment()
 	val, err := subEnv.Execute(de.Val)
 	if err == nil {
-		if de.Const {
-			err = env.BindConst(de.Sym, val)
-		} else {
-			err = env.Bind(de.Sym, val)
-		}
+		err = env.Bind(de.Sym, val)
 	}
 	return val, err
 }
@@ -111,15 +88,7 @@ func (de *DefineExpr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
-	var l int
-	if de.Const {
-		l, err = io.WriteString(w, "CONST ")
-		length += l
-		if err != nil {
-			return length, err
-		}
-	}
-	l, err = sx.Print(w, de.Sym)
+	l, err := sx.Print(w, de.Sym)
 	length += l
 	if err != nil {
 		return length, err

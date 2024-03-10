@@ -141,36 +141,3 @@ func checkBindingEqual(t *testing.T, bind1, bind2 *sxeval.Binding) {
 		t.Error("equal bindings differ")
 	}
 }
-
-func TestConstBinding(t *testing.T) {
-	t.Parallel()
-	bind := sxeval.MakeRootBinding(2)
-	symVar, symConst := sx.MakeSymbol("sym-var"), sx.MakeSymbol("sym-const")
-	err := bind.Bind(symVar, sx.Int64(0))
-	if err != nil {
-		t.Errorf("error in symVar.Bind(1): %v", err)
-		return
-	}
-	if bind.IsConst(symVar) {
-		t.Errorf("symbol %v is wrongly seen a constant", symVar)
-		return
-	}
-	err = bind.BindConst(symVar, sx.Int64(2))
-	if err != nil {
-		t.Error("symVar was not changed, but should:", err)
-	}
-
-	err = bind.BindConst(symConst, sx.Int64(0))
-	if err != nil {
-		t.Errorf("error in symConst.Bind(1): %v", err)
-		return
-	}
-	if !bind.IsConst(symConst) {
-		t.Errorf("symbol %v is wrongly seen a variable", symConst)
-		return
-	}
-	err = bind.BindConst(symConst, sx.Int64(2))
-	if err == nil {
-		t.Error("symConst was changed, but should not")
-	}
-}

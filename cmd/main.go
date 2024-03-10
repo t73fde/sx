@@ -121,7 +121,7 @@ func (me *mainEngine) AfterRework(re *sxeval.ReworkEnvironment, expr, result sxe
 var specials = []*sxeval.Special{
 	&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
-	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
+	&sxbuiltins.DefVarS,                     // defvar
 	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
 	&sxbuiltins.DefDynS, &sxbuiltins.DefMacroS, // defdyn, defmacro
 	&sxbuiltins.LetS,   // let
@@ -279,6 +279,8 @@ func main() {
 		_ = root.BindBuiltin(b)
 	}
 	_ = root.Bind(sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined())
+	_ = root.Bind(sx.MakeSymbol("NIL"), sx.Nil())
+	_ = root.Bind(sx.MakeSymbol("T"), sx.MakeSymbol("T"))
 	me := mainEngine{
 		logReader:   true,
 		logParse:    true,
@@ -423,11 +425,7 @@ func printExpr(expr sxeval.Expr, level int) {
 		printExpr(e.True, level+1)
 		printExpr(e.False, level+1)
 	case *sxbuiltins.DefineExpr:
-		if e.Const {
-			fmt.Println("DEFCONST", e.Sym)
-		} else {
-			fmt.Println("DEFVAR", e.Sym)
-		}
+		fmt.Println("DEFVAR", e.Sym)
 		printExpr(e.Val, level+1)
 	case *sxbuiltins.SetXExpr:
 		fmt.Println("SET!", e.Sym)

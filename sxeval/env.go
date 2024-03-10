@@ -282,9 +282,6 @@ func (ee ExecuteError) Unwrap() error { return ee.err }
 func (env *Environment) Bind(sym *sx.Symbol, obj sx.Object) error {
 	return env.binding.Bind(sym, obj)
 }
-func (env *Environment) BindConst(sym *sx.Symbol, obj sx.Object) error {
-	return env.binding.BindConst(sym, obj)
-}
 func (env *Environment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Lookup(sym)
 }

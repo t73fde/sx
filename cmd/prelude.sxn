@@ -11,17 +11,15 @@
 ;;; SPDX-FileCopyrightText: 2023-present Detlef Stern
 ;;;----------------------------------------------------------------------------
 
-;; Constants NIL and T
-(defconst NIL ())
-(defconst T   'T)
+;; Following code assumes defined constants NIL and T
 
 ;; Macros boolean and not
 (defmacro boolean (x) `(if ,x T NIL))
 (defmacro not (x) `(if ,x NIL T))
 
-;; Macros !== and != to negate an equivalence
-(defmacro !== args `(not (== ,@args)))
-(defmacro != args `(not (= ,@args)))
+;; Macros not== and not= to negate an equivalence
+(defmacro not== args `(not (== ,@args)))
+(defmacro not= args `(not (= ,@args)))
 
 ;; let* macro
 ;;

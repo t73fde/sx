@@ -46,32 +46,6 @@ var tcsDefine = tTestCases{
 		withErr: true,
 	},
 	{name: "defvar-a-1", src: "(defvar a 1)", exp: "1"},
-
-	{
-		name:    "err-defconst-0",
-		src:     "(defconst)",
-		exp:     "{[{defconst: need at least two arguments}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-defconst-1",
-		src:     "(defconst 1)",
-		exp:     "{[{defconst: argument 1 must be a symbol, but is: sx.Int64/1}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-defconst-1a",
-		src:     "(defconst a)",
-		exp:     "{[{defconst: argument 2 missing}]}",
-		withErr: true,
-	},
-	{
-		name:    "err-defconst-a-1",
-		src:     "(defconst a . 1)",
-		exp:     "{[{defconst: argument 2 must be a proper list}]}",
-		withErr: true,
-	},
-	{name: "defconst-a-1", src: "(defconst a 1)", exp: "1"},
 }
 
 func TestSetX(t *testing.T) {

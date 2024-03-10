@@ -109,7 +109,7 @@ func createBinding() *sxeval.Binding {
 var specials = []*sxeval.Special{
 	&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
-	&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
+	&sxbuiltins.DefVarS,                     // defvar
 	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
 	&sxbuiltins.DefDynS, &sxbuiltins.DefMacroS, // defdyn, defmacro
 	&sxbuiltins.LetS,   // let
