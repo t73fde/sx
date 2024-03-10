@@ -35,6 +35,9 @@ type Binding struct {
 }
 
 func makeBinding(name string, parent *Binding, sizeHint int) *Binding {
+	if sizeHint <= 0 {
+		sizeHint = 3
+	}
 	return &Binding{
 		vars:   make(mapSymObj, sizeHint),
 		parent: parent,
@@ -50,9 +53,6 @@ func MakeRootBinding(sizeHint int) *Binding {
 
 // MakeChildBinding creates a new binding with a given parent.
 func (b *Binding) MakeChildBinding(name string, sizeHint int) *Binding {
-	if sizeHint <= 0 {
-		return makeBinding(name, b, 3)
-	}
 	return makeBinding(name, b, sizeHint)
 }
 
@@ -65,13 +65,13 @@ func (b *Binding) IsEqual(other sx.Object) bool {
 	if b.IsNil() {
 		return sx.IsNil(other)
 	}
-	if omb, ok := other.(*Binding); ok {
-		mvars, ovars := b.vars, omb.vars
-		if len(mvars) != len(ovars) {
+	if ob, isBinding := other.(*Binding); isBinding {
+		bvars, obvars := b.vars, ob.vars
+		if len(bvars) != len(obvars) {
 			return false
 		}
-		for k, v := range mvars {
-			ov, found := ovars[k]
+		for k, v := range bvars {
+			ov, found := obvars[k]
 			if !found || !v.IsEqual(ov) {
 				return false
 			}
