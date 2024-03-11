@@ -35,11 +35,11 @@ func TestBindLookupUnbind(t *testing.T) {
 		newRoot := sxeval.MakeRootBinding(1)
 		_ = newRoot.Bind(sym1, sym2)
 		child := newRoot.MakeChildBinding("assoc", 30)
-		bindLookupUnbind(t, newRoot, child, sym1, sym2)
+		bindLookup(t, newRoot, child, sym1, sym2)
 	})
 }
 
-func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.Symbol) {
+func bindLookup(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.Symbol) {
 	_ = child.Bind(sym2, sym1)
 
 	if _, found := child.Lookup(sym1); found {
@@ -57,15 +57,6 @@ func bindLookupUnbind(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.
 	}
 	if cc := child.Bindings().Assoc(sym2); cc == nil {
 		t.Error("Symbol", sym2, "not found in child bindings")
-	}
-
-	_ = root.Unbind(sym1)
-	if _, found := root.Lookup(sym1); found {
-		t.Error("Symbol", sym1, "was found in root")
-	}
-	_ = child.Unbind(sym2)
-	if _, found := child.Lookup(sym2); found {
-		t.Error("Symbol", sym2, "was found in child")
 	}
 }
 

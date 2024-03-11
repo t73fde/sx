@@ -142,15 +142,6 @@ func (b *Binding) Bindings() *sx.Pair {
 	return result
 }
 
-// Unbind removes the mapping of the given symbol to an object.
-func (b *Binding) Unbind(sym *sx.Symbol) error {
-	if b.frozen {
-		return ErrBindingFrozen{Binding: b}
-	}
-	delete(b.vars, sym.GetValue())
-	return nil
-}
-
 // Freeze sets the binding in a read-only state.
 func (b *Binding) Freeze() { b.frozen = true }
 
