@@ -24,26 +24,26 @@ type ErrBindingFrozen struct{ Binding *Binding }
 
 func (err ErrBindingFrozen) Error() string { return fmt.Sprintf("binding is frozen: %v", err.Binding) }
 
-type mapSymObj = map[string]sx.Object
-
 // Binding is a binding based on maps.
 type Binding struct {
-	vars   mapSymObj
+	impl   bindingImpl
 	parent *Binding
+	inline singleBinding
 	name   string
 	frozen bool
 }
 
 func makeBinding(name string, parent *Binding, sizeHint int) *Binding {
-	if sizeHint <= 0 {
-		sizeHint = 3
-	}
-	return &Binding{
-		vars:   make(mapSymObj, sizeHint),
+	b := Binding{
 		parent: parent,
 		name:   name,
-		frozen: false,
 	}
+	if sizeHint == 1 {
+		b.impl = &b.inline
+	} else {
+		b.impl = makeMappedBinding(sizeHint)
+	}
+	return &b
 }
 
 // MakeRootBinding creates a new root binding.
@@ -66,13 +66,15 @@ func (b *Binding) IsEqual(other sx.Object) bool {
 		return sx.IsNil(other)
 	}
 	if ob, isBinding := other.(*Binding); isBinding {
-		bvars, obvars := b.vars, ob.vars
-		if len(bvars) != len(obvars) {
+		impl, oimpl := b.impl, ob.impl
+		if impl.length() != oimpl.length() {
 			return false
 		}
-		for k, v := range bvars {
-			ov, found := obvars[k]
-			if !found || !v.IsEqual(ov) {
+		alist, oalist := b.impl.alist(), ob.impl.alist()
+		for node := alist; node != nil; node = node.Tail() {
+			pair := node.Car().(*sx.Pair)
+			opair := oalist.Assoc(pair.Car())
+			if opair == nil || !pair.Cdr().IsEqual(opair.Cdr()) {
 				return false
 			}
 		}
@@ -81,7 +83,7 @@ func (b *Binding) IsEqual(other sx.Object) bool {
 	return false
 }
 func (b *Binding) String() string {
-	return fmt.Sprintf("#<binding:%s/%d>", b.name, len(b.vars))
+	return fmt.Sprintf("#<binding:%s/%d>", b.name, b.impl.length())
 }
 
 func (b *Binding) GoString() string { return b.String() }
@@ -99,12 +101,21 @@ func (b *Binding) Parent() *Binding {
 
 // Bind creates a local mapping with a given symbol and object.
 //
-// A previous, non-const mapping will be overwritten.
-func (b *Binding) Bind(sym *sx.Symbol, val sx.Object) error {
+// A previous mapping will be overwritten.
+func (b *Binding) Bind(sym *sx.Symbol, obj sx.Object) error {
 	if b.frozen {
 		return ErrBindingFrozen{Binding: b}
 	}
-	b.vars[sym.GetValue()] = val
+	if !b.impl.bind(sym, obj) {
+		lst := b.impl.alist()
+		mb := makeMappedBinding(lst.Length() + 1)
+		for node := lst; node != nil; node = node.Tail() {
+			pair := node.Car().(*sx.Pair)
+			mb.bind(pair.Car().(*sx.Symbol), pair.Cdr())
+		}
+		mb.bind(sym, obj)
+		b.impl = mb
+	}
 	return nil
 }
 
@@ -121,8 +132,7 @@ func (b *Binding) BindBuiltin(bi *Builtin) error {
 // found, the search will *not* be continued in the parent binding.
 // Use the global `Resolve` function, if you want a search up to the parent.
 func (b *Binding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
-	obj, found := b.vars[sym.GetValue()]
-	return obj, found
+	return b.impl.lookup(sym)
 }
 
 // LookupN will lookup the symbol in the N-th parent.
@@ -135,11 +145,7 @@ func (b *Binding) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
 
 // Bindings returns all bindings as an a-list in some random order.
 func (b *Binding) Bindings() *sx.Pair {
-	result := sx.Nil()
-	for k, v := range b.vars {
-		result = result.Cons(sx.Cons(sx.MakeSymbol(k), v))
-	}
-	return result
+	return b.impl.alist()
 }
 
 // Freeze sets the binding in a read-only state.
@@ -194,4 +200,74 @@ func GetBinding(obj sx.Object) (*Binding, bool) {
 	}
 	b, ok := obj.(*Binding)
 	return b, ok
+}
+
+type bindingImpl interface {
+	bind(*sx.Symbol, sx.Object) bool
+	lookup(*sx.Symbol) (sx.Object, bool)
+	alist() *sx.Pair
+	length() int
+}
+
+type mapSymObj = map[string]sx.Object
+
+type mappedBinding struct {
+	m mapSymObj
+}
+
+func makeMappedBinding(sizeHint int) mappedBinding {
+	if sizeHint <= 0 {
+		sizeHint = 3
+	}
+	return mappedBinding{make(mapSymObj, sizeHint)}
+}
+func (mb mappedBinding) bind(sym *sx.Symbol, obj sx.Object) bool {
+	mb.m[sym.GetValue()] = obj
+	return true
+}
+func (mb mappedBinding) lookup(sym *sx.Symbol) (sx.Object, bool) {
+	obj, found := mb.m[sym.GetValue()]
+	return obj, found
+}
+func (mb mappedBinding) alist() *sx.Pair {
+	var result sx.ListBuilder
+	for s, obj := range mb.m {
+		result.Add(sx.Cons(sx.MakeSymbol(s), obj))
+	}
+	return result.List()
+}
+func (mb mappedBinding) length() int { return len(mb.m) }
+
+type singleBinding struct {
+	sym *sx.Symbol
+	obj sx.Object
+}
+
+func (sb *singleBinding) bind(sym *sx.Symbol, obj sx.Object) bool {
+	if bsym := sb.sym; bsym != nil {
+		if !bsym.IsEqual(sym) {
+			return false
+		}
+	}
+	sb.sym = sym
+	sb.obj = obj
+	return true
+}
+func (sb *singleBinding) lookup(sym *sx.Symbol) (sx.Object, bool) {
+	if bsym := sb.sym; bsym != nil && bsym.IsEqual(sym) {
+		return sb.obj, true
+	}
+	return nil, false
+}
+func (sb *singleBinding) alist() *sx.Pair {
+	if bsym := sb.sym; bsym != nil {
+		return sx.Cons(sx.Cons(bsym, sb.obj), sx.Nil())
+	}
+	return nil
+}
+func (sb *singleBinding) length() int {
+	if sb.sym == nil {
+		return 0
+	}
+	return 1
 }

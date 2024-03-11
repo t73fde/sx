@@ -92,13 +92,13 @@ func TestAlist(t *testing.T) {
 
 func TestRootBindingEqual(t *testing.T) {
 	t.Parallel()
-	root1 := sxeval.MakeRootBinding(0)
+	root1 := sxeval.MakeRootBinding(1)
 	root2 := sxeval.MakeRootBinding(7)
 	checkBindingEqual(t, root1, root2)
 
 	root := sxeval.MakeRootBinding(3)
-	child1 := root.MakeChildBinding("child1", 17)
-	child2 := root.MakeChildBinding("child22", 11)
+	child1 := root.MakeChildBinding("child1", 7)
+	child2 := root.MakeChildBinding("child22", 1)
 	checkBindingEqual(t, child1, child2)
 }
 
