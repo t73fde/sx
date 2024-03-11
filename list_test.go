@@ -96,6 +96,21 @@ func TestListLength(t *testing.T) {
 	}
 }
 
+func TestPairIsEqual(t *testing.T) {
+	t.Parallel()
+
+	if !sx.Nil().IsEqual(sx.Nil()) {
+		t.Error("Nil() != Nil()")
+	}
+	sym1, sym2 := sx.MakeSymbol("sym1"), sx.MakeSymbol("sym2")
+	if sx.MakeList(sym1, sym2).IsEqual(sx.MakeList(sym1, sym1)) {
+		t.Error("(sym1 sym2) == (sym1 sym1)")
+	}
+	if sx.Cons(sym1, sym2).IsEqual(sx.Cons(sym1, sym1)) {
+		t.Error("(sym1 . sym2) == (sym1 . sym1)")
+	}
+}
+
 func TestListAssoc(t *testing.T) {
 	t.Parallel()
 

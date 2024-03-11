@@ -61,11 +61,23 @@ func (pair *Pair) IsEqual(other Object) bool {
 	}
 	if otherPair, ok := other.(*Pair); ok {
 		node, otherNode := pair, otherPair
-		for ; node != nil && otherNode != nil; node = node.Tail() {
+		for node != nil && otherNode != nil {
 			if !node.Car().IsEqual(otherNode.Car()) {
 				return false
 			}
-			otherNode = otherNode.Tail()
+			cdr, otherCdr := node.Cdr(), otherNode.Cdr()
+			if IsNil(cdr) {
+				return IsNil(otherCdr)
+			}
+			next, isPair := GetPair(cdr)
+			if !isPair {
+				return cdr.IsEqual(otherCdr)
+			}
+			otherNext, isPair := GetPair(otherCdr)
+			if !isPair {
+				return false
+			}
+			node, otherNode = next, otherNext
 		}
 		return node == otherNode
 	}
