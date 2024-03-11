@@ -388,28 +388,12 @@ func (dl *DynLambda) IsPure(sx.Vector) bool { return false }
 
 // Call the Procedure.
 func (dl *DynLambda) Call(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-	numParams := len(dl.Params)
-	if len(args) < numParams {
-		return nil, fmt.Errorf("%s: missing arguments: %v", dl.Name, dl.Params[len(args):])
-	}
-	bindSize := numParams
-	if dl.Rest != nil {
-		bindSize++
-	}
-	dynEnv := env.NewLexicalEnvironment(env.Binding(), dl.Name, bindSize)
-	for i, p := range dl.Params {
-		err := dynEnv.Bind(p, args[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	if dl.Rest != nil {
-		err := dynEnv.Bind(dl.Rest, sx.MakeList(args[numParams:]...))
-		if err != nil {
-			return nil, err
-		}
-	} else if len(args) > numParams {
-		return nil, fmt.Errorf("%s: excess arguments: %v", dl.Name, []sx.Object(args[numParams:]))
-	}
-	return dynEnv.ExecuteTCO(dl.Expr)
+	// A DynLambda is just a LexLambda with a different Binding.
+	return (&LexLambda{
+		Binding: env.Binding(),
+		Name:    dl.Name,
+		Params:  dl.Params,
+		Rest:    dl.Rest,
+		Expr:    dl.Expr,
+	}).Call(env, args)
 }
