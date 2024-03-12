@@ -228,8 +228,7 @@ func (ce *CallExpr) Improve(re *ReworkEnvironment) Expr {
 }
 
 func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {
-	subEnv := env.NewDynamicEnvironment()
-	val, err := subEnv.Execute(ce.Proc)
+	val, err := env.Execute(ce.Proc)
 	if err != nil {
 		return nil, err
 	}
@@ -270,8 +269,7 @@ func computeCallable(env *Environment, proc Callable, args []Expr) (sx.Object, e
 	}
 	objArgs := make(sx.Vector, len(args))
 	for i, exprArg := range args {
-		subEnv := env.NewDynamicEnvironment()
-		val, err := subEnv.Execute(exprArg)
+		val, err := env.Execute(exprArg)
 		if err != nil {
 			return val, err
 		}
@@ -332,8 +330,7 @@ func (bce *BuiltinCallExpr) Improve(re *ReworkEnvironment) Expr {
 }
 
 func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
-	subEnv := env.NewDynamicEnvironment()
-	return computeCallable(subEnv, bce.Proc, bce.Args)
+	return computeCallable(env, bce.Proc, bce.Args)
 }
 
 func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {

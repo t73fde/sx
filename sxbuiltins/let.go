@@ -143,8 +143,7 @@ func (le *LetExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 func (le *LetExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	letEnv := env.NewLexicalEnvironment(env.Binding(), "let", len(le.Symbols))
 	for i, sym := range le.Symbols {
-		subEnv := env.NewDynamicEnvironment()
-		obj, err := subEnv.Execute(le.Vals[i])
+		obj, err := env.Execute(le.Vals[i])
 		if err != nil {
 			return nil, err
 		}
@@ -232,8 +231,7 @@ func (le1 *Let1Expr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 
 func (le1 *Let1Expr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	letEnv := env.NewLexicalEnvironment(env.Binding(), "let1", 1)
-	subEnv := env.NewDynamicEnvironment()
-	obj, err := subEnv.Execute(le1.Value)
+	obj, err := env.Execute(le1.Value)
 	if err != nil {
 		return nil, err
 	}

@@ -75,8 +75,7 @@ func (de *DefineExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 }
 
 func (de *DefineExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	subEnv := env.NewDynamicEnvironment()
-	val, err := subEnv.Execute(de.Val)
+	val, err := env.Execute(de.Val)
 	if err == nil {
 		err = env.Bind(de.Sym, val)
 	}
@@ -157,8 +156,7 @@ func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	if bind == nil {
 		return nil, env.MakeNotBoundError(se.Sym)
 	}
-	subEnv := env.NewDynamicEnvironment()
-	val, err := subEnv.Execute(se.Val)
+	val, err := env.Execute(se.Val)
 	if err == nil {
 		err = bind.Bind(se.Sym, val)
 	}

@@ -130,8 +130,7 @@ func (ife *IfExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 }
 
 func (ife *IfExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	subEnv := env.NewDynamicEnvironment()
-	test, err := subEnv.Execute(ife.Test)
+	test, err := env.Execute(ife.Test)
 	if err != nil {
 		return nil, err
 	}

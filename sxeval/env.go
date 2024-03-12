@@ -146,11 +146,6 @@ func (env *Environment) MakeReworkEnvironment() *ReworkEnvironment {
 	return re
 }
 
-func (env *Environment) NewDynamicEnvironment() *Environment {
-	result := *env
-	return &result
-}
-
 func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
 	return &Environment{
 		binding:  parent.MakeChildBinding(name, numBindings),
@@ -172,7 +167,7 @@ func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 			}
 			exec.AfterExecution(env, expr, res, err)
 			if again, ok := err.(executeAgain); ok {
-				env.binding = again.binding
+				env = again.env
 				expr = again.expr
 				continue
 			}
@@ -186,7 +181,7 @@ func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 			return res, nil
 		}
 		if again, ok := err.(executeAgain); ok {
-			env.binding = again.binding
+			env = again.env
 			expr = again.expr
 			continue
 		}
@@ -198,23 +193,20 @@ func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 // position, aka as tail call order.
 func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 	// Uncomment this line to test for non-TCO
-	// subEnv := env.NewDynamicEnvironment()
-	// return subEnv.Execute(expr)
+	// return env.Execute(expr)
 
 	// Just return relevant data for real TCO
-	return nil, executeAgain{binding: env.binding, expr: expr}
+	return nil, executeAgain{env: env, expr: expr}
 }
 
 // Call the given Callable with the arguments.
 func (env *Environment) Call(fn Callable, args sx.Vector) (sx.Object, error) {
-	dynamicEnv := env.NewDynamicEnvironment()
-	res, err := fn.Call(dynamicEnv, args)
+	res, err := fn.Call(env, args)
 	if err == nil {
 		return res, nil
 	}
 	if again, ok := err.(executeAgain); ok {
-		dynamicEnv.binding = again.binding
-		return dynamicEnv.Execute(again.expr)
+		return again.env.Execute(again.expr)
 	}
 	return nil, env.addExecuteError(&callableExpr{Proc: fn, Args: args}, err)
 }
@@ -234,8 +226,7 @@ func (ce *callableExpr) Unparse() sx.Object {
 func (ce *callableExpr) Improve(*ReworkEnvironment) Expr { return ce }
 
 func (ce *callableExpr) Compute(env *Environment) (sx.Object, error) {
-	subEnv := env.NewDynamicEnvironment()
-	return subEnv.Call(ce.Proc, ce.Args)
+	return env.Call(ce.Proc, ce.Args)
 }
 
 func (ce *callableExpr) Print(w io.Writer) (int, error) {
@@ -245,8 +236,8 @@ func (ce *callableExpr) Print(w io.Writer) (int, error) {
 // executeAgain is a non-error error signalling that the given expression should be
 // executed again in the given binding.
 type executeAgain struct {
-	binding *Binding
-	expr    Expr
+	env  *Environment
+	expr Expr
 }
 
 func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }

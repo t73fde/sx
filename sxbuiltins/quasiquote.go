@@ -377,8 +377,7 @@ func (mle MakeListExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 }
 
 func (mle MakeListExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	subEnv := env.NewDynamicEnvironment()
-	elem, err := subEnv.Execute(mle.Elem)
+	elem, err := env.Execute(mle.Elem)
 	if err != nil {
 		return nil, err
 	}

@@ -108,9 +108,7 @@ func (be *BeginExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 
 func (be *BeginExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	for _, e := range be.Front {
-		subEnv := env.NewDynamicEnvironment()
-		_, err := subEnv.Execute(e)
-		if err != nil {
+		if _, err := env.Execute(e); err != nil {
 			return nil, err
 		}
 	}
