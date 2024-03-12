@@ -25,7 +25,6 @@ import (
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
 	binding  *Binding
-	caller   *Environment // the dynamic call stack
 	observer *observer
 }
 
@@ -52,7 +51,6 @@ func (env *Environment) String() string { return env.binding.name }
 func MakeExecutionEnvironment(bind *Binding) *Environment {
 	return &Environment{
 		binding: bind,
-		caller:  nil,
 		observer: &observer{
 			execute: nil,
 			parse:   nil,
@@ -150,14 +148,12 @@ func (env *Environment) MakeReworkEnvironment() *ReworkEnvironment {
 
 func (env *Environment) NewDynamicEnvironment() *Environment {
 	result := *env
-	result.caller = env
 	return &result
 }
 
 func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
 	return &Environment{
 		binding:  parent.MakeChildBinding(name, numBindings),
-		caller:   env,
 		observer: env.observer,
 	}
 }
