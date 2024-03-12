@@ -35,6 +35,9 @@ type Builtin struct {
 	// The actual builtin function, with any number of arguments
 	Fn func(*Environment, sx.Vector) (sx.Object, error)
 
+	// The actual builtin function, with two arguments
+	Fn2 func(*Environment, sx.Object, sx.Object) (sx.Object, error)
+
 	// Do not add a CallError
 	NoCallError bool
 }
@@ -67,6 +70,57 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 		return testPure(objs)
 	}
 	return false
+}
+
+// Call1 the builtin function with the given environment and one argument.
+func (b *Builtin) Call1(env *Environment, arg sx.Object) (sx.Object, error) {
+	// Check arity
+	minArity, maxArity := b.MinArity, b.MaxArity
+	if minArity == maxArity {
+		if minArity != 1 {
+			err := fmt.Errorf("exactly %d arguments required, but 1 given: [%v]", minArity, arg)
+			return nil, CallError{Name: b.Name, Err: err}
+		}
+	} else if maxArity < 0 {
+		if 1 < minArity {
+			err := fmt.Errorf("at least %d arguments required, but only 1 given: [%v]", minArity, arg)
+			return nil, CallError{Name: b.Name, Err: err}
+		}
+	} else if 1 < minArity || maxArity < 1 {
+		err := fmt.Errorf("between %d and %d arguments required, but 1 given: [%v]", minArity, maxArity, arg)
+		return nil, CallError{Name: b.Name, Err: err}
+	}
+
+	obj, err := b.Fn(env, sx.Vector{arg})
+	return b.handleCallError(obj, err)
+}
+
+// Call2 the builtin function with the given environment and two arguments.
+func (b *Builtin) Call2(env *Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+	// Check arity
+	minArity, maxArity := b.MinArity, b.MaxArity
+	if minArity == maxArity {
+		if minArity != 2 {
+			err := fmt.Errorf("exactly %d arguments required, but 2 given: [%v %v]", minArity, arg0, arg1)
+			return nil, CallError{Name: b.Name, Err: err}
+		}
+	} else if maxArity < 0 {
+		if 2 < minArity {
+			err := fmt.Errorf("at least %d arguments required, but only 2 given: [%v %v]", minArity, arg0, arg1)
+			return nil, CallError{Name: b.Name, Err: err}
+		}
+	} else if 2 < minArity || maxArity < 2 {
+		err := fmt.Errorf("between %d and %d arguments required, but 2 given: [%v %v]", minArity, maxArity, arg0, arg1)
+		return nil, CallError{Name: b.Name, Err: err}
+	}
+
+	if fn2 := b.Fn2; fn2 != nil {
+		obj, err := fn2(env, arg0, arg1)
+		return b.handleCallError(obj, err)
+	}
+
+	obj, err := b.Fn(env, sx.Vector{arg0, arg1})
+	return b.handleCallError(obj, err)
 }
 
 // Call the builtin function with the given environment and arguments.
@@ -109,6 +163,10 @@ func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
 	}
 
 	obj, err := b.Fn(env, args)
+	return b.handleCallError(obj, err)
+}
+
+func (b *Builtin) handleCallError(obj sx.Object, err error) (sx.Object, error) {
 	if err == nil {
 		return obj, nil
 	}

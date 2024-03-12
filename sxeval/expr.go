@@ -264,18 +264,36 @@ func (ce *CallExpr) Print(w io.Writer) (int, error) {
 }
 
 func computeCallable(env *Environment, proc Callable, args []Expr) (sx.Object, error) {
-	if len(args) == 0 {
+	switch numargs := len(args); numargs {
+	case 0:
 		return proc.Call(env, nil)
-	}
-	objArgs := make(sx.Vector, len(args))
-	for i, exprArg := range args {
-		val, err := env.Execute(exprArg)
+	case 1:
+		arg, err := env.Execute(args[0])
 		if err != nil {
-			return val, err
+			return nil, err
 		}
-		objArgs[i] = val
+		return proc.Call1(env, arg)
+	case 2:
+		arg0, err := env.Execute(args[0])
+		if err != nil {
+			return nil, err
+		}
+		arg1, err := env.Execute(args[1])
+		if err != nil {
+			return nil, err
+		}
+		return proc.Call2(env, arg0, arg1)
+	default:
+		objArgs := make(sx.Vector, numargs)
+		for i, exprArg := range args {
+			val, err := env.Execute(exprArg)
+			if err != nil {
+				return val, err
+			}
+			objArgs[i] = val
+		}
+		return proc.Call(env, objArgs)
 	}
-	return proc.Call(env, objArgs)
 }
 
 // NotCallableError signals that a value cannot be called when it must be called.

@@ -16,6 +16,8 @@ package sxbuiltins
 // Contains builtins to work with numbers.
 
 import (
+	"fmt"
+
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
 )
@@ -38,6 +40,17 @@ var Add = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		num0, isNumber := sx.GetNumber(arg0)
+		if !isNumber {
+			return nil, fmt.Errorf("number expected")
+		}
+		num1, isNumber := sx.GetNumber(arg1)
+		if !isNumber {
+			return nil, fmt.Errorf("number expected")
+		}
+		return sx.NumAdd(num0, num1), nil
+	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(0))
 		if len(args) == 0 {
@@ -61,6 +74,17 @@ var Sub = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		num0, isNumber := sx.GetNumber(arg0)
+		if !isNumber {
+			return nil, fmt.Errorf("number expected")
+		}
+		num1, isNumber := sx.GetNumber(arg1)
+		if !isNumber {
+			return nil, fmt.Errorf("number expected")
+		}
+		return sx.NumSub(num0, num1), nil
+	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		acc, err := GetNumber(args, 0)
 		if err != nil {
@@ -86,6 +110,17 @@ var Mul = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		num0, isNumber := sx.GetNumber(arg0)
+		if !isNumber {
+			return nil, fmt.Errorf("number expected")
+		}
+		num1, isNumber := sx.GetNumber(arg1)
+		if !isNumber {
+			return nil, fmt.Errorf("number expected")
+		}
+		return sx.NumMul(num0, num1), nil
+	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(1))
 		for i := range len(args) {
