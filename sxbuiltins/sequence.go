@@ -47,7 +47,7 @@ var LengthLess = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		n, err := GetNumber(args, 1)
+		n, err := GetNumber(args[1], 1)
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +66,7 @@ var Nth = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		n, err := GetNumber(args, 1)
+		n, err := GetNumber(args[1], 1)
 		if err != nil {
 			return nil, err
 		}

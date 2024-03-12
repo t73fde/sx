@@ -14,8 +14,6 @@
 package sxbuiltins
 
 import (
-	"fmt"
-
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
 )
@@ -41,13 +39,13 @@ func cmpMakeBuiltin(name string, cmpFn func(int) bool) sxeval.Builtin {
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
 		Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-			num0, isNumber := sx.GetNumber(arg0)
-			if !isNumber {
-				return nil, fmt.Errorf("number expected")
+			num0, err := GetNumber(arg0, 0)
+			if err != nil {
+				return nil, err
 			}
-			num1, isNumber := sx.GetNumber(arg1)
-			if !isNumber {
-				return nil, fmt.Errorf("number expected")
+			num1, err := GetNumber(arg1, 1)
+			if err != nil {
+				return nil, err
 			}
 			cmpRes := sx.NumCmp(num0, num1)
 			if cmpFn(cmpRes) {
@@ -56,12 +54,12 @@ func cmpMakeBuiltin(name string, cmpFn func(int) bool) sxeval.Builtin {
 			return sx.Nil(), nil
 		},
 		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-			acc, err := GetNumber(args, 0)
+			acc, err := GetNumber(args[0], 0)
 			if err != nil {
 				return nil, err
 			}
 			for i := 1; i < len(args); i++ {
-				num, err2 := GetNumber(args, i)
+				num, err2 := GetNumber(args[i], i)
 				if err2 != nil {
 					return nil, err2
 				}

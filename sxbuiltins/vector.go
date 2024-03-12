@@ -54,7 +54,7 @@ var VectorSetBang = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		num, err := GetNumber(args, 1)
+		num, err := GetNumber(args[1], 1)
 		if err != nil {
 			return nil, err
 		}

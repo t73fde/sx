@@ -16,8 +16,6 @@ package sxbuiltins
 // Contains builtins to work with numbers.
 
 import (
-	"fmt"
-
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
 )
@@ -41,13 +39,13 @@ var Add = sxeval.Builtin{
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
 	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		num0, isNumber := sx.GetNumber(arg0)
-		if !isNumber {
-			return nil, fmt.Errorf("number expected")
+		num0, err := GetNumber(arg0, 0)
+		if err != nil {
+			return nil, err
 		}
-		num1, isNumber := sx.GetNumber(arg1)
-		if !isNumber {
-			return nil, fmt.Errorf("number expected")
+		num1, err := GetNumber(arg1, 1)
+		if err != nil {
+			return nil, err
 		}
 		return sx.NumAdd(num0, num1), nil
 	},
@@ -58,7 +56,7 @@ var Add = sxeval.Builtin{
 		}
 
 		for i := range len(args) {
-			num, err := GetNumber(args, i)
+			num, err := GetNumber(args[i], i)
 			if err != nil {
 				return nil, err
 			}
@@ -75,18 +73,18 @@ var Sub = sxeval.Builtin{
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
 	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		num0, isNumber := sx.GetNumber(arg0)
-		if !isNumber {
-			return nil, fmt.Errorf("number expected")
+		num0, err := GetNumber(arg0, 0)
+		if err != nil {
+			return nil, err
 		}
-		num1, isNumber := sx.GetNumber(arg1)
-		if !isNumber {
-			return nil, fmt.Errorf("number expected")
+		num1, err := GetNumber(arg1, 1)
+		if err != nil {
+			return nil, err
 		}
 		return sx.NumSub(num0, num1), nil
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		acc, err := GetNumber(args, 0)
+		acc, err := GetNumber(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +92,7 @@ var Sub = sxeval.Builtin{
 			return sx.NumNeg(acc), nil
 		}
 		for i := 1; i < len(args); i++ {
-			num, err2 := GetNumber(args, i)
+			num, err2 := GetNumber(args[i], i)
 			if err2 != nil {
 				return nil, err2
 			}
@@ -111,20 +109,20 @@ var Mul = sxeval.Builtin{
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
 	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		num0, isNumber := sx.GetNumber(arg0)
-		if !isNumber {
-			return nil, fmt.Errorf("number expected")
+		num0, err := GetNumber(arg0, 0)
+		if err != nil {
+			return nil, err
 		}
-		num1, isNumber := sx.GetNumber(arg1)
-		if !isNumber {
-			return nil, fmt.Errorf("number expected")
+		num1, err := GetNumber(arg1, 1)
+		if err != nil {
+			return nil, err
 		}
 		return sx.NumMul(num0, num1), nil
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(1))
 		for i := range len(args) {
-			num, err := GetNumber(args, i)
+			num, err := GetNumber(args[i], i)
 			if err != nil {
 				return nil, err
 			}
@@ -140,17 +138,22 @@ var Div = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		acc, err := GetNumber(args, 0)
-		if err != nil {
-			return nil, err
-		}
-		num, err := GetNumber(args, 1)
-		if err != nil {
-			return nil, err
-		}
-		return sx.NumDiv(acc, num)
+	Fn2:      numberDiv,
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		return numberDiv(env, args[0], args[1])
 	},
+}
+
+func numberDiv(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+	acc, err := GetNumber(arg0, 0)
+	if err != nil {
+		return nil, err
+	}
+	num, err := GetNumber(arg1, 1)
+	if err != nil {
+		return nil, err
+	}
+	return sx.NumDiv(acc, num)
 }
 
 // Mod is the builtin that implements (mod n m)
@@ -159,15 +162,20 @@ var Mod = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		acc, err := GetNumber(args, 0)
-		if err != nil {
-			return nil, err
-		}
-		num, err := GetNumber(args, 1)
-		if err != nil {
-			return nil, err
-		}
-		return sx.NumMod(acc, num)
+	Fn2:      numberMod,
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		return numberMod(env, args[0], args[1])
 	},
+}
+
+func numberMod(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+	acc, err := GetNumber(arg0, 0)
+	if err != nil {
+		return nil, err
+	}
+	num, err := GetNumber(arg1, 1)
+	if err != nil {
+		return nil, err
+	}
+	return sx.NumMod(acc, num)
 }

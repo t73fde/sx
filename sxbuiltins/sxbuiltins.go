@@ -40,8 +40,7 @@ func GetString(args sx.Vector, pos int) (sx.String, error) {
 }
 
 // GetNumber returns the given argument as a number, and checks for errors.
-func GetNumber(args sx.Vector, pos int) (sx.Number, error) {
-	arg := args[pos]
+func GetNumber(arg sx.Object, pos int) (sx.Number, error) {
 	if num, ok := sx.GetNumber(arg); ok {
 		return num, nil
 	}
