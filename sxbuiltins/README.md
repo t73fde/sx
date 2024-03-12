@@ -49,18 +49,15 @@ environment. `(defvar SYMBOL OBJ)` binds the value of `OBJ` to the symbol
 Since `(defvar add7 (lambda (x) (+ x 7)))` is a little verbose, there is a
 simpler form: `(defun add7 (x) (+x 7))`. Then you can evaluate `(add7 10)`.
 
-If you want the binding to be constant, i.e. that it cannot be updated later,
-you should use the form `(defconst SYMBOL OBJ)`.
-
 While a `lambda` creates an user-defined callable function, the is a form to
 create an user-defined syntax function: `(defmacro NAME PARAMS OBJ1 ...)`. Such
 a syntax function typically creates a list that will be evaluated separately.
 For example, there is an user-defined syntax function that sequentially
 evaluates its arguments and stops if a boolean "false" value is found: `(and
 OBJ1 ...)`. If all arguments evaluate to a boolean "true" value, `and` returns
-a "true" value, of course. Here is its definition:
+a "true" value, of course. Here is its definition (`T` is bound to the symbol
+`T`):
 
-    (defconst T 'T)  ; a simple true value
     (defmacro and args
         (cond ((null? args)       T)
               ((null? (cdr args)) (car args))
