@@ -32,7 +32,7 @@ type Builtin struct {
 	// Test builtin to be independent of the environment and does not produce some side effect
 	TestPure func(sx.Vector) bool
 
-	// The actual builtin function
+	// The actual builtin function, with any number of arguments
 	Fn func(*Environment, sx.Vector) (sx.Object, error)
 
 	// Do not add a CallError

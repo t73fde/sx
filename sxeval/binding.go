@@ -38,9 +38,10 @@ func makeBinding(name string, parent *Binding, sizeHint int) *Binding {
 		parent: parent,
 		name:   name,
 	}
-	if sizeHint == 1 {
+	switch sizeHint {
+	case 0, 1:
 		b.impl = &b.inline
-	} else {
+	default:
 		b.impl = makeMappedBinding(sizeHint)
 	}
 	return &b
@@ -216,7 +217,7 @@ type mappedBinding struct {
 }
 
 func makeMappedBinding(sizeHint int) mappedBinding {
-	if sizeHint <= 0 {
+	if sizeHint < 3 {
 		sizeHint = 3
 	}
 	return mappedBinding{make(mapSymObj, sizeHint)}
