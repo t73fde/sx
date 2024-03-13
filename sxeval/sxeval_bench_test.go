@@ -59,6 +59,22 @@ func BenchmarkFac(b *testing.B) {
 	}
 }
 
+func BenchmarkFaa(b *testing.B) {
+	root := createBindingForTCO()
+	facSym := sx.MakeSymbol("faa")
+	obj := sx.MakeList(facSym, sx.Int64(20), sx.Int64(1))
+	env := sxeval.MakeExecutionEnvironment(root)
+	expr, err := env.Parse(obj)
+	if err != nil {
+		panic(err)
+	}
+	expr = env.Rework(expr)
+	b.ResetTimer()
+	for range b.N {
+		_, _ = env.Run(expr)
+	}
+}
+
 func BenchmarkFib(b *testing.B) {
 	root := createBindingForTCO()
 	facSym := sx.MakeSymbol("fib")

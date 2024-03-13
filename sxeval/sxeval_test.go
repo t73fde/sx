@@ -115,6 +115,9 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 ;; Naive implementation of fac
 (defun fac (n) (if (= n 0) 1 (* n (fac (- n 1)))))
 
+;; Accumulator based implementation of fac
+(defun faa (n acc) (if (= n 0) acc (faa (- n 1) (* acc n))))
+
 ;; Naive fibonacci
 (defun fib (n) (if (<= n 1) 1 (+ (fib (- n 1)) (fib (- n 2)))))
 `
@@ -162,6 +165,9 @@ func TestTailCallOptimization(t *testing.T) {
 
 		// The following is not a TCO test, but a test for a correct fac implementation.
 		{name: "fac20", src: "(fac 10)", exp: "3628800"},
+
+		// The following is not a TCO test, but a test for a correct faa implementation.
+		{name: "faa20", src: "(faa 10 1)", exp: "3628800"},
 
 		// The following is not a TCO test, but a test for a correct fac implementation.
 		{name: "fib20", src: "(fib 6)", exp: "13"},
