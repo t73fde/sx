@@ -33,17 +33,13 @@ func createTestBinding() *sxeval.Binding {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
+		Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+			return sx.String(arg0.GoString() + arg1.GoString()), nil
+		},
 		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 			var sb strings.Builder
 			for _, val := range args {
-				var s string
-				if sv, ok := val.(sx.String); ok {
-					s = string(sv)
-				} else {
-					s = val.String()
-				}
-
-				_, err := sb.WriteString(s)
+				_, err := sb.WriteString(val.GoString())
 				if err != nil {
 					return nil, err
 				}

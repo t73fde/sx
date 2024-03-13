@@ -23,12 +23,19 @@ var ParseExpression = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		realEnv, err := adaptEnvironment(env, args)
+	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		expr, err := env.Parse(arg)
 		if err != nil {
 			return nil, err
 		}
-		expr, err := realEnv.Parse(args[0])
+		return sxeval.MakeExprObj(expr), nil
+	},
+	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		bind, err := GetBinding(arg1, 1)
+		if err != nil {
+			return nil, err
+		}
+		expr, err := env.RebindExecutionEnvironment(bind).Parse(arg0)
 		if err != nil {
 			return nil, err
 		}
@@ -41,16 +48,31 @@ var ReworkExpression = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		expr, err := GetExprObj(args, 0)
+	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		expr, err := GetExprObj(arg, 0)
 		if err != nil {
 			return nil, err
 		}
-		realEnv, err := adaptEnvironment(env, args)
+		reworkedExpr := env.Rework(expr.GetExpr())
 		if err != nil {
 			return nil, err
 		}
-		reworkedExpr := realEnv.Rework(expr.GetExpr())
+		return sxeval.MakeExprObj(reworkedExpr), nil
+
+	},
+	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		expr, err := GetExprObj(arg0, 0)
+		if err != nil {
+			return nil, err
+		}
+		bind, err := GetBinding(arg1, 1)
+		if err != nil {
+			return nil, err
+		}
+		reworkedExpr := env.RebindExecutionEnvironment(bind).Rework(expr.GetExpr())
+		if err != nil {
+			return nil, err
+		}
 		return sxeval.MakeExprObj(reworkedExpr), nil
 	},
 }
@@ -60,8 +82,8 @@ var UnparseExpression = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		expr, err := GetExprObj(args, 0)
+	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		expr, err := GetExprObj(arg, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -74,16 +96,25 @@ var RunExpression = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		expr, err := GetExprObj(args, 0)
+	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		expr, err := GetExprObj(arg, 0)
 		if err != nil {
 			return nil, err
 		}
-		realEnv, err := adaptEnvironment(env, args)
+		obj, err := env.Run(expr.GetExpr())
+		return obj, err
+
+	},
+	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		expr, err := GetExprObj(arg0, 0)
 		if err != nil {
 			return nil, err
 		}
-		obj, err := realEnv.Run(expr.GetExpr())
+		bind, err := GetBinding(arg1, 1)
+		if err != nil {
+			return nil, err
+		}
+		obj, err := env.RebindExecutionEnvironment(bind).Run(expr.GetExpr())
 		return obj, err
 	},
 }
@@ -93,12 +124,19 @@ var Compile = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		realEnv, errAdapt := adaptEnvironment(env, args)
-		if errAdapt != nil {
-			return nil, errAdapt
+	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		expr, err := env.Compile(arg)
+		if err != nil {
+			return nil, err
 		}
-		expr, err := realEnv.Compile(args[0])
+		return sxeval.MakeExprObj(expr), nil
+	},
+	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		bind, err := GetBinding(arg1, 1)
+		if err != nil {
+			return nil, err
+		}
+		expr, err := env.RebindExecutionEnvironment(bind).Compile(arg0)
 		if err != nil {
 			return nil, err
 		}
@@ -111,39 +149,30 @@ var Eval = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		realEnv, err := adaptEnvironment(env, args)
+	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		expr, err := getEvalExpr(env, arg)
 		if err != nil {
 			return nil, err
 		}
-
-		var expr sxeval.Expr
-		exprObj, isExpr := sxeval.GetExprObj(args[0])
-		if isExpr {
-			expr = exprObj.GetExpr()
-		} else {
-			expr, err = realEnv.Compile(args[0])
-			if err != nil {
-				return nil, err
-			}
+		return env.Run(expr)
+	},
+	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		bind, err := GetBinding(arg1, 1)
+		if err != nil {
+			return nil, err
 		}
-
-		obj, err := realEnv.Run(expr)
-		return obj, err
+		argEnv := env.RebindExecutionEnvironment(bind)
+		expr, err := getEvalExpr(argEnv, arg0)
+		if err != nil {
+			return nil, err
+		}
+		return argEnv.Run(expr)
 	},
 }
 
-func adaptEnvironment(env *sxeval.Environment, args sx.Vector) (*sxeval.Environment, error) {
-	pos := 1
-	if pos < len(args) {
-		if sx.IsNil(args[pos]) {
-			return env, nil
-		}
-		bind, err := GetBinding(args, pos)
-		if err != nil {
-			return nil, err
-		}
-		return env.RebindExecutionEnvironment(bind), nil
+func getEvalExpr(env *sxeval.Environment, arg sx.Object) (sxeval.Expr, error) {
+	if exprObj, isExpr := sxeval.GetExprObj(arg); isExpr {
+		return exprObj.GetExpr(), nil
 	}
-	return env, nil
+	return env.Compile(arg)
 }

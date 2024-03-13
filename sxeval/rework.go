@@ -90,5 +90,12 @@ func (re *ReworkEnvironment) Bind(sym *sx.Symbol) error {
 // It is only called, if no full execution environment is needed, only a binding.
 func (re *ReworkEnvironment) Call(fn Callable, args sx.Vector) (sx.Object, error) {
 	env := MakeExecutionEnvironment(re.binding)
-	return fn.Call(env, args)
+	switch len(args) {
+	case 1:
+		return fn.Call1(env, args[0])
+	case 2:
+		return fn.Call2(env, args[0], args[1])
+	default:
+		return fn.Call(env, args)
+	}
 }

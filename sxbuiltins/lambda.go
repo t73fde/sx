@@ -28,8 +28,8 @@ var CallableP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		_, ok := sxeval.GetCallable(args[0])
+	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		_, ok := sxeval.GetCallable(arg)
 		return sx.MakeBoolean(ok), nil
 	},
 }

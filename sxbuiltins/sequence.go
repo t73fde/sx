@@ -24,8 +24,8 @@ var Length = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		seq, err := GetSequence(args, 0)
+	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		seq, err := GetSequence(arg, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -42,12 +42,12 @@ var LengthLess = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		seq, err := GetSequence(args, 0)
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		seq, err := GetSequence(arg0, 0)
 		if err != nil {
 			return nil, err
 		}
-		n, err := GetNumber(args[1], 1)
+		n, err := GetNumber(arg1, 1)
 		if err != nil {
 			return nil, err
 		}
@@ -61,12 +61,12 @@ var Nth = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		seq, err := GetSequence(args, 0)
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		seq, err := GetSequence(arg0, 0)
 		if err != nil {
 			return nil, err
 		}
-		n, err := GetNumber(args[1], 1)
+		n, err := GetNumber(arg1, 1)
 		if err != nil {
 			return nil, err
 		}
@@ -80,8 +80,8 @@ var Sequence2List = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		seq, err := GetSequence(args, 0)
+	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		seq, err := GetSequence(arg, 0)
 		if err != nil {
 			return nil, err
 		}

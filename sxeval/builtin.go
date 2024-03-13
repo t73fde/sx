@@ -32,11 +32,14 @@ type Builtin struct {
 	// Test builtin to be independent of the environment and does not produce some side effect
 	TestPure func(sx.Vector) bool
 
-	// The actual builtin function, with any number of arguments
-	Fn func(*Environment, sx.Vector) (sx.Object, error)
+	// The actual builtin function, with one arguments
+	Fn1 func(*Environment, sx.Object) (sx.Object, error)
 
 	// The actual builtin function, with two arguments
 	Fn2 func(*Environment, sx.Object, sx.Object) (sx.Object, error)
+
+	// The actual builtin function, with any number of arguments
+	Fn func(*Environment, sx.Vector) (sx.Object, error)
 
 	// Do not add a CallError
 	NoCallError bool
@@ -91,7 +94,7 @@ func (b *Builtin) Call1(env *Environment, arg sx.Object) (sx.Object, error) {
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 
-	obj, err := b.Fn(env, sx.Vector{arg})
+	obj, err := b.Fn1(env, arg)
 	return b.handleCallError(obj, err)
 }
 
@@ -114,12 +117,7 @@ func (b *Builtin) Call2(env *Environment, arg0, arg1 sx.Object) (sx.Object, erro
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 
-	if fn2 := b.Fn2; fn2 != nil {
-		obj, err := fn2(env, arg0, arg1)
-		return b.handleCallError(obj, err)
-	}
-
-	obj, err := b.Fn(env, sx.Vector{arg0, arg1})
+	obj, err := b.Fn2(env, arg0, arg1)
 	return b.handleCallError(obj, err)
 }
 

@@ -23,7 +23,7 @@ var Defined = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		return sx.MakeBoolean(!sx.IsUndefined(args[0])), nil
+	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		return sx.MakeBoolean(!sx.IsUndefined(arg)), nil
 	},
 }

@@ -152,8 +152,14 @@ var tcsList = tTestCases{
 	{name: "list*-2", src: "(list* 1 2)", exp: "(1 . 2)"},
 
 	{name: "append-0", src: "(append)", exp: "()"},
-	{name: "append-1", src: "(append 1)", exp: "1"},
+	{name: "append-1", src: "(append '(1))", exp: "(1)"},
 	{name: "append-3", src: "(append (list 1 2) (list 3 4 5) '(6 . 7))", exp: "(1 2 3 4 5 6 . 7)"},
+	{
+		name:    "err-append-1",
+		src:     "(append 1)",
+		exp:     "{[{append: argument 1 is not a list, but sx.Int64/1}]}",
+		withErr: true,
+	},
 	{
 		name:    "err-append-improper",
 		src:     "(append (cons 1 2) (list 3 4))",

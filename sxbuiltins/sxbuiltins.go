@@ -22,8 +22,7 @@ import (
 )
 
 // GetSymbol returns the given argument as a symbol, and checks for errors.
-func GetSymbol(args sx.Vector, pos int) (*sx.Symbol, error) {
-	arg := args[pos]
+func GetSymbol(arg sx.Object, pos int) (*sx.Symbol, error) {
 	if sym, ok := sx.GetSymbol(arg); ok {
 		return sym, nil
 	}
@@ -31,8 +30,7 @@ func GetSymbol(args sx.Vector, pos int) (*sx.Symbol, error) {
 }
 
 // GetString returns the given argument as a string, and checks for errors.
-func GetString(args sx.Vector, pos int) (sx.String, error) {
-	arg := args[pos]
+func GetString(arg sx.Object, pos int) (sx.String, error) {
 	if s, isString := sx.GetString(arg); isString {
 		return s, nil
 	}
@@ -48,8 +46,7 @@ func GetNumber(arg sx.Object, pos int) (sx.Number, error) {
 }
 
 // GetList returns the given argument as a list, and checks for errors.
-func GetList(args sx.Vector, pos int) (*sx.Pair, error) {
-	arg := args[pos]
+func GetList(arg sx.Object, pos int) (*sx.Pair, error) {
 	if sx.IsNil(arg) {
 		return nil, nil
 	}
@@ -60,8 +57,7 @@ func GetList(args sx.Vector, pos int) (*sx.Pair, error) {
 }
 
 // GetPair returns the given argument as a non-nil list, and checks for errors.
-func GetPair(args sx.Vector, pos int) (*sx.Pair, error) {
-	arg := args[pos]
+func GetPair(arg sx.Object, pos int) (*sx.Pair, error) {
 	if !sx.IsNil(arg) {
 		if pair, isPair := sx.GetPair(arg); isPair {
 			return pair, nil
@@ -71,8 +67,7 @@ func GetPair(args sx.Vector, pos int) (*sx.Pair, error) {
 }
 
 // GetVector returns the given argument as a vector, and checks for errors.
-func GetVector(args sx.Vector, pos int) (sx.Vector, error) {
-	arg := args[pos]
+func GetVector(arg sx.Object, pos int) (sx.Vector, error) {
 	if v, ok := sx.GetVector(arg); ok {
 		return v, nil
 	}
@@ -80,8 +75,7 @@ func GetVector(args sx.Vector, pos int) (sx.Vector, error) {
 }
 
 // GetSequence returns the given argument as a sequence, and checks for errors.
-func GetSequence(args sx.Vector, pos int) (sx.Sequence, error) {
-	arg := args[pos]
+func GetSequence(arg sx.Object, pos int) (sx.Sequence, error) {
 	if seq, ok := sx.GetSequence(arg); ok {
 		if sx.IsNil(seq) {
 			return sx.Nil(), nil
@@ -92,8 +86,7 @@ func GetSequence(args sx.Vector, pos int) (sx.Sequence, error) {
 }
 
 // GetBinding returns the given argument as a binding, and checks for errors.
-func GetBinding(args sx.Vector, pos int) (*sxeval.Binding, error) {
-	arg := args[pos]
+func GetBinding(arg sx.Object, pos int) (*sxeval.Binding, error) {
 	if bind, ok := sxeval.GetBinding(arg); ok {
 		return bind, nil
 	}
@@ -101,8 +94,7 @@ func GetBinding(args sx.Vector, pos int) (*sxeval.Binding, error) {
 }
 
 // GetCallable returns the given argument as a callable, and checks for errors.
-func GetCallable(args sx.Vector, pos int) (sxeval.Callable, error) {
-	arg := args[pos]
+func GetCallable(arg sx.Object, pos int) (sxeval.Callable, error) {
 	if fn, ok := sxeval.GetCallable(arg); ok {
 		return fn, nil
 	}
@@ -110,8 +102,7 @@ func GetCallable(args sx.Vector, pos int) (sxeval.Callable, error) {
 }
 
 // GetExprObj returns the given argument as a expression object, and checks for errors.
-func GetExprObj(args sx.Vector, pos int) (*sxeval.ExprObj, error) {
-	arg := args[pos]
+func GetExprObj(arg sx.Object, pos int) (*sxeval.ExprObj, error) {
 	if fn, ok := sxeval.GetExprObj(arg); ok {
 		return fn, nil
 	}

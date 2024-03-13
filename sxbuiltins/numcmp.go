@@ -48,10 +48,7 @@ func cmpMakeBuiltin(name string, cmpFn func(int) bool) sxeval.Builtin {
 				return nil, err
 			}
 			cmpRes := sx.NumCmp(num0, num1)
-			if cmpFn(cmpRes) {
-				return sx.T, nil
-			}
-			return sx.Nil(), nil
+			return sx.MakeBoolean(cmpFn(cmpRes)), nil
 		},
 		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 			acc, err := GetNumber(args[0], 0)

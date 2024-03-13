@@ -29,6 +29,12 @@ var Error = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: nil,
+	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		return nil, fmt.Errorf("%s", arg.GoString())
+	},
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		return nil, fmt.Errorf("%s %s", arg0.GoString(), arg1.GoString())
+	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		if len(args) == 0 {
 			return nil, fmt.Errorf("unspecified user error")
@@ -38,14 +44,7 @@ var Error = sxeval.Builtin{
 			if i > 0 {
 				sb.WriteByte(' ')
 			}
-			switch o := arg.(type) {
-			case sx.String:
-				sb.WriteString(string(o))
-			case *sx.Symbol:
-				sb.WriteString(o.GetValue())
-			default:
-				sb.WriteString(arg.String())
-			}
+			sb.WriteString(arg.GoString())
 		}
 		return nil, fmt.Errorf("%s", sb.String())
 	},
@@ -58,17 +57,21 @@ var NotBoundError = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		sym, err := GetSymbol(args, 0)
+	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		sym, err := GetSymbol(arg, 0)
 		if err != nil {
 			return nil, err
 		}
-		bind := env.Binding()
-		if len(args) == 2 {
-			bind, err = GetBinding(args, 1)
-			if err != nil {
-				return nil, err
-			}
+		return nil, sxeval.NotBoundError{Binding: env.Binding(), Sym: sym}
+	},
+	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		sym, err := GetSymbol(arg0, 0)
+		if err != nil {
+			return nil, err
+		}
+		bind, err := GetBinding(arg1, 1)
+		if err != nil {
+			return nil, err
 		}
 		return nil, sxeval.NotBoundError{Binding: bind, Sym: sym}
 	},
