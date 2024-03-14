@@ -26,12 +26,9 @@ import (
 // Pretty writes the first argument to stdout.
 var Pretty = sxeval.Builtin{
 	Name:     "pp",
-	MinArity: 0,
+	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
-		return sx.Nil(), nil
-	},
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		_, err := Print(os.Stdout, arg)
 		return sx.Nil(), err
