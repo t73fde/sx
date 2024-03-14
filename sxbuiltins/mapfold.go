@@ -30,11 +30,11 @@ var Map = sxeval.Builtin{
 		}
 		// fn must be checked first, because it is an error, if argument 0 is
 		// not a callable, even if the list is empty and fn will never be called.
-		fn, err := GetCallable(args, 0)
+		fn, err := GetCallable(args[0], 0)
 		if err != nil {
 			return false
 		}
-		lst, err := GetList(args, 1)
+		lst, err := GetList(args[1], 1)
 		if err != nil {
 			return false
 		}
@@ -57,14 +57,14 @@ var Map = sxeval.Builtin{
 			lst = pair
 		}
 	},
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
 		// fn must be checked first, because it is an error, if argument 0 is
 		// not a callable, even if the list is empty and fn will never be called.
-		fn, err := GetCallable(args, 0)
+		fn, err := GetCallable(arg0, 0)
 		if err != nil {
 			return nil, err
 		}
-		lst, err := GetList(args, 1)
+		lst, err := GetList(arg1, 1)
 		if err != nil {
 			return nil, err
 		}
@@ -109,13 +109,13 @@ var Apply = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: nil, // Might be changed in the future
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		lst, err := GetList(args, 1)
+	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		lst, err := GetList(arg1, 1)
 		if err != nil {
 			return nil, err
 		}
 		callExpr := sxeval.CallExpr{
-			Proc: sxeval.ObjExpr{Obj: args[0]},
+			Proc: sxeval.ObjExpr{Obj: arg0},
 			Args: nil,
 		}
 		if lst == nil {
@@ -145,11 +145,11 @@ var Fold = sxeval.Builtin{
 	MaxArity: 3,
 	TestPure: nil, // Might be changed in the future
 	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		fn, err := GetCallable(args, 0)
+		fn, err := GetCallable(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		lst, err := GetList(args, 2)
+		lst, err := GetList(args[2], 2)
 		if err != nil {
 			return nil, err
 		}
@@ -179,11 +179,11 @@ var FoldReverse = sxeval.Builtin{
 	MaxArity: 3,
 	TestPure: nil, // Might be changed in the future
 	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		fn, err := GetCallable(args, 0)
+		fn, err := GetCallable(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		lst, err := GetList(args, 2)
+		lst, err := GetList(args[2], 2)
 		if err != nil {
 			return nil, err
 		}

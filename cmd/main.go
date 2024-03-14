@@ -187,11 +187,11 @@ var builtins = []*sxeval.Builtin{
 		MinArity: 0,
 		MaxArity: 1,
 		TestPure: nil,
-		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-			if len(args) == 0 {
-				panic("common panic")
-			}
-			panic(args[0])
+		Fn0: func(*sxeval.Environment) (sx.Object, error) {
+			panic("common panic")
+		},
+		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+			panic(arg)
 		},
 	},
 }
@@ -202,7 +202,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Environment, sx.Vector) (sx.Object, error) {
+		Fn0: func(*sxeval.Environment) (sx.Object, error) {
 			res := me.logReader
 			me.logReader = !res
 			return sx.MakeBoolean(res), nil
@@ -213,7 +213,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Environment, sx.Vector) (sx.Object, error) {
+		Fn0: func(*sxeval.Environment) (sx.Object, error) {
 			res := me.logParse
 			me.logParse = !res
 			return sx.MakeBoolean(res), nil
@@ -224,7 +224,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Environment, sx.Vector) (sx.Object, error) {
+		Fn0: func(*sxeval.Environment) (sx.Object, error) {
 			res := me.logRework
 			me.logRework = !res
 			return sx.MakeBoolean(res), nil
@@ -235,7 +235,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Environment, sx.Vector) (sx.Object, error) {
+		Fn0: func(*sxeval.Environment) (sx.Object, error) {
 			res := me.logExpr
 			me.logExpr = !res
 			return sx.MakeBoolean(res), nil
@@ -246,7 +246,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Environment, sx.Vector) (sx.Object, error) {
+		Fn0: func(*sxeval.Environment) (sx.Object, error) {
 			res := me.logExecutor
 			me.logExecutor = !res
 			return sx.MakeBoolean(res), nil
@@ -257,7 +257,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn: func(*sxeval.Environment, sx.Vector) (sx.Object, error) {
+		Fn0: func(*sxeval.Environment) (sx.Object, error) {
 			me.logReader = false
 			me.logParse = false
 			me.logRework = false

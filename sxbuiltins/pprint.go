@@ -26,14 +26,11 @@ import (
 // Pretty writes the first argument to stdout.
 var Pretty = sxeval.Builtin{
 	Name:     "pp",
-	MinArity: 0,
+	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		if len(args) == 0 {
-			return sx.Nil(), nil
-		}
-		_, err := Print(os.Stdout, args[0])
+	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		_, err := Print(os.Stdout, arg)
 		return sx.Nil(), err
 	},
 }

@@ -26,12 +26,11 @@ var ToString = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		obj := args[0]
-		if s, isString := sx.GetString(obj); isString {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		if s, isString := sx.GetString(arg); isString {
 			return s, nil
 		}
-		return sx.String(obj.String()), nil
+		return sx.String(arg.GoString()), nil
 	},
 }
 
@@ -41,11 +40,26 @@ var Concat = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		if len(args) == 0 {
-			return sx.String(""), nil
+	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+		return sx.String(""), nil
+	},
+	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		s, err := GetString(arg, 0)
+		return s, err
+	},
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		s0, err := GetString(arg0, 0)
+		if err != nil {
+			return nil, err
 		}
-		s, err := GetString(args, 0)
+		s1, err := GetString(arg1, 1)
+		if err != nil {
+			return nil, err
+		}
+		return sx.String(string(s0) + string(s1)), nil
+	},
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		s, err := GetString(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
@@ -55,7 +69,7 @@ var Concat = sxeval.Builtin{
 		var sb strings.Builder
 		sb.WriteString(string(s))
 		for i := 1; i < len(args); i++ {
-			s, err = GetString(args, i)
+			s, err = GetString(args[i], i)
 			if err != nil {
 				return nil, err
 			}

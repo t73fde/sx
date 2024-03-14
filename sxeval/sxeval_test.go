@@ -33,17 +33,19 @@ func createTestBinding() *sxeval.Binding {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
+		Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+			return sx.String(""), nil
+		},
+		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+			return sx.String(arg.GoString()), nil
+		},
+		Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+			return sx.String(arg0.GoString() + arg1.GoString()), nil
+		},
 		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 			var sb strings.Builder
 			for _, val := range args {
-				var s string
-				if sv, ok := val.(sx.String); ok {
-					s = string(sv)
-				} else {
-					s = val.String()
-				}
-
-				_, err := sb.WriteString(s)
+				_, err := sb.WriteString(val.GoString())
 				if err != nil {
 					return nil, err
 				}
@@ -119,6 +121,9 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 ;; Naive implementation of fac
 (defun fac (n) (if (= n 0) 1 (* n (fac (- n 1)))))
 
+;; Accumulator based implementation of fac
+(defun faa (n acc) (if (= n 0) acc (faa (- n 1) (* acc n))))
+
 ;; Naive fibonacci
 (defun fib (n) (if (<= n 1) 1 (+ (fib (- n 1)) (fib (- n 2)))))
 `
@@ -166,6 +171,9 @@ func TestTailCallOptimization(t *testing.T) {
 
 		// The following is not a TCO test, but a test for a correct fac implementation.
 		{name: "fac20", src: "(fac 10)", exp: "3628800"},
+
+		// The following is not a TCO test, but a test for a correct faa implementation.
+		{name: "faa20", src: "(faa 10 1)", exp: "3628800"},
 
 		// The following is not a TCO test, but a test for a correct fac implementation.
 		{name: "fib20", src: "(fib 6)", exp: "13"},

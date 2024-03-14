@@ -28,6 +28,15 @@ type Callable interface {
 	// does not produce any side effects.
 	IsPure(sx.Vector) bool
 
+	// Call0 with no argument in given environment.
+	Call0(*Environment) (sx.Object, error)
+
+	// Call1 with one argument in given environment.
+	Call1(*Environment, sx.Object) (sx.Object, error)
+
+	// Call2 with two arguments in given environment.
+	Call2(*Environment, sx.Object, sx.Object) (sx.Object, error)
+
 	// Call the value with the given args in the given environment.
 	Call(*Environment, sx.Vector) (sx.Object, error)
 }
