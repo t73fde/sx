@@ -33,6 +33,12 @@ func createTestBinding() *sxeval.Binding {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
+		Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+			return sx.String(""), nil
+		},
+		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+			return sx.String(arg.GoString()), nil
+		},
 		Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
 			return sx.String(arg0.GoString() + arg1.GoString()), nil
 		},

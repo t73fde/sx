@@ -190,6 +190,9 @@ var List = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
+	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+		return sx.Nil(), nil
+	},
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		return sx.Cons(arg, sx.Nil()), nil
 	},
@@ -230,6 +233,9 @@ var Append = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
+	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+		return sx.Nil(), nil
+	},
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		lst, err := GetList(arg, 0)
 		return lst, err

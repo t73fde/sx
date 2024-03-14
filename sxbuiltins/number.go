@@ -38,6 +38,9 @@ var Add = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
+	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+		return sx.Int64(0), nil
+	},
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		num, err := GetNumber(arg, 0)
 		return num, err
@@ -55,10 +58,6 @@ var Add = sxeval.Builtin{
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(0))
-		if len(args) == 0 {
-			return acc, nil
-		}
-
 		for i := range len(args) {
 			num, err := GetNumber(args[i], i)
 			if err != nil {
@@ -113,6 +112,9 @@ var Mul = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
+	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+		return sx.Int64(1), nil
+	},
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		num, err := GetNumber(arg, 0)
 		return num, err

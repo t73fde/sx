@@ -32,7 +32,10 @@ type Builtin struct {
 	// Test builtin to be independent of the environment and does not produce some side effect
 	TestPure func(sx.Vector) bool
 
-	// The actual builtin function, with one arguments
+	// The actual builtin function, with no argument
+	Fn0 func(*Environment) (sx.Object, error)
+
+	// The actual builtin function, with one argument
 	Fn1 func(*Environment, sx.Object) (sx.Object, error)
 
 	// The actual builtin function, with two arguments
@@ -75,6 +78,28 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 	return false
 }
 
+// Call0 the builtin function with the given environment and no arguments.
+func (b *Builtin) Call0(env *Environment) (sx.Object, error) {
+	// Check arity
+	minArity, maxArity := b.MinArity, b.MaxArity
+	if minArity == maxArity {
+		if minArity != 0 {
+			err := fmt.Errorf("exactly %d arguments required, but none given", minArity)
+			return nil, CallError{Name: b.Name, Err: err}
+		}
+	} else if maxArity < 0 {
+		if 0 < minArity {
+			err := fmt.Errorf("at least %d arguments required, but none given", minArity)
+			return nil, CallError{Name: b.Name, Err: err}
+		}
+	} else if 0 < minArity {
+		err := fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
+		return nil, CallError{Name: b.Name, Err: err}
+	}
+	obj, err := b.Fn0(env)
+	return b.handleCallError(obj, err)
+}
+
 // Call1 the builtin function with the given environment and one argument.
 func (b *Builtin) Call1(env *Environment, arg sx.Object) (sx.Object, error) {
 	// Check arity
@@ -93,7 +118,6 @@ func (b *Builtin) Call1(env *Environment, arg sx.Object) (sx.Object, error) {
 		err := fmt.Errorf("between %d and %d arguments required, but 1 given: [%v]", minArity, maxArity, arg)
 		return nil, CallError{Name: b.Name, Err: err}
 	}
-
 	obj, err := b.Fn1(env, arg)
 	return b.handleCallError(obj, err)
 }
@@ -116,7 +140,6 @@ func (b *Builtin) Call2(env *Environment, arg0, arg1 sx.Object) (sx.Object, erro
 		err := fmt.Errorf("between %d and %d arguments required, but 2 given: [%v %v]", minArity, maxArity, arg0, arg1)
 		return nil, CallError{Name: b.Name, Err: err}
 	}
-
 	obj, err := b.Fn2(env, arg0, arg1)
 	return b.handleCallError(obj, err)
 }
@@ -159,7 +182,6 @@ func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
 		}
 		return nil, CallError{Name: b.Name, Err: err}
 	}
-
 	obj, err := b.Fn(env, args)
 	return b.handleCallError(obj, err)
 }

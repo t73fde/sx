@@ -40,6 +40,9 @@ var Concat = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
+	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+		return sx.String(""), nil
+	},
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		s, err := GetString(arg, 0)
 		return s, err
@@ -56,9 +59,6 @@ var Concat = sxeval.Builtin{
 		return sx.String(string(s0) + string(s1)), nil
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		if len(args) == 0 {
-			return sx.String(""), nil
-		}
 		s, err := GetString(args[0], 0)
 		if err != nil {
 			return nil, err

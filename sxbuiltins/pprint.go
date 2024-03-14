@@ -29,13 +29,12 @@ var Pretty = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: 1,
 	TestPure: nil,
+	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+		return sx.Nil(), nil
+	},
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		_, err := Print(os.Stdout, arg)
 		return sx.Nil(), err
-	},
-	Fn: func(_ *sxeval.Environment, _ sx.Vector) (sx.Object, error) {
-		// Will only be called with no args.
-		return sx.Nil(), nil
 	},
 }
 

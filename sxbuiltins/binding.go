@@ -25,7 +25,7 @@ var CurrentBinding = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: 0,
 	TestPure: nil,
-	Fn: func(env *sxeval.Environment, _ sx.Vector) (sx.Object, error) {
+	Fn0: func(env *sxeval.Environment) (sx.Object, error) {
 		return env.Binding(), nil
 	},
 }

@@ -266,7 +266,7 @@ func (ce *CallExpr) Print(w io.Writer) (int, error) {
 func computeCallable(env *Environment, proc Callable, args []Expr) (sx.Object, error) {
 	switch numargs := len(args); numargs {
 	case 0:
-		return proc.Call(env, nil)
+		return proc.Call0(env)
 	case 1:
 		arg, err := env.Execute(args[0])
 		if err != nil {

@@ -203,7 +203,7 @@ func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 func (env *Environment) Call(fn Callable, args sx.Vector) (res sx.Object, err error) {
 	switch len(args) {
 	case 0:
-		res, err = fn.Call(env, nil)
+		res, err = fn.Call0(env)
 	case 1:
 		res, err = fn.Call1(env, args[0])
 	case 2:

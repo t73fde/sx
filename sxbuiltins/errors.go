@@ -29,6 +29,9 @@ var Error = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: nil,
+	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+		return nil, fmt.Errorf("unspecified user error")
+	},
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		return nil, fmt.Errorf("%s", arg.GoString())
 	},
@@ -36,9 +39,6 @@ var Error = sxeval.Builtin{
 		return nil, fmt.Errorf("%s %s", arg0.GoString(), arg1.GoString())
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
-		if len(args) == 0 {
-			return nil, fmt.Errorf("unspecified user error")
-		}
 		var sb strings.Builder
 		for i, arg := range args {
 			if i > 0 {
