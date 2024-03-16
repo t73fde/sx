@@ -25,7 +25,13 @@ import (
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
 	binding  *Binding
+	tco      *tcodata
 	observer *observer
+}
+
+type tcodata struct {
+	env  *Environment
+	expr Expr
 }
 
 type observer struct {
@@ -51,6 +57,10 @@ func (env *Environment) String() string { return env.binding.name }
 func MakeExecutionEnvironment(bind *Binding) *Environment {
 	return &Environment{
 		binding: bind,
+		tco: &tcodata{
+			env:  nil,
+			expr: nil,
+		},
 		observer: &observer{
 			execute: nil,
 			parse:   nil,
@@ -147,10 +157,9 @@ func (env *Environment) MakeReworkEnvironment() *ReworkEnvironment {
 }
 
 func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
-	return &Environment{
-		binding:  parent.MakeChildBinding(name, numBindings),
-		observer: env.observer,
-	}
+	result := *env
+	result.binding = parent.MakeChildBinding(name, numBindings)
+	return &result
 }
 
 // Execute the given expression.
@@ -166,9 +175,9 @@ func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 				}
 			}
 			exec.AfterExecution(env, expr, res, err)
-			if again, ok := err.(executeAgain); ok {
-				env = again.env
-				expr = again.expr
+			if err == errExecuteAgain {
+				env = env.tco.env
+				expr = env.tco.expr
 				continue
 			}
 			return res, env.addExecuteError(expr, err)
@@ -180,9 +189,9 @@ func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 		if err == nil {
 			return res, nil
 		}
-		if again, ok := err.(executeAgain); ok {
-			env = again.env
-			expr = again.expr
+		if err == errExecuteAgain {
+			env = env.tco.env
+			expr = env.tco.expr
 			continue
 		}
 		return res, env.addExecuteError(expr, err)
@@ -196,7 +205,9 @@ func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 	// return env.Execute(expr)
 
 	// Just return relevant data for real TCO
-	return nil, executeAgain{env: env, expr: expr}
+	env.tco.env = env
+	env.tco.expr = expr
+	return nil, errExecuteAgain
 }
 
 // Call the given Callable with the arguments.
@@ -214,8 +225,8 @@ func (env *Environment) Call(fn Callable, args sx.Vector) (res sx.Object, err er
 	if err == nil {
 		return res, nil
 	}
-	if again, ok := err.(executeAgain); ok {
-		return again.env.Execute(again.expr)
+	if err == errExecuteAgain {
+		return env.tco.env.Execute(env.tco.expr)
 	}
 	return nil, env.addExecuteError(&callableExpr{Proc: fn, Args: args}, err)
 }
@@ -242,14 +253,9 @@ func (ce *callableExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{call %v %v}", ce.Proc, ce.Args)
 }
 
-// executeAgain is a non-error error signalling that the given expression should be
+// errExecuteAgain is a non-error error signalling that the given expression should be
 // executed again in the given binding.
-type executeAgain struct {
-	env  *Environment
-	expr Expr
-}
-
-func (e executeAgain) Error() string { return fmt.Sprintf("Again: %v", e.expr) }
+var errExecuteAgain = errors.New("TCO trampoline")
 
 func (env *Environment) addExecuteError(expr Expr, err error) error {
 	var execError ExecuteError

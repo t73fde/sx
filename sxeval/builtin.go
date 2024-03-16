@@ -187,13 +187,10 @@ func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
 }
 
 func (b *Builtin) handleCallError(obj sx.Object, err error) (sx.Object, error) {
-	if err == nil {
-		return obj, nil
+	if err == nil || err == errExecuteAgain {
+		return obj, err
 	}
 	if !b.NoCallError {
-		if _, ok := (err).(executeAgain); ok {
-			return obj, err
-		}
 		var callError CallError
 		if !errors.As(err, &callError) {
 			err = CallError{Name: b.Name, Err: err}
