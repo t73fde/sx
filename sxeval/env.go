@@ -287,10 +287,10 @@ func (ee ExecuteError) PrintStack(w io.Writer, prefix string, logger *slog.Logge
 		if logger != nil {
 			logger.Debug(logmsg, "env", elem.Env, "expr", val)
 		}
-		fmt.Fprintf(w, "%v%d: env: %v, expr: %T/%v\n", prefix, i, elem.Env, val, val)
-		io.WriteString(w, "   exp: ")
-		elem.Expr.Print(w)
-		io.WriteString(w, "\n")
+		_, _ = fmt.Fprintf(w, "%v%d: env: %v, expr: %T/%v\n", prefix, i, elem.Env, val, val)
+		_, _ = io.WriteString(w, "   exp: ")
+		_, _ = elem.Expr.Print(w)
+		_, _ = io.WriteString(w, "\n")
 	}
 
 }

@@ -133,7 +133,10 @@ func (b *Binding) BindBuiltin(bi *Builtin) error {
 // found, the search will *not* be continued in the parent binding.
 // Use the global `Resolve` function, if you want a search up to the parent.
 func (b *Binding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
-	return b.impl.lookup(sym)
+	if sym != nil {
+		return b.impl.lookup(sym)
+	}
+	return sx.Nil(), false
 }
 
 // LookupN will lookup the symbol in the N-th parent.
@@ -160,38 +163,44 @@ func (b *Binding) IsFrozen() bool { return b.frozen }
 // the symbol was bound.
 func (b *Binding) resolveFull(sym *sx.Symbol) (sx.Object, *Binding, int) {
 	depth := 0
-	for curr := b; curr != nil; curr = curr.parent {
-		if obj, found := curr.Lookup(sym); found {
-			return obj, curr, depth
+	if sym != nil {
+		for curr := b; curr != nil; curr = curr.parent {
+			if obj, found := curr.Lookup(sym); found {
+				return obj, curr, depth
+			}
+			depth++
 		}
-		depth++
 	}
-	return nil, nil, depth
+	return sx.Nil(), nil, depth
 }
 
 // Resolve a symbol in a binding and all of its parent bindings.
 func (b *Binding) Resolve(sym *sx.Symbol) (sx.Object, bool) {
-	for curr := b; curr != nil; curr = curr.parent {
-		if obj, found := curr.Lookup(sym); found {
-			return obj, true
+	if sym != nil {
+		for curr := b; curr != nil; curr = curr.parent {
+			if obj, found := curr.Lookup(sym); found {
+				return obj, true
+			}
 		}
 	}
-	return nil, false
+	return sx.Nil(), false
 }
 
 // ResolveN resolves a symbol in the N-th parent binding and all of its parent
 // bindings.
 func (b *Binding) ResolveN(sym *sx.Symbol, n int) (sx.Object, bool) {
-	curr := b
-	for i := 0; i < n; i++ {
-		curr = curr.parent
-	}
-	for ; curr != nil; curr = curr.parent {
-		if obj, found := curr.Lookup(sym); found {
-			return obj, true
+	if sym != nil {
+		curr := b
+		for i := 0; i < n; i++ {
+			curr = curr.parent
+		}
+		for ; curr != nil; curr = curr.parent {
+			if obj, found := curr.Lookup(sym); found {
+				return obj, true
+			}
 		}
 	}
-	return nil, false
+	return sx.Nil(), false
 }
 
 // GetBinding returns the object as a binding, if possible.

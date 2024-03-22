@@ -25,6 +25,11 @@ func TestBindLookupUnbind(t *testing.T) {
 	sym1 := sx.MakeSymbol("sym1")
 	sym2 := sx.MakeSymbol("sym2")
 	root := sxeval.MakeRootBinding(1)
+
+	if val, found := root.Lookup(nil); found {
+		t.Errorf("nil symbol should not be found, but got: %v", val)
+	}
+
 	_ = root.Bind(sym1, sym2)
 
 	if val, found := root.Lookup(sym2); found {
