@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 
 	"zettelstore.de/sx.fossil"
@@ -280,6 +281,19 @@ type EnvironmentExpr struct {
 
 func (ee ExecuteError) Error() string { return ee.err.Error() }
 func (ee ExecuteError) Unwrap() error { return ee.err }
+func (ee ExecuteError) PrintStack(w io.Writer, prefix string, logger *slog.Logger, logmsg string) {
+	for i, elem := range ee.Stack {
+		val := elem.Expr.Unparse()
+		if logger != nil {
+			logger.Debug(logmsg, "env", elem.Env, "expr", val)
+		}
+		fmt.Fprintf(w, "%v%d: env: %v, expr: %T/%v\n", prefix, i, elem.Env, val, val)
+		io.WriteString(w, "   exp: ")
+		elem.Expr.Print(w)
+		io.WriteString(w, "\n")
+	}
+
+}
 
 func (env *Environment) Bind(sym *sx.Symbol, obj sx.Object) error {
 	return env.binding.Bind(sym, obj)
