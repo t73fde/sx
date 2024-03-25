@@ -158,15 +158,37 @@ func (pair *Pair) Length() int {
 	return result
 }
 
-func (pair *Pair) LengthLess(l int) bool {
-	result := 0
+func (pair *Pair) LengthLess(n int) bool {
+	count := 0
 	for node := pair; node != nil; node = node.Tail() {
-		result++
-		if result >= l {
+		count++
+		if count >= n {
 			return false
 		}
 	}
-	return result < l
+	return count < n
+}
+
+func (pair *Pair) LengthGreater(n int) bool {
+	count := 0
+	for node := pair; node != nil; node = node.Tail() {
+		count++
+		if count > n {
+			return true
+		}
+	}
+	return count > n
+}
+
+func (pair *Pair) LengthEqual(n int) bool {
+	count := 0
+	for node := pair; node != nil; node = node.Tail() {
+		count++
+		if count > n {
+			return false
+		}
+	}
+	return count == n
 }
 
 func (pair *Pair) Nth(n int) (Object, error) {

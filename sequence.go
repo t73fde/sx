@@ -20,8 +20,17 @@ type Sequence interface {
 	// Length returns the length of the sequence.
 	Length() int
 
-	// LengthLess returns true if the legth is less than the given one.
-	LengthLess(l int) bool
+	// LengthLess reports whether the length of the sequence is less than
+	// the given number.
+	LengthLess(n int) bool
+
+	// LengthGreater reports whether the length of the sequence is greater than
+	// the given number.
+	LengthGreater(n int) bool
+
+	// LengthEqual reports whether the length of the sequence is equal to the
+	// given number.
+	LengthEqual(n int) bool
 
 	// Nth returns the n-th element of a sequence.
 	Nth(n int) (Object, error)

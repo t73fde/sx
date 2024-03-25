@@ -55,6 +55,44 @@ var LengthLess = sxeval.Builtin{
 	},
 }
 
+// LengthGreater returns true if the length of the sequence is greater than the given number.
+var LengthGreater = sxeval.Builtin{
+	Name:     "length>",
+	MinArity: 2,
+	MaxArity: 2,
+	TestPure: sxeval.AssertPure,
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		seq, err := GetSequence(arg0, 0)
+		if err != nil {
+			return nil, err
+		}
+		n, err := GetNumber(arg1, 1)
+		if err != nil {
+			return nil, err
+		}
+		return sx.MakeBoolean(seq.LengthGreater(int(n.(sx.Int64)))), nil
+	},
+}
+
+// LengthEqual returns true if the length of the sequence is equal to the given number.
+var LengthEqual = sxeval.Builtin{
+	Name:     "length=",
+	MinArity: 2,
+	MaxArity: 2,
+	TestPure: sxeval.AssertPure,
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		seq, err := GetSequence(arg0, 0)
+		if err != nil {
+			return nil, err
+		}
+		n, err := GetNumber(arg1, 1)
+		if err != nil {
+			return nil, err
+		}
+		return sx.MakeBoolean(seq.LengthEqual(int(n.(sx.Int64)))), nil
+	},
+}
+
 // Nth returns the n-th element of the sequence.
 var Nth = sxeval.Builtin{
 	Name:     "nth",

@@ -92,7 +92,9 @@ func (v Vector) Print(w io.Writer) (int, error) {
 
 func (v Vector) Length() int { return len(v) }
 
-func (v Vector) LengthLess(l int) bool { return len(v) < l }
+func (v Vector) LengthLess(n int) bool    { return len(v) < n }
+func (v Vector) LengthGreater(n int) bool { return len(v) > n }
+func (v Vector) LengthEqual(n int) bool   { return len(v) == n }
 
 func (v Vector) Nth(n int) (Object, error) {
 	if n < 0 || len(v) <= n {
