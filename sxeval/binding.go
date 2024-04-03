@@ -15,6 +15,7 @@ package sxeval
 
 import (
 	"fmt"
+	"slices"
 
 	"zettelstore.de/sx.fossil"
 )
@@ -147,6 +148,11 @@ func (b *Binding) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
 	return b.Lookup(sym)
 }
 
+// Symbols returns all bound symbols, sorted by its GoString.
+func (b *Binding) Symbols() []*sx.Symbol {
+	return b.impl.symbols()
+}
+
 // Bindings returns all bindings as an a-list in some random order.
 func (b *Binding) Bindings() *sx.Pair {
 	return b.impl.alist()
@@ -215,6 +221,7 @@ func GetBinding(obj sx.Object) (*Binding, bool) {
 type bindingImpl interface {
 	bind(*sx.Symbol, sx.Object) bool
 	lookup(*sx.Symbol) (sx.Object, bool)
+	symbols() []*sx.Symbol
 	alist() *sx.Pair
 	length() int
 }
@@ -238,6 +245,18 @@ func (mb mappedBinding) bind(sym *sx.Symbol, obj sx.Object) bool {
 func (mb mappedBinding) lookup(sym *sx.Symbol) (sx.Object, bool) {
 	obj, found := mb.m[sym.GetValue()]
 	return obj, found
+}
+func (mb mappedBinding) symbols() []*sx.Symbol {
+	names := make([]string, 0, len(mb.m))
+	for s := range mb.m {
+		names = append(names, s)
+	}
+	slices.Sort(names)
+	result := make([]*sx.Symbol, 0, len(names))
+	for _, s := range names {
+		result = append(result, sx.MakeSymbol(s))
+	}
+	return result
 }
 func (mb mappedBinding) alist() *sx.Pair {
 	var result sx.ListBuilder
@@ -268,6 +287,12 @@ func (sb *singleBinding) lookup(sym *sx.Symbol) (sx.Object, bool) {
 		return sb.obj, true
 	}
 	return nil, false
+}
+func (sb *singleBinding) symbols() []*sx.Symbol {
+	if bsym := sb.sym; bsym != nil {
+		return []*sx.Symbol{bsym}
+	}
+	return nil
 }
 func (sb *singleBinding) alist() *sx.Pair {
 	if bsym := sb.sym; bsym != nil {
