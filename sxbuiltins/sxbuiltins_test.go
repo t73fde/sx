@@ -19,10 +19,10 @@ import (
 	"strings"
 	"testing"
 
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
-	"zettelstore.de/sx.fossil/sxeval"
-	"zettelstore.de/sx.fossil/sxreader"
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxbuiltins"
+	"t73f.de/r/sx/sxeval"
+	"t73f.de/r/sx/sxreader"
 )
 
 // Contains tests of all builtins in sub-packages.

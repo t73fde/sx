@@ -16,7 +16,7 @@ package sx_test
 import (
 	"testing"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 func TestIsTrue(t *testing.T) {

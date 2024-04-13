@@ -18,7 +18,7 @@ import (
 	"io"
 	"strings"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // unmatchedDelimiter is a reader macro that signals the error of an

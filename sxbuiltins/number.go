@@ -16,8 +16,8 @@ package sxbuiltins
 // Contains builtins to work with numbers.
 
 import (
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxeval"
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxeval"
 )
 
 // NumberP returns true if the argument is a number.

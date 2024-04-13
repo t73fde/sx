@@ -21,8 +21,8 @@ import (
 	"strings"
 	"testing"
 
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxreader"
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxreader"
 )
 
 func TestReaderName(t *testing.T) {

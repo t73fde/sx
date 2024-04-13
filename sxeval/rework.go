@@ -16,7 +16,7 @@ package sxeval
 import (
 	"math"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // ReworkEnvironment guides the Expr.Rework operation.

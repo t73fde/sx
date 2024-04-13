@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"slices"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // ErrBindingFrozen is returned when trying to update a frozen binding.

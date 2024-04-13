@@ -16,7 +16,7 @@ package sxeval
 import (
 	"errors"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // Syntax is a form that produces an expression by parsing.

@@ -16,8 +16,8 @@ package sxeval_test
 import (
 	"testing"
 
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxeval"
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxeval"
 )
 
 func TestBindLookupUnbind(t *testing.T) {

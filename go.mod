@@ -1,3 +1,3 @@
-module zettelstore.de/sx.fossil
+module t73f.de/r/sx
 
 go 1.22

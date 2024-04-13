@@ -19,7 +19,7 @@ import (
 	"math"
 	"strings"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // Expr are values that are computed for evaluation in an environment.

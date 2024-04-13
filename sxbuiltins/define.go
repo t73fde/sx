@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"io"
 
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxeval"
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxeval"
 )
 
 const defvarName = "defvar"

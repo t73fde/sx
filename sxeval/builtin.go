@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"math"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // Builtin is the type for normal predefined functions.

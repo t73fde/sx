@@ -14,8 +14,8 @@
 package sxbuiltins
 
 import (
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxeval"
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxeval"
 )
 
 // Length returns the length of the given sequence.

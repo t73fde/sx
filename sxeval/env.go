@@ -20,7 +20,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // Environment is a runtime object of the current computing environment.

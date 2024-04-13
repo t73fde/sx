@@ -22,7 +22,7 @@ import (
 	"strings"
 	"unicode"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // Reader consumes characters from a stream and parses them into s-expressions.

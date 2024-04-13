@@ -18,12 +18,12 @@ import (
 	"io"
 	"testing"
 
-	"zettelstore.de/sx.fossil/sxreader"
+	"t73f.de/r/sx/sxreader"
 )
 
 // FuzzReaderRead tests reader.Reader.Read() with various data.
 //
-// Start with: `go test -fuzz=FuzzReaderRead zettelstore.de/sx.fossil/sxreader`.
+// Start with: `go test -fuzz=FuzzReaderRead t73f.de/r/sx/sxreader`.
 func FuzzReaderRead(f *testing.F) {
 	f.Fuzz(func(t *testing.T, src []byte) {
 		t.Parallel()

@@ -16,7 +16,7 @@ package sxeval
 import (
 	"fmt"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // ParseEnvironment is a parsing environment.

@@ -19,7 +19,7 @@ import (
 	"sort"
 	"strings"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 type attrType int

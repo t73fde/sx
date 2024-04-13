@@ -19,7 +19,7 @@ package sxeval
 import (
 	"strings"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // Callable is a value that can be called for evaluation.
