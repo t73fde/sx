@@ -24,7 +24,7 @@ func TestIsTrue(t *testing.T) {
 	if sx.IsTrue(sx.Nil()) {
 		t.Error("Nil is True")
 	}
-	if sx.IsTrue(sx.String("")) {
+	if sx.IsTrue(sx.String{}) {
 		t.Error("Empty string is True")
 	}
 	if sx.IsTrue(sx.MakeUndefined()) {
@@ -37,7 +37,7 @@ func TestIsFalse(t *testing.T) {
 	if !sx.IsFalse(sx.Nil()) {
 		t.Error("Nil is True")
 	}
-	if !sx.IsFalse(sx.String("")) {
+	if !sx.IsFalse(sx.String{}) {
 		t.Error("Empty string is True")
 	}
 	if !sx.IsFalse(sx.MakeUndefined()) {

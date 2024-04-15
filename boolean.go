@@ -31,7 +31,7 @@ func IsTrue(obj Object) bool {
 	if IsNil(obj) {
 		return false
 	}
-	if s, ok := GetString(obj); ok && string(s) == "" {
+	if s, ok := GetString(obj); ok && s.GetValue() == "" {
 		return false
 	}
 	return !IsUndefined(obj)
@@ -42,7 +42,7 @@ func IsFalse(obj Object) bool {
 	if IsNil(obj) {
 		return true
 	}
-	if s, ok := GetString(obj); ok && string(s) == "" {
+	if s, ok := GetString(obj); ok && s.GetValue() == "" {
 		return true
 	}
 	return IsUndefined(obj)

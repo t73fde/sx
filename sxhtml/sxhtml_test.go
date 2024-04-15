@@ -115,7 +115,7 @@ func checkTestcases(t *testing.T, testcases []testcase, newGen func() *sxhtml.Ge
 			}
 
 			sb.Reset()
-			_, err = gen.WriteListHTML(&sb, sx.MakeList(val, sx.String("/"), val))
+			_, err = gen.WriteListHTML(&sb, sx.MakeList(val, sx.MakeString("/"), val))
 			if err != nil {
 				t.Error(err)
 				return

@@ -34,7 +34,7 @@ func GetString(arg sx.Object, pos int) (sx.String, error) {
 	if s, isString := sx.GetString(arg); isString {
 		return s, nil
 	}
-	return "", fmt.Errorf("argument %d is not a string, but %T/%v", pos+1, arg, arg)
+	return sx.String{}, fmt.Errorf("argument %d is not a string, but %T/%v", pos+1, arg, arg)
 }
 
 // GetNumber returns the given argument as a number, and checks for errors.

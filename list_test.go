@@ -55,7 +55,7 @@ func TestGetList(t *testing.T) {
 	} else if res != nil {
 		t.Error("Nil() must be nil")
 	}
-	if _, isPair = sx.GetPair(sx.String("nil")); isPair {
+	if _, isPair = sx.GetPair(sx.MakeString("nil")); isPair {
 		t.Error("A string is not a list")
 	}
 }
@@ -262,16 +262,16 @@ func TestListBuilder(t *testing.T) {
 		t.Errorf("list is not empty, but: %v", lb.List())
 	}
 	lb.Add(sx.MakeSymbol("a"))
-	lb.Add(sx.String("b"))
-	if got, exp := lb.List(), sx.MakeList(sx.MakeSymbol("a"), sx.String("b")); !got.IsEqual(exp) {
+	lb.Add(sx.MakeString("b"))
+	if got, exp := lb.List(), sx.MakeList(sx.MakeSymbol("a"), sx.MakeString("b")); !got.IsEqual(exp) {
 		t.Errorf("expected %v, but got %v", exp, got)
 	}
 
 	lst := sx.MakeList(sx.MakeSymbol("a"))
 	lb.ExtendBang(lst)
 	lb.ExtendBang(nil)
-	lb.ExtendBang(sx.MakeList(sx.String("b"), sx.MakeSymbol("c")))
-	exp := sx.MakeList(sx.MakeSymbol("a"), sx.String("b"), sx.MakeSymbol("c"))
+	lb.ExtendBang(sx.MakeList(sx.MakeString("b"), sx.MakeSymbol("c")))
+	exp := sx.MakeList(sx.MakeSymbol("a"), sx.MakeString("b"), sx.MakeSymbol("c"))
 	if got := lb.List(); !got.IsEqual(exp) {
 		t.Errorf("expected %v, but got %v", exp, got)
 	}

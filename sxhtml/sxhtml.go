@@ -122,7 +122,7 @@ type myEncoder struct {
 func (enc *myEncoder) generate(obj sx.Object) {
 	switch o := obj.(type) {
 	case sx.String:
-		enc.pr.printHTML(string(o))
+		enc.pr.printHTML(o.GetValue())
 		enc.lastWasTag = false
 	case sx.Number:
 		enc.pr.printHTML(string(o.String()))
@@ -177,7 +177,7 @@ func (enc *myEncoder) writeCDATA(elems *sx.Pair) {
 func (enc *myEncoder) writeNoEscape(elems *sx.Pair) {
 	for n := elems; n != nil; n = n.Tail() {
 		if s, isString := sx.GetString(n.Car()); isString {
-			enc.pr.printString(string(s))
+			enc.pr.printString(s.GetValue())
 		}
 	}
 }
@@ -242,7 +242,7 @@ func (enc *myEncoder) writeTag(sym *sx.Symbol, elems *sx.Pair) {
 
 func ignoreEmptyStrings(elem *sx.Pair) *sx.Pair {
 	for node := elem; node != nil; node = node.Tail() {
-		if s, isString := sx.GetString(node.Car()); !isString || s != "" {
+		if s, isString := sx.GetString(node.Car()); !isString || s.GetValue() != "" {
 			return node
 		}
 	}
@@ -290,7 +290,7 @@ func (enc *myEncoder) writeAttributes(attrs *sx.Pair) {
 			var s string
 			switch o := obj.(type) {
 			case sx.String:
-				s = string(o)
+				s = o.GetValue()
 			case *sx.Symbol:
 				s = o.GetValue()
 			case sx.Number:

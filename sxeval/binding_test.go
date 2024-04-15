@@ -68,13 +68,13 @@ func bindLookup(t *testing.T, root, child *sxeval.Binding, sym1, sym2 *sx.Symbol
 func TestAlist(t *testing.T) {
 	t.Parallel()
 	bind := sxeval.MakeRootBinding(7)
-	_ = bind.Bind(sx.MakeSymbol("sym1"), sx.String("sym1"))
-	_ = bind.Bind(sx.MakeSymbol("sym2"), sx.String("sym2"))
-	_ = bind.Bind(sx.MakeSymbol("sym3"), sx.String("sym3"))
-	_ = bind.Bind(sx.MakeSymbol("sym4"), sx.String("sym4"))
-	_ = bind.Bind(sx.MakeSymbol("sym5"), sx.String("sym5"))
-	_ = bind.Bind(sx.MakeSymbol("sym6"), sx.String("sym6"))
-	_ = bind.Bind(sx.MakeSymbol("sym7"), sx.String("sym7"))
+	_ = bind.Bind(sx.MakeSymbol("sym1"), sx.MakeString("sym1"))
+	_ = bind.Bind(sx.MakeSymbol("sym2"), sx.MakeString("sym2"))
+	_ = bind.Bind(sx.MakeSymbol("sym3"), sx.MakeString("sym3"))
+	_ = bind.Bind(sx.MakeSymbol("sym4"), sx.MakeString("sym4"))
+	_ = bind.Bind(sx.MakeSymbol("sym5"), sx.MakeString("sym5"))
+	_ = bind.Bind(sx.MakeSymbol("sym6"), sx.MakeString("sym6"))
+	_ = bind.Bind(sx.MakeSymbol("sym7"), sx.MakeString("sym7"))
 	alist := bind.Bindings()
 	if alist.Length() != 7 {
 		t.Error("Not 7 elements:", alist)
@@ -86,7 +86,7 @@ func TestAlist(t *testing.T) {
 		cons := elem.Car().(*sx.Pair)
 		sym := cons.Car().(*sx.Symbol)
 		str := cons.Cdr().(sx.String)
-		if got := sx.MakeSymbol(string(str)); !sym.IsEqual(got) {
+		if got := sx.MakeSymbol(str.GetValue()); !sym.IsEqual(got) {
 			t.Error("Symbol", sym, "is not equal to", str, "but to", got)
 		}
 	}

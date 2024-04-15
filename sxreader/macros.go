@@ -118,7 +118,7 @@ func readString(rd *Reader, _ rune) (sx.Object, error) {
 				return nil, rd.annotateError(err, beginPos)
 			}
 		} else if ch == '"' {
-			return sx.String(sb.String()), nil
+			return sx.MakeString(sb.String()), nil
 		}
 
 		sb.WriteRune(ch)

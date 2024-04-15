@@ -21,7 +21,13 @@ import (
 )
 
 // String represents a string object.
-type String string
+type String struct{ val string }
+
+// MakeString creates a String from a string.
+func MakeString(s string) String { return String{s} }
+
+// GetValue returns the string value of a String.
+func (s String) GetValue() string { return s.val }
 
 // IsNil return true, if it is a nil string value.
 func (String) IsNil() bool { return false }
@@ -31,7 +37,7 @@ func (String) IsAtom() bool { return true }
 // IsEqual compares two objects for equivalence.
 func (s String) IsEqual(other Object) bool {
 	otherS, ok := other.(String)
-	return ok && string(s) == string(otherS)
+	return ok && s.GetValue() == otherS.GetValue()
 
 }
 
@@ -45,7 +51,7 @@ func (s String) String() string {
 }
 
 // GoString returns the go string representation.
-func (s String) GoString() string { return string(s) }
+func (s String) GoString() string { return s.val }
 
 var (
 	quote        = []byte{'"'}
@@ -68,10 +74,10 @@ func (s String) Print(w io.Writer) (int, error) {
 		return length, err
 	}
 	var esc []byte
-	for i := 0; i < len(s); {
-		ch, size := rune(s[i]), 1
+	for i := 0; i < len(s.val); {
+		ch, size := rune(s.val[i]), 1
 		if ch >= utf8.RuneSelf {
-			ch, size = utf8.DecodeRuneInString(string(s)[i:])
+			ch, size = utf8.DecodeRuneInString(s.val[i:])
 		}
 		switch ch {
 		case '"':
@@ -109,7 +115,7 @@ func (s String) Print(w io.Writer) (int, error) {
 				esc[7] = encHex[ch&0xF]
 			}
 		}
-		l, err2 := io.WriteString(w, string(s)[last:i])
+		l, err2 := io.WriteString(w, s.val[last:i])
 		length += l
 		if err2 != nil {
 			return length, err2
@@ -122,8 +128,8 @@ func (s String) Print(w io.Writer) (int, error) {
 		i += size
 		last = i
 	}
-	if last <= len(s) {
-		l, err2 := io.WriteString(w, string(s)[last:])
+	if last <= len(s.val) {
+		l, err2 := io.WriteString(w, s.val[last:])
 		length += l
 		if err2 != nil {
 			return length, err2
@@ -136,7 +142,7 @@ func (s String) Print(w io.Writer) (int, error) {
 // GetString returns the object as a string, if possible
 func GetString(obj Object) (String, bool) {
 	if IsNil(obj) {
-		return String(""), false
+		return String{}, false
 	}
 	s, ok := obj.(String)
 	return s, ok

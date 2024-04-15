@@ -34,13 +34,13 @@ func createTestBinding() *sxeval.Binding {
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
 		Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
-			return sx.String(""), nil
+			return sx.String{}, nil
 		},
 		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
-			return sx.String(arg.GoString()), nil
+			return sx.MakeString(arg.GoString()), nil
 		},
 		Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-			return sx.String(arg0.GoString() + arg1.GoString()), nil
+			return sx.MakeString(arg0.GoString() + arg1.GoString()), nil
 		},
 		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 			var sb strings.Builder
@@ -50,12 +50,12 @@ func createTestBinding() *sxeval.Binding {
 					return nil, err
 				}
 			}
-			return sx.String(sb.String()), nil
+			return sx.MakeString(sb.String()), nil
 		},
 	})
 
 	symHello := sx.MakeSymbol("hello")
-	_ = bind.Bind(symHello, sx.String("Hello, World"))
+	_ = bind.Bind(symHello, sx.MakeString("Hello, World"))
 	return bind
 }
 

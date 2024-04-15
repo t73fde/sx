@@ -76,7 +76,7 @@ var LambdaS = sxeval.Special{
 		car := args.Car()
 		var name string
 		if sName, isString := sx.GetString(car); isString {
-			name = string(sName)
+			name = sName.GetValue()
 			args = args.Tail()
 			if args == nil {
 				return nil, errNoParameterSpecAndBody
