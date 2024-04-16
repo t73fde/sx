@@ -16,6 +16,8 @@ package sxeval
 import (
 	"fmt"
 	"slices"
+	"strings"
+	"unsafe"
 
 	"t73f.de/r/sx"
 )
@@ -226,7 +228,7 @@ type bindingImpl interface {
 	length() int
 }
 
-type mapSymObj = map[string]sx.Object
+type mapSymObj = map[*sx.Symbol]sx.Object
 
 type mappedBinding struct {
 	m mapSymObj
@@ -239,29 +241,36 @@ func makeMappedBinding(sizeHint int) mappedBinding {
 	return mappedBinding{make(mapSymObj, sizeHint)}
 }
 func (mb mappedBinding) bind(sym *sx.Symbol, obj sx.Object) bool {
-	mb.m[sym.GetValue()] = obj
+	mb.m[sym] = obj
 	return true
 }
 func (mb mappedBinding) lookup(sym *sx.Symbol) (sx.Object, bool) {
-	obj, found := mb.m[sym.GetValue()]
+	obj, found := mb.m[sym]
 	return obj, found
 }
 func (mb mappedBinding) symbols() []*sx.Symbol {
-	names := make([]string, 0, len(mb.m))
-	for s := range mb.m {
-		names = append(names, s)
+	result := make([]*sx.Symbol, 0, len(mb.m))
+	for sym := range mb.m {
+		result = append(result, sym)
 	}
-	slices.Sort(names)
-	result := make([]*sx.Symbol, 0, len(names))
-	for _, s := range names {
-		result = append(result, sx.MakeSymbol(s))
-	}
+	slices.SortFunc(result, func(symA, symB *sx.Symbol) int {
+		facA, facB := symA.Factory(), symB.Factory()
+		if facA == facB {
+			return strings.Compare(symA.GetValue(), symB.GetValue())
+		}
+
+		// Make a stable descision, if symbols were created from different factories.
+		if uintptr(unsafe.Pointer(facA)) < uintptr(unsafe.Pointer(facB)) {
+			return -1
+		}
+		return 1
+	})
 	return result
 }
 func (mb mappedBinding) alist() *sx.Pair {
 	var result sx.ListBuilder
-	for s, obj := range mb.m {
-		result.Add(sx.Cons(sx.MakeSymbol(s), obj))
+	for sym, obj := range mb.m {
+		result.Add(sx.Cons(sym, obj))
 	}
 	return result.List()
 }
@@ -274,7 +283,7 @@ type singleBinding struct {
 
 func (sb *singleBinding) bind(sym *sx.Symbol, obj sx.Object) bool {
 	if bsym := sb.sym; bsym != nil {
-		if !bsym.IsEqual(sym) {
+		if bsym != sym {
 			return false
 		}
 	}
@@ -283,7 +292,7 @@ func (sb *singleBinding) bind(sym *sx.Symbol, obj sx.Object) bool {
 	return true
 }
 func (sb *singleBinding) lookup(sym *sx.Symbol) (sx.Object, bool) {
-	if bsym := sb.sym; bsym != nil && bsym.IsEqual(sym) {
+	if bsym := sb.sym; bsym != nil && bsym == sym {
 		return sb.obj, true
 	}
 	return nil, false
