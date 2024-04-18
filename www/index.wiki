@@ -40,8 +40,8 @@ reside in a different namespace.
 
 This repository contains several sub-projects / packages:
 
-  *  The package [/dir?ci=tip|Sx] itself contains all relevant data values , such as numbers,
-     symbols, strings, &hellip;
+  *  The package [/dir?ci=tip|Sx] itself contains all relevant data values,
+     such as numbers, symbols, strings, &hellip;
   *  [/dir?ci=tip&name=sxreader|SxReader] provides functions and data structures
      to read a s-expression representation and transforms it into the data
      values.
@@ -50,8 +50,6 @@ This repository contains several sub-projects / packages:
      a (possibly new) s-expression.
   *  [/dir?ci=tip&name=sxbuiltins|SxBuiltins] provide a collection of functions
      that can be used for a base evaluator.
-  *  [/dir?ci=tip&name=sxhtml|SxHTML] is a domain specific language to
-     represent HTML. It is used for HTML templating engines.
   *  Package [/dir?ci=tip&name=cmd|cmd] contains a simple command line tool to
      work interactively with s-expressions. It combines all previous packages
      and also serves as an example to use them.
@@ -71,7 +69,7 @@ it is in your search path for commands.
 How you can execute the following Go command to retrieve a given version of
 this library:
 
-<code>GOVCS=t73f.de:fossil go get -x t73f.de/r/sx.fossil@HASH</code>
+<code>GOVCS=t73f.de:fossil go get t73f.de/r/sx@HASH</code>
 
 where <code>HASH</code> is the hash value of the commit you want to use.
 
