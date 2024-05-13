@@ -22,8 +22,10 @@ import (
 	"t73f.de/r/sx"
 )
 
-// Callable is a value that can be called for evaluation.
+// Callable is an sx.Object which can be called for evaluation.
 type Callable interface {
+	sx.Object
+
 	// IsPure checks if the callable is independent of a full environment and
 	// does not produce any side effects.
 	IsPure(sx.Vector) bool
