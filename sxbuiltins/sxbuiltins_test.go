@@ -111,11 +111,12 @@ var specials = []*sxeval.Special{
 	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
 	&sxbuiltins.DefVarS,                     // defvar
 	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
-	&sxbuiltins.DefDynS, &sxbuiltins.DefMacroS, // defdyn, defmacro
-	&sxbuiltins.LetS,   // let
-	&sxbuiltins.SetXS,  // set!
-	&sxbuiltins.IfS,    // if
-	&sxbuiltins.BeginS, // begin
+	&sxbuiltins.DefDynS, &sxbuiltins.DynLambdaS, // defdyn, dyn-lambda
+	&sxbuiltins.DefMacroS, //  defmacro
+	&sxbuiltins.LetS,      // let
+	&sxbuiltins.SetXS,     // set!
+	&sxbuiltins.IfS,       // if
+	&sxbuiltins.BeginS,    // begin
 }
 var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Equal,                    // =

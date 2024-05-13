@@ -64,8 +64,6 @@ func parseDefProc(pf *sxeval.ParseEnvironment, args *sx.Pair) (*sx.Symbol, *Lamb
 	return sym, le, err
 }
 
-const lambdaName = "lambda"
-
 // LambdaS parses a procedure specification.
 var LambdaS = sxeval.Special{
 	Name: lambdaName,
@@ -192,9 +190,14 @@ type LambdaExpr struct {
 }
 
 const (
-	macroType     = -1
+	macroType = -1
+	macroName = "macro"
+
 	lexLambdaType = 0
+	lambdaName    = "lambda"
+
 	dynLambdaType = 1
+	dynLambdaName = "dyn-lambda"
 )
 
 func (le *LambdaExpr) Unparse() sx.Object {
@@ -203,7 +206,13 @@ func (le *LambdaExpr) Unparse() sx.Object {
 	for i := len(le.Params) - 1; i >= 0; i-- {
 		params = sx.Cons(le.Params[i], params)
 	}
-	return sx.MakeList(sx.MakeSymbol(lambdaName), params, expr)
+	name := lambdaName
+	if le.Type < 0 {
+		name = macroName
+	} else if le.Type > 0 {
+		name = dynLambdaName
+	}
+	return sx.MakeList(sx.MakeSymbol(name), params, expr)
 }
 
 func (le *LambdaExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
@@ -456,6 +465,20 @@ var DefDynS = sxeval.Special{
 		}
 		le.Type = dynLambdaType
 		return &DefineExpr{Sym: sym, Val: le}, nil
+	},
+}
+
+// DynLambdaS parses a dynamically scoped procedure specification.
+var DynLambdaS = sxeval.Special{
+	Name: dynLambdaName,
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+		expr, err := LambdaS.Fn(pf, args)
+		if err == nil {
+			le := expr.(*LambdaExpr)
+			le.Type = dynLambdaType
+			return le, nil
+		}
+		return expr, err
 	},
 }
 
