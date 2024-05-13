@@ -134,6 +134,7 @@ func TestReadComment(t *testing.T) {
 		{name: "comment text after int", src: "3 ; three", exp: "3"},
 		{name: "new line in commented list", src: "(3 ;; three\n  4)", exp: "(3 4)"},
 		{name: "", src: "(\n3\n;;; line\n4\n)", exp: "(3 4)"},
+		{name: "comment in list", src: "(;\n3;\n);", exp: "(3)"},
 	})
 }
 

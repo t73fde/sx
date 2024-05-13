@@ -14,6 +14,7 @@
 package sxreader
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -195,7 +196,7 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 			return nil, ErrListTooLong
 		}
 		curLength++
-		ch, err := rd.skipSpace()
+		ch, err := rd.readListCh()
 		if err != nil {
 			if err == io.EOF {
 				return nil, ErrEOF
@@ -247,6 +248,24 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 
 	}
 	return sx.MakeList(objs...), nil
+}
+func (rd *Reader) readListCh() (rune, error) {
+	for {
+		ch, err := rd.nextRune()
+		if err != nil {
+			return 0, err
+		}
+		if isSpace(ch) {
+			continue
+		}
+		if ch != chComment {
+			return ch, nil
+		}
+		_, err = readComment(rd, ch)
+		if err != nil && !errors.Is(err, ErrSkip) {
+			return 0, err
+		}
+	}
 }
 
 func readQuote(rd *Reader, _ rune) (sx.Object, error) {

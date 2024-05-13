@@ -79,6 +79,9 @@ const DefaultNestingLimit = 1000
 // DefaultListLimit specifies the default valur for `WithListLimit`.
 const DefaultListLimit = 10000
 
+// chComment ist the beginning of a comment. It needs special treatment.
+const chComment = ';'
+
 // MakeReader creates a new reader.
 func MakeReader(r io.Reader) *Reader {
 	return &Reader{
@@ -90,15 +93,15 @@ func MakeReader(r io.Reader) *Reader {
 		col:     0,
 		prevCol: 0,
 		macros: macroMap{
-			'"':  readString,
-			'#':  readHash,
-			'\'': readQuote,
-			'(':  readList(')'),
-			')':  unmatchedDelimiter,
-			',':  readUnquote,
-			'.':  readDot,
-			';':  readComment,
-			'`':  readQuasiquote,
+			'"':       readString,
+			'#':       readHash,
+			'\'':      readQuote,
+			'(':       readList(')'),
+			')':       unmatchedDelimiter,
+			',':       readUnquote,
+			'.':       readDot,
+			chComment: readComment,
+			'`':       readQuasiquote,
 		},
 		maxDepth:  DefaultNestingLimit,
 		maxLength: DefaultListLimit,
