@@ -30,6 +30,7 @@ type Environment struct {
 	observer *observer
 }
 
+// tcodata contains everything to implement Tail Call Optimization (tco)
 type tcodata struct {
 	env  *Environment
 	expr Expr
@@ -346,7 +347,11 @@ type NotBoundError struct {
 
 func (e NotBoundError) Error() string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "symbol %q not bound in ", e.Sym.String())
+	if e.Sym == nil {
+		sb.WriteString("symbol == nil, not bound in ")
+	} else {
+		fmt.Fprintf(&sb, "symbol %q not bound in ", e.Sym.String())
+	}
 	second := false
 	for binding := e.Binding; binding != nil; binding = binding.Parent() {
 		if second {
