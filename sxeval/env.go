@@ -212,6 +212,19 @@ func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 	return nil, errExecuteAgain
 }
 
+// MacroCall executes the Callable in a macro environment.
+func (env *Environment) MacroCall(name string, fn Callable, args sx.Vector) (res sx.Object, err error) {
+	macroEnv := Environment{
+		binding: env.binding.MakeChildBinding(name, 0),
+		tco: &tcodata{
+			env:  nil,
+			expr: nil,
+		},
+		observer: env.observer,
+	}
+	return macroEnv.Call(fn, args)
+}
+
 // Call the given Callable with the arguments.
 func (env *Environment) Call(fn Callable, args sx.Vector) (res sx.Object, err error) {
 	switch len(args) {

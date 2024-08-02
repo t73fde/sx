@@ -77,7 +77,7 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, er
 		Rest:    m.Rest,
 		Expr:    m.Expr,
 	}
-	return m.Env.Call(&proc, macroArgs)
+	return m.Env.MacroCall(proc.Name, &proc, macroArgs)
 }
 
 // MacroExpand0 implements one level of macro expansion.
