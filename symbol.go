@@ -34,38 +34,41 @@ func MakeSymbol(val string) *Symbol {
 func (sym *Symbol) GetValue() string { return sym.val }
 
 // IsNil may return true if a symbol pointer is nil.
-func (sy *Symbol) IsNil() bool { return sy == nil }
+func (sym *Symbol) IsNil() bool { return sym == nil }
 
 func (*Symbol) IsAtom() bool { return true }
 
-// IsEqual compare two symbols.
-func (sy *Symbol) IsEqual(other Object) bool {
-	if sy == nil {
+// IsEqual compare the symbol with an object.
+func (sym *Symbol) IsEqual(other Object) bool {
+	if sym == nil {
 		return IsNil(other)
 	}
 	if IsNil(other) {
 		return false
 	}
 	otherSy, isSymbol := other.(*Symbol)
-	return isSymbol && sy == otherSy
+	return isSymbol && sym.IsEqualSymbol(otherSy)
 }
 
+// IsEqualSymbol compare two symbols.
+func (sym *Symbol) IsEqualSymbol(other *Symbol) bool { return sym == other }
+
 // String returns the string representation.
-func (sy *Symbol) String() string {
+func (sym *Symbol) String() string {
 	var sb strings.Builder
-	if _, err := sy.Print(&sb); err != nil {
+	if _, err := sym.Print(&sb); err != nil {
 		return err.Error()
 	}
 	return sb.String()
 }
 
 // GoString returns the go string representation.
-func (sy *Symbol) GoString() string { return sy.val }
+func (sym *Symbol) GoString() string { return sym.val }
 
 // Print write the string representation to the given Writer.
-func (sy *Symbol) Print(w io.Writer) (int, error) {
+func (sym *Symbol) Print(w io.Writer) (int, error) {
 	// TODO: provide escape of symbol contains non-printable chars.
-	return io.WriteString(w, sy.val)
+	return io.WriteString(w, sym.val)
 }
 
 // GetSymbol returns the object as a symbol if possible.
@@ -78,7 +81,7 @@ func GetSymbol(obj Object) (*Symbol, bool) {
 }
 
 // Factory returns the SymbolFactory that created the symbol.
-func (sy *Symbol) Factory() *SymbolFactory { return sy.fac }
+func (sym *Symbol) Factory() *SymbolFactory { return sym.fac }
 
 // SymbolFactory creates an interned symbol.
 type SymbolFactory struct {

@@ -37,9 +37,12 @@ func (String) IsAtom() bool { return true }
 // IsEqual compares two objects for equivalence.
 func (s String) IsEqual(other Object) bool {
 	otherS, ok := other.(String)
-	return ok && s.GetValue() == otherS.GetValue()
+	return ok && s.IsEqualString(otherS)
 
 }
+
+// IsEqualString compares two strings.
+func (s String) IsEqualString(other String) bool { return s.val == other.val }
 
 // String returns the string representation.
 func (s String) String() string {
