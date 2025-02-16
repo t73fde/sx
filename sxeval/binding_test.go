@@ -81,9 +81,9 @@ func TestAlist(t *testing.T) {
 		return
 	}
 	cnt := 0
-	for elem := alist; elem != nil; elem = elem.Tail() {
+	for val := range alist.Values() {
 		cnt++
-		cons := elem.Car().(*sx.Pair)
+		cons := val.(*sx.Pair)
 		sym := cons.Car().(*sx.Symbol)
 		str := cons.Cdr().(sx.String)
 		if got := sx.MakeSymbol(str.GetValue()); !sym.IsEqual(got) {

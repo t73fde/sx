@@ -16,6 +16,8 @@ package sx
 import (
 	"fmt"
 	"io"
+	"iter"
+	"slices"
 	"strings"
 )
 
@@ -26,29 +28,28 @@ type Pair struct {
 	cdr Object
 }
 
-// Nil() returns the nil list.
+// Nil returns the nil list.
 func Nil() *Pair { return (*Pair)(nil) }
 
 // Cons prepends a value in front of a given listreturning the new list.
 func (pair *Pair) Cons(car Object) *Pair { return &Pair{car: car, cdr: pair} }
 
+// Cons creates a pair, often called a "cons cell".
 func Cons(car, cdr Object) *Pair { return &Pair{car: car, cdr: cdr} }
 
 // MakeList creates a new list with the given objects.
 func MakeList(objs ...Object) *Pair {
-	if len(objs) == 0 {
-		return Nil()
+	var lb ListBuilder
+	for _, obj := range objs {
+		lb.Add(obj)
 	}
-	result := Nil()
-	for i := len(objs) - 1; i >= 0; i-- {
-		result = result.Cons(objs[i])
-	}
-	return result
+	return lb.List()
 }
 
 // IsNil return true, if it is a nil pair object.
 func (pair *Pair) IsNil() bool { return pair == nil }
 
+// IsAtom returns true, if the list is an atom.
 func (pair *Pair) IsAtom() bool { return pair == nil }
 
 // IsEqual compare two objects.
@@ -101,24 +102,24 @@ func (pair *Pair) Print(w io.Writer) (int, error) {
 	if pair == nil {
 		return io.WriteString(w, "()")
 	}
-	len, err := io.WriteString(w, "(")
+	l, err := io.WriteString(w, "(")
 	if err != nil {
-		return len, err
+		return l, err
 	}
 	var len2 int
 
 	for node := pair; ; {
 		if node != pair {
 			len2, err = io.WriteString(w, " ")
-			len += len2
+			l += len2
 			if err != nil {
-				return len, err
+				return l, err
 			}
 		}
 		len2, err = Print(w, node.car)
-		len += len2
+		l += len2
 		if err != nil {
-			return len, err
+			return l, err
 		}
 
 		cdr := node.cdr
@@ -131,36 +132,43 @@ func (pair *Pair) Print(w io.Writer) (int, error) {
 		}
 
 		len2, err = io.WriteString(w, " . ")
-		len += len2
+		l += len2
 		if err != nil {
-			return len, err
+			return l, err
 		}
 		len2, err = Print(w, cdr)
-		len += len2
+		l += len2
 		if err != nil {
-			return len, err
+			return l, err
 		}
 		break
 	}
 
 	len2, err = io.WriteString(w, ")")
-	len += len2
-	return len, err
+	l += len2
+	return l, err
 }
 
 // --- Sequence methods
 
+// Length returns the length of the pair list.
+//
+// The list must not be circular.
 func (pair *Pair) Length() int {
 	result := 0
-	for n := pair; n != nil; n = n.Tail() {
+	for range pair.Pairs() {
 		result++
 	}
 	return result
 }
 
+// LengthLess returns true if the length of the pair list is less than the
+// given number.
+//
+// pair.LengthLess(n) is typically much faster than pair.Length() < n.
 func (pair *Pair) LengthLess(n int) bool {
 	count := 0
-	for node := pair; node != nil; node = node.Tail() {
+	for range pair.Pairs() {
 		count++
 		if count >= n {
 			return false
@@ -169,9 +177,13 @@ func (pair *Pair) LengthLess(n int) bool {
 	return count < n
 }
 
+// LengthGreater returns true if the length of the pair list is greater than
+// the given number.
+//
+// pair.LengthGreater(n) is typically much faster than pair.Length() > n.
 func (pair *Pair) LengthGreater(n int) bool {
 	count := 0
-	for node := pair; node != nil; node = node.Tail() {
+	for range pair.Pairs() {
 		count++
 		if count > n {
 			return true
@@ -180,9 +192,13 @@ func (pair *Pair) LengthGreater(n int) bool {
 	return count > n
 }
 
+// LengthEqual returns true if the length of the pair list is equal to the
+// given number.
+//
+// pair.LengthEqual(n) is typically much faster than pair.Length() == n.
 func (pair *Pair) LengthEqual(n int) bool {
 	count := 0
-	for node := pair; node != nil; node = node.Tail() {
+	for range pair.Pairs() {
 		count++
 		if count > n {
 			return false
@@ -191,22 +207,27 @@ func (pair *Pair) LengthEqual(n int) bool {
 	return count == n
 }
 
+// Nth returns the n'th object of the pair list. It is an error, if n < 0
+// or if the list length is less than n.
 func (pair *Pair) Nth(n int) (Object, error) {
 	if n < 0 {
 		return Nil(), fmt.Errorf("negative index %d", n)
 	}
 	cnt := 0
-	for node := pair; node != nil; node = node.Tail() {
+	for val := range pair.Values() {
 		if cnt == n {
-			return node.Car(), nil
+			return val, nil
 		}
 		cnt++
 	}
 	return Nil(), fmt.Errorf("index too large: %d for %v", n, pair)
 }
 
+// MakeList builds a list. Basically, the same pair is returned.
+// This method is needed to make Sequence interface happy.
 func (pair *Pair) MakeList() *Pair { return pair }
 
+// Iterator returns a sequence iterator to implement sequence methods.
 func (pair *Pair) Iterator() SequenceIterator {
 	return &pairIterator{pair}
 }
@@ -352,20 +373,11 @@ func (pair *Pair) Tail() *Pair {
 	return nil
 }
 
-// UnsafeLength returns the length of the pair list.
-// func (pair *Pair) UnsafeLength() int {
-// 	result := 0
-// 	for n := pair; n != nil; n = n.Tail() {
-// 		result++
-// 	}
-// 	return result
-// }
-
 // Assoc returns the first pair of a list where the car IsEqual to the given
 // object.
 func (pair *Pair) Assoc(obj Object) *Pair {
-	for node := pair; node != nil; node = node.Tail() {
-		if p, ok := node.car.(*Pair); ok {
+	for val := range pair.Values() {
+		if p, ok := val.(*Pair); ok {
 			if p.car.IsEqual(obj) {
 				return p
 			}
@@ -458,9 +470,9 @@ func (pair *Pair) Copy() *Pair {
 	for {
 		curr := prev.cdr
 		if next, isPair := GetPair(curr); isPair && next != nil {
-			copy := Cons(next.car, next.cdr)
-			prev.SetCdr(copy)
-			prev = copy
+			cpy := Cons(next.car, next.cdr)
+			prev.SetCdr(cpy)
+			prev = cpy
 			continue
 		}
 		prev.SetCdr(curr)
@@ -470,17 +482,7 @@ func (pair *Pair) Copy() *Pair {
 
 // AsVector returns a proper list as a vector
 func (pair *Pair) AsVector() Vector {
-	if pair == nil {
-		return nil
-	}
-	if IsNil(pair.cdr) {
-		return Vector{pair.car}
-	}
-	v := make(Vector, 0, 2)
-	for node := pair; node != nil; node = node.Tail() {
-		v = append(v, node.car)
-	}
-	return v
+	return slices.Collect(pair.Values())
 }
 
 // ErrImproper is signalled if an improper list is found where it is not
@@ -489,6 +491,30 @@ type ErrImproper struct{ Pair *Pair }
 
 // Error returns a textual representation for this error.
 func (err ErrImproper) Error() string { return fmt.Sprintf("improper list: %v", err.Pair) }
+
+// --- Go iterators
+
+// Pairs returns an iterator of all pair nodes.
+func (pair *Pair) Pairs() iter.Seq[*Pair] {
+	return func(yield func(*Pair) bool) {
+		for node := pair; node != nil; node = node.Tail() {
+			if !yield(node) {
+				return
+			}
+		}
+	}
+}
+
+// Values returns an iterator of all objects in the pair list.
+func (pair *Pair) Values() iter.Seq[Object] {
+	return func(yield func(Object) bool) {
+		for node := pair; node != nil; node = node.Tail() {
+			if !yield(node.car) {
+				return
+			}
+		}
+	}
+}
 
 // ListBuilder is a helper to build a list sequentially from start to end.
 type ListBuilder struct {

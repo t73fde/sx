@@ -60,8 +60,13 @@ func (b *Binding) MakeChildBinding(name string, sizeHint int) *Binding {
 	return makeBinding(name, b, sizeHint)
 }
 
-func (b *Binding) IsNil() bool  { return b == nil }
+// IsNil returns true if the binding is the nil binding.
+func (b *Binding) IsNil() bool { return b == nil }
+
+// IsAtom returns true if the binding is an atom.
 func (b *Binding) IsAtom() bool { return b == nil }
+
+// IsEqual returns true if both objects have the same value.
 func (b *Binding) IsEqual(other sx.Object) bool {
 	if b == other {
 		return true
@@ -75,8 +80,8 @@ func (b *Binding) IsEqual(other sx.Object) bool {
 			return false
 		}
 		alist, oalist := b.impl.alist(), ob.impl.alist()
-		for node := alist; node != nil; node = node.Tail() {
-			pair := node.Car().(*sx.Pair)
+		for val := range alist.Values() {
+			pair := val.(*sx.Pair)
 			opair := oalist.Assoc(pair.Car())
 			if opair == nil || !pair.Cdr().IsEqual(opair.Cdr()) {
 				return false
@@ -86,10 +91,12 @@ func (b *Binding) IsEqual(other sx.Object) bool {
 	}
 	return false
 }
+
 func (b *Binding) String() string {
 	return fmt.Sprintf("#<binding:%s/%d>", b.name, b.impl.length())
 }
 
+// GoString returns the binding as a string suitable to be used in Go code.
 func (b *Binding) GoString() string { return b.String() }
 
 // Name returns the local name of this binding.
@@ -113,8 +120,8 @@ func (b *Binding) Bind(sym *sx.Symbol, obj sx.Object) error {
 	if !b.impl.bind(sym, obj) {
 		lst := b.impl.alist()
 		mb := makeMappedBinding(lst.Length() + 1)
-		for node := lst; node != nil; node = node.Tail() {
-			pair := node.Car().(*sx.Pair)
+		for val := range lst.Values() {
+			pair := val.(*sx.Pair)
 			mb.bind(pair.Car().(*sx.Symbol), pair.Cdr())
 		}
 		mb.bind(sym, obj)
@@ -123,6 +130,7 @@ func (b *Binding) Bind(sym *sx.Symbol, obj sx.Object) error {
 	return nil
 }
 
+// BindSpecial will bind a Special to its name.
 func (b *Binding) BindSpecial(syn *Special) error {
 	return b.Bind(sx.MakeSymbol(syn.Name), syn)
 }
