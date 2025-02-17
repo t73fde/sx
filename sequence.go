@@ -13,6 +13,8 @@
 
 package sx
 
+import "iter"
+
 // Sequence is an Object that has a finite, ordered set of elements.
 type Sequence interface {
 	Object
@@ -39,9 +41,9 @@ type Sequence interface {
 	// pair list, it is returned without copying it.
 	MakeList() *Pair
 
-	// Iterator return an SequenceIterator to iterate over all elements of
-	// the sequence in natural order.
-	Iterator() SequenceIterator
+	// Values() returns an iterator over all elements of the sequence in
+	// natural order.
+	Values() iter.Seq[Object]
 }
 
 // --- Sequence functions
@@ -53,16 +55,4 @@ func GetSequence(obj Object) (Sequence, bool) {
 	}
 	v, ok := obj.(Sequence)
 	return v, ok
-}
-
-// SequenceIterator allows to iterate over all elements of a Sequence.
-type SequenceIterator interface {
-	// HasElement returns true if the iterator is able to return an element.
-	HasElement() bool
-
-	// Element returns the current element, or Undefined{} if there is no such element.
-	Element() Object
-
-	// Advance moves to the next element and return true if there is one.
-	Advance() bool
 }

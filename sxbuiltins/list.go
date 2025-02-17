@@ -386,6 +386,6 @@ var List2Vector = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		return lst.AsVector(), nil
+		return sx.Collect(lst.Values()), nil
 	},
 }

@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"slices"
 	"strings"
 )
 
@@ -227,27 +226,15 @@ func (pair *Pair) Nth(n int) (Object, error) {
 // This method is needed to make Sequence interface happy.
 func (pair *Pair) MakeList() *Pair { return pair }
 
-// Iterator returns a sequence iterator to implement sequence methods.
-func (pair *Pair) Iterator() SequenceIterator {
-	return &pairIterator{pair}
-}
-
-// --- pairIterator implements SequenceIterator
-type pairIterator struct {
-	curr *Pair
-}
-
-func (pi *pairIterator) HasElement() bool { return pi.curr != nil }
-func (pi *pairIterator) Element() Object {
-	if node := pi.curr; node != nil {
-		return node.Car()
+// Values returns an iterator of all objects in the pair list.
+func (pair *Pair) Values() iter.Seq[Object] {
+	return func(yield func(Object) bool) {
+		for node := pair; node != nil; node = node.Tail() {
+			if !yield(node.car) {
+				return
+			}
+		}
 	}
-	return MakeUndefined()
-}
-func (pi *pairIterator) Advance() bool {
-	tail := pi.curr.Tail()
-	pi.curr = tail
-	return tail != nil
 }
 
 // --- Pair / list methods
@@ -480,11 +467,6 @@ func (pair *Pair) Copy() *Pair {
 	}
 }
 
-// AsVector returns a proper list as a vector
-func (pair *Pair) AsVector() Vector {
-	return slices.Collect(pair.Values())
-}
-
 // ErrImproper is signalled if an improper list is found where it is not
 // appropriate.
 type ErrImproper struct{ Pair *Pair }
@@ -499,17 +481,6 @@ func (pair *Pair) Pairs() iter.Seq[*Pair] {
 	return func(yield func(*Pair) bool) {
 		for node := pair; node != nil; node = node.Tail() {
 			if !yield(node) {
-				return
-			}
-		}
-	}
-}
-
-// Values returns an iterator of all objects in the pair list.
-func (pair *Pair) Values() iter.Seq[Object] {
-	return func(yield func(Object) bool) {
-		for node := pair; node != nil; node = node.Tail() {
-			if !yield(node.car) {
 				return
 			}
 		}
