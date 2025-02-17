@@ -51,6 +51,8 @@ func (e Error) Error() string {
 	return fmt.Sprintf("ReaderError %d-%d: %v", e.End.Line, e.End.Col, e.Cause)
 }
 
+// Format help fmt.Printf (and similar) functions to build a better string
+// representation of the error.
 func (e Error) Format(s fmt.State, _ rune) {
 	if s.Flag('#') {
 		_, _ = fmt.Fprintf(s, "File \"%s\" line %d, column %d to line %d, column %d\n",

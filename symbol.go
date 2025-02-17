@@ -36,6 +36,7 @@ func (sym *Symbol) GetValue() string { return sym.val }
 // IsNil may return true if a symbol pointer is nil.
 func (sym *Symbol) IsNil() bool { return sym == nil }
 
+// IsAtom always returns true because a symbol is an atomic value.
 func (*Symbol) IsAtom() bool { return true }
 
 // IsEqual compare the symbol with an object.

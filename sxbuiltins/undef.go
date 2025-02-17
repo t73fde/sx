@@ -18,7 +18,8 @@ import (
 	"t73f.de/r/sx/sxeval"
 )
 
-var Defined = sxeval.Builtin{
+// DefinedP is a builtin to check if the given object is not undefined.
+var DefinedP = sxeval.Builtin{
 	Name:     "defined?",
 	MinArity: 1,
 	MaxArity: 1,

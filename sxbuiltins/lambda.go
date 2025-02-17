@@ -116,7 +116,7 @@ func ParseProcedure(pf *sxeval.ParseEnvironment, name string, paramSpec, bodySpe
 	if rest != nil {
 		bindSize++
 	}
-	fnFrame := pf.MakeChildFrame(name+"-def", bindSize)
+	fnFrame := pf.MakeChildEnvironment(name+"-def", bindSize)
 	for _, p := range params {
 		err := fnFrame.Bind(p, sx.MakeUndefined())
 		if err != nil {
@@ -168,6 +168,8 @@ func parseProcHead(plist *sx.Pair) (params []*sx.Symbol, _ *sx.Symbol, _ error) 
 	}
 }
 
+// GetParameterSymbol parses a symbol to be used in the parameter list.
+// It is an error if the symbol occurs more than one.
 func GetParameterSymbol(params []*sx.Symbol, obj sx.Object) (*sx.Symbol, error) {
 	sym, isSymbol := sx.GetSymbol(obj)
 	if !isSymbol {
@@ -181,6 +183,8 @@ func GetParameterSymbol(params []*sx.Symbol, obj sx.Object) (*sx.Symbol, error) 
 	return sym, nil
 }
 
+// LambdaExpr stores all data for a lambda expression. It may be a macro,
+// a lexical or a dynamic lambda.
 type LambdaExpr struct {
 	Name   string
 	Params []*sx.Symbol
@@ -200,6 +204,7 @@ const (
 	dynLambdaName = "dyn-lambda"
 )
 
+// Unparse the expression as an sx.Object
 func (le *LambdaExpr) Unparse() sx.Object {
 	expr := le.Expr.Unparse()
 	var params sx.Object = le.Rest
@@ -215,7 +220,8 @@ func (le *LambdaExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(name), params, expr)
 }
 
-func (le *LambdaExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+// Improve the expression into a possible simpler one.
+func (le *LambdaExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
 	bindSize := len(le.Params)
 	if le.Rest != nil {
 		bindSize++
@@ -232,6 +238,7 @@ func (le *LambdaExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	return le
 }
 
+// Compute the expression in a frame and return the result.
 func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	leType := le.Type
 	if leType == 0 {
@@ -261,6 +268,7 @@ func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	}, nil
 }
 
+// Print the expression on the given writer.
 func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 	var typeString string
 	if leType := le.Type; leType < 0 {
@@ -322,11 +330,20 @@ type LexLambda struct {
 	Expr    sxeval.Expr
 }
 
-func (ll *LexLambda) IsNil() bool                  { return ll == nil }
-func (ll *LexLambda) IsAtom() bool                 { return ll == nil }
+// IsNil returns true if the object must be treated like a sx.Nil() object.
+func (ll *LexLambda) IsNil() bool { return ll == nil }
+
+// IsAtom returns true if the object is atomic.
+func (ll *LexLambda) IsAtom() bool { return ll == nil }
+
+// IsEqual returns true if the other object has the same content.
 func (ll *LexLambda) IsEqual(other sx.Object) bool { return ll == other }
-func (ll *LexLambda) String() string               { return "#<lambda:" + ll.Name + ">" }
-func (ll *LexLambda) GoString() string             { return ll.String() }
+
+// String returns a string representation.
+func (ll *LexLambda) String() string { return "#<lambda:" + ll.Name + ">" }
+
+// GoString returns a string representation to be used in Go code.
+func (ll *LexLambda) GoString() string { return ll.String() }
 
 // --- Builtin methods to implement sxeval.Callable
 
@@ -490,11 +507,20 @@ type DynLambda struct {
 	Expr   sxeval.Expr
 }
 
-func (dl *DynLambda) IsNil() bool                  { return dl == nil }
-func (dl *DynLambda) IsAtom() bool                 { return dl == nil }
+// IsNil returns true if the object must be treated like a sx.Nil() object.
+func (dl *DynLambda) IsNil() bool { return dl == nil }
+
+// IsAtom returns true if the object is atomic.
+func (dl *DynLambda) IsAtom() bool { return dl == nil }
+
+// IsEqual returns true if the other object has the same content.
 func (dl *DynLambda) IsEqual(other sx.Object) bool { return dl == other }
-func (dl *DynLambda) String() string               { return "#<dyn-lambda:" + dl.Name + ">" }
-func (dl *DynLambda) GoString() string             { return dl.String() }
+
+// String returns a string representation.
+func (dl *DynLambda) String() string { return "#<dyn-lambda:" + dl.Name + ">" }
+
+// GoString returns a string representation to be used in Go code.
+func (dl *DynLambda) GoString() string { return dl.String() }
 
 // --- Builtin methods to implement sxeval.Callable
 

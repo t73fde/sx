@@ -136,6 +136,7 @@ func makeCxr(spec string) sxeval.Builtin {
 	}
 }
 
+// Car/Cdr call, two to four levels deep.
 var (
 	Caar = makeCxr("aa")
 	Cadr = makeCxr("ad")
@@ -262,9 +263,9 @@ var Append = sxeval.Builtin{
 					prev.SetCdr(lst1)
 					return result, nil
 				}
-				copy := sx.Cons(next.Car(), next.Cdr())
-				prev.SetCdr(copy)
-				prev = copy
+				cpy := sx.Cons(next.Car(), next.Cdr())
+				prev.SetCdr(cpy)
+				prev = cpy
 				continue
 			}
 			return nil, sx.ErrImproper{Pair: lst0}
@@ -343,7 +344,7 @@ var All = sxeval.Builtin{
 	},
 }
 
-// All returns a true value, if any element of the list evaluate to true.
+// Any returns a true value, if any element of the list evaluates to true.
 // Otherwise it returns a false value.
 var Any = sxeval.Builtin{
 	Name:     "any",

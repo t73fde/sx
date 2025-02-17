@@ -38,11 +38,13 @@ func ParseInteger(s string) (Number, error) {
 // Int64 is a number that store 64 bit integer values.
 type Int64 int64
 
+// IsZero returns true if the value is zero.
 func (i Int64) IsZero() bool { return i == 0 }
 
 // IsNil return true, if it is a nil integer value.
 func (i Int64) IsNil() bool { return false }
 
+// IsAtom always returns true because a symbol is an atomic value.
 func (Int64) IsAtom() bool { return true }
 
 // IsEqual compare two objects.

@@ -42,11 +42,20 @@ type Special struct {
 	Fn   func(*ParseEnvironment, *sx.Pair) (Expr, error)
 }
 
-func (sp *Special) IsNil() bool                  { return sp == nil }
-func (sp *Special) IsAtom() bool                 { return sp == nil }
+// IsNil returns true if the object must be treated like a sx.Nil() object.
+func (sp *Special) IsNil() bool { return sp == nil }
+
+// IsAtom returns true if the object is atomic.
+func (sp *Special) IsAtom() bool { return sp == nil }
+
+// IsEqual returns true if the other object has the same content.
 func (sp *Special) IsEqual(other sx.Object) bool { return sp == other }
-func (sp *Special) String() string               { return "#<special:" + sp.Name + ">" }
-func (sp *Special) GoString() string             { return sp.String() }
+
+// String returns a string representation.
+func (sp *Special) String() string { return "#<special:" + sp.Name + ">" }
+
+// GoString returns a string representation to be used in Go code.
+func (sp *Special) GoString() string { return sp.String() }
 
 // Parse the args by calling the syntax function.
 func (sp *Special) Parse(pf *ParseEnvironment, args *sx.Pair) (Expr, error) {

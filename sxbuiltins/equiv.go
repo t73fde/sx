@@ -20,6 +20,7 @@ import (
 	"t73f.de/r/sx/sxeval"
 )
 
+// Identical returns true, if all arguments are identical objects.
 var Identical = sxeval.Builtin{
 	Name:     "==",
 	MinArity: 2,
@@ -38,6 +39,7 @@ var Identical = sxeval.Builtin{
 	},
 }
 
+// Equal returns true if all arguments have the same value.
 var Equal = sxeval.Builtin{
 	Name:     "=",
 	MinArity: 2,

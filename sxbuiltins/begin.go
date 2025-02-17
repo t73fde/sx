@@ -66,6 +66,7 @@ type BeginExpr struct {
 	Last  sxeval.Expr
 }
 
+// Unparse the expression as an sx.Object
 func (be *BeginExpr) Unparse() sx.Object {
 	obj := be.Last.Unparse()
 	for i := len(be.Front) - 1; i >= 0; i-- {
@@ -74,7 +75,8 @@ func (be *BeginExpr) Unparse() sx.Object {
 	return sx.Cons(sx.MakeSymbol(beginName), obj)
 }
 
-func (be *BeginExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+// Improve the expression into a possible simpler one.
+func (be *BeginExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
 	last := re.Rework(be.Last)
 	frontLen := len(be.Front)
 	if frontLen == 0 {
@@ -106,6 +108,7 @@ func (be *BeginExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	return be
 }
 
+// Compute the expression in a frame and return the result.
 func (be *BeginExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	for _, e := range be.Front {
 		if _, err := env.Execute(e); err != nil {
@@ -115,6 +118,7 @@ func (be *BeginExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	return env.ExecuteTCO(be.Last)
 }
 
+// Print the expression on the given writer.
 func (be *BeginExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{BEGIN")
 	if err != nil {

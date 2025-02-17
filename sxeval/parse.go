@@ -35,6 +35,7 @@ type ParseObserver interface {
 	AfterParse(*ParseEnvironment, sx.Object, Expr, error)
 }
 
+// Parse the form into an expression.
 func (pf *ParseEnvironment) Parse(form sx.Object) (expr Expr, err error) {
 	if observer := pf.observer; observer != nil {
 		var obj sx.Object
@@ -115,6 +116,7 @@ func (pf *ParseEnvironment) parsePair(pair *sx.Pair) (Expr, error) {
 	return &ce, nil
 }
 
+// ParseAgain signals the parser that the form must be parsed again, e.g. for macro expansion.
 func (pf *ParseEnvironment) ParseAgain(form sx.Object) error {
 	return errParseAgain{pf: pf, form: form}
 }
@@ -128,18 +130,23 @@ type errParseAgain struct {
 
 func (e errParseAgain) Error() string { return fmt.Sprintf("Again: %T/%v", e.form, e.form) }
 
-func (pf *ParseEnvironment) MakeChildFrame(name string, baseSize int) *ParseEnvironment {
+// MakeChildEnvironment creates a child enviroment.
+func (pf *ParseEnvironment) MakeChildEnvironment(name string, baseSize int) *ParseEnvironment {
 	return &ParseEnvironment{
 		binding:  pf.binding.MakeChildBinding(name, baseSize),
 		observer: pf.observer,
 	}
 }
 
+// Bind the symbol to the object in this environment.
 func (pf *ParseEnvironment) Bind(sym *sx.Symbol, obj sx.Object) error {
 	return pf.binding.Bind(sym, obj)
 }
 
+// Resolve the symbol w.r.t. this environment and return the bound object or false.
 func (pf *ParseEnvironment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return pf.binding.Resolve(sym)
 }
+
+// Binding returns the binding of this parse environment.
 func (pf *ParseEnvironment) Binding() *Binding { return pf.binding }

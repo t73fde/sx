@@ -11,6 +11,7 @@
 // SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
+// Package main provides a simple interpreter for s-expressions.
 package main
 
 import (
@@ -55,7 +56,7 @@ func (me *mainEngine) BeforeExecution(env *sxeval.Environment, expr sxeval.Expr)
 	return expr, nil
 }
 
-func (me *mainEngine) AfterExecution(env *sxeval.Environment, expr sxeval.Expr, obj sx.Object, err error) {
+func (me *mainEngine) AfterExecution(_ *sxeval.Environment, _ sxeval.Expr, obj sx.Object, err error) {
 	if me.logExecutor {
 		spaces := strings.Repeat(" ", me.execLevel-1)
 		me.execCount++
@@ -80,7 +81,7 @@ func (me *mainEngine) BeforeParse(pe *sxeval.ParseEnvironment, form sx.Object) (
 	return form, nil
 }
 
-func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, form sx.Object, expr sxeval.Expr, err error) {
+func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, _ sx.Object, expr sxeval.Expr, err error) {
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel-1)
 		bind := pe.Binding()
@@ -95,7 +96,7 @@ func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, form sx.Object, ex
 
 //----- ReworkObserver methods
 
-func (me *mainEngine) BeforeRework(re *sxeval.ReworkEnvironment, expr sxeval.Expr) sxeval.Expr {
+func (me *mainEngine) BeforeRework(re *sxeval.ImproveEnvironment, expr sxeval.Expr) sxeval.Expr {
 	if me.logRework {
 		spaces := strings.Repeat(" ", me.reworkLevel)
 		me.reworkLevel++
@@ -107,7 +108,7 @@ func (me *mainEngine) BeforeRework(re *sxeval.ReworkEnvironment, expr sxeval.Exp
 	return expr
 }
 
-func (me *mainEngine) AfterRework(re *sxeval.ReworkEnvironment, expr, result sxeval.Expr) {
+func (me *mainEngine) AfterRework(re *sxeval.ImproveEnvironment, _, result sxeval.Expr) {
 	if me.logRework {
 		spaces := strings.Repeat(" ", me.reworkLevel-1)
 		bind := re.Binding()
@@ -169,7 +170,7 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Sequence2List,             // ->list
 	&sxbuiltins.CallableP,                 // callable?
 	&sxbuiltins.Macroexpand0,              // macroexpand-0
-	&sxbuiltins.Defined,                   // defined?
+	&sxbuiltins.DefinedP,                  // defined?
 	&sxbuiltins.CurrentBinding,            // current-environment
 	&sxbuiltins.ParentBinding,             // parent-environment
 	&sxbuiltins.Bindings,                  // environment-bindings

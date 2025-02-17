@@ -27,8 +27,8 @@ type Expr interface {
 	// Unparse the expression as an sx.Object
 	Unparse() sx.Object
 
-	// Improve the expressions to a possible simpler one.
-	Improve(*ReworkEnvironment) Expr
+	// Improve the expression into a possible simpler one.
+	Improve(*ImproveEnvironment) Expr
 
 	// Compute the expression in a frame and return the result.
 	// It may have side-effects, on the given environment, or on the
@@ -75,28 +75,39 @@ var NilExpr = nilExpr{}
 
 type nilExpr struct{}
 
-func (nilExpr) Unparse() sx.Object                      { return sx.Nil() }
-func (nilExpr) Improve(*ReworkEnvironment) Expr         { return NilExpr }
+// Unparse the expression back into a form object.
+func (nilExpr) Unparse() sx.Object { return sx.Nil() }
+
+// Improve the expression into a possible simpler one.
+func (nilExpr) Improve(*ImproveEnvironment) Expr { return NilExpr }
+
+// Compute the expression in a frame and return the result.
 func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
-func (nilExpr) Print(w io.Writer) (int, error)          { return io.WriteString(w, "{NIL}") }
-func (nilExpr) ConstObject() sx.Object                  { return sx.Nil() }
+
+// Print the expression on the given writer.
+func (nilExpr) Print(w io.Writer) (int, error) { return io.WriteString(w, "{NIL}") }
+func (nilExpr) ConstObject() sx.Object         { return sx.Nil() }
 
 // ObjExpr returns the stored object.
 type ObjExpr struct {
 	Obj sx.Object
 }
 
+// Unparse the expression back into a form object.
 func (oe ObjExpr) Unparse() sx.Object { return oe.Obj }
 
-func (oe ObjExpr) Improve(re *ReworkEnvironment) Expr {
+// Improve the expression into a possible simpler one.
+func (oe ObjExpr) Improve(re *ImproveEnvironment) Expr {
 	if obj := oe.Obj; sx.IsNil(obj) {
 		return re.Rework(NilExpr)
 	}
 	return oe
 }
 
+// Compute the expression in a frame and return the result.
 func (oe ObjExpr) Compute(*Environment) (sx.Object, error) { return oe.Obj, nil }
 
+// Print the expression on the given writer.
 func (oe ObjExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{OBJ ")
 	if err != nil {
@@ -111,6 +122,9 @@ func (oe ObjExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
+
+// ConstObject returns the object stored by this expression. It must be treated
+// as a constant value.
 func (oe ObjExpr) ConstObject() sx.Object { return oe.Obj }
 
 // --- SymbolExpr -------------------------------------------------------------
@@ -124,9 +138,14 @@ type SymbolExpr interface {
 // UnboundSymbolExpr resolves the given symbol in an environment and returns its value.
 type UnboundSymbolExpr struct{ sym *sx.Symbol }
 
+// GetSymbol returns the symbol that is current not known to be bound to a value.
 func (use UnboundSymbolExpr) GetSymbol() *sx.Symbol { return use.sym }
-func (use UnboundSymbolExpr) Unparse() sx.Object    { return use.sym }
-func (use UnboundSymbolExpr) Improve(re *ReworkEnvironment) Expr {
+
+// Unparse the expression back into a form object.
+func (use UnboundSymbolExpr) Unparse() sx.Object { return use.sym }
+
+// Improve the expression into a possible simpler one.
+func (use UnboundSymbolExpr) Improve(re *ImproveEnvironment) Expr {
 	obj, depth, isConst := re.Resolve(use.sym)
 	if depth == math.MinInt {
 		return use
@@ -140,10 +159,12 @@ func (use UnboundSymbolExpr) Improve(re *ReworkEnvironment) Expr {
 	return re.Rework(&ResolveSymbolExpr{sym: use.sym, skip: re.Height()})
 }
 
+// Compute the expression in a frame and return the result.
 func (use UnboundSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.ResolveUnboundWithError(use.sym)
 }
 
+// Print the expression on the given writer.
 func (use UnboundSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{UNBOUND %v}", use.sym)
 }
@@ -156,15 +177,23 @@ type ResolveSymbolExpr struct {
 	skip int
 }
 
-func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol              { return rse.sym }
-func (rse ResolveSymbolExpr) Unparse() sx.Object                 { return rse.sym }
-func (rse ResolveSymbolExpr) Improve(re *ReworkEnvironment) Expr { return rse }
-func (use ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	return env.ResolveNWithError(use.sym, use.skip)
+// GetSymbol returns the symbol that later must be resolved.
+func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
+
+// Unparse the expression back into a form object.
+func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.sym }
+
+// Improve the expression into a possible simpler one.
+func (rse ResolveSymbolExpr) Improve(*ImproveEnvironment) Expr { return rse }
+
+// Compute the expression in a frame and return the result.
+func (rse ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
+	return env.ResolveNWithError(rse.sym, rse.skip)
 }
 
-func (use ResolveSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{RESOLVE/%d %v}", use.skip, use.sym)
+// Print the expression on the given writer.
+func (rse ResolveSymbolExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{RESOLVE/%d %v}", rse.skip, rse.sym)
 }
 
 // LookupSymbolExpr is a special UnboundSymbolExpr that gives an indication
@@ -174,16 +203,24 @@ type LookupSymbolExpr struct {
 	lvl int
 }
 
+// GetSymbol returns the symbol that must later be looked up.
 func (lse *LookupSymbolExpr) GetSymbol() *sx.Symbol { return lse.sym }
-func (lse *LookupSymbolExpr) GetLevel() int         { return lse.lvl }
 
-func (lse *LookupSymbolExpr) Unparse() sx.Object              { return lse.sym }
-func (lse *LookupSymbolExpr) Improve(*ReworkEnvironment) Expr { return lse }
+// GetLevel returns the nesting level to later start a look up.
+func (lse *LookupSymbolExpr) GetLevel() int { return lse.lvl }
 
+// Unparse the expression back into a form object.
+func (lse *LookupSymbolExpr) Unparse() sx.Object { return lse.sym }
+
+// Improve the expression into a possible simpler one.
+func (lse *LookupSymbolExpr) Improve(*ImproveEnvironment) Expr { return lse }
+
+// Compute the expression in a frame and return the result.
 func (lse *LookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.LookupNWithError(lse.sym, lse.lvl)
 }
 
+// Print the expression on the given writer.
 func (lse LookupSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{LOOKUP/%d %v}", lse.lvl, lse.sym)
 }
@@ -198,6 +235,7 @@ type CallExpr struct {
 
 func (ce *CallExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
 
+// Unparse the expression back into a form object.
 func (ce *CallExpr) Unparse() sx.Object {
 	lst := make(sx.Vector, len(ce.Args)+1)
 	lst[0] = ce.Proc.Unparse()
@@ -207,7 +245,8 @@ func (ce *CallExpr) Unparse() sx.Object {
 	return sx.MakeList(lst...)
 }
 
-func (ce *CallExpr) Improve(re *ReworkEnvironment) Expr {
+// Improve the expression into a possible simpler one.
+func (ce *CallExpr) Improve(re *ImproveEnvironment) Expr {
 	// If the ce.Proc is a builtin, rework to a BuiltinCallExpr.
 
 	proc := re.Rework(ce.Proc)
@@ -227,6 +266,7 @@ func (ce *CallExpr) Improve(re *ReworkEnvironment) Expr {
 	return ce
 }
 
+// Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {
 	val, err := env.Execute(ce.Proc)
 	if err != nil {
@@ -243,6 +283,7 @@ func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {
 	return computeCallable(env, proc, ce.Args)
 }
 
+// Print the expression on the given writer.
 func (ce *CallExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{CALL ")
 	if err != nil {
@@ -315,12 +356,14 @@ type BuiltinCallExpr struct {
 
 func (bce *BuiltinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
 
+// Unparse the expression back into a form object.
 func (bce *BuiltinCallExpr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: bce.Args}
 	return ce.Unparse()
 }
 
-func (bce *BuiltinCallExpr) Improve(re *ReworkEnvironment) Expr {
+// Improve the expression into a possible simpler one.
+func (bce *BuiltinCallExpr) Improve(re *ImproveEnvironment) Expr {
 	// Improve checks if the Builtin is pure and if all args are
 	// constant sx.Object's. If this is true, it will call the builtin with
 	// the args. If no error was signaled, the result object will be used
@@ -347,10 +390,12 @@ func (bce *BuiltinCallExpr) Improve(re *ReworkEnvironment) Expr {
 	return re.Rework(ObjExpr{Obj: result})
 }
 
+// Compute the value of this expression in the given environment.
 func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
 	return computeCallable(env, bce.Proc, bce.Args)
 }
 
+// Print the expression to a io.Writer.
 func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{BCALL ")
 	if err != nil {
@@ -383,9 +428,13 @@ func MakeExprObj(expr Expr) *ExprObj {
 	return &ExprObj{expr}
 }
 
+// IsNil returns true if the object must be treated like a sx.Nil() object.
 func (eo *ExprObj) IsNil() bool { return eo == nil }
-func (*ExprObj) IsAtom() bool   { return false }
 
+// IsAtom returns true if the object is atomic.
+func (*ExprObj) IsAtom() bool { return false }
+
+// IsEqual returns true if the other object has the same content.
 func (eo *ExprObj) IsEqual(other sx.Object) bool {
 	if eo == nil {
 		return sx.IsNil(other)
@@ -397,6 +446,7 @@ func (eo *ExprObj) IsEqual(other sx.Object) bool {
 	return isEO && (eo == otherEo || eo.expr == otherEo.expr)
 }
 
+// String returns a string representation.
 func (eo *ExprObj) String() string {
 	var sb strings.Builder
 	sb.WriteString("#<")
@@ -407,6 +457,7 @@ func (eo *ExprObj) String() string {
 	return sb.String()
 }
 
+// GoString returns a string representation to be used in Go code.
 func (eo *ExprObj) GoString() string {
 	var sb strings.Builder
 	if _, err := eo.expr.Print(&sb); err != nil {
@@ -415,6 +466,7 @@ func (eo *ExprObj) GoString() string {
 	return sb.String()
 }
 
+// GetExpr returns the expression of this object.
 func (eo *ExprObj) GetExpr() Expr {
 	if eo == nil {
 		return nil
@@ -422,7 +474,7 @@ func (eo *ExprObj) GetExpr() Expr {
 	return eo.expr
 }
 
-// GetExprObj returns the object as a expression object, if possible.
+// GetExprObj returns the object as an expression object, if possible.
 func GetExprObj(obj sx.Object) (*ExprObj, bool) {
 	if sx.IsNil(obj) {
 		return nil, false

@@ -120,7 +120,7 @@ func (env *Environment) Compile(obj sx.Object) (Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	re := env.MakeReworkEnvironment()
+	re := env.MakeImproveEnvironment()
 	return re.Rework(expr), nil
 }
 
@@ -132,7 +132,7 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 
 // Rework the given expression.
 func (env *Environment) Rework(expr Expr) Expr {
-	re := env.MakeReworkEnvironment()
+	re := env.MakeImproveEnvironment()
 	return re.Rework(expr)
 }
 
@@ -141,6 +141,7 @@ func (env *Environment) Run(expr Expr) (sx.Object, error) {
 	return env.Execute(expr)
 }
 
+// MakeParseEnvironment builds a parsing environment to parse a form.
 func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 	return &ParseEnvironment{
 		binding:  env.binding,
@@ -148,8 +149,9 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 	}
 }
 
-func (env *Environment) MakeReworkEnvironment() *ReworkEnvironment {
-	re := &ReworkEnvironment{
+// MakeImproveEnvironment builds an environment to improve expression.
+func (env *Environment) MakeImproveEnvironment() *ImproveEnvironment {
+	re := &ImproveEnvironment{
 		binding:  env.binding,
 		height:   0,
 		observer: env.observer.rework,
@@ -158,6 +160,8 @@ func (env *Environment) MakeReworkEnvironment() *ReworkEnvironment {
 	return re
 }
 
+// NewLexicalEnvironment builds a new lexical environment with the given parent
+// binding, environment name, and the number of bindings to store.
 func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
 	result := *env
 	result.binding = parent.MakeChildBinding(name, numBindings)
@@ -258,7 +262,7 @@ func (ce *callableExpr) Unparse() sx.Object {
 	return args.Cons(ce.Proc.(sx.Object))
 }
 
-func (ce *callableExpr) Improve(*ReworkEnvironment) Expr { return ce }
+func (ce *callableExpr) Improve(*ImproveEnvironment) Expr { return ce }
 
 func (ce *callableExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.Call(ce.Proc, ce.Args)
@@ -284,10 +288,15 @@ func (env *Environment) addExecuteError(expr Expr, err error) error {
 	}
 }
 
+// ExecuteError is the error that may occur if an expression is computed.
+// It contains the call stack.
 type ExecuteError struct {
 	Stack []EnvironmentExpr
 	err   error
 }
+
+// EnvironmentExpr stores the curent environment and the expression to be
+// computed, for better error messages.
 type EnvironmentExpr struct {
 	Env  *Environment
 	Expr Expr
@@ -295,6 +304,8 @@ type EnvironmentExpr struct {
 
 func (ee ExecuteError) Error() string { return ee.err.Error() }
 func (ee ExecuteError) Unwrap() error { return ee.err }
+
+// PrintStack prints the calling stack to an io.Writer.
 func (ee ExecuteError) PrintStack(w io.Writer, prefix string, logger *slog.Logger, logmsg string) {
 	for i, elem := range ee.Stack {
 		val := elem.Expr.Unparse()
@@ -309,27 +320,45 @@ func (ee ExecuteError) PrintStack(w io.Writer, prefix string, logger *slog.Logge
 
 }
 
+// Bind the symbol to an object value in this environment.
 func (env *Environment) Bind(sym *sx.Symbol, obj sx.Object) error {
 	return env.binding.Bind(sym, obj)
 }
+
+// Lookup a symbol in this environment. If not found, false is returned.
 func (env *Environment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Lookup(sym)
 }
+
+// Resolve a symbol in this environment or in its parent environments. If the
+// symbol is not found, a false is returned.
 func (env *Environment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Resolve(sym)
 }
+
+// LookupNWithError tries to look up a symbol in a parent environment of this
+// environment, which is n levels away. If this is not possible,
+// a NotBoundError is returned.
 func (env *Environment) LookupNWithError(sym *sx.Symbol, n int) (sx.Object, error) {
 	if obj, found := env.binding.LookupN(sym, n); found {
 		return obj, nil
 	}
 	return nil, env.MakeNotBoundError(sym)
 }
+
+// ResolveNWithError tries to resolve the symbol in this environment, after
+// skipping some parent levels. If it is not possible to resolve the symbol,
+// a NotBoundError is returned.
 func (env *Environment) ResolveNWithError(sym *sx.Symbol, skip int) (sx.Object, error) {
 	if obj, found := env.binding.ResolveN(sym, skip); found {
 		return obj, nil
 	}
 	return nil, env.MakeNotBoundError(sym)
 }
+
+// ResolveUnboundWithError tries to resolve a symbol in this environment,
+// or in its parent environments.
+// If not possible, a NotBoundError is returned.
 func (env *Environment) ResolveUnboundWithError(sym *sx.Symbol) (sx.Object, error) {
 	if obj, found := env.binding.Resolve(sym); found {
 		return obj, nil
@@ -337,6 +366,8 @@ func (env *Environment) ResolveUnboundWithError(sym *sx.Symbol) (sx.Object, erro
 	return nil, env.MakeNotBoundError(sym)
 }
 
+// FindBinding returns the binding, where the symbol is bound to a value.
+// If no binding was found, nil is returned.
 func (env *Environment) FindBinding(sym *sx.Symbol) *Binding {
 	for curr := env.binding; curr != nil; curr = curr.parent {
 		if _, found := curr.Lookup(sym); found {
@@ -346,8 +377,11 @@ func (env *Environment) FindBinding(sym *sx.Symbol) *Binding {
 	return nil
 }
 
+// Binding returns the binding of this environment.
 func (env *Environment) Binding() *Binding { return env.binding }
 
+// MakeNotBoundError builds an error to signal that a symbol was not bound in
+// the environment.
 func (env *Environment) MakeNotBoundError(sym *sx.Symbol) NotBoundError {
 	return NotBoundError{Binding: env.binding, Sym: sym}
 }

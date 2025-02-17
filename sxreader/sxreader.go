@@ -11,6 +11,8 @@
 // SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
+// Package sxreader implements a way to read symbolic expression into an
+// internal representation.
 package sxreader
 
 import (

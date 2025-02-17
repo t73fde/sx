@@ -72,11 +72,13 @@ type IfExpr struct {
 	False sxeval.Expr
 }
 
+// Unparse the expression as an sx.Object
 func (ife *IfExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(ifName), ife.Test.Unparse(), ife.True.Unparse(), ife.False.Unparse())
 }
 
-func (ife *IfExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+// Improve the expression into a possible simpler one.
+func (ife *IfExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
 	testExpr := re.Rework(ife.Test)
 	trueExpr := re.Rework(ife.True)
 	falseExpr := re.Rework(ife.False)
@@ -129,6 +131,7 @@ func (ife *IfExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	return ife
 }
 
+// Compute the expression in a frame and return the result.
 func (ife *IfExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	test, err := env.Execute(ife.Test)
 	if err != nil {
@@ -140,6 +143,7 @@ func (ife *IfExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	return env.ExecuteTCO(ife.False)
 }
 
+// Print the expression on the given writer.
 func (ife *IfExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{IF ")
 	if err != nil {

@@ -64,16 +64,19 @@ type DefineExpr struct {
 	Val sxeval.Expr
 }
 
+// Unparse the expression as an sx.Object
 func (de *DefineExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(defvarName), de.Sym, de.Val.Unparse())
 }
 
-func (de *DefineExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+// Improve the expression into a possible simpler one.
+func (de *DefineExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
 	_ = re.Bind(de.Sym)
 	de.Val = re.Rework(de.Val)
 	return de
 }
 
+// Compute the expression in a frame and return the result.
 func (de *DefineExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	val, err := env.Execute(de.Val)
 	if err == nil {
@@ -82,6 +85,7 @@ func (de *DefineExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	return val, err
 }
 
+// Print the expression on the given writer.
 func (de *DefineExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{DEFINE ")
 	if err != nil {
@@ -143,14 +147,18 @@ type SetXExpr struct {
 	Val sxeval.Expr
 }
 
+// Unparse the expression as an sx.Object
 func (se *SetXExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(setXName), se.Sym, se.Val.Unparse())
 }
 
-func (se *SetXExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+// Improve the expression into a possible simpler one.
+func (se *SetXExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
 	se.Val = re.Rework(se.Val)
 	return se
 }
+
+// Compute the expression in a frame and return the result.
 func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	bind := env.FindBinding(se.Sym)
 	if bind == nil {
@@ -162,6 +170,8 @@ func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	}
 	return val, err
 }
+
+// Print the expression on the given writer.
 func (se *SetXExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{SET! ")
 	if err != nil {

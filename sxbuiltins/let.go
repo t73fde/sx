@@ -76,7 +76,7 @@ func parseBindingsBody(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr,
 	}
 
 	vals := make([]sxeval.Expr, len(objs))
-	letEnv := pf.MakeChildFrame("let-def", len(symbols))
+	letEnv := pf.MakeChildEnvironment("let-def", len(symbols))
 	for i, sym := range symbols {
 		expr, err := pf.Parse(objs[i])
 		if err != nil {
@@ -110,6 +110,7 @@ type LetExpr struct {
 	Body    sxeval.Expr
 }
 
+// Unparse the expression as an sx.Object
 func (le *LetExpr) Unparse() sx.Object {
 	var bindings sx.ListBuilder
 	for i, sym := range le.Symbols {
@@ -119,7 +120,8 @@ func (le *LetExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(letName), bindings.List(), body)
 }
 
-func (le *LetExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+// Improve the expression into a possible simpler one.
+func (le *LetExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
 	switch len(le.Vals) {
 	case 0:
 		return re.Rework(le.Body)
@@ -140,6 +142,7 @@ func (le *LetExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	return le
 }
 
+// Compute the expression in a frame and return the result.
 func (le *LetExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	letEnv := env.NewLexicalEnvironment(env.Binding(), "let", len(le.Symbols))
 	for i, sym := range le.Symbols {
@@ -154,6 +157,7 @@ func (le *LetExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	return letEnv.ExecuteTCO(le.Body)
 }
 
+// Print the expression on the given writer.
 func (le *LetExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{LET (")
 	if err != nil {
@@ -213,6 +217,7 @@ type Let1Expr struct {
 	Body   sxeval.Expr
 }
 
+// Unparse the expression as an sx.Object
 func (le1 *Let1Expr) Unparse() sx.Object {
 	return sx.MakeList(
 		sx.MakeSymbol(letName),
@@ -221,7 +226,8 @@ func (le1 *Let1Expr) Unparse() sx.Object {
 	)
 }
 
-func (le1 *Let1Expr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+// Improve the expression into a possible simpler one.
+func (le1 *Let1Expr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
 	letEnv := re.MakeChildEnvironment("let1-rework", 1)
 	le1.Value = re.Rework(le1.Value)
 	_ = letEnv.Bind(le1.Symbol)
@@ -229,6 +235,7 @@ func (le1 *Let1Expr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
 	return le1
 }
 
+// Compute the expression in a frame and return the result.
 func (le1 *Let1Expr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	letEnv := env.NewLexicalEnvironment(env.Binding(), "let1", 1)
 	obj, err := env.Execute(le1.Value)
@@ -241,13 +248,14 @@ func (le1 *Let1Expr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	return letEnv.ExecuteTCO(le1.Body)
 }
 
-func (le *Let1Expr) Print(w io.Writer) (int, error) {
+// Print the expression on the given writer.
+func (le1 *Let1Expr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{LET1 ((")
 	if err != nil {
 		return length, err
 	}
 	var l int
-	l, err = le.Symbol.Print(w)
+	l, err = le1.Symbol.Print(w)
 	length += l
 	if err != nil {
 		return length, err
@@ -257,7 +265,7 @@ func (le *Let1Expr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
-	l, err = le.Value.Print(w)
+	l, err = le1.Value.Print(w)
 	length += l
 	if err != nil {
 		return length, err
@@ -267,7 +275,7 @@ func (le *Let1Expr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
-	l, err = le.Body.Print(w)
+	l, err = le1.Body.Print(w)
 	length += l
 	if err != nil {
 		return length, err

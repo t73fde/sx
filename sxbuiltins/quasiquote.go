@@ -367,15 +367,19 @@ func getUnquoteObj(sym *sx.Symbol, lst *sx.Pair) (sx.Object, error) {
 	return nil, fmt.Errorf("additional arguments %v for %s", rest.String(), sym)
 }
 
+// MakeListExpr is an expression to store a list with exactly one element.
 type MakeListExpr struct{ Elem sxeval.Expr }
 
+// Unparse the expression as an sx.Object
 func (mle MakeListExpr) Unparse() sx.Object { return sx.MakeList(mle.Elem.Unparse()) }
 
-func (mle MakeListExpr) Improve(re *sxeval.ReworkEnvironment) sxeval.Expr {
+// Improve the expression into a possible simpler one.
+func (mle MakeListExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
 	mle.Elem = re.Rework(mle.Elem)
 	return mle
 }
 
+// Compute the expression in a frame and return the result.
 func (mle MakeListExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	elem, err := env.Execute(mle.Elem)
 	if err != nil {
@@ -384,6 +388,7 @@ func (mle MakeListExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	return sx.Cons(elem, nil), nil
 }
 
+// Print the expression on the given writer.
 func (mle MakeListExpr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{MAKELIST ")
 	if err != nil {

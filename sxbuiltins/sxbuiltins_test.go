@@ -156,7 +156,7 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Sequence2List,             // ->list
 	&sxbuiltins.CallableP,                 // callable?
 	&sxbuiltins.Macroexpand0,              // macroexpand-0
-	&sxbuiltins.Defined,                   // defined?
+	&sxbuiltins.DefinedP,                  // defined?
 	&sxbuiltins.CurrentBinding,            // current-environment
 	&sxbuiltins.ParentBinding,             // parent-environment
 	&sxbuiltins.Bindings,                  // environment-bindings

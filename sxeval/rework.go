@@ -19,9 +19,9 @@ import (
 	"t73f.de/r/sx"
 )
 
-// ReworkEnvironment guides the Expr.Rework operation.
-type ReworkEnvironment struct {
-	base     *ReworkEnvironment
+// ImproveEnvironment guides the Expr.Rework operation.
+type ImproveEnvironment struct {
+	base     *ImproveEnvironment
 	binding  *Binding // Current binding
 	height   int      // Height of current binding.
 	observer ReworkObserver
@@ -30,16 +30,16 @@ type ReworkEnvironment struct {
 // ReworkObserver monitors the inner workings of the rework process.
 type ReworkObserver interface {
 	// BeforeRework is called immediate before the given expression is reworked.
-	BeforeRework(*ReworkEnvironment, Expr) Expr
+	BeforeRework(*ImproveEnvironment, Expr) Expr
 
 	// AfterRework is called after the given expression was reworked to a
 	// possibly simpler one.
-	AfterRework(*ReworkEnvironment, Expr, Expr)
+	AfterRework(*ImproveEnvironment, Expr, Expr)
 }
 
 // MakeChildEnvironment creates a subordinate rework environment with a new binding.
-func (re *ReworkEnvironment) MakeChildEnvironment(name string, baseSize int) *ReworkEnvironment {
-	return &ReworkEnvironment{
+func (re *ImproveEnvironment) MakeChildEnvironment(name string, baseSize int) *ImproveEnvironment {
+	return &ImproveEnvironment{
 		base:     re.base,
 		binding:  re.binding.MakeChildBinding(name, baseSize),
 		height:   re.height + 1,
@@ -48,7 +48,7 @@ func (re *ReworkEnvironment) MakeChildEnvironment(name string, baseSize int) *Re
 }
 
 // Rework the given expression. Do not call `expr.Rework()` directly.
-func (re *ReworkEnvironment) Rework(expr Expr) Expr {
+func (re *ImproveEnvironment) Rework(expr Expr) Expr {
 	if observer := re.observer; observer != nil {
 		expr2 := observer.BeforeRework(re, expr)
 		result := expr2.Improve(re)
@@ -59,17 +59,17 @@ func (re *ReworkEnvironment) Rework(expr Expr) Expr {
 }
 
 // Height returns the difference between the acual and the base height.
-func (re *ReworkEnvironment) Height() int { return re.height - re.base.height }
+func (re *ImproveEnvironment) Height() int { return re.height - re.base.height }
 
 // Binding returns the binding of this environment.
-func (re *ReworkEnvironment) Binding() *Binding { return re.binding }
+func (re *ImproveEnvironment) Binding() *Binding { return re.binding }
 
 // Resolve the symbol into an object, and return the binding depth plus an
 // indication about the const-ness of the value. If the symbol could not be
 // resolved, depth has the value of `math.MinInt`. If the symbol was found
 // in the base environment, depth is set to -1, to indicate a possible unbound
 // situation.
-func (re *ReworkEnvironment) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
+func (re *ImproveEnvironment) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
 	obj, b, depth := re.binding.resolveFull(sym)
 	if b == nil {
 		return nil, math.MinInt, false
@@ -81,14 +81,14 @@ func (re *ReworkEnvironment) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
 }
 
 // Bind the undefined value to the symbol in the current environment.
-func (re *ReworkEnvironment) Bind(sym *sx.Symbol) error {
+func (re *ImproveEnvironment) Bind(sym *sx.Symbol) error {
 	return re.binding.Bind(sym, sx.MakeUndefined())
 }
 
 // Call a function for constant folding.
 //
 // It is only called, if no full execution environment is needed, only a binding.
-func (re *ReworkEnvironment) Call(fn Callable, args sx.Vector) (sx.Object, error) {
+func (re *ImproveEnvironment) Call(fn Callable, args sx.Vector) (sx.Object, error) {
 	env := MakeExecutionEnvironment(re.binding)
 	switch len(args) {
 	case 0:

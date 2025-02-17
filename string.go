@@ -32,6 +32,7 @@ func (s String) GetValue() string { return s.val }
 // IsNil return true, if it is a nil string value.
 func (String) IsNil() bool { return false }
 
+// IsAtom always returns true because a string is an atomic value.
 func (String) IsAtom() bool { return true }
 
 // IsEqual compares two objects for equivalence.

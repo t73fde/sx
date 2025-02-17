@@ -18,6 +18,8 @@ import (
 	"t73f.de/r/sx/sxeval"
 )
 
+// ParseExpression parses the given object into an expression (to be
+// executed / run later).
 var ParseExpression = sxeval.Builtin{
 	Name:     "parse-expression",
 	MinArity: 1,
@@ -43,6 +45,8 @@ var ParseExpression = sxeval.Builtin{
 	},
 }
 
+// ReworkExpression tries to improve the given expression into an expression
+// than is simpler to execute.
 var ReworkExpression = sxeval.Builtin{
 	Name:     "rework-expression",
 	MinArity: 1,
@@ -77,12 +81,13 @@ var ReworkExpression = sxeval.Builtin{
 	},
 }
 
+// UnparseExpression produces a form object of a given expression.
 var UnparseExpression = sxeval.Builtin{
 	Name:     "unparse-expression",
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		expr, err := GetExprObj(arg, 0)
 		if err != nil {
 			return nil, err
@@ -91,6 +96,8 @@ var UnparseExpression = sxeval.Builtin{
 	},
 }
 
+// RunExpression executes the given compiled expression, optionally within
+// an environment.
 var RunExpression = sxeval.Builtin{
 	Name:     "run-expression",
 	MinArity: 1,
@@ -119,6 +126,7 @@ var RunExpression = sxeval.Builtin{
 	},
 }
 
+// Compile the object into an expression. There is an optional environment.
 var Compile = sxeval.Builtin{
 	Name:     "compile",
 	MinArity: 1,
@@ -144,6 +152,7 @@ var Compile = sxeval.Builtin{
 	},
 }
 
+// Eval evaluates the given object, in an optional environment.
 var Eval = sxeval.Builtin{
 	Name:     "eval",
 	MinArity: 1,

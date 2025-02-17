@@ -20,6 +20,7 @@ import (
 	"t73f.de/r/sx/sxeval"
 )
 
+// CurrentBinding returns the current binding.
 var CurrentBinding = sxeval.Builtin{
 	Name:     "current-binding",
 	MinArity: 0,
@@ -30,6 +31,8 @@ var CurrentBinding = sxeval.Builtin{
 	},
 }
 
+// ParentBinding returns the parent binding of the given binding. For the
+// top-most binding, an undefined value is returned.
 var ParentBinding = sxeval.Builtin{
 	Name:     "parent-binding",
 	MinArity: 1,
@@ -47,6 +50,7 @@ var ParentBinding = sxeval.Builtin{
 	},
 }
 
+// Bindings returns the given bindings as an association list.
 var Bindings = sxeval.Builtin{
 	Name:     "bindings",
 	MinArity: 1,
@@ -94,7 +98,7 @@ var BindingLookup = sxeval.Builtin{
 		}
 		return sx.MakeUndefined(), nil
 	},
-	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
 		sym, err := GetSymbol(arg0, 0)
 		if err != nil {
 			return nil, err
@@ -127,7 +131,7 @@ var BindingResolve = sxeval.Builtin{
 		}
 		return sx.MakeUndefined(), nil
 	},
-	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
 		sym, err := GetSymbol(arg0, 0)
 		if err != nil {
 			return nil, err

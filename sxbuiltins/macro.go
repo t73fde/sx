@@ -41,12 +41,23 @@ type Macro struct {
 	Expr    sxeval.Expr
 }
 
-func (m *Macro) IsNil() bool                  { return m == nil }
-func (m *Macro) IsAtom() bool                 { return m == nil }
-func (m *Macro) IsEqual(other sx.Object) bool { return m == other }
-func (m *Macro) String() string               { return "#<macro:" + m.Name + ">" }
-func (m *Macro) GoString() string             { return m.String() }
+// IsNil returns true if the object must be treated like a sx.Nil() object.
+func (m *Macro) IsNil() bool { return m == nil }
 
+// IsAtom returns true if the object is atomic.
+func (m *Macro) IsAtom() bool { return m == nil }
+
+// IsEqual returns true if the other object has the same content.
+func (m *Macro) IsEqual(other sx.Object) bool { return m == other }
+
+// String returns a string representation.
+func (m *Macro) String() string { return "#<macro:" + m.Name + ">" }
+
+// GoString returns a string representation to be used in Go code.
+func (m *Macro) GoString() string { return m.String() }
+
+// Parse transforms a macro call into its expanded form. Some kind of
+// iterative expansion may happen.
 func (m *Macro) Parse(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 	form, err := m.Expand(pf, args)
 	if err != nil {
@@ -55,6 +66,7 @@ func (m *Macro) Parse(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, 
 	return nil, pf.ParseAgain(form)
 }
 
+// Expand the macro in the given call.
 func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, error) {
 	var macroArgs sx.Vector
 	arg := sx.Object(args)
@@ -80,7 +92,7 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, er
 	return m.Env.MacroCall(proc.Name, &proc, macroArgs)
 }
 
-// MacroExpand0 implements one level of macro expansion.
+// Macroexpand0 implements one level of macro expansion.
 //
 // It is mostly used for debugging macros.
 var Macroexpand0 = sxeval.Builtin{

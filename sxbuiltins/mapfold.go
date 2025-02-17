@@ -125,7 +125,7 @@ var Apply = sxeval.Builtin{
 		for node := lst; ; {
 			cdr := node.Cdr()
 			if sx.IsNil(cdr) {
-				expr := env.MakeReworkEnvironment().Rework(&callExpr)
+				expr := env.MakeImproveEnvironment().Rework(&callExpr)
 				return env.ExecuteTCO(expr)
 			}
 			if next, ok2 := sx.GetPair(cdr); ok2 {
