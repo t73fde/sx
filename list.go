@@ -498,16 +498,32 @@ func (lb *ListBuilder) Reset() {
 	lb.last = nil
 }
 
-// Add an object to the list.
+// Add an object to the list builder.
 func (lb *ListBuilder) Add(obj Object) {
 	elem := Cons(obj, nil)
 	if lb.first == nil {
 		lb.first = elem
-		lb.last = lb.first
+		lb.last = elem
 		return
 	}
 	lb.last.cdr = elem
 	lb.last = elem
+}
+
+// AddN adds multiple objects to the list builder.
+func (lb *ListBuilder) AddN(objs ...Object) {
+	if len(objs) == 0 {
+		return
+	}
+	lb.Add(objs[0])
+	// assert: lb.first != nil
+	last := lb.last
+	for _, obj := range objs[1:] {
+		elem := Cons(obj, nil)
+		last.cdr = elem
+		last = elem
+	}
+	lb.last = last
 }
 
 // ExtendBang the list by the given list, reusing the given list
@@ -531,12 +547,8 @@ func (lb *ListBuilder) ExtendBang(lst *Pair) {
 	}
 }
 
-// List the result, resetting the builder.
-func (lb *ListBuilder) List() *Pair {
-	result := lb.first
-	lb.Reset()
-	return result
-}
+// List the result, but not resetting the builder.
+func (lb *ListBuilder) List() *Pair { return lb.first }
 
 // IsEmpty returns true, if no element was added.
 func (lb *ListBuilder) IsEmpty() bool { return lb.first == nil }

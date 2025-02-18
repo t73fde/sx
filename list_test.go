@@ -242,9 +242,9 @@ func TestListCopy(t *testing.T) {
 		sx.MakeList(sx.Int64(2), sx.Int64(3), sx.Int64(5), sx.Int64(7)),
 	}
 	for i, tc := range testcases {
-		copy := tc.Copy()
-		if !tc.IsEqual(copy) {
-			t.Errorf("%d: %v != %v", i, tc, copy)
+		cpy := tc.Copy()
+		if !tc.IsEqual(cpy) {
+			t.Errorf("%d: %v != %v", i, tc, cpy)
 		}
 	}
 }
@@ -258,20 +258,24 @@ func TestListBuilder(t *testing.T) {
 	if got, exp := lb.List(), sx.MakeList(sx.MakeSymbol("a")); !got.IsEqual(exp) {
 		t.Errorf("expected %v, but got %v", exp, got)
 	}
-	if !lb.IsEmpty() {
-		t.Errorf("list is not empty, but: %v", lb.List())
+	if lb.IsEmpty() {
+		t.Errorf("list is empty, expected: %v", lb.List())
 	}
-	lb.Add(sx.MakeSymbol("a"))
-	lb.Add(sx.MakeString("b"))
-	if got, exp := lb.List(), sx.MakeList(sx.MakeSymbol("a"), sx.MakeString("b")); !got.IsEqual(exp) {
+	lb.Reset()
+	a, b, c := sx.MakeSymbol("a"), sx.MakeSymbol("b"), sx.MakeSymbol("c")
+	lb.AddN()
+	lb.AddN(a, b)
+	lb.AddN(c)
+	if got, exp := lb.List(), sx.MakeList(a, b, c); !got.IsEqual(exp) {
 		t.Errorf("expected %v, but got %v", exp, got)
 	}
+	lb.Reset()
 
-	lst := sx.MakeList(sx.MakeSymbol("a"))
+	lst := sx.MakeList(a)
 	lb.ExtendBang(lst)
 	lb.ExtendBang(nil)
-	lb.ExtendBang(sx.MakeList(sx.MakeString("b"), sx.MakeSymbol("c")))
-	exp := sx.MakeList(sx.MakeSymbol("a"), sx.MakeString("b"), sx.MakeSymbol("c"))
+	lb.ExtendBang(sx.MakeList(b, c))
+	exp := sx.MakeList(a, b, c)
 	if got := lb.List(); !got.IsEqual(exp) {
 		t.Errorf("expected %v, but got %v", exp, got)
 	}
