@@ -187,12 +187,10 @@ func readList(endCh rune) macroFn {
 func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 	objs := make(sx.Vector, 0, 32)
 
-	var dotObj sx.Object
-	hasDotObj := false
-
-	curLength := uint(0)
+	curLength, maxLength := uint(0), rd.maxLength
+	checkLength := maxLength > 0
 	for {
-		if maxLength := rd.maxLength; maxLength > 0 {
+		if checkLength {
 			if curLength > maxLength {
 				return nil, ErrListTooLong
 			}
@@ -212,19 +210,27 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 		if ch == '.' {
 			ch2, err2 := rd.nextRune()
 			if err2 == nil && isSpace(ch2) {
-				dotObj, err2 = rd.Read()
+				dotObj, err2 := rd.Read()
 				if err2 != nil {
 					return nil, err2
 				}
-				hasDotObj = true
 				ch3, err3 := rd.skipSpace()
 				if err3 != nil {
-					return nil, err
+					return nil, err3
 				}
 				if ch3 != endCh {
 					return nil, fmt.Errorf("'%c' (%v) expected, but got '%c' (%v)", endCh, endCh, ch3, ch3)
 				}
-				break
+				lenV := len(objs)
+				if lenV == 0 {
+					return sx.Cons(sx.Nil(), dotObj), nil
+				}
+				lenV--
+				result := sx.Cons(objs[lenV], dotObj)
+				for i := lenV - 1; i >= 0; i-- {
+					result = result.Cons(objs[i])
+				}
+				return result, nil
 			}
 			rd.unreadRunes(ch2)
 		}
@@ -235,19 +241,6 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 			return nil, err
 		}
 		objs = append(objs, val)
-	}
-	if hasDotObj {
-		lenV := len(objs)
-		if lenV == 0 {
-			return sx.Cons(sx.Nil(), dotObj), nil
-		}
-		lenV--
-		result := sx.Cons(objs[lenV], dotObj)
-		for i := lenV - 1; i >= 0; i-- {
-			result = result.Cons(objs[i])
-		}
-		return result, nil
-
 	}
 	return sx.MakeList(objs...), nil
 }
