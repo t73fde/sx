@@ -143,6 +143,19 @@ func TestReadComment(t *testing.T) {
 	})
 }
 
+func TestReadQuotes(t *testing.T) {
+	performReaderTestCases(t, []readerTestCase{
+		{name: "SimpleQuote", src: "'a", exp: "(quote a)"},
+		{name: "ErrQuote", src: "'", exp: "unexpected EOF", mustErr: true},
+		{name: "SimpleQuasiQuote", src: "`a", exp: "(quasiquote a)"},
+		{name: "ErrQuasiQuote", src: "`", exp: "unexpected EOF", mustErr: true},
+		{name: "SimpleUnquote", src: ",a", exp: "(unquote a)"},
+		{name: "ErrUnquote", src: ",", exp: "unexpected EOF", mustErr: true},
+		{name: "SimpleUnquoteSplicing", src: ",@a", exp: "(unquote-splicing a)"},
+		{name: "ErrUnquoteSplicing", src: ",@", exp: "unexpected EOF", mustErr: true},
+	})
+}
+
 func TestReadHash(t *testing.T) {
 	performReaderTestCases(t, []readerTestCase{
 		{name: "hash only", src: "#", exp: "ReaderError 1-1: '#' not allowed here", mustErr: true},

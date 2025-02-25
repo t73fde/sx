@@ -290,6 +290,9 @@ func readQuasiquote(rd *Reader, _ rune) (sx.Object, error) {
 func readUnquote(rd *Reader, _ rune) (sx.Object, error) {
 	ch, err := rd.nextRune()
 	if err != nil {
+		if err == io.EOF {
+			return nil, ErrEOF
+		}
 		return nil, err
 	}
 	sym := sx.SymbolUnquoteSplicing
@@ -301,5 +304,8 @@ func readUnquote(rd *Reader, _ rune) (sx.Object, error) {
 	if err == nil {
 		return sx.Nil().Cons(obj).Cons(sym), nil
 	}
-	return obj, err
+	if err == io.EOF {
+		return nil, ErrEOF
+	}
+	return nil, err
 }
