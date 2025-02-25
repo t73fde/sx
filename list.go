@@ -550,5 +550,8 @@ func (lb *ListBuilder) ExtendBang(lst *Pair) {
 // List the result, but not resetting the builder.
 func (lb *ListBuilder) List() *Pair { return lb.first }
 
+// Last returns the last pair.
+func (lb *ListBuilder) Last() *Pair { return lb.last }
+
 // IsEmpty returns true, if no element was added.
 func (lb *ListBuilder) IsEmpty() bool { return lb.first == nil }
