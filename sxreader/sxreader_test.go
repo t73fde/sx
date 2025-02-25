@@ -215,6 +215,11 @@ func TestReaderLimits(t *testing.T) {
 	if !errors.Is(err, sxreader.ErrListTooLong) {
 		t.Errorf("%v, but got %v", sxreader.ErrListTooLong, err)
 	}
+
+	err = checkLength(0, 100000)
+	if err != nil {
+		t.Errorf("no errors excepted, but got: %v", err)
+	}
 }
 
 func checkNested(maxDepth, depth int) error {

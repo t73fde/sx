@@ -192,10 +192,12 @@ func (rd *Reader) readList(endCh rune) (*sx.Pair, error) {
 
 	curLength := uint(0)
 	for {
-		if curLength > rd.maxLength {
-			return nil, ErrListTooLong
+		if maxLength := rd.maxLength; maxLength > 0 {
+			if curLength > maxLength {
+				return nil, ErrListTooLong
+			}
+			curLength++
 		}
-		curLength++
 		ch, err := rd.readListCh()
 		if err != nil {
 			if err == io.EOF {

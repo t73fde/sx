@@ -69,7 +69,7 @@ func (rd *Reader) SetNestingLimit(depth uint) *Reader {
 	return rd
 }
 
-// SetListLimit sets the maximum length of a list.
+// SetListLimit sets the maximum length of a list. A value 0 signals no limit.
 func (rd *Reader) SetListLimit(length uint) *Reader {
 	rd.maxLength = length
 	return rd
