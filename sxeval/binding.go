@@ -152,7 +152,7 @@ func (b *Binding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 
 // LookupN will lookup the symbol in the N-th parent.
 func (b *Binding) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
-	for i := 0; i < n; i++ {
+	for range n {
 		b = b.parent
 	}
 	return b.Lookup(sym)
@@ -207,7 +207,7 @@ func (b *Binding) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 func (b *Binding) ResolveN(sym *sx.Symbol, n int) (sx.Object, bool) {
 	if sym != nil {
 		curr := b
-		for i := 0; i < n; i++ {
+		for range n {
 			curr = curr.parent
 		}
 		for ; curr != nil; curr = curr.parent {
