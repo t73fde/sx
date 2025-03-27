@@ -70,9 +70,9 @@ func (de *DefineExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (de *DefineExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
+func (de *DefineExpr) Improve(re *sxeval.Improver) sxeval.Expr {
 	_ = re.Bind(de.Sym)
-	de.Val = re.Rework(de.Val)
+	de.Val = re.Improve(de.Val)
 	return de
 }
 
@@ -153,8 +153,8 @@ func (se *SetXExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (se *SetXExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
-	se.Val = re.Rework(se.Val)
+func (se *SetXExpr) Improve(re *sxeval.Improver) sxeval.Expr {
+	se.Val = re.Improve(se.Val)
 	return se
 }
 

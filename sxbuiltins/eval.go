@@ -45,10 +45,10 @@ var ParseExpression = sxeval.Builtin{
 	},
 }
 
-// ReworkExpression tries to improve the given expression into an expression
+// ImproveExpression tries to improve the given expression into an expression
 // than is simpler to execute.
-var ReworkExpression = sxeval.Builtin{
-	Name:     "rework-expression",
+var ImproveExpression = sxeval.Builtin{
+	Name:     "improve-expression",
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
@@ -57,11 +57,11 @@ var ReworkExpression = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		reworkedExpr := env.Rework(expr.GetExpr())
+		improvedExpr := env.Improve(expr.GetExpr())
 		if err != nil {
 			return nil, err
 		}
-		return sxeval.MakeExprObj(reworkedExpr), nil
+		return sxeval.MakeExprObj(improvedExpr), nil
 
 	},
 	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
@@ -73,11 +73,11 @@ var ReworkExpression = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		reworkedExpr := env.RebindExecutionEnvironment(bind).Rework(expr.GetExpr())
+		improvedExpr := env.RebindExecutionEnvironment(bind).Improve(expr.GetExpr())
 		if err != nil {
 			return nil, err
 		}
-		return sxeval.MakeExprObj(reworkedExpr), nil
+		return sxeval.MakeExprObj(improvedExpr), nil
 	},
 }
 

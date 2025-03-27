@@ -31,15 +31,15 @@ import (
 )
 
 type mainEngine struct {
-	logReader   bool
-	logParse    bool
-	logRework   bool
-	logExpr     bool
-	logExecutor bool
-	parseLevel  int
-	reworkLevel int
-	execLevel   int
-	execCount   int
+	logReader    bool
+	logParse     bool
+	logImprove   bool
+	logExpr      bool
+	logExecutor  bool
+	parseLevel   int
+	improveLevel int
+	execLevel    int
+	execCount    int
 }
 
 // ----- ExecuteObserver methods
@@ -94,28 +94,28 @@ func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, _ sx.Object, expr 
 	}
 }
 
-//----- ReworkObserver methods
+//----- ImproveObserver methods
 
-func (me *mainEngine) BeforeRework(re *sxeval.ImproveEnvironment, expr sxeval.Expr) sxeval.Expr {
-	if me.logRework {
-		spaces := strings.Repeat(" ", me.reworkLevel)
-		me.reworkLevel++
+func (me *mainEngine) BeforeImprove(re *sxeval.Improver, expr sxeval.Expr) sxeval.Expr {
+	if me.logImprove {
+		spaces := strings.Repeat(" ", me.improveLevel)
+		me.improveLevel++
 		bind := re.Binding()
-		fmt.Printf("%v;R%v %v<-%v ", spaces, me.reworkLevel, bind, bind.Parent())
+		fmt.Printf("%v;R%v %v<-%v ", spaces, me.improveLevel, bind, bind.Parent())
 		_, _ = expr.Print(os.Stdout)
 		fmt.Println()
 	}
 	return expr
 }
 
-func (me *mainEngine) AfterRework(re *sxeval.ImproveEnvironment, _, result sxeval.Expr) {
-	if me.logRework {
-		spaces := strings.Repeat(" ", me.reworkLevel-1)
+func (me *mainEngine) AfterImprove(re *sxeval.Improver, _, result sxeval.Expr) {
+	if me.logImprove {
+		spaces := strings.Repeat(" ", me.improveLevel-1)
 		bind := re.Binding()
-		fmt.Printf("%v;S%v %v<-%v ", spaces, me.reworkLevel, bind, bind.Parent())
+		fmt.Printf("%v;S%v %v<-%v ", spaces, me.improveLevel, bind, bind.Parent())
 		_, _ = result.Print(os.Stdout)
 		fmt.Println()
-		me.reworkLevel--
+		me.improveLevel--
 	}
 }
 
@@ -181,7 +181,7 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Error,                     // error
 	&sxbuiltins.NotBoundError,             // not-bound-error
 	&sxbuiltins.ParseExpression,           // parse-expression
-	&sxbuiltins.ReworkExpression,          // rework-expression
+	&sxbuiltins.ImproveExpression,         // improve-expression
 	&sxbuiltins.UnparseExpression,         // unparse-expression
 	&sxbuiltins.RunExpression,             // run-expression
 	&sxbuiltins.Compile, &sxbuiltins.Eval, // compile, eval
@@ -223,13 +223,13 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		},
 	})
 	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-rework",
+		Name:     "log-improve",
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
 		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logRework
-			me.logRework = !res
+			res := me.logImprove
+			me.logImprove = !res
 			return sx.MakeBoolean(res), nil
 		},
 	})
@@ -263,7 +263,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		Fn0: func(*sxeval.Environment) (sx.Object, error) {
 			me.logReader = false
 			me.logParse = false
-			me.logRework = false
+			me.logImprove = false
 			me.logExecutor = false
 			return sx.Nil(), nil
 		},
@@ -287,7 +287,7 @@ func main() {
 	me := mainEngine{
 		logReader:   true,
 		logParse:    true,
-		logRework:   true,
+		logImprove:  true,
 		logExpr:     false,
 		logExecutor: true,
 	}
@@ -321,7 +321,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 
 	for {
 		env := sxeval.MakeExecutionEnvironment(bind)
-		env.SetExecutor(me).SetParseObserver(me).SetReworkObserver(me)
+		env.SetExecutor(me).SetParseObserver(me).SetImproveObserver(me)
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {
@@ -339,7 +339,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			fmt.Println(";p", err)
 			continue
 		}
-		expr = env.Rework(expr)
+		expr = env.Improve(expr)
 		if me.logReader {
 			fmt.Printf(";= ")
 			_, _ = expr.Print(os.Stdout)

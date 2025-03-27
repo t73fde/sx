@@ -34,7 +34,7 @@ func BenchmarkEvenTCO(b *testing.B) {
 			if err != nil {
 				panic(err)
 			}
-			expr = env.Rework(expr)
+			expr = env.Improve(expr)
 			b.ResetTimer()
 			for b.Loop() {
 				_, _ = env.Run(expr)
@@ -52,7 +52,7 @@ func BenchmarkFac(b *testing.B) {
 	if err != nil {
 		panic(err)
 	}
-	expr = env.Rework(expr)
+	expr = env.Improve(expr)
 
 	for b.Loop() {
 		_, _ = env.Run(expr)
@@ -68,7 +68,7 @@ func BenchmarkFaa(b *testing.B) {
 	if err != nil {
 		panic(err)
 	}
-	expr = env.Rework(expr)
+	expr = env.Improve(expr)
 
 	for b.Loop() {
 		_, _ = env.Run(expr)
@@ -84,7 +84,7 @@ func BenchmarkFib(b *testing.B) {
 	if err != nil {
 		panic(err)
 	}
-	expr = env.Rework(expr)
+	expr = env.Improve(expr)
 
 	for b.Loop() {
 		_, _ = env.Run(expr)

@@ -19,27 +19,34 @@ import (
 	"t73f.de/r/sx"
 )
 
-// ImproveEnvironment guides the Expr.Rework operation.
-type ImproveEnvironment struct {
-	base     *ImproveEnvironment
+// Improvable is an additional interface for `Expr` that can be possibly
+// improved to simple ones.
+type Improvable interface {
+	// Improve the expression into a possible simpler one.
+	Improve(*Improver) Expr
+}
+
+// Improver guides the improve operation.
+type Improver struct {
+	base     *Improver
 	binding  *Binding // Current binding
 	height   int      // Height of current binding.
-	observer ReworkObserver
+	observer ImproveObserver
 }
 
-// ReworkObserver monitors the inner workings of the rework process.
-type ReworkObserver interface {
-	// BeforeRework is called immediate before the given expression is reworked.
-	BeforeRework(*ImproveEnvironment, Expr) Expr
+// ImproveObserver monitors the inner workings of the improve process.
+type ImproveObserver interface {
+	// BeforeImprove is called immediate before the given expression is improved.
+	BeforeImprove(*Improver, Expr) Expr
 
-	// AfterRework is called after the given expression was reworked to a
+	// AfterImprove is called after the given expression was improved to a
 	// possibly simpler one.
-	AfterRework(*ImproveEnvironment, Expr, Expr)
+	AfterImprove(*Improver, Expr, Expr)
 }
 
-// MakeChildEnvironment creates a subordinate rework environment with a new binding.
-func (re *ImproveEnvironment) MakeChildEnvironment(name string, baseSize int) *ImproveEnvironment {
-	return &ImproveEnvironment{
+// MakeChildImprover creates a subordinate improver with a new binding.
+func (re *Improver) MakeChildImprover(name string, baseSize int) *Improver {
+	return &Improver{
 		base:     re.base,
 		binding:  re.binding.MakeChildBinding(name, baseSize),
 		height:   re.height + 1,
@@ -47,29 +54,36 @@ func (re *ImproveEnvironment) MakeChildEnvironment(name string, baseSize int) *I
 	}
 }
 
-// Rework the given expression. Do not call `expr.Rework()` directly.
-func (re *ImproveEnvironment) Rework(expr Expr) Expr {
+// Improve the given expression. Do not call `expr.Improve()` directly.
+func (re *Improver) Improve(expr Expr) Expr {
 	if observer := re.observer; observer != nil {
-		expr2 := observer.BeforeRework(re, expr)
-		result := expr2.Improve(re)
-		observer.AfterRework(re, expr2, result)
-		return result
+		expr2 := observer.BeforeImprove(re, expr)
+		if iexpr2, ok := expr2.(Improvable); ok {
+			result := iexpr2.Improve(re)
+			observer.AfterImprove(re, expr2, result)
+			return result
+		}
+		observer.AfterImprove(re, expr2, expr2)
+		return expr2
 	}
-	return expr.Improve(re)
+	if iexpr, ok := expr.(Improvable); ok {
+		return iexpr.Improve(re)
+	}
+	return expr
 }
 
-// Height returns the difference between the acual and the base height.
-func (re *ImproveEnvironment) Height() int { return re.height - re.base.height }
+// Height returns the difference between the actual and the base height.
+func (re *Improver) Height() int { return re.height - re.base.height }
 
 // Binding returns the binding of this environment.
-func (re *ImproveEnvironment) Binding() *Binding { return re.binding }
+func (re *Improver) Binding() *Binding { return re.binding }
 
 // Resolve the symbol into an object, and return the binding depth plus an
 // indication about the const-ness of the value. If the symbol could not be
 // resolved, depth has the value of `math.MinInt`. If the symbol was found
 // in the base environment, depth is set to -1, to indicate a possible unbound
 // situation.
-func (re *ImproveEnvironment) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
+func (re *Improver) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
 	obj, b, depth := re.binding.resolveFull(sym)
 	if b == nil {
 		return nil, math.MinInt, false
@@ -81,14 +95,14 @@ func (re *ImproveEnvironment) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
 }
 
 // Bind the undefined value to the symbol in the current environment.
-func (re *ImproveEnvironment) Bind(sym *sx.Symbol) error {
+func (re *Improver) Bind(sym *sx.Symbol) error {
 	return re.binding.Bind(sym, sx.MakeUndefined())
 }
 
 // Call a function for constant folding.
 //
 // It is only called, if no full execution environment is needed, only a binding.
-func (re *ImproveEnvironment) Call(fn Callable, args sx.Vector) (sx.Object, error) {
+func (re *Improver) Call(fn Callable, args sx.Vector) (sx.Object, error) {
 	env := MakeExecutionEnvironment(re.binding)
 	switch len(args) {
 	case 0:

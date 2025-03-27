@@ -14,13 +14,13 @@ expression. To control this logging, some additional functions are available:
   internal parsing steps are aslo logged. The symbolic expression to be parsed
   is logged with the prefix ";P ", the resulting parsed expression with the
   prefix ";Q ".
-* `(log-expr)`: enables logging of the result of calls to `sxeval.Rework`.
+* `(log-expr)`: enables logging of the result of calls to `sxeval.Improve`.
   Further processing is stopped, the resulting expression is not computed.
   This is to inspect the output of a `(quasiquote ...)` expression.
 * `(log-executor)`: toggles the logging of the computing execution. The
   expression to be computed is logged with the prefix ";X ", the resulting
   value with the prefix ";O ".
-* `(log-off)`: All loggings, except the rework log, are enabled. This command
+* `(log-off)`: All loggings, except the improve log, are enabled. This command
   disables all logging.
 * `(panic EXPR)`: produces an internal panic (a hard error within the Go
   environment). The optional expression is the argument. If not given, the

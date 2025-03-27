@@ -76,15 +76,15 @@ func (be *BeginExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (be *BeginExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
-	last := re.Rework(be.Last)
+func (be *BeginExpr) Improve(re *sxeval.Improver) sxeval.Expr {
+	last := re.Improve(be.Last)
 	frontLen := len(be.Front)
 	if frontLen == 0 {
 		return last
 	}
 	seq := make([]sxeval.Expr, 0, frontLen)
 	for _, expr := range be.Front {
-		re := re.Rework(expr)
+		re := re.Improve(expr)
 		if _, isConstObject := re.(sxeval.ConstObjectExpr); isConstObject {
 			// A constant object has no side effect, it can be ignored in the sequence
 			continue

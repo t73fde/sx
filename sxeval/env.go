@@ -39,7 +39,7 @@ type tcodata struct {
 type observer struct {
 	execute ExecuteObserver
 	parse   ParseObserver
-	rework  ReworkObserver
+	improve ImproveObserver
 }
 
 // ExecuteObserver observes the execution of expressions.
@@ -66,7 +66,7 @@ func MakeExecutionEnvironment(bind *Binding) *Environment {
 		observer: &observer{
 			execute: nil,
 			parse:   nil,
-			rework:  nil,
+			improve: nil,
 		},
 	}
 }
@@ -83,9 +83,9 @@ func (env *Environment) SetParseObserver(observe ParseObserver) *Environment {
 	return env
 }
 
-// SetReworkObserver sets the given rework observer.
-func (env *Environment) SetReworkObserver(observe ReworkObserver) *Environment {
-	env.newObserver().rework = observe
+// SetImproveObserver sets the given improve observer.
+func (env *Environment) SetImproveObserver(observe ImproveObserver) *Environment {
+	env.newObserver().improve = observe
 	return env
 }
 
@@ -109,11 +109,11 @@ func (env *Environment) Eval(obj sx.Object) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	expr = env.Rework(expr)
+	expr = env.Improve(expr)
 	return env.Run(expr)
 }
 
-// Compile the given object and return the reworked expression.
+// Compile the given object and return the improved expression.
 func (env *Environment) Compile(obj sx.Object) (Expr, error) {
 	pe := env.MakeParseEnvironment()
 	expr, err := pe.Parse(obj)
@@ -121,7 +121,7 @@ func (env *Environment) Compile(obj sx.Object) (Expr, error) {
 		return nil, err
 	}
 	re := env.MakeImproveEnvironment()
-	return re.Rework(expr), nil
+	return re.Improve(expr), nil
 }
 
 // Parse the given object.
@@ -130,10 +130,10 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 	return pe.Parse(obj)
 }
 
-// Rework the given expression.
-func (env *Environment) Rework(expr Expr) Expr {
+// Improve the given expression.
+func (env *Environment) Improve(expr Expr) Expr {
 	re := env.MakeImproveEnvironment()
-	return re.Rework(expr)
+	return re.Improve(expr)
 }
 
 // Run the given expression.
@@ -150,11 +150,11 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 }
 
 // MakeImproveEnvironment builds an environment to improve expression.
-func (env *Environment) MakeImproveEnvironment() *ImproveEnvironment {
-	re := &ImproveEnvironment{
+func (env *Environment) MakeImproveEnvironment() *Improver {
+	re := &Improver{
 		binding:  env.binding,
 		height:   0,
-		observer: env.observer.rework,
+		observer: env.observer.improve,
 	}
 	re.base = re
 	return re
@@ -261,8 +261,6 @@ func (ce *callableExpr) Unparse() sx.Object {
 	args := sx.MakeList(ce.Args...)
 	return args.Cons(ce.Proc.(sx.Object))
 }
-
-func (ce *callableExpr) Improve(*ImproveEnvironment) Expr { return ce }
 
 func (ce *callableExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.Call(ce.Proc, ce.Args)

@@ -22,14 +22,14 @@ Evaluation works in three steps:
 
 1. The object is parsed according to the evaluation rules, resulting in an
    "expression" object (`sxeval.Expr`).
-2. Expression objects may be "reworked", into possibly simpler expression
+2. Expression objects may be "improved", into possibly simpler expression
    objects. For example, if a symbols's value cannot be changed, the symbol
    lookup can be replaced with its value.
 3. The expression is computed with respect to a given environment, resulting in
    an object.
 
 This separation allowed to pre-compute the structure of an object, resulting in
-possibly faster execution time or less memory to store. Parsing an reworking
+possibly faster execution time or less memory to store. Parsing an expression
 can be done in advance, while computing can be done much later.
 
 To make the steps of evaluation easier to handle, `sxeval` defines an

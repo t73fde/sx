@@ -374,8 +374,8 @@ type MakeListExpr struct{ Elem sxeval.Expr }
 func (mle MakeListExpr) Unparse() sx.Object { return sx.MakeList(mle.Elem.Unparse()) }
 
 // Improve the expression into a possible simpler one.
-func (mle MakeListExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
-	mle.Elem = re.Rework(mle.Elem)
+func (mle MakeListExpr) Improve(re *sxeval.Improver) sxeval.Expr {
+	mle.Elem = re.Improve(mle.Elem)
 	return mle
 }
 

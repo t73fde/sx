@@ -121,24 +121,24 @@ func (le *LetExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (le *LetExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
+func (le *LetExpr) Improve(re *sxeval.Improver) sxeval.Expr {
 	switch len(le.Vals) {
 	case 0:
-		return re.Rework(le.Body)
+		return re.Improve(le.Body)
 	case 1:
 		le1 := &Let1Expr{
 			Symbol: le.Symbols[0],
 			Value:  le.Vals[0],
 			Body:   le.Body,
 		}
-		return re.Rework(le1)
+		return re.Improve(le1)
 	}
-	letEnv := re.MakeChildEnvironment("let-rework", len(le.Vals))
+	letEnv := re.MakeChildImprover("let-improve", len(le.Vals))
 	for i, val := range le.Vals {
-		le.Vals[i] = re.Rework(val)
+		le.Vals[i] = re.Improve(val)
 		_ = letEnv.Bind(le.Symbols[i])
 	}
-	le.Body = letEnv.Rework(le.Body)
+	le.Body = letEnv.Improve(le.Body)
 	return le
 }
 
@@ -227,11 +227,11 @@ func (le1 *Let1Expr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (le1 *Let1Expr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
-	letEnv := re.MakeChildEnvironment("let1-rework", 1)
-	le1.Value = re.Rework(le1.Value)
+func (le1 *Let1Expr) Improve(re *sxeval.Improver) sxeval.Expr {
+	letEnv := re.MakeChildImprover("let1-improve", 1)
+	le1.Value = re.Improve(le1.Value)
 	_ = letEnv.Bind(le1.Symbol)
-	le1.Body = letEnv.Rework(le1.Body)
+	le1.Body = letEnv.Improve(le1.Body)
 	return le1
 }
 

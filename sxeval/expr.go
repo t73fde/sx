@@ -27,9 +27,6 @@ type Expr interface {
 	// Unparse the expression as an sx.Object
 	Unparse() sx.Object
 
-	// Improve the expression into a possible simpler one.
-	Improve(*ImproveEnvironment) Expr
-
 	// Compute the expression in a frame and return the result.
 	// It may have side-effects, on the given environment, or on the
 	// general environment of the system.
@@ -78,9 +75,6 @@ type nilExpr struct{}
 // Unparse the expression back into a form object.
 func (nilExpr) Unparse() sx.Object { return sx.Nil() }
 
-// Improve the expression into a possible simpler one.
-func (nilExpr) Improve(*ImproveEnvironment) Expr { return NilExpr }
-
 // Compute the expression in a frame and return the result.
 func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
 
@@ -97,9 +91,9 @@ type ObjExpr struct {
 func (oe ObjExpr) Unparse() sx.Object { return oe.Obj }
 
 // Improve the expression into a possible simpler one.
-func (oe ObjExpr) Improve(re *ImproveEnvironment) Expr {
+func (oe ObjExpr) Improve(re *Improver) Expr {
 	if obj := oe.Obj; sx.IsNil(obj) {
-		return re.Rework(NilExpr)
+		return re.Improve(NilExpr)
 	}
 	return oe
 }
@@ -145,18 +139,18 @@ func (use UnboundSymbolExpr) GetSymbol() *sx.Symbol { return use.sym }
 func (use UnboundSymbolExpr) Unparse() sx.Object { return use.sym }
 
 // Improve the expression into a possible simpler one.
-func (use UnboundSymbolExpr) Improve(re *ImproveEnvironment) Expr {
+func (use UnboundSymbolExpr) Improve(re *Improver) Expr {
 	obj, depth, isConst := re.Resolve(use.sym)
 	if depth == math.MinInt {
 		return use
 	}
 	if isConst {
-		return re.Rework(ObjExpr{Obj: obj})
+		return re.Improve(ObjExpr{Obj: obj})
 	}
 	if depth >= 0 {
-		return re.Rework(&LookupSymbolExpr{sym: use.sym, lvl: depth})
+		return re.Improve(&LookupSymbolExpr{sym: use.sym, lvl: depth})
 	}
-	return re.Rework(&ResolveSymbolExpr{sym: use.sym, skip: re.Height()})
+	return re.Improve(&ResolveSymbolExpr{sym: use.sym, skip: re.Height()})
 }
 
 // Compute the expression in a frame and return the result.
@@ -183,9 +177,6 @@ func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
 // Unparse the expression back into a form object.
 func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.sym }
 
-// Improve the expression into a possible simpler one.
-func (rse ResolveSymbolExpr) Improve(*ImproveEnvironment) Expr { return rse }
-
 // Compute the expression in a frame and return the result.
 func (rse ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.ResolveNWithError(rse.sym, rse.skip)
@@ -211,9 +202,6 @@ func (lse *LookupSymbolExpr) GetLevel() int { return lse.lvl }
 
 // Unparse the expression back into a form object.
 func (lse *LookupSymbolExpr) Unparse() sx.Object { return lse.sym }
-
-// Improve the expression into a possible simpler one.
-func (lse *LookupSymbolExpr) Improve(*ImproveEnvironment) Expr { return lse }
 
 // Compute the expression in a frame and return the result.
 func (lse *LookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
@@ -246,22 +234,22 @@ func (ce *CallExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (ce *CallExpr) Improve(re *ImproveEnvironment) Expr {
-	// If the ce.Proc is a builtin, rework to a BuiltinCallExpr.
+func (ce *CallExpr) Improve(re *Improver) Expr {
+	// If the ce.Proc is a builtin, improve to a BuiltinCallExpr.
 
-	proc := re.Rework(ce.Proc)
+	proc := re.Improve(ce.Proc)
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
 		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
 			bce := &BuiltinCallExpr{
 				Proc: b,
 				Args: ce.Args,
 			}
-			return re.Rework(bce)
+			return re.Improve(bce)
 		}
 	}
 	ce.Proc = proc
 	for i, arg := range ce.Args {
-		ce.Args[i] = re.Rework(arg)
+		ce.Args[i] = re.Improve(arg)
 	}
 	return ce
 }
@@ -363,7 +351,7 @@ func (bce *BuiltinCallExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (bce *BuiltinCallExpr) Improve(re *ImproveEnvironment) Expr {
+func (bce *BuiltinCallExpr) Improve(re *Improver) Expr {
 	// Improve checks if the Builtin is pure and if all args are
 	// constant sx.Object's. If this is true, it will call the builtin with
 	// the args. If no error was signaled, the result object will be used
@@ -372,7 +360,7 @@ func (bce *BuiltinCallExpr) Improve(re *ImproveEnvironment) Expr {
 	mayInline := true
 	args := make(sx.Vector, len(bce.Args))
 	for i, arg := range bce.Args {
-		expr := re.Rework(arg)
+		expr := re.Improve(arg)
 		if objExpr, isConstObject := expr.(ConstObjectExpr); isConstObject {
 			args[i] = objExpr.ConstObject()
 		} else {
@@ -387,7 +375,7 @@ func (bce *BuiltinCallExpr) Improve(re *ImproveEnvironment) Expr {
 	if err != nil {
 		return bce
 	}
-	return re.Rework(ObjExpr{Obj: result})
+	return re.Improve(ObjExpr{Obj: result})
 }
 
 // Compute the value of this expression in the given environment.

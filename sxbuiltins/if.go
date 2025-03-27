@@ -78,10 +78,10 @@ func (ife *IfExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (ife *IfExpr) Improve(re *sxeval.ImproveEnvironment) sxeval.Expr {
-	testExpr := re.Rework(ife.Test)
-	trueExpr := re.Rework(ife.True)
-	falseExpr := re.Rework(ife.False)
+func (ife *IfExpr) Improve(re *sxeval.Improver) sxeval.Expr {
+	testExpr := re.Improve(ife.Test)
+	trueExpr := re.Improve(ife.True)
+	falseExpr := re.Improve(ife.False)
 
 	// Check for nested IfExpr in testExpr
 	//
