@@ -221,12 +221,12 @@ func (le *LambdaExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (le *LambdaExpr) Improve(re *sxeval.Improver) sxeval.Expr {
+func (le *LambdaExpr) Improve(imp *sxeval.Improver) sxeval.Expr {
 	bindSize := len(le.Params)
 	if le.Rest != nil {
 		bindSize++
 	}
-	fnEnv := re.MakeChildImprover(le.Name+"-improve", bindSize)
+	fnEnv := imp.MakeChildImprover(le.Name+"-improve", bindSize)
 	for _, sym := range le.Params {
 		_ = fnEnv.Bind(sym)
 	}

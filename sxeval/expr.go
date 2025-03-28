@@ -91,9 +91,9 @@ type ObjExpr struct {
 func (oe ObjExpr) Unparse() sx.Object { return oe.Obj }
 
 // Improve the expression into a possible simpler one.
-func (oe ObjExpr) Improve(re *Improver) Expr {
+func (oe ObjExpr) Improve(imp *Improver) Expr {
 	if obj := oe.Obj; sx.IsNil(obj) {
-		return re.Improve(NilExpr)
+		return imp.Improve(NilExpr)
 	}
 	return oe
 }
@@ -139,18 +139,18 @@ func (use UnboundSymbolExpr) GetSymbol() *sx.Symbol { return use.sym }
 func (use UnboundSymbolExpr) Unparse() sx.Object { return use.sym }
 
 // Improve the expression into a possible simpler one.
-func (use UnboundSymbolExpr) Improve(re *Improver) Expr {
-	obj, depth, isConst := re.Resolve(use.sym)
+func (use UnboundSymbolExpr) Improve(imp *Improver) Expr {
+	obj, depth, isConst := imp.Resolve(use.sym)
 	if depth == math.MinInt {
 		return use
 	}
 	if isConst {
-		return re.Improve(ObjExpr{Obj: obj})
+		return imp.Improve(ObjExpr{Obj: obj})
 	}
 	if depth >= 0 {
-		return re.Improve(&LookupSymbolExpr{sym: use.sym, lvl: depth})
+		return imp.Improve(&LookupSymbolExpr{sym: use.sym, lvl: depth})
 	}
-	return re.Improve(&ResolveSymbolExpr{sym: use.sym, skip: re.Height()})
+	return imp.Improve(&ResolveSymbolExpr{sym: use.sym, skip: imp.Height()})
 }
 
 // Compute the expression in a frame and return the result.
@@ -234,30 +234,30 @@ func (ce *CallExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (ce *CallExpr) Improve(re *Improver) Expr {
+func (ce *CallExpr) Improve(imp *Improver) Expr {
 	// If the ce.Proc is a builtin, improve to a BuiltinCallExpr.
 
-	proc := re.Improve(ce.Proc)
+	proc := imp.Improve(ce.Proc)
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
 		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
 			bce := &BuiltinCallExpr{
 				Proc: b,
 				Args: ce.Args,
 			}
-			return re.Improve(bce)
+			return imp.Improve(bce)
 		}
 	}
 	ce.Proc = proc
 	for i, arg := range ce.Args {
-		ce.Args[i] = re.Improve(arg)
+		ce.Args[i] = imp.Improve(arg)
 	}
 	switch len(ce.Args) {
 	case 0:
-		return re.Improve(&Call0Expr{proc})
+		return imp.Improve(&Call0Expr{proc})
 	case 1:
-		return re.Improve(&Call1Expr{proc, ce.Args[0]})
+		return imp.Improve(&Call1Expr{proc, ce.Args[0]})
 	case 2:
-		return re.Improve(&Call2Expr{proc, ce.Args[0], ce.Args[1]})
+		return imp.Improve(&Call2Expr{proc, ce.Args[0], ce.Args[1]})
 	}
 	return ce
 }
@@ -364,16 +364,12 @@ func (e NotCallableError) Error() string {
 func (e NotCallableError) String() string { return e.Error() }
 
 // Call0Expr calls a procedure with no arg and returns the resulting objects.
-type Call0Expr struct {
-	Proc Expr
-}
+type Call0Expr struct{ Proc Expr }
 
 func (c0e *Call0Expr) String() string { return fmt.Sprintf("%v", c0e.Proc) }
 
 // Unparse the expression back into a form object.
-func (c1e *Call0Expr) Unparse() sx.Object {
-	return sx.MakeList(c1e.Proc.Unparse())
-}
+func (c0e *Call0Expr) Unparse() sx.Object { return sx.MakeList(c0e.Proc.Unparse()) }
 
 // Compute the expression in a frame and return the result.
 func (c0e *Call0Expr) Compute(env *Environment) (sx.Object, error) {
@@ -463,7 +459,7 @@ func (bce *BuiltinCallExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (bce *BuiltinCallExpr) Improve(re *Improver) Expr {
+func (bce *BuiltinCallExpr) Improve(imp *Improver) Expr {
 	// Improve checks if the Builtin is pure and if all args are
 	// constant sx.Object's. If this is true, it will call the builtin with
 	// the args. If no error was signaled, the result object will be used
@@ -472,7 +468,7 @@ func (bce *BuiltinCallExpr) Improve(re *Improver) Expr {
 	mayInline := true
 	args := make(sx.Vector, len(bce.Args))
 	for i, arg := range bce.Args {
-		expr := re.Improve(arg)
+		expr := imp.Improve(arg)
 		if objExpr, isConstObject := expr.(ConstObjectExpr); isConstObject {
 			args[i] = objExpr.ConstObject()
 		} else {
@@ -481,14 +477,14 @@ func (bce *BuiltinCallExpr) Improve(re *Improver) Expr {
 		bce.Args[i] = expr
 	}
 	if mayInline && bce.Proc.IsPure(args) {
-		if result, err := re.Call(bce.Proc, args); err == nil {
-			return re.Improve(ObjExpr{Obj: result})
+		if result, err := imp.Call(bce.Proc, args); err == nil {
+			return imp.Improve(ObjExpr{Obj: result})
 		}
 	}
 
 	switch len(bce.Args) {
 	case 2:
-		return re.Improve(&BuiltinCall2Expr{bce.Proc, bce.Args[0], bce.Args[1]})
+		return imp.Improve(&BuiltinCall2Expr{bce.Proc, bce.Args[0], bce.Args[1]})
 	}
 	return bce
 }
@@ -518,8 +514,33 @@ func (bce *BuiltinCall0Expr) Unparse() sx.Object {
 	return ce.Unparse()
 }
 
+// Improve the expression into a possible simpler one.
+func (bce *BuiltinCall0Expr) Improve(imp *Improver) Expr {
+	b := bce.Proc
+	minArity, maxArity := bce.Proc.MinArity, bce.Proc.MaxArity
+	if minArity == maxArity {
+		if minArity != 0 {
+			err := fmt.Errorf("exactly %d arguments required, but none given", minArity)
+			imp.SetError(CallError{Name: b.Name, Err: err})
+		}
+	} else if maxArity < 0 {
+		if 1 < minArity {
+			err := fmt.Errorf("at least %d arguments required, but none given", minArity)
+			imp.SetError(CallError{Name: b.Name, Err: err})
+		}
+	} else if 0 < minArity {
+		err := fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
+		imp.SetError(CallError{Name: b.Name, Err: err})
+	}
+	return bce
+}
+
 // Compute the value of this expression in the given environment.
-func (bce *BuiltinCall0Expr) Compute(env *Environment) (sx.Object, error) { return bce.Proc.Call0(env) }
+func (bce *BuiltinCall0Expr) Compute(env *Environment) (sx.Object, error) {
+	// return bce.Proc.Call0(env)
+	obj, err := bce.Proc.Fn0(env)
+	return bce.Proc.handleCallError(obj, err)
+}
 
 // Print the expression to a io.Writer.
 func (bce *BuiltinCall0Expr) Print(w io.Writer) (int, error) {
@@ -542,13 +563,36 @@ func (bce *BuiltinCall1Expr) Unparse() sx.Object {
 	return ce.Unparse()
 }
 
+// Improve the expression into a possible simpler one.
+func (bce *BuiltinCall1Expr) Improve(imp *Improver) Expr {
+	b := bce.Proc
+	minArity, maxArity := bce.Proc.MinArity, bce.Proc.MaxArity
+	if minArity == maxArity {
+		if minArity != 1 {
+			err := fmt.Errorf("exactly %d arguments required, but 1 given: [%v]", minArity, bce.Arg.Unparse())
+			imp.SetError(CallError{Name: b.Name, Err: err})
+		}
+	} else if maxArity < 0 {
+		if 1 < minArity {
+			err := fmt.Errorf("at least %d arguments required, but only 1 given: [%v]", minArity, bce.Arg.Unparse())
+			imp.SetError(CallError{Name: b.Name, Err: err})
+		}
+	} else if 1 < minArity || maxArity < 1 {
+		err := fmt.Errorf("between %d and %d arguments required, but 1 given: [%v]", minArity, maxArity, bce.Arg.Unparse())
+		imp.SetError(CallError{Name: b.Name, Err: err})
+	}
+	return bce
+}
+
 // Compute the value of this expression in the given environment.
 func (bce *BuiltinCall1Expr) Compute(env *Environment) (sx.Object, error) {
 	val, err := env.Execute(bce.Arg)
 	if err != nil {
 		return nil, err
 	}
-	return bce.Proc.Call1(env, val)
+	// return bce.Proc.Call1(env, val)
+	obj, err := bce.Proc.Fn1(env, val)
+	return bce.Proc.handleCallError(obj, err)
 }
 
 // Print the expression to a io.Writer.
@@ -575,6 +619,27 @@ func (bce *BuiltinCall2Expr) Unparse() sx.Object {
 	return ce.Unparse()
 }
 
+// Improve the expression into a possible simpler one.
+func (bce *BuiltinCall2Expr) Improve(imp *Improver) Expr {
+	b := bce.Proc
+	minArity, maxArity := bce.Proc.MinArity, bce.Proc.MaxArity
+	if minArity == maxArity {
+		if minArity != 2 {
+			err := fmt.Errorf("exactly %d arguments required, but 2 given: [%v %v]", minArity, bce.Arg0.Unparse(), bce.Arg1.Unparse())
+			imp.SetError(CallError{Name: b.Name, Err: err})
+		}
+	} else if maxArity < 0 {
+		if 2 < minArity {
+			err := fmt.Errorf("at least %d arguments required, but only 2 given: [%v %v]", minArity, bce.Arg0.Unparse(), bce.Arg1.Unparse())
+			imp.SetError(CallError{Name: b.Name, Err: err})
+		}
+	} else if 2 < minArity || maxArity < 2 {
+		err := fmt.Errorf("between %d and %d arguments required, but 2 given: [%v %v]", minArity, maxArity, bce.Arg0.Unparse(), bce.Arg1.Unparse())
+		imp.SetError(CallError{Name: b.Name, Err: err})
+	}
+	return bce
+}
+
 // Compute the value of this expression in the given environment.
 func (bce *BuiltinCall2Expr) Compute(env *Environment) (sx.Object, error) {
 	val0, err := env.Execute(bce.Arg0)
@@ -585,7 +650,9 @@ func (bce *BuiltinCall2Expr) Compute(env *Environment) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return bce.Proc.Call2(env, val0, val1)
+	// return bce.Proc.Call2(env, val0, val1)
+	obj, err := bce.Proc.Fn2(env, val0, val1)
+	return bce.Proc.handleCallError(obj, err)
 }
 
 // Print the expression to a io.Writer.

@@ -96,11 +96,11 @@ func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, _ sx.Object, expr 
 
 //----- ImproveObserver methods
 
-func (me *mainEngine) BeforeImprove(re *sxeval.Improver, expr sxeval.Expr) sxeval.Expr {
+func (me *mainEngine) BeforeImprove(imp *sxeval.Improver, expr sxeval.Expr) sxeval.Expr {
 	if me.logImprove {
 		spaces := strings.Repeat(" ", me.improveLevel)
 		me.improveLevel++
-		bind := re.Binding()
+		bind := imp.Binding()
 		fmt.Printf("%v;R%v %v<-%v ", spaces, me.improveLevel, bind, bind.Parent())
 		_, _ = expr.Print(os.Stdout)
 		fmt.Println()
@@ -108,10 +108,10 @@ func (me *mainEngine) BeforeImprove(re *sxeval.Improver, expr sxeval.Expr) sxeva
 	return expr
 }
 
-func (me *mainEngine) AfterImprove(re *sxeval.Improver, _, result sxeval.Expr) {
+func (me *mainEngine) AfterImprove(imp *sxeval.Improver, _, result sxeval.Expr) {
 	if me.logImprove {
 		spaces := strings.Repeat(" ", me.improveLevel-1)
-		bind := re.Binding()
+		bind := imp.Binding()
 		fmt.Printf("%v;S%v %v<-%v ", spaces, me.improveLevel, bind, bind.Parent())
 		_, _ = result.Print(os.Stdout)
 		fmt.Println()
@@ -339,7 +339,11 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			fmt.Println(";p", err)
 			continue
 		}
-		expr = env.Improve(expr)
+		expr, err = env.Improve(expr)
+		if err != nil {
+			fmt.Println(";i", err)
+			continue
+		}
 		if me.logReader {
 			fmt.Printf(";= ")
 			_, _ = expr.Print(os.Stdout)

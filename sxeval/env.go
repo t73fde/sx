@@ -107,9 +107,12 @@ func (env *Environment) RebindExecutionEnvironment(bind *Binding) *Environment {
 func (env *Environment) Eval(obj sx.Object) (sx.Object, error) {
 	expr, err := env.Parse(obj)
 	if err != nil {
-		return nil, err
+		return sx.Nil(), err
 	}
-	expr = env.Improve(expr)
+	expr, err = env.Improve(expr)
+	if err != nil {
+		return sx.Nil(), err
+	}
 	return env.Run(expr)
 }
 
@@ -120,8 +123,8 @@ func (env *Environment) Compile(obj sx.Object) (Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	re := env.MakeImproveEnvironment()
-	return re.Improve(expr), nil
+	imp := env.MakeImproveEnvironment()
+	return imp.Improve(expr), imp.err
 }
 
 // Parse the given object.
@@ -131,9 +134,9 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 }
 
 // Improve the given expression.
-func (env *Environment) Improve(expr Expr) Expr {
-	re := env.MakeImproveEnvironment()
-	return re.Improve(expr)
+func (env *Environment) Improve(expr Expr) (Expr, error) {
+	imp := env.MakeImproveEnvironment()
+	return imp.Improve(expr), imp.err
 }
 
 // Run the given expression.

@@ -30,7 +30,8 @@ type Improvable interface {
 type Improver struct {
 	base     *Improver
 	binding  *Binding // Current binding
-	height   int      // Height of current binding.
+	height   int      // Height of current binding
+	err      error
 	observer ImproveObserver
 }
 
@@ -45,65 +46,76 @@ type ImproveObserver interface {
 }
 
 // MakeChildImprover creates a subordinate improver with a new binding.
-func (re *Improver) MakeChildImprover(name string, baseSize int) *Improver {
+func (imp *Improver) MakeChildImprover(name string, baseSize int) *Improver {
 	return &Improver{
-		base:     re.base,
-		binding:  re.binding.MakeChildBinding(name, baseSize),
-		height:   re.height + 1,
-		observer: re.observer,
+		base:     imp.base,
+		binding:  imp.binding.MakeChildBinding(name, baseSize),
+		height:   imp.height + 1,
+		err:      imp.err,
+		observer: imp.observer,
 	}
 }
 
 // Improve the given expression. Do not call `expr.Improve()` directly.
-func (re *Improver) Improve(expr Expr) Expr {
-	if observer := re.observer; observer != nil {
-		expr2 := observer.BeforeImprove(re, expr)
+func (imp *Improver) Improve(expr Expr) Expr {
+	if imp.err != nil {
+		return expr
+	}
+	if observer := imp.observer; observer != nil {
+		expr2 := observer.BeforeImprove(imp, expr)
 		if iexpr2, ok := expr2.(Improvable); ok {
-			result := iexpr2.Improve(re)
-			observer.AfterImprove(re, expr2, result)
+			result := iexpr2.Improve(imp)
+			observer.AfterImprove(imp, expr2, result)
 			return result
 		}
-		observer.AfterImprove(re, expr2, expr2)
+		observer.AfterImprove(imp, expr2, expr2)
 		return expr2
 	}
 	if iexpr, ok := expr.(Improvable); ok {
-		return iexpr.Improve(re)
+		return iexpr.Improve(imp)
 	}
 	return expr
 }
 
 // Height returns the difference between the actual and the base height.
-func (re *Improver) Height() int { return re.height - re.base.height }
+func (imp *Improver) Height() int { return imp.height - imp.base.height }
 
 // Binding returns the binding of this environment.
-func (re *Improver) Binding() *Binding { return re.binding }
+func (imp *Improver) Binding() *Binding { return imp.binding }
+
+// SetError signals an error during improvement.
+func (imp *Improver) SetError(err error) {
+	if imp.err == nil {
+		imp.err = err
+	}
+}
 
 // Resolve the symbol into an object, and return the binding depth plus an
 // indication about the const-ness of the value. If the symbol could not be
 // resolved, depth has the value of `math.MinInt`. If the symbol was found
 // in the base environment, depth is set to -1, to indicate a possible unbound
 // situation.
-func (re *Improver) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
-	obj, b, depth := re.binding.resolveFull(sym)
+func (imp *Improver) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
+	obj, b, depth := imp.binding.resolveFull(sym)
 	if b == nil {
 		return nil, math.MinInt, false
 	}
-	if depth >= re.Height() {
+	if depth >= imp.Height() {
 		return obj, -1, b.IsFrozen()
 	}
 	return obj, depth, b.IsFrozen()
 }
 
 // Bind the undefined value to the symbol in the current environment.
-func (re *Improver) Bind(sym *sx.Symbol) error {
-	return re.binding.Bind(sym, sx.MakeUndefined())
+func (imp *Improver) Bind(sym *sx.Symbol) error {
+	return imp.binding.Bind(sym, sx.MakeUndefined())
 }
 
 // Call a function for constant folding.
 //
 // It is only called, if no full execution environment is needed, only a binding.
-func (re *Improver) Call(fn Callable, args sx.Vector) (sx.Object, error) {
-	env := MakeExecutionEnvironment(re.binding)
+func (imp *Improver) Call(fn Callable, args sx.Vector) (sx.Object, error) {
+	env := MakeExecutionEnvironment(imp.binding)
 	switch len(args) {
 	case 0:
 		return fn.Call0(env)

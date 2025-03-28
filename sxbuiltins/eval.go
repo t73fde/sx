@@ -55,11 +55,11 @@ var ImproveExpression = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		expr, err := GetExprObj(arg, 0)
 		if err != nil {
-			return nil, err
+			return sx.Nil(), err
 		}
-		improvedExpr := env.Improve(expr.GetExpr())
+		improvedExpr, err := env.Improve(expr.GetExpr())
 		if err != nil {
-			return nil, err
+			return sx.Nil(), err
 		}
 		return sxeval.MakeExprObj(improvedExpr), nil
 
@@ -73,7 +73,7 @@ var ImproveExpression = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		improvedExpr := env.RebindExecutionEnvironment(bind).Improve(expr.GetExpr())
+		improvedExpr, err := env.RebindExecutionEnvironment(bind).Improve(expr.GetExpr())
 		if err != nil {
 			return nil, err
 		}
