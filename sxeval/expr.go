@@ -251,29 +251,90 @@ func (ce *CallExpr) Improve(re *Improver) Expr {
 	for i, arg := range ce.Args {
 		ce.Args[i] = re.Improve(arg)
 	}
+	switch len(ce.Args) {
+	case 0:
+		return re.Improve(&Call0Expr{proc})
+	case 1:
+		return re.Improve(&Call1Expr{proc, ce.Args[0]})
+	case 2:
+		return re.Improve(&Call2Expr{proc, ce.Args[0], ce.Args[1]})
+	}
 	return ce
 }
 
 // Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {
-	val, err := env.Execute(ce.Proc)
+	proc, err := computeProc(env, ce.Proc)
 	if err != nil {
 		return nil, err
 	}
-	if sx.IsNil(val) {
-		return nil, NotCallableError{Obj: val}
-	}
-	proc, ok := val.(Callable)
-	if !ok {
-		return nil, NotCallableError{Obj: val}
-	}
-
 	return computeCallable(env, proc, ce.Args)
+}
+
+func computeProc(env *Environment, proc Expr) (Callable, error) {
+	val, err := env.Execute(proc)
+	if err != nil {
+		return nil, err
+	}
+	if !sx.IsNil(val) {
+		if proc, ok := val.(Callable); ok {
+			return proc, nil
+		}
+	}
+	return nil, NotCallableError{Obj: val}
+}
+
+func computeCallable(env *Environment, proc Callable, args []Expr) (sx.Object, error) {
+	switch numargs := len(args); numargs {
+	case 0:
+		return proc.Call0(env)
+	case 1:
+		arg, err := env.Execute(args[0])
+		if err != nil {
+			return nil, err
+		}
+		return proc.Call1(env, arg)
+	case 2:
+		return computeCallable2(env, proc, args[0], args[1])
+	default:
+		objArgs := make(sx.Vector, numargs)
+		for i, exprArg := range args {
+			val, err := env.Execute(exprArg)
+			if err != nil {
+				return val, err
+			}
+			objArgs[i] = val
+		}
+		return proc.Call(env, objArgs)
+	}
+}
+
+func computeCallable1(env *Environment, proc Callable, arg Expr) (sx.Object, error) {
+	val, err := env.Execute(arg)
+	if err != nil {
+		return nil, err
+	}
+	return proc.Call1(env, val)
+}
+func computeCallable2(env *Environment, proc Callable, arg0, arg1 Expr) (sx.Object, error) {
+	val0, err := env.Execute(arg0)
+	if err != nil {
+		return nil, err
+	}
+	val1, err := env.Execute(arg1)
+	if err != nil {
+		return nil, err
+	}
+	return proc.Call2(env, val0, val1)
 }
 
 // Print the expression on the given writer.
 func (ce *CallExpr) Print(w io.Writer) (int, error) {
-	length, err := io.WriteString(w, "{CALL ")
+	return ce.doPrint(w, "{CALL ")
+}
+
+func (ce *CallExpr) doPrint(w io.Writer, init string) (int, error) {
+	length, err := io.WriteString(w, init)
 	if err != nil {
 		return length, err
 	}
@@ -292,39 +353,6 @@ func (ce *CallExpr) Print(w io.Writer) (int, error) {
 	return length, err
 }
 
-func computeCallable(env *Environment, proc Callable, args []Expr) (sx.Object, error) {
-	switch numargs := len(args); numargs {
-	case 0:
-		return proc.Call0(env)
-	case 1:
-		arg, err := env.Execute(args[0])
-		if err != nil {
-			return nil, err
-		}
-		return proc.Call1(env, arg)
-	case 2:
-		arg0, err := env.Execute(args[0])
-		if err != nil {
-			return nil, err
-		}
-		arg1, err := env.Execute(args[1])
-		if err != nil {
-			return nil, err
-		}
-		return proc.Call2(env, arg0, arg1)
-	default:
-		objArgs := make(sx.Vector, numargs)
-		for i, exprArg := range args {
-			val, err := env.Execute(exprArg)
-			if err != nil {
-				return val, err
-			}
-			objArgs[i] = val
-		}
-		return proc.Call(env, objArgs)
-	}
-}
-
 // NotCallableError signals that a value cannot be called when it must be called.
 type NotCallableError struct {
 	Obj sx.Object
@@ -334,6 +362,90 @@ func (e NotCallableError) Error() string {
 	return fmt.Sprintf("not callable: %T/%v", e.Obj, e.Obj)
 }
 func (e NotCallableError) String() string { return e.Error() }
+
+// Call0Expr calls a procedure with no arg and returns the resulting objects.
+type Call0Expr struct {
+	Proc Expr
+}
+
+func (c0e *Call0Expr) String() string { return fmt.Sprintf("%v", c0e.Proc) }
+
+// Unparse the expression back into a form object.
+func (c1e *Call0Expr) Unparse() sx.Object {
+	return sx.MakeList(c1e.Proc.Unparse())
+}
+
+// Compute the expression in a frame and return the result.
+func (c0e *Call0Expr) Compute(env *Environment) (sx.Object, error) {
+	proc, err := computeProc(env, c0e.Proc)
+	if err != nil {
+		return nil, err
+	}
+	return proc.Call0(env)
+}
+
+// Print the expression on the given writer.
+func (c0e *Call0Expr) Print(w io.Writer) (int, error) {
+	ce := CallExpr{c0e.Proc, nil}
+	return ce.doPrint(w, "{CALL-0 ")
+}
+
+// Call1Expr calls a procedure with one arg and returns the resulting objects.
+type Call1Expr struct {
+	Proc Expr
+	Arg  Expr
+}
+
+func (c1e *Call1Expr) String() string { return fmt.Sprintf("%v %v", c1e.Proc, c1e.Arg) }
+
+// Unparse the expression back into a form object.
+func (c1e *Call1Expr) Unparse() sx.Object {
+	return sx.MakeList(c1e.Proc.Unparse(), c1e.Arg.Unparse())
+}
+
+// Compute the expression in a frame and return the result.
+func (c1e *Call1Expr) Compute(env *Environment) (sx.Object, error) {
+	proc, err := computeProc(env, c1e.Proc)
+	if err != nil {
+		return nil, err
+	}
+	return computeCallable1(env, proc, c1e.Arg)
+}
+
+// Print the expression on the given writer.
+func (c1e *Call1Expr) Print(w io.Writer) (int, error) {
+	ce := CallExpr{c1e.Proc, []Expr{c1e.Arg}}
+	return ce.doPrint(w, "{CALL-1 ")
+}
+
+// Call2Expr calls a procedure with two args and returns the resulting objects.
+type Call2Expr struct {
+	Proc Expr
+	Arg0 Expr
+	Arg1 Expr
+}
+
+func (c2e *Call2Expr) String() string { return fmt.Sprintf("%v %v %v", c2e.Proc, c2e.Arg0, c2e.Arg1) }
+
+// Unparse the expression back into a form object.
+func (c2e *Call2Expr) Unparse() sx.Object {
+	return sx.MakeList(c2e.Proc.Unparse(), c2e.Arg0.Unparse(), c2e.Arg1.Unparse())
+}
+
+// Compute the expression in a frame and return the result.
+func (c2e *Call2Expr) Compute(env *Environment) (sx.Object, error) {
+	proc, err := computeProc(env, c2e.Proc)
+	if err != nil {
+		return nil, err
+	}
+	return computeCallable2(env, proc, c2e.Arg0, c2e.Arg1)
+}
+
+// Print the expression on the given writer.
+func (c2e *Call2Expr) Print(w io.Writer) (int, error) {
+	ce := CallExpr{c2e.Proc, []Expr{c2e.Arg0, c2e.Arg1}}
+	return ce.doPrint(w, "{CALL-2 ")
+}
 
 // BuiltinCallExpr calls a builtin and returns the resulting object.
 // It is an optimization of `CallExpr.`
@@ -368,14 +480,17 @@ func (bce *BuiltinCallExpr) Improve(re *Improver) Expr {
 		}
 		bce.Args[i] = expr
 	}
-	if !mayInline || !bce.Proc.IsPure(args) {
-		return bce
+	if mayInline && bce.Proc.IsPure(args) {
+		if result, err := re.Call(bce.Proc, args); err == nil {
+			return re.Improve(ObjExpr{Obj: result})
+		}
 	}
-	result, err := re.Call(bce.Proc, args)
-	if err != nil {
-		return bce
+
+	switch len(bce.Args) {
+	case 2:
+		return re.Improve(&BuiltinCall2Expr{bce.Proc, bce.Args[0], bce.Args[1]})
 	}
-	return re.Improve(ObjExpr{Obj: result})
+	return bce
 }
 
 // Compute the value of this expression in the given environment.
@@ -385,23 +500,98 @@ func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
 
 // Print the expression to a io.Writer.
 func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {
-	length, err := io.WriteString(w, "{BCALL ")
+	ce := CallExpr{ObjExpr{bce.Proc}, bce.Args}
+	return ce.doPrint(w, "{BCALL ")
+}
+
+// BuiltinCall0Expr calls a builtin with no arg and returns the resulting object.
+// It is an optimization of `CallExpr.`
+type BuiltinCall0Expr struct {
+	Proc *Builtin
+}
+
+func (bce *BuiltinCall0Expr) String() string { return fmt.Sprintf("%v", bce.Proc) }
+
+// Unparse the expression back into a form object.
+func (bce *BuiltinCall0Expr) Unparse() sx.Object {
+	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: nil}
+	return ce.Unparse()
+}
+
+// Compute the value of this expression in the given environment.
+func (bce *BuiltinCall0Expr) Compute(env *Environment) (sx.Object, error) { return bce.Proc.Call0(env) }
+
+// Print the expression to a io.Writer.
+func (bce *BuiltinCall0Expr) Print(w io.Writer) (int, error) {
+	ce := CallExpr{ObjExpr{bce.Proc}, nil}
+	return ce.doPrint(w, "{BCALL-0 ")
+}
+
+// BuiltinCall1Expr calls a builtin with one arg and returns the resulting object.
+// It is an optimization of `CallExpr.`
+type BuiltinCall1Expr struct {
+	Proc *Builtin
+	Arg  Expr
+}
+
+func (bce *BuiltinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Arg) }
+
+// Unparse the expression back into a form object.
+func (bce *BuiltinCall1Expr) Unparse() sx.Object {
+	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg}}
+	return ce.Unparse()
+}
+
+// Compute the value of this expression in the given environment.
+func (bce *BuiltinCall1Expr) Compute(env *Environment) (sx.Object, error) {
+	val, err := env.Execute(bce.Arg)
 	if err != nil {
-		return length, err
+		return nil, err
 	}
-	l, err := sx.Print(w, bce.Proc)
-	length += l
+	return bce.Proc.Call1(env, val)
+}
+
+// Print the expression to a io.Writer.
+func (bce *BuiltinCall1Expr) Print(w io.Writer) (int, error) {
+	ce := CallExpr{ObjExpr{bce.Proc}, []Expr{bce.Arg}}
+	return ce.doPrint(w, "{BCALL-1 ")
+}
+
+// BuiltinCall2Expr calls a builtin with two args and returns the resulting object.
+// It is an optimization of `CallExpr.`
+type BuiltinCall2Expr struct {
+	Proc *Builtin
+	Arg0 Expr
+	Arg1 Expr
+}
+
+func (bce *BuiltinCall2Expr) String() string {
+	return fmt.Sprintf("%v %v %v", bce.Proc, bce.Arg0, bce.Arg1)
+}
+
+// Unparse the expression back into a form object.
+func (bce *BuiltinCall2Expr) Unparse() sx.Object {
+	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg0, bce.Arg1}}
+	return ce.Unparse()
+}
+
+// Compute the value of this expression in the given environment.
+func (bce *BuiltinCall2Expr) Compute(env *Environment) (sx.Object, error) {
+	val0, err := env.Execute(bce.Arg0)
 	if err != nil {
-		return length, err
+		return nil, err
 	}
-	l, err = PrintExprs(w, bce.Args)
-	length += l
+	val1, err := env.Execute(bce.Arg1)
 	if err != nil {
-		return length, err
+		return nil, err
 	}
-	l, err = io.WriteString(w, "}")
-	length += l
-	return length, err
+	return bce.Proc.Call2(env, val0, val1)
+}
+
+// Print the expression to a io.Writer.
+func (bce *BuiltinCall2Expr) Print(w io.Writer) (int, error) {
+	ce := CallExpr{ObjExpr{bce.Proc}, []Expr{bce.Arg0, bce.Arg1}}
+	return ce.doPrint(w, "{BCALL-2 ")
 }
 
 // --- ExprObj ---------------------------------------------------------------
