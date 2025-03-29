@@ -187,8 +187,8 @@ func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
 }
 
 func (b *Builtin) handleCallError(obj sx.Object, err error) (sx.Object, error) {
-	if err == nil || err == errExecuteAgain {
-		return obj, err
+	if err == nil {
+		return obj, nil
 	}
 	if !b.NoCallError {
 		var callError CallError

@@ -219,8 +219,8 @@ func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 	return nil, errExecuteAgain
 }
 
-// MacroCall executes the Callable in a macro environment.
-func (env *Environment) MacroCall(name string, fn Callable, args sx.Vector) (res sx.Object, err error) {
+// ApplyMacro executes the Callable in a macro environment.
+func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector) (res sx.Object, err error) {
 	macroEnv := Environment{
 		binding: env.binding.MakeChildBinding(name, 0),
 		tco: &tcodata{
@@ -229,11 +229,11 @@ func (env *Environment) MacroCall(name string, fn Callable, args sx.Vector) (res
 		},
 		observer: env.observer,
 	}
-	return macroEnv.Call(fn, args)
+	return macroEnv.Apply(fn, args)
 }
 
-// Call the given Callable with the arguments.
-func (env *Environment) Call(fn Callable, args sx.Vector) (res sx.Object, err error) {
+// Apply the given Callable with the arguments.
+func (env *Environment) Apply(fn Callable, args sx.Vector) (res sx.Object, err error) {
 	switch len(args) {
 	case 0:
 		res, err = fn.Call0(env)
@@ -250,26 +250,26 @@ func (env *Environment) Call(fn Callable, args sx.Vector) (res sx.Object, err er
 	if err == errExecuteAgain {
 		return env.tco.env.Execute(env.tco.expr)
 	}
-	return nil, env.addExecuteError(&callableExpr{Proc: fn, Args: args}, err)
+	return nil, env.addExecuteError(&applyExpr{Proc: fn, Args: args}, err)
 }
 
-type callableExpr struct {
+type applyExpr struct {
 	Proc Callable
 	Args sx.Vector
 }
 
-func (ce *callableExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
+func (ce *applyExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
 
-func (ce *callableExpr) Unparse() sx.Object {
+func (ce *applyExpr) Unparse() sx.Object {
 	args := sx.MakeList(ce.Args...)
 	return args.Cons(ce.Proc.(sx.Object))
 }
 
-func (ce *callableExpr) Compute(env *Environment) (sx.Object, error) {
-	return env.Call(ce.Proc, ce.Args)
+func (ce *applyExpr) Compute(env *Environment) (sx.Object, error) {
+	return env.Apply(ce.Proc, ce.Args)
 }
 
-func (ce *callableExpr) Print(w io.Writer) (int, error) {
+func (ce *applyExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{call %v %v}", ce.Proc, ce.Args)
 }
 

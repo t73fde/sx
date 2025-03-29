@@ -72,7 +72,7 @@ var Map = sxeval.Builtin{
 			return sx.Nil(), nil
 		}
 
-		val, err := env.Call(fn, sx.Vector{lst.Car()})
+		val, err := env.Apply(fn, sx.Vector{lst.Car()})
 		if err != nil {
 			return sx.Nil(), err
 		}
@@ -85,14 +85,14 @@ var Map = sxeval.Builtin{
 			}
 			pair, isPair := sx.GetPair(cdr2)
 			if !isPair {
-				val2, err2 := env.Call(fn, sx.Vector{cdr2})
+				val2, err2 := env.Apply(fn, sx.Vector{cdr2})
 				if err2 != nil {
 					return result, err2
 				}
 				curr.SetCdr(val2)
 				break
 			}
-			val2, err2 := env.Call(fn, sx.Vector{pair.Car()})
+			val2, err2 := env.Apply(fn, sx.Vector{pair.Car()})
 			if err2 != nil {
 				return result, err2
 			}
@@ -119,13 +119,13 @@ var Apply = sxeval.Builtin{
 			return nil, err
 		}
 		if lst == nil {
-			return env.Call(fn, nil)
+			return env.Apply(fn, nil)
 		}
 		args := sx.Vector{lst.Car()}
 		for node := lst; ; {
 			cdr := node.Cdr()
 			if sx.IsNil(cdr) {
-				return env.Call(fn, args)
+				return env.Apply(fn, args)
 			}
 			if next, isPair := sx.GetPair(cdr); isPair {
 				node = next
@@ -157,7 +157,7 @@ var Fold = sxeval.Builtin{
 		for node := lst; node != nil; {
 			params[0] = node.Car()
 			params[1] = res
-			res, err = env.Call(fn, params)
+			res, err = env.Apply(fn, params)
 			if err != nil {
 				return nil, err
 			}
@@ -195,7 +195,7 @@ var FoldReverse = sxeval.Builtin{
 		for node := rev; node != nil; {
 			params[0] = node.Car()
 			params[1] = res
-			res, err = env.Call(fn, params)
+			res, err = env.Apply(fn, params)
 			if err != nil {
 				return nil, err
 			}
