@@ -110,27 +110,26 @@ var Apply = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil, // Might be changed in the future
 	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+		fn, err := GetCallable(arg0, 0)
+		if err != nil {
+			return nil, err
+		}
 		lst, err := GetList(arg1, 1)
 		if err != nil {
 			return nil, err
 		}
-		callExpr := sxeval.CallExpr{
-			Proc: sxeval.ObjExpr{Obj: arg0},
-			Args: nil,
-		}
 		if lst == nil {
-			return env.ExecuteTCO(&callExpr)
+			return env.Call(fn, nil)
 		}
-		callExpr.Args = append(callExpr.Args, sxeval.ObjExpr{Obj: lst.Car()})
+		args := sx.Vector{lst.Car()}
 		for node := lst; ; {
 			cdr := node.Cdr()
 			if sx.IsNil(cdr) {
-				expr := env.MakeImproveEnvironment().Improve(&callExpr)
-				return env.ExecuteTCO(expr)
+				return env.Call(fn, args)
 			}
-			if next, ok2 := sx.GetPair(cdr); ok2 {
+			if next, isPair := sx.GetPair(cdr); isPair {
 				node = next
-				callExpr.Args = append(callExpr.Args, sxeval.ObjExpr{Obj: node.Car()})
+				args = append(args, node.Car())
 				continue
 			}
 			return nil, sx.ErrImproper{Pair: lst}
