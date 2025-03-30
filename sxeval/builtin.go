@@ -29,7 +29,8 @@ type Builtin struct {
 	// Minimum and maximum arity. If MaxArity < 0, maximum arity is unlimited
 	MinArity, MaxArity int16
 
-	// Test builtin to be independent of the environment and does not produce some side effect
+	// Test builtin to be independent of the environment and does not produce
+	// some side effect. Must return false when number of args does not match arity.
 	TestPure func(sx.Vector) bool
 
 	// The actual builtin function, with no argument
@@ -48,8 +49,14 @@ type Builtin struct {
 	NoCallError bool
 }
 
-// AssertPure is a TestPure function that alsways returns true.
+// AssertPure is a TestPure function that always returns true.
 func AssertPure(sx.Vector) bool { return true }
+
+// Assert1Arg is a TesTPure function that returns true if one arg is given
+func Assert1Arg(args sx.Vector) bool { return len(args) == 1 }
+
+// Assert2Arg is a TesTPure function that returns true if two args are given
+func Assert2Arg(args sx.Vector) bool { return len(args) == 2 }
 
 // --- Builtin methods to implement sx.Object
 
@@ -97,7 +104,7 @@ func (b *Builtin) Call0(env *Environment) (sx.Object, error) {
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 	obj, err := b.Fn0(env)
-	return b.handleCallError(obj, err)
+	return obj, b.handleCallError(err)
 }
 
 // Call1 the builtin function with the given environment and one argument.
@@ -119,7 +126,7 @@ func (b *Builtin) Call1(env *Environment, arg sx.Object) (sx.Object, error) {
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 	obj, err := b.Fn1(env, arg)
-	return b.handleCallError(obj, err)
+	return obj, b.handleCallError(err)
 }
 
 // Call2 the builtin function with the given environment and two arguments.
@@ -141,7 +148,7 @@ func (b *Builtin) Call2(env *Environment, arg0, arg1 sx.Object) (sx.Object, erro
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 	obj, err := b.Fn2(env, arg0, arg1)
-	return b.handleCallError(obj, err)
+	return obj, b.handleCallError(err)
 }
 
 // Call the builtin function with the given environment and arguments.
@@ -183,18 +190,13 @@ func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 	obj, err := b.Fn(env, args)
-	return b.handleCallError(obj, err)
+	return obj, b.handleCallError(err)
 }
 
-func (b *Builtin) handleCallError(obj sx.Object, err error) (sx.Object, error) {
-	if err == nil {
-		return obj, nil
+func (b *Builtin) handleCallError(err error) error {
+	var callError CallError
+	if err != nil && !b.NoCallError && !errors.As(err, &callError) {
+		return CallError{Name: b.Name, Err: err}
 	}
-	if !b.NoCallError {
-		var callError CallError
-		if !errors.As(err, &callError) {
-			err = CallError{Name: b.Name, Err: err}
-		}
-	}
-	return obj, err
+	return err
 }

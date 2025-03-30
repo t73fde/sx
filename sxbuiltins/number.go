@@ -25,7 +25,7 @@ var NumberP = sxeval.Builtin{
 	Name:     "number?",
 	MinArity: 1,
 	MaxArity: 1,
-	TestPure: sxeval.AssertPure,
+	TestPure: sxeval.Assert1Arg,
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		_, ok := sx.GetNumber(arg)
 		return sx.MakeBoolean(ok), nil
@@ -74,7 +74,7 @@ var Sub = sxeval.Builtin{
 	Name:     "-",
 	MinArity: 1,
 	MaxArity: -1,
-	TestPure: sxeval.AssertPure,
+	TestPure: func(args sx.Vector) bool { return len(args) > 0 },
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		num, err := GetNumber(arg, 0)
 		return sx.NumNeg(num), err
@@ -148,7 +148,7 @@ var Div = sxeval.Builtin{
 	Name:     "div",
 	MinArity: 2,
 	MaxArity: 2,
-	TestPure: sxeval.AssertPure,
+	TestPure: sxeval.Assert2Arg,
 	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
 		num0, err := GetNumber(arg0, 0)
 		if err != nil {
@@ -167,7 +167,7 @@ var Mod = sxeval.Builtin{
 	Name:     "mod",
 	MinArity: 2,
 	MaxArity: 2,
-	TestPure: sxeval.AssertPure,
+	TestPure: sxeval.Assert2Arg,
 	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
 		num0, err := GetNumber(arg0, 0)
 		if err != nil {

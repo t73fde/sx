@@ -124,7 +124,7 @@ func (env *Environment) Compile(obj sx.Object) (Expr, error) {
 		return nil, err
 	}
 	imp := env.MakeImproveEnvironment()
-	return imp.Improve(expr), imp.err
+	return imp.Improve(expr)
 }
 
 // Parse the given object.
@@ -136,7 +136,7 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 // Improve the given expression.
 func (env *Environment) Improve(expr Expr) (Expr, error) {
 	imp := env.MakeImproveEnvironment()
-	return imp.Improve(expr), imp.err
+	return imp.Improve(expr)
 }
 
 // Run the given expression.

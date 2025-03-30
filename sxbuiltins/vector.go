@@ -43,7 +43,7 @@ var VectorP = sxeval.Builtin{
 	Name:     "vector?",
 	MinArity: 1,
 	MaxArity: 1,
-	TestPure: sxeval.AssertPure,
+	TestPure: sxeval.Assert2Arg,
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		_, isVector := sx.GetVector(arg)
 		return sx.MakeBoolean(isVector), nil
@@ -55,7 +55,7 @@ var VectorSetBang = sxeval.Builtin{
 	Name:     "vset!",
 	MinArity: 3,
 	MaxArity: 3,
-	TestPure: sxeval.AssertPure,
+	TestPure: func(args sx.Vector) bool { return len(args) == 3 },
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		v, err := GetVector(args[0], 0)
 		if err != nil {
