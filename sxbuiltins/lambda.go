@@ -27,7 +27,7 @@ var CallableP = sxeval.Builtin{
 	Name:     "callable?",
 	MinArity: 1,
 	MaxArity: 1,
-	TestPure: sxeval.AssertPure,
+	TestPure: sxeval.Assert1Arg,
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		_, ok := sxeval.GetCallable(arg)
 		return sx.MakeBoolean(ok), nil
