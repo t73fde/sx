@@ -568,21 +568,12 @@ func unparsedArgs(args []Expr) []sx.Object {
 
 // Compile the expression.
 func (bce *BuiltinCallExpr) Compile(sxc *Compiler) error {
-	pos := sxc.curStack
 	for _, args := range bce.Args {
 		if err := sxc.Compile(args); err != nil {
 			return err
 		}
 	}
-	numArgs := len(bce.Args)
-	posArgs := pos + numArgs
-	sxc.AdjustStack(-numArgs + 1)
-	sxc.Emit(func(interp *Interpreter) error {
-		obj, err := bce.Proc.Fn(interp.env, interp.stack[pos:posArgs])
-		interp.Kill(numArgs - 1)
-		interp.Set(obj)
-		return err
-	}, "BCALL", strconv.Itoa(numArgs), bce.Proc.Name)
+	sxc.EmitBCall(bce.Proc, len(bce.Args))
 	return nil
 }
 
@@ -639,12 +630,7 @@ func (bce *BuiltinCall0Expr) Improve(*Improver) (Expr, error) {
 
 // Compile the expression.
 func (bce *BuiltinCall0Expr) Compile(sxc *Compiler) error {
-	sxc.AdjustStack(1)
-	sxc.Emit(func(interp *Interpreter) error {
-		obj, err := bce.Proc.Fn0(interp.env)
-		interp.Push(obj)
-		return err
-	}, "BCALL-0", bce.Proc.Name)
+	sxc.EmitBCall0(bce.Proc)
 	return nil
 }
 
@@ -701,11 +687,7 @@ func (bce *BuiltinCall1Expr) Compile(sxc *Compiler) error {
 	if err := sxc.Compile(bce.Arg); err != nil {
 		return err
 	}
-	sxc.Emit(func(interp *Interpreter) error {
-		obj, err := bce.Proc.Fn1(interp.env, interp.Top())
-		interp.Set(obj)
-		return err
-	}, "BCALL-1", bce.Proc.Name)
+	sxc.EmitBCall1(bce.Proc)
 	return nil
 }
 
@@ -773,13 +755,7 @@ func (bce *BuiltinCall2Expr) Compile(sxc *Compiler) error {
 	if err := sxc.Compile(bce.Arg1); err != nil {
 		return err
 	}
-	sxc.AdjustStack(-1)
-	sxc.Emit(func(interp *Interpreter) error {
-		val1, val0 := interp.Pop(), interp.Top()
-		obj, err := bce.Proc.Fn2(interp.env, val0, val1)
-		interp.Set(obj)
-		return err
-	}, "BCALL-2", bce.Proc.Name)
+	sxc.EmitBCall2(bce.Proc)
 	return nil
 }
 

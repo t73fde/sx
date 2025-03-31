@@ -73,6 +73,58 @@ func (sxc *Compiler) Emit(fn IFunc, s string, vals ...string) {
 	sxc.program = append(sxc.program, fn)
 }
 
+// TODO: EmitNOP that returns a patch function, to be used for jumps
+
+// EmitBCall emits an intruction to call a builtin with more than two args
+func (sxc *Compiler) EmitBCall(b *Builtin, nargs int) {
+	sxc.AdjustStack(-nargs + 1)
+	// TODO: cache fn
+	fn := func(interp *Interpreter) error {
+		sp := interp.sp
+		obj, err := b.Fn(interp.env, interp.stack[sp-nargs:sp])
+		interp.Kill(nargs - 1)
+		interp.Set(obj)
+		return err
+	}
+	sxc.Emit(fn, "BCALL", strconv.Itoa(nargs), b.Name)
+}
+
+// EmitBCall0 emits an intruction to call a builtin with no args
+func (sxc *Compiler) EmitBCall0(b *Builtin) {
+	sxc.AdjustStack(1)
+	// TODO: cache fn
+	fn := func(interp *Interpreter) error {
+		obj, err := b.Fn0(interp.env)
+		interp.Push(obj)
+		return err
+	}
+	sxc.Emit(fn, "BCALL-0", b.Name)
+}
+
+// EmitBCall1 emits an intruction to call a builtin with one arg
+func (sxc *Compiler) EmitBCall1(b *Builtin) {
+	// TODO: cache fn
+	fn := func(interp *Interpreter) error {
+		obj, err := b.Fn1(interp.env, interp.Top())
+		interp.Set(obj)
+		return err
+	}
+	sxc.Emit(fn, "BCALL-1", b.Name)
+}
+
+// EmitBCall2 emits an intruction to call a builtin with two args
+func (sxc *Compiler) EmitBCall2(b *Builtin) {
+	sxc.AdjustStack(-1)
+	// TODO: cache fn
+	fn := func(interp *Interpreter) error {
+		val1, val0 := interp.Pop(), interp.Top()
+		obj, err := b.Fn2(interp.env, val0, val1)
+		interp.Set(obj)
+		return err
+	}
+	sxc.Emit(fn, "BCALL-2", b.Name)
+}
+
 // MissingCompileError is signaled if an expression cannot be compiled
 type MissingCompileError struct {
 	Expr Expr // Expression unable to compile

@@ -93,7 +93,7 @@ func BenchmarkAddExec(b *testing.B) {
 
 	var stack []sx.Object
 	for b.Loop() {
-		stack = make([]sx.Object, 0, 3) // simulates the alloc of CompiledExpr
+		stack = make([]sx.Object, 0, 10) // simulates the alloc of CompiledExpr
 		_, _ = env.Run(expr)
 	}
 	if b == nil {
@@ -115,7 +115,10 @@ func BenchmarkAddCompiled(b *testing.B) {
 
 func prepareAddBenchmark() (*sxeval.Environment, sxeval.Expr) {
 	root := createBindingForTCO()
-	obj := sx.MakeList(sx.MakeSymbol("+"), sx.MakeSymbol("a"), sx.Int64(4), sx.Int64(11), sx.Int64(13))
+	obj := sx.MakeList(
+		sx.MakeSymbol("*"),
+		sx.MakeList(sx.MakeSymbol("+"), sx.MakeSymbol("a"), sx.Int64(4), sx.Int64(11), sx.Int64(13)),
+		sx.Int64(17))
 	env := sxeval.MakeExecutionEnvironment(root)
 	expr, err := env.Parse(obj)
 	if err != nil {
