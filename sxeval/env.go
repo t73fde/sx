@@ -119,7 +119,12 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 	if err != nil {
 		return expr, err
 	}
-	imp := env.MakeImproveEnvironment()
+	imp := &Improver{
+		binding:  env.binding,
+		height:   0,
+		observer: env.observer.improve,
+	}
+	imp.base = imp
 	return imp.Improve(expr)
 }
 
@@ -134,17 +139,6 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 		binding:  env.binding,
 		observer: env.observer.parse,
 	}
-}
-
-// MakeImproveEnvironment builds an environment to improve expression.
-func (env *Environment) MakeImproveEnvironment() *Improver {
-	re := &Improver{
-		binding:  env.binding,
-		height:   0,
-		observer: env.observer.improve,
-	}
-	re.base = re
-	return re
 }
 
 // NewLexicalEnvironment builds a new lexical environment with the given parent
