@@ -307,7 +307,11 @@ func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return computeCallable(env, proc, ce.Args)
+	objArgs, err := computeArgs(env, ce.Args)
+	if err != nil {
+		return nil, err
+	}
+	return proc.Call(env, objArgs)
 }
 
 func computeProc(env *Environment, proc Expr) (Callable, error) {
@@ -323,16 +327,16 @@ func computeProc(env *Environment, proc Expr) (Callable, error) {
 	return nil, NotCallableError{Obj: val}
 }
 
-func computeCallable(env *Environment, proc Callable, args []Expr) (sx.Object, error) {
+func computeArgs(env *Environment, args []Expr) (sx.Vector, error) {
 	objArgs := make(sx.Vector, len(args))
 	for i, exprArg := range args {
 		val, err := env.Execute(exprArg)
 		if err != nil {
-			return val, err
+			return nil, err
 		}
 		objArgs[i] = val
 	}
-	return proc.Call(env, objArgs)
+	return objArgs, nil
 }
 
 // Print the expression on the given writer.
@@ -513,7 +517,53 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 	case 2:
 		return imp.Improve(&BuiltinCall2Expr{bce.Proc, bce.Args[0], bce.Args[1]})
 	}
+
+	// Check arity
+	b := bce.Proc
+	nargs := len(bce.Args)
+	if nargs > math.MaxInt16 {
+		err := fmt.Errorf("more than %d arguments are not supported, but %d given", math.MaxInt16, nargs)
+		return nil, CallError{Name: b.Name, Err: err}
+	}
+	numArgs, minArity, maxArity := int16(nargs), b.MinArity, b.MaxArity
+	if minArity == maxArity {
+		if numArgs != minArity {
+			var err error
+			if numArgs == 0 {
+				err = fmt.Errorf("exactly %d arguments required, but none given", minArity)
+			} else {
+				err = fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, unparsedArgs(bce.Args))
+			}
+			return nil, CallError{Name: b.Name, Err: err}
+		}
+	} else if maxArity < 0 {
+		if numArgs < minArity {
+			var err error
+			if numArgs == 0 {
+				err = fmt.Errorf("at least %d arguments required, but none given", minArity)
+			} else {
+				err = fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, unparsedArgs(bce.Args))
+			}
+			return nil, CallError{Name: b.Name, Err: err}
+		}
+	} else if numArgs < minArity || maxArity < numArgs {
+		var err error
+		if numArgs == 0 {
+			err = fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
+		} else {
+			err = fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, unparsedArgs(bce.Args))
+		}
+		return nil, CallError{Name: b.Name, Err: err}
+	}
 	return bce, nil
+}
+
+func unparsedArgs(args []Expr) []sx.Object {
+	result := make([]sx.Object, len(args))
+	for i, arg := range args {
+		result[i] = arg.Unparse()
+	}
+	return result
 }
 
 // Compile the expression.
@@ -538,7 +588,12 @@ func (bce *BuiltinCallExpr) Compile(sxc *Compiler) error {
 
 // Compute the value of this expression in the given environment.
 func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
-	return computeCallable(env, bce.Proc, bce.Args)
+	objArgs, err := computeArgs(env, bce.Args)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := bce.Proc.Fn(env, objArgs)
+	return bce.Proc.handleCallError(obj, err)
 }
 
 // Print the expression to a io.Writer.
