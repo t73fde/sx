@@ -34,10 +34,6 @@ func BenchmarkEvenTCO(b *testing.B) {
 			if err != nil {
 				panic(err)
 			}
-			expr, err = env.Improve(expr)
-			if err != nil {
-				panic(err)
-			}
 			b.ResetTimer()
 			for b.Loop() {
 				_, _ = env.Run(expr)
@@ -55,10 +51,6 @@ func BenchmarkFac(b *testing.B) {
 	if err != nil {
 		panic(err)
 	}
-	expr, err = env.Improve(expr)
-	if err != nil {
-		panic(err)
-	}
 
 	for b.Loop() {
 		_, _ = env.Run(expr)
@@ -67,14 +59,10 @@ func BenchmarkFac(b *testing.B) {
 
 func BenchmarkFaa(b *testing.B) {
 	root := createBindingForTCO()
-	facSym := sx.MakeSymbol("faa")
-	obj := sx.MakeList(facSym, sx.Int64(20), sx.Int64(1))
+	faaSym := sx.MakeSymbol("faa")
+	obj := sx.MakeList(faaSym, sx.Int64(20), sx.Int64(1))
 	env := sxeval.MakeExecutionEnvironment(root)
 	expr, err := env.Parse(obj)
-	if err != nil {
-		panic(err)
-	}
-	expr, err = env.Improve(expr)
 	if err != nil {
 		panic(err)
 	}
@@ -86,14 +74,10 @@ func BenchmarkFaa(b *testing.B) {
 
 func BenchmarkFib(b *testing.B) {
 	root := createBindingForTCO()
-	facSym := sx.MakeSymbol("fib")
-	obj := sx.MakeList(facSym, sx.Int64(10))
+	fibSym := sx.MakeSymbol("fib")
+	obj := sx.MakeList(fibSym, sx.Int64(10))
 	env := sxeval.MakeExecutionEnvironment(root)
 	expr, err := env.Parse(obj)
-	if err != nil {
-		panic(err)
-	}
-	expr, err = env.Improve(expr)
 	if err != nil {
 		panic(err)
 	}

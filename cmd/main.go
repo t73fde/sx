@@ -166,25 +166,24 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.List2Vector,                     // list->vector
 	&sxbuiltins.Length, &sxbuiltins.LengthEqual, // length, length=
 	&sxbuiltins.LengthLess, &sxbuiltins.LengthGreater, // length<, length>
-	&sxbuiltins.Nth,                       // nth
-	&sxbuiltins.Sequence2List,             // ->list
-	&sxbuiltins.CallableP,                 // callable?
-	&sxbuiltins.Macroexpand0,              // macroexpand-0
-	&sxbuiltins.DefinedP,                  // defined?
-	&sxbuiltins.CurrentBinding,            // current-environment
-	&sxbuiltins.ParentBinding,             // parent-environment
-	&sxbuiltins.Bindings,                  // environment-bindings
-	&sxbuiltins.BoundP,                    // bound?
-	&sxbuiltins.BindingLookup,             // environment-lookup
-	&sxbuiltins.BindingResolve,            // environment-resolve
-	&sxbuiltins.Pretty,                    // pp
-	&sxbuiltins.Error,                     // error
-	&sxbuiltins.NotBoundError,             // not-bound-error
-	&sxbuiltins.ParseExpression,           // parse-expression
-	&sxbuiltins.ImproveExpression,         // improve-expression
-	&sxbuiltins.UnparseExpression,         // unparse-expression
-	&sxbuiltins.RunExpression,             // run-expression
-	&sxbuiltins.Compile, &sxbuiltins.Eval, // compile, eval
+	&sxbuiltins.Nth,               // nth
+	&sxbuiltins.Sequence2List,     // ->list
+	&sxbuiltins.CallableP,         // callable?
+	&sxbuiltins.Macroexpand0,      // macroexpand-0
+	&sxbuiltins.DefinedP,          // defined?
+	&sxbuiltins.CurrentBinding,    // current-environment
+	&sxbuiltins.ParentBinding,     // parent-environment
+	&sxbuiltins.Bindings,          // environment-bindings
+	&sxbuiltins.BoundP,            // bound?
+	&sxbuiltins.BindingLookup,     // environment-lookup
+	&sxbuiltins.BindingResolve,    // environment-resolve
+	&sxbuiltins.Pretty,            // pp
+	&sxbuiltins.Error,             // error
+	&sxbuiltins.NotBoundError,     // not-bound-error
+	&sxbuiltins.ParseExpression,   // parse-expression
+	&sxbuiltins.UnparseExpression, // unparse-expression
+	&sxbuiltins.RunExpression,     // run-expression
+	&sxbuiltins.Eval,              // eval
 	{
 		Name:     "panic",
 		MinArity: 0,
@@ -337,11 +336,6 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 		expr, err := env.Parse(obj)
 		if err != nil {
 			fmt.Println(";p", err)
-			continue
-		}
-		expr, err = env.Improve(expr)
-		if err != nil {
-			fmt.Println(";i", err)
 			continue
 		}
 		if me.logReader {

@@ -109,32 +109,16 @@ func (env *Environment) Eval(obj sx.Object) (sx.Object, error) {
 	if err != nil {
 		return sx.Nil(), err
 	}
-	expr, err = env.Improve(expr)
-	if err != nil {
-		return sx.Nil(), err
-	}
 	return env.Run(expr)
-}
-
-// Compile the given object and return the improved expression.
-func (env *Environment) Compile(obj sx.Object) (Expr, error) {
-	pe := env.MakeParseEnvironment()
-	expr, err := pe.Parse(obj)
-	if err != nil {
-		return nil, err
-	}
-	imp := env.MakeImproveEnvironment()
-	return imp.Improve(expr)
 }
 
 // Parse the given object.
 func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 	pe := env.MakeParseEnvironment()
-	return pe.Parse(obj)
-}
-
-// Improve the given expression.
-func (env *Environment) Improve(expr Expr) (Expr, error) {
+	expr, err := pe.Parse(obj)
+	if err != nil {
+		return expr, err
+	}
 	imp := env.MakeImproveEnvironment()
 	return imp.Improve(expr)
 }

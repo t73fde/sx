@@ -292,47 +292,15 @@ func computeProc(env *Environment, proc Expr) (Callable, error) {
 }
 
 func computeCallable(env *Environment, proc Callable, args []Expr) (sx.Object, error) {
-	switch numargs := len(args); numargs {
-	case 0:
-		return proc.Call0(env)
-	case 1:
-		arg, err := env.Execute(args[0])
+	objArgs := make(sx.Vector, len(args))
+	for i, exprArg := range args {
+		val, err := env.Execute(exprArg)
 		if err != nil {
-			return nil, err
+			return val, err
 		}
-		return proc.Call1(env, arg)
-	case 2:
-		return computeCallable2(env, proc, args[0], args[1])
-	default:
-		objArgs := make(sx.Vector, numargs)
-		for i, exprArg := range args {
-			val, err := env.Execute(exprArg)
-			if err != nil {
-				return val, err
-			}
-			objArgs[i] = val
-		}
-		return proc.Call(env, objArgs)
+		objArgs[i] = val
 	}
-}
-
-func computeCallable1(env *Environment, proc Callable, arg Expr) (sx.Object, error) {
-	val, err := env.Execute(arg)
-	if err != nil {
-		return nil, err
-	}
-	return proc.Call1(env, val)
-}
-func computeCallable2(env *Environment, proc Callable, arg0, arg1 Expr) (sx.Object, error) {
-	val0, err := env.Execute(arg0)
-	if err != nil {
-		return nil, err
-	}
-	val1, err := env.Execute(arg1)
-	if err != nil {
-		return nil, err
-	}
-	return proc.Call2(env, val0, val1)
+	return proc.Call(env, objArgs)
 }
 
 // Print the expression on the given writer.
@@ -412,7 +380,12 @@ func (c1e *Call1Expr) Compute(env *Environment) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return computeCallable1(env, proc, c1e.Arg)
+
+	val, err := env.Execute(c1e.Arg)
+	if err != nil {
+		return nil, err
+	}
+	return proc.Call1(env, val)
 }
 
 // Print the expression on the given writer.
@@ -441,7 +414,15 @@ func (c2e *Call2Expr) Compute(env *Environment) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return computeCallable2(env, proc, c2e.Arg0, c2e.Arg1)
+	val0, err := env.Execute(c2e.Arg0)
+	if err != nil {
+		return nil, err
+	}
+	val1, err := env.Execute(c2e.Arg1)
+	if err != nil {
+		return nil, err
+	}
+	return proc.Call2(env, val0, val1)
 }
 
 // Print the expression on the given writer.
@@ -551,7 +532,6 @@ func (bce *BuiltinCall0Expr) Improve(*Improver) (Expr, error) {
 
 // Compute the value of this expression in the given environment.
 func (bce *BuiltinCall0Expr) Compute(env *Environment) (sx.Object, error) {
-	// return bce.Proc.Call0(env)
 	obj, err := bce.Proc.Fn0(env)
 	return bce.Proc.handleCallError(obj, err)
 }
@@ -604,7 +584,7 @@ func (bce *BuiltinCall1Expr) Compute(env *Environment) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	// return bce.Proc.Call1(env, val)
+
 	obj, err := bce.Proc.Fn1(env, val)
 	return bce.Proc.handleCallError(obj, err)
 }
@@ -664,7 +644,7 @@ func (bce *BuiltinCall2Expr) Compute(env *Environment) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	// return bce.Proc.Call2(env, val0, val1)
+
 	obj, err := bce.Proc.Fn2(env, val0, val1)
 	return bce.Proc.handleCallError(obj, err)
 }

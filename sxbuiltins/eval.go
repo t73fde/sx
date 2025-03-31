@@ -45,42 +45,6 @@ var ParseExpression = sxeval.Builtin{
 	},
 }
 
-// ImproveExpression tries to improve the given expression into an expression
-// than is simpler to execute.
-var ImproveExpression = sxeval.Builtin{
-	Name:     "improve-expression",
-	MinArity: 1,
-	MaxArity: 2,
-	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
-		expr, err := GetExprObj(arg, 0)
-		if err != nil {
-			return sx.Nil(), err
-		}
-		improvedExpr, err := env.Improve(expr.GetExpr())
-		if err != nil {
-			return sx.Nil(), err
-		}
-		return sxeval.MakeExprObj(improvedExpr), nil
-
-	},
-	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		expr, err := GetExprObj(arg0, 0)
-		if err != nil {
-			return nil, err
-		}
-		bind, err := GetBinding(arg1, 1)
-		if err != nil {
-			return nil, err
-		}
-		improvedExpr, err := env.RebindExecutionEnvironment(bind).Improve(expr.GetExpr())
-		if err != nil {
-			return nil, err
-		}
-		return sxeval.MakeExprObj(improvedExpr), nil
-	},
-}
-
 // UnparseExpression produces a form object of a given expression.
 var UnparseExpression = sxeval.Builtin{
 	Name:     "unparse-expression",
@@ -126,32 +90,6 @@ var RunExpression = sxeval.Builtin{
 	},
 }
 
-// Compile the object into an expression. There is an optional environment.
-var Compile = sxeval.Builtin{
-	Name:     "compile",
-	MinArity: 1,
-	MaxArity: 2,
-	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
-		expr, err := env.Compile(arg)
-		if err != nil {
-			return nil, err
-		}
-		return sxeval.MakeExprObj(expr), nil
-	},
-	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		bind, err := GetBinding(arg1, 1)
-		if err != nil {
-			return nil, err
-		}
-		expr, err := env.RebindExecutionEnvironment(bind).Compile(arg0)
-		if err != nil {
-			return nil, err
-		}
-		return sxeval.MakeExprObj(expr), nil
-	},
-}
-
 // Eval evaluates the given object, in an optional environment.
 var Eval = sxeval.Builtin{
 	Name:     "eval",
@@ -183,5 +121,5 @@ func getEvalExpr(env *sxeval.Environment, arg sx.Object) (sxeval.Expr, error) {
 	if exprObj, isExpr := sxeval.GetExprObj(arg); isExpr {
 		return exprObj.GetExpr(), nil
 	}
-	return env.Compile(arg)
+	return env.Parse(arg)
 }
