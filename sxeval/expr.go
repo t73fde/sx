@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strconv"
 	"strings"
 
 	"t73f.de/r/sx"
@@ -78,6 +79,16 @@ func (nilExpr) Unparse() sx.Object { return sx.Nil() }
 // Compute the expression in a frame and return the result.
 func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
 
+// Compile the expression
+func (nilExpr) Compile(sxc *Compiler) error {
+	sxc.AdjustStack(1)
+	sxc.Emit(func(interp *Interpreter) error {
+		interp.Push(sx.Nil())
+		return nil
+	}, "PUSH-NIL")
+	return nil
+}
+
 // Print the expression on the given writer.
 func (nilExpr) Print(w io.Writer) (int, error) { return io.WriteString(w, "{NIL}") }
 func (nilExpr) ConstObject() sx.Object         { return sx.Nil() }
@@ -96,6 +107,16 @@ func (oe ObjExpr) Improve(imp *Improver) (Expr, error) {
 		return imp.Improve(NilExpr)
 	}
 	return oe, nil
+}
+
+// Compile the expression
+func (oe ObjExpr) Compile(sxc *Compiler) error {
+	sxc.AdjustStack(1)
+	sxc.Emit(func(interp *Interpreter) error {
+		interp.Push(oe.Obj)
+		return nil
+	}, "PUSH", oe.Obj.String())
+	return nil
 }
 
 // Compute the expression in a frame and return the result.
@@ -176,6 +197,17 @@ func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
 
 // Unparse the expression back into a form object.
 func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.sym }
+
+// Compile the expression
+func (rse ResolveSymbolExpr) Compile(sxc *Compiler) error {
+	sxc.AdjustStack(1)
+	sxc.Emit(func(interp *Interpreter) error {
+		obj, err := interp.env.ResolveNWithError(rse.sym, rse.skip)
+		interp.Push(obj)
+		return err
+	}, "RESOLVE", strconv.Itoa(rse.skip), rse.sym.String())
+	return nil
+}
 
 // Compute the expression in a frame and return the result.
 func (rse ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
@@ -484,6 +516,26 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 	return bce, nil
 }
 
+// Compile the expression.
+func (bce *BuiltinCallExpr) Compile(sxc *Compiler) error {
+	pos := sxc.curStack
+	for _, args := range bce.Args {
+		if err := sxc.Compile(args); err != nil {
+			return err
+		}
+	}
+	numArgs := len(bce.Args)
+	posArgs := pos + numArgs
+	sxc.AdjustStack(-numArgs + 1)
+	sxc.Emit(func(interp *Interpreter) error {
+		obj, err := bce.Proc.Fn(interp.env, interp.stack[pos:posArgs])
+		interp.Kill(numArgs - 1)
+		interp.Set(obj)
+		return err
+	}, "BCALL", strconv.Itoa(numArgs), bce.Proc.Name)
+	return nil
+}
+
 // Compute the value of this expression in the given environment.
 func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
 	return computeCallable(env, bce.Proc, bce.Args)
@@ -528,6 +580,17 @@ func (bce *BuiltinCall0Expr) Improve(*Improver) (Expr, error) {
 		return bce, CallError{Name: b.Name, Err: err}
 	}
 	return bce, nil
+}
+
+// Compile the expression.
+func (bce *BuiltinCall0Expr) Compile(sxc *Compiler) error {
+	sxc.AdjustStack(1)
+	sxc.Emit(func(interp *Interpreter) error {
+		obj, err := bce.Proc.Fn0(interp.env)
+		interp.Push(obj)
+		return err
+	}, "BCALL-0", bce.Proc.Name)
+	return nil
 }
 
 // Compute the value of this expression in the given environment.
@@ -576,6 +639,19 @@ func (bce *BuiltinCall1Expr) Improve(*Improver) (Expr, error) {
 		return bce, CallError{Name: b.Name, Err: err}
 	}
 	return bce, nil
+}
+
+// Compile the expression.
+func (bce *BuiltinCall1Expr) Compile(sxc *Compiler) error {
+	if err := sxc.Compile(bce.Arg); err != nil {
+		return err
+	}
+	sxc.Emit(func(interp *Interpreter) error {
+		obj, err := bce.Proc.Fn1(interp.env, interp.Top())
+		interp.Set(obj)
+		return err
+	}, "BCALL-1", bce.Proc.Name)
+	return nil
 }
 
 // Compute the value of this expression in the given environment.
@@ -632,6 +708,24 @@ func (bce *BuiltinCall2Expr) Improve(*Improver) (Expr, error) {
 		return bce, CallError{Name: b.Name, Err: err}
 	}
 	return bce, nil
+}
+
+// Compile the expression.
+func (bce *BuiltinCall2Expr) Compile(sxc *Compiler) error {
+	if err := sxc.Compile(bce.Arg0); err != nil {
+		return err
+	}
+	if err := sxc.Compile(bce.Arg1); err != nil {
+		return err
+	}
+	sxc.AdjustStack(-1)
+	sxc.Emit(func(interp *Interpreter) error {
+		val1, val0 := interp.Pop(), interp.Top()
+		obj, err := bce.Proc.Fn2(interp.env, val0, val1)
+		interp.Set(obj)
+		return err
+	}, "BCALL-2", bce.Proc.Name)
+	return nil
 }
 
 // Compute the value of this expression in the given environment.

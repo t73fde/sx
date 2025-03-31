@@ -14,6 +14,7 @@
 package sxeval_test
 
 import (
+	"log"
 	"strconv"
 	"testing"
 
@@ -85,4 +86,40 @@ func BenchmarkFib(b *testing.B) {
 	for b.Loop() {
 		_, _ = env.Run(expr)
 	}
+}
+
+func BenchmarkAddExec(b *testing.B) {
+	env, expr := prepareAddBenchmark()
+
+	var stack []sx.Object
+	for b.Loop() {
+		stack = make([]sx.Object, 0, 3) // simulates the alloc of CompiledExpr
+		_, _ = env.Run(expr)
+	}
+	if b == nil {
+		log.Println(stack)
+	}
+}
+
+func BenchmarkAddCompiled(b *testing.B) {
+	env, expr := prepareAddBenchmark()
+	expr, err := env.Compile(expr)
+	if err != nil {
+		panic(err)
+	}
+
+	for b.Loop() {
+		_, _ = env.Run(expr)
+	}
+}
+
+func prepareAddBenchmark() (*sxeval.Environment, sxeval.Expr) {
+	root := createBindingForTCO()
+	obj := sx.MakeList(sx.MakeSymbol("+"), sx.MakeSymbol("a"), sx.Int64(4), sx.Int64(11), sx.Int64(13))
+	env := sxeval.MakeExecutionEnvironment(root)
+	expr, err := env.Parse(obj)
+	if err != nil {
+		panic(err)
+	}
+	return env, expr
 }

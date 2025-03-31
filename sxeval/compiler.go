@@ -1,0 +1,135 @@
+//-----------------------------------------------------------------------------
+// Copyright (c) 2025-present Detlef Stern
+//
+// This file is part of sx.
+//
+// sx is licensed under the latest version of the EUPL (European Union
+// Public License). Please see file LICENSE.txt for your rights and obligations
+// under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2025-present Detlef Stern
+//-----------------------------------------------------------------------------
+
+package sxeval
+
+import (
+	"fmt"
+	"io"
+	"strconv"
+	"strings"
+
+	"t73f.de/r/sx"
+)
+
+// Compilable is an interface, Expr should implement if they support compilation.
+type Compilable interface {
+	Compile(*Compiler) error
+}
+
+// Compiler is the data to be used at compilation time.
+type Compiler struct {
+	env      *Environment
+	observer CompileObserver
+	program  []IFunc
+	curStack int
+	maxStack int
+}
+
+// CompileObserver monitors the inner workings of the compilation.
+type CompileObserver interface {
+	LogCompile(*Compiler, string, ...string)
+}
+
+// Stats returns some basic statistics of the Compiler: length of program,
+// current stack position, maximum stack position
+func (sxc *Compiler) Stats() (int, int, int) { return len(sxc.program), sxc.curStack, sxc.maxStack }
+
+// Compile the given expression. Do not call `expr.Compile()` directly.
+func (sxc *Compiler) Compile(expr Expr) error {
+	if iexpr, ok := expr.(Compilable); ok {
+		return iexpr.Compile(sxc)
+	}
+	return MissingCompileError{Expr: expr}
+}
+
+// AdjustStack to track the current (and maximum) position of the abstract stack pointer.
+func (sxc *Compiler) AdjustStack(offset int) {
+	sxc.curStack += offset
+	if sxc.curStack < 0 {
+		panic("negative stack position")
+	}
+	sxc.maxStack = max(sxc.maxStack, sxc.curStack)
+	if ob := sxc.observer; ob != nil {
+		ob.LogCompile(sxc, "ADJUST", strconv.Itoa(offset))
+	}
+}
+
+// Emit a threaded code.
+func (sxc *Compiler) Emit(fn IFunc, s string, vals ...string) {
+	if ob := sxc.observer; ob != nil {
+		ob.LogCompile(sxc, s, vals...)
+	}
+	sxc.program = append(sxc.program, fn)
+}
+
+// MissingCompileError is signaled if an expression cannot be compiled
+type MissingCompileError struct {
+	Expr Expr // Expression unable to compile
+}
+
+func (mc MissingCompileError) Error() string {
+	var sb strings.Builder
+	_, _ = sb.WriteString("unable to compile: ")
+	_, _ = mc.Expr.Print(&sb)
+	return sb.String()
+}
+
+// ----- CompiledExpr: the result of a compilation
+
+var _ Expr = (*CompiledExpr)(nil)
+
+// CompiledExpr is an expression that contains a program.
+type CompiledExpr struct {
+	program   []IFunc
+	stacksize int
+	source    Expr // Source of program
+}
+
+// Unparse the expression as an sx.Object
+func (comp *CompiledExpr) Unparse() sx.Object { return &ExprObj{expr: comp} }
+
+// Compute the expression in an environment and return the result.
+// It may have side-effects, on the given environment, or on the
+// general environment of the system.
+func (comp *CompiledExpr) Compute(env *Environment) (sx.Object, error) {
+	program := comp.program
+	ip := 0
+
+	interp := NewInterpreter(env, comp.stacksize)
+	for ip < len(program) {
+		err := program[ip](&interp)
+		if err != nil {
+			// TODO: ip recalc
+			return nil, err
+		}
+		ip++
+	}
+	return interp.stack[interp.sp-1], nil
+}
+
+// Print the expression on the given writer.
+func (comp *CompiledExpr) Print(w io.Writer) (int, error) {
+	length, err := fmt.Fprintf(w, "{COMPILED %d %d ", comp.stacksize, len(comp.program))
+	if err != nil {
+		return length, err
+	}
+	l, err := comp.source.Print(w)
+	length += l
+	if err != nil {
+		return length, err
+	}
+	l, err = io.WriteString(w, "}")
+	length += l
+	return length, err
+}

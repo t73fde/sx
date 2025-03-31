@@ -34,6 +34,7 @@ type mainEngine struct {
 	logReader    bool
 	logParse     bool
 	logImprove   bool
+	logCompile   bool
 	logExpr      bool
 	logExecutor  bool
 	parseLevel   int
@@ -119,6 +120,19 @@ func (me *mainEngine) AfterImprove(imp *sxeval.Improver, _, result sxeval.Expr, 
 	}
 }
 
+// ---- CompileObserver methods
+
+func (me *mainEngine) LogCompile(sxc *sxeval.Compiler, s string, vals ...string) {
+	if me.logCompile {
+		pc, curPos, maxPos := sxc.Stats()
+		fmt.Printf(";C %d %d %d: %s", maxPos, curPos, pc, s)
+		for _, val := range vals {
+			fmt.Print(" ", val)
+		}
+		fmt.Println()
+	}
+}
+
 var specials = []*sxeval.Special{
 	&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
@@ -171,12 +185,12 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.CallableP,         // callable?
 	&sxbuiltins.Macroexpand0,      // macroexpand-0
 	&sxbuiltins.DefinedP,          // defined?
-	&sxbuiltins.CurrentBinding,    // current-environment
-	&sxbuiltins.ParentBinding,     // parent-environment
+	&sxbuiltins.CurrentBinding,    // current-binding
+	&sxbuiltins.ParentBinding,     // parent-binding
 	&sxbuiltins.Bindings,          // environment-bindings
 	&sxbuiltins.BoundP,            // bound?
-	&sxbuiltins.BindingLookup,     // environment-lookup
-	&sxbuiltins.BindingResolve,    // environment-resolve
+	&sxbuiltins.BindingLookup,     // binding-lookup
+	&sxbuiltins.BindingResolve,    // binding-resolve
 	&sxbuiltins.Pretty,            // pp
 	&sxbuiltins.Error,             // error
 	&sxbuiltins.NotBoundError,     // not-bound-error
@@ -229,6 +243,17 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 		Fn0: func(*sxeval.Environment) (sx.Object, error) {
 			res := me.logImprove
 			me.logImprove = !res
+			return sx.MakeBoolean(res), nil
+		},
+	})
+	_ = root.BindBuiltin(&sxeval.Builtin{
+		Name:     "log-compile",
+		MinArity: 0,
+		MaxArity: 0,
+		TestPure: nil,
+		Fn0: func(*sxeval.Environment) (sx.Object, error) {
+			res := me.logCompile
+			me.logCompile = !res
 			return sx.MakeBoolean(res), nil
 		},
 	})
@@ -287,6 +312,7 @@ func main() {
 		logReader:   true,
 		logParse:    true,
 		logImprove:  true,
+		logCompile:  true,
 		logExpr:     false,
 		logExecutor: true,
 	}
@@ -300,6 +326,11 @@ func main() {
 	bind := root.MakeChildBinding("repl", 1024)
 	_ = bind.Bind(sx.MakeSymbol("root-binding"), root)
 	_ = bind.Bind(sx.MakeSymbol("repl-binding"), bind)
+
+	// Good to disable const checking
+	_ = bind.Bind(sx.MakeSymbol("a"), sx.Int64(3))
+	_ = bind.Bind(sx.MakeSymbol("b"), sx.Int64(4))
+	_ = bind.Bind(sx.MakeSymbol("c"), sx.Int64(11))
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -320,7 +351,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 
 	for {
 		env := sxeval.MakeExecutionEnvironment(bind)
-		env.SetExecutor(me).SetParseObserver(me).SetImproveObserver(me)
+		env.SetExecutor(me).SetParseObserver(me).SetImproveObserver(me).SetCompileObserver(me)
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {
@@ -337,6 +368,12 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 		if err != nil {
 			fmt.Println(";p", err)
 			continue
+		}
+		expr2, err := env.Compile(expr)
+		if err == nil {
+			expr = expr2
+		} else {
+			fmt.Println(";c", err)
 		}
 		if me.logReader {
 			fmt.Printf(";= ")

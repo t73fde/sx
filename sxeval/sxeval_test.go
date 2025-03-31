@@ -126,6 +126,9 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 
 ;; Naive fibonacci
 (defun fib (n) (if (<= n 1) 1 (+ (fib (- n 1)) (fib (- n 2)))))
+
+;; Variable to disable constant folding
+(defvar a 3)
 `
 
 func createBindingForTCO() *sxeval.Binding {

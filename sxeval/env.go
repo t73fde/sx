@@ -40,6 +40,7 @@ type observer struct {
 	execute ExecuteObserver
 	parse   ParseObserver
 	improve ImproveObserver
+	compile CompileObserver
 }
 
 // ExecuteObserver observes the execution of expressions.
@@ -67,6 +68,7 @@ func MakeExecutionEnvironment(bind *Binding) *Environment {
 			execute: nil,
 			parse:   nil,
 			improve: nil,
+			compile: nil,
 		},
 	}
 }
@@ -86,6 +88,12 @@ func (env *Environment) SetParseObserver(observe ParseObserver) *Environment {
 // SetImproveObserver sets the given improve observer.
 func (env *Environment) SetImproveObserver(observe ImproveObserver) *Environment {
 	env.newObserver().improve = observe
+	return env
+}
+
+// SetCompileObserver sets the given compile observer.
+func (env *Environment) SetCompileObserver(observe CompileObserver) *Environment {
+	env.newObserver().compile = observe
 	return env
 }
 
@@ -121,6 +129,28 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 	}
 	imp := env.MakeImproveEnvironment()
 	return imp.Improve(expr)
+}
+
+// Compile the expression
+func (env *Environment) Compile(expr Expr) (Expr, error) {
+	sxc := Compiler{
+		env:      env,
+		observer: env.observer.compile,
+		program:  nil,
+		curStack: 0,
+		maxStack: 0,
+	}
+	if err := sxc.Compile(expr); err != nil {
+		return nil, err
+	}
+	if sxc.curStack != 1 {
+		panic(fmt.Sprintf("wrong stack position: %d", sxc.curStack))
+	}
+	return &CompiledExpr{
+		program:   sxc.program,
+		stacksize: sxc.maxStack,
+		source:    expr,
+	}, nil
 }
 
 // Run the given expression.
