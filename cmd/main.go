@@ -108,11 +108,11 @@ func (me *mainEngine) BeforeImprove(imp *sxeval.Improver, expr sxeval.Expr) sxev
 	return expr
 }
 
-func (me *mainEngine) AfterImprove(imp *sxeval.Improver, _, result sxeval.Expr) {
+func (me *mainEngine) AfterImprove(imp *sxeval.Improver, _, result sxeval.Expr, err error) {
 	if me.logImprove {
 		spaces := strings.Repeat(" ", me.improveLevel-1)
 		bind := imp.Binding()
-		fmt.Printf("%v;S%v %v<-%v ", spaces, me.improveLevel, bind, bind.Parent())
+		fmt.Printf("%v;S%v %v<-%v %v ", spaces, me.improveLevel, bind, bind.Parent(), err)
 		_, _ = result.Print(os.Stdout)
 		fmt.Println()
 		me.improveLevel--

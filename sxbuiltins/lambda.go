@@ -221,7 +221,7 @@ func (le *LambdaExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (le *LambdaExpr) Improve(imp *sxeval.Improver) sxeval.Expr {
+func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	bindSize := len(le.Params)
 	if le.Rest != nil {
 		bindSize++
@@ -234,8 +234,11 @@ func (le *LambdaExpr) Improve(imp *sxeval.Improver) sxeval.Expr {
 		_ = fnEnv.Bind(rest)
 	}
 
-	le.Expr = fnEnv.Improve(le.Expr)
-	return le
+	expr, err := fnEnv.Improve(le.Expr)
+	if err == nil {
+		le.Expr = expr
+	}
+	return le, err
 }
 
 // Compute the expression in a frame and return the result.

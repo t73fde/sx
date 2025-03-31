@@ -23,7 +23,7 @@ import (
 // improved to simple ones.
 type Improvable interface {
 	// Improve the expression into a possible simpler one.
-	Improve(*Improver) Expr
+	Improve(*Improver) (Expr, error)
 }
 
 // Improver guides the improve operation.
@@ -31,7 +31,6 @@ type Improver struct {
 	base     *Improver
 	binding  *Binding // Current binding
 	height   int      // Height of current binding
-	err      error
 	observer ImproveObserver
 }
 
@@ -42,7 +41,7 @@ type ImproveObserver interface {
 
 	// AfterImprove is called after the given expression was improved to a
 	// possibly simpler one.
-	AfterImprove(*Improver, Expr, Expr)
+	AfterImprove(*Improver, Expr, Expr, error)
 }
 
 // MakeChildImprover creates a subordinate improver with a new binding.
@@ -51,30 +50,26 @@ func (imp *Improver) MakeChildImprover(name string, baseSize int) *Improver {
 		base:     imp.base,
 		binding:  imp.binding.MakeChildBinding(name, baseSize),
 		height:   imp.height + 1,
-		err:      imp.err,
 		observer: imp.observer,
 	}
 }
 
 // Improve the given expression. Do not call `expr.Improve()` directly.
-func (imp *Improver) Improve(expr Expr) Expr {
-	if imp.err != nil {
-		return expr
-	}
+func (imp *Improver) Improve(expr Expr) (Expr, error) {
 	if observer := imp.observer; observer != nil {
 		expr2 := observer.BeforeImprove(imp, expr)
 		if iexpr2, ok := expr2.(Improvable); ok {
-			result := iexpr2.Improve(imp)
-			observer.AfterImprove(imp, expr2, result)
-			return result
+			result, err := iexpr2.Improve(imp)
+			observer.AfterImprove(imp, expr2, result, err)
+			return result, err
 		}
-		observer.AfterImprove(imp, expr2, expr2)
-		return expr2
+		observer.AfterImprove(imp, expr2, expr2, nil)
+		return expr2, nil
 	}
 	if iexpr, ok := expr.(Improvable); ok {
 		return iexpr.Improve(imp)
 	}
-	return expr
+	return expr, nil
 }
 
 // Height returns the difference between the actual and the base height.
@@ -82,13 +77,6 @@ func (imp *Improver) Height() int { return imp.height - imp.base.height }
 
 // Binding returns the binding of this environment.
 func (imp *Improver) Binding() *Binding { return imp.binding }
-
-// SetError signals an error during improvement.
-func (imp *Improver) SetError(err error) {
-	if imp.err == nil {
-		imp.err = err
-	}
-}
 
 // Resolve the symbol into an object, and return the binding depth plus an
 // indication about the const-ness of the value. If the symbol could not be

@@ -76,15 +76,18 @@ func (be *BeginExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (be *BeginExpr) Improve(imp *sxeval.Improver) sxeval.Expr {
-	last := imp.Improve(be.Last)
+func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
+	last, err := imp.Improve(be.Last)
 	frontLen := len(be.Front)
 	if frontLen == 0 {
-		return last
+		return last, err
 	}
 	seq := make([]sxeval.Expr, 0, frontLen)
 	for _, expr := range be.Front {
-		re := imp.Improve(expr)
+		re, err2 := imp.Improve(expr)
+		if err2 != nil {
+			return be, err
+		}
 		if _, isConstObject := re.(sxeval.ConstObjectExpr); isConstObject {
 			// A constant object has no side effect, it can be ignored in the sequence
 			continue
@@ -96,7 +99,7 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) sxeval.Expr {
 		seq = append(seq, re)
 	}
 	if seqLen := len(seq); seqLen == 0 {
-		return last
+		return last, nil
 	} else if seqLen == cap(be.Front) {
 		copy(be.Front, seq)
 	} else {
@@ -105,7 +108,7 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) sxeval.Expr {
 		be.Front = newFront
 	}
 	be.Last = last
-	return be
+	return be, nil
 }
 
 // Compute the expression in a frame and return the result.
