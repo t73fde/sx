@@ -78,15 +78,18 @@ func (be *BeginExpr) Unparse() sx.Object {
 // Improve the expression into a possible simpler one.
 func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	last, err := imp.Improve(be.Last)
+	if err != nil {
+		return be, err
+	}
 	frontLen := len(be.Front)
 	if frontLen == 0 {
-		return last, err
+		return last, nil
 	}
 	seq := make([]sxeval.Expr, 0, frontLen)
 	for _, expr := range be.Front {
 		re, err2 := imp.Improve(expr)
 		if err2 != nil {
-			return be, err
+			return be, err2
 		}
 		if _, isConstObject := re.(sxeval.ConstObjectExpr); isConstObject {
 			// A constant object has no side effect, it can be ignored in the sequence
