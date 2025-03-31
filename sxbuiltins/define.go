@@ -161,7 +161,7 @@ func (se *SetXExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	if err == nil {
 		se.Val = expr
 	}
-	return se, nil
+	return se, err
 }
 
 // Compute the expression in a frame and return the result.
