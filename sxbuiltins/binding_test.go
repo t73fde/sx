@@ -97,7 +97,7 @@ var tcsBinding = tTestCases{
 	{
 		name:    "err-lookup-3-noenv",
 		src:     "(binding-lookup 'a (current-binding) 1)",
-		exp:     "{[{binding-lookup: between 1 and 2 arguments required, but 3 given: [a #<binding:err-lookup-3-noenv/0> 1]}]}",
+		exp:     "{[{binding-lookup: between 1 and 2 arguments required, but 3 given: [a (#<builtin:current-binding>) 1]}]}",
 		withErr: true,
 	},
 	{name: "lookup-b", src: "(binding-lookup 'b)", exp: "#<undefined>"},
@@ -128,7 +128,7 @@ var tcsBinding = tTestCases{
 	{
 		name:    "err-resolve-3-noenv",
 		src:     "(binding-resolve 'a (current-binding) 1)",
-		exp:     "{[{binding-resolve: between 1 and 2 arguments required, but 3 given: [a #<binding:err-resolve-3-noenv/0> 1]}]}",
+		exp:     "{[{binding-resolve: between 1 and 2 arguments required, but 3 given: [a (#<builtin:current-binding>) 1]}]}",
 		withErr: true,
 	},
 	{name: "resolve-b", src: "(binding-resolve 'b)", exp: "11"},
