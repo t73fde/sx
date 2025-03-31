@@ -37,7 +37,7 @@ func cmpMakeBuiltin(name string, cmpFn func(int) bool) sxeval.Builtin {
 		Name:     name,
 		MinArity: 2,
 		MaxArity: -1,
-		TestPure: func(args sx.Vector) bool { return len(args) >= 2 },
+		TestPure: sxeval.AssertPure,
 		Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
 			num0, err := GetNumber(arg0, 0)
 			if err != nil {

@@ -27,7 +27,7 @@ var CallableP = sxeval.Builtin{
 	Name:     "callable?",
 	MinArity: 1,
 	MaxArity: 1,
-	TestPure: sxeval.Assert1Arg,
+	TestPure: sxeval.AssertPure,
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		_, ok := sxeval.GetCallable(arg)
 		return sx.MakeBoolean(ok), nil
@@ -221,7 +221,7 @@ func (le *LambdaExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
+func (le *LambdaExpr) Improve(imp *sxeval.Improver) sxeval.Expr {
 	bindSize := len(le.Params)
 	if le.Rest != nil {
 		bindSize++
@@ -234,11 +234,8 @@ func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		_ = fnEnv.Bind(rest)
 	}
 
-	expr, err := fnEnv.Improve(le.Expr)
-	if err == nil {
-		le.Expr = expr
-	}
-	return le, err
+	le.Expr = fnEnv.Improve(le.Expr)
+	return le
 }
 
 // Compute the expression in a frame and return the result.

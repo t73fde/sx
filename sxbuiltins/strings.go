@@ -25,7 +25,7 @@ var ToString = sxeval.Builtin{
 	Name:     "->string",
 	MinArity: 1,
 	MaxArity: 1,
-	TestPure: sxeval.Assert1Arg,
+	TestPure: sxeval.AssertPure,
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		if s, isString := sx.GetString(arg); isString {
 			return s, nil

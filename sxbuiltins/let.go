@@ -121,7 +121,7 @@ func (le *LetExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
+func (le *LetExpr) Improve(imp *sxeval.Improver) sxeval.Expr {
 	switch len(le.Vals) {
 	case 0:
 		return imp.Improve(le.Body)
@@ -135,18 +135,11 @@ func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	}
 	letEnv := imp.MakeChildImprover("let-improve", len(le.Vals))
 	for i, val := range le.Vals {
-		expr, err := imp.Improve(val)
-		if err != nil {
-			return le, err
-		}
-		le.Vals[i] = expr
+		le.Vals[i] = imp.Improve(val)
 		_ = letEnv.Bind(le.Symbols[i])
 	}
-	expr, err := letEnv.Improve(le.Body)
-	if err == nil {
-		le.Body = expr
-	}
-	return le, err
+	le.Body = letEnv.Improve(le.Body)
+	return le
 }
 
 // Compute the expression in a frame and return the result.
@@ -234,17 +227,12 @@ func (le1 *Let1Expr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (le1 *Let1Expr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
+func (le1 *Let1Expr) Improve(imp *sxeval.Improver) sxeval.Expr {
 	letEnv := imp.MakeChildImprover("let1-improve", 1)
-	expr, err := imp.Improve(le1.Value)
-	if err == nil {
-		le1.Value = expr
-		_ = letEnv.Bind(le1.Symbol)
-		if expr, err = letEnv.Improve(le1.Body); err == nil {
-			le1.Body = expr
-		}
-	}
-	return le1, err
+	le1.Value = imp.Improve(le1.Value)
+	_ = letEnv.Bind(le1.Symbol)
+	le1.Body = letEnv.Improve(le1.Body)
+	return le1
 }
 
 // Compute the expression in a frame and return the result.

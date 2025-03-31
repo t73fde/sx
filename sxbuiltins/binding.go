@@ -55,7 +55,7 @@ var Bindings = sxeval.Builtin{
 	Name:     "bindings",
 	MinArity: 1,
 	MaxArity: 1,
-	TestPure: func(args sx.Vector) bool { return len(args) == 1 },
+	TestPure: sxeval.AssertPure,
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		bind, err := GetBinding(arg, 0)
 		if err != nil {

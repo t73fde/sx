@@ -78,19 +78,10 @@ func (ife *IfExpr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (ife *IfExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
-	testExpr, err := imp.Improve(ife.Test)
-	if err != nil {
-		return ife, err
-	}
-	trueExpr, err := imp.Improve(ife.True)
-	if err != nil {
-		return ife, err
-	}
-	falseExpr, err := imp.Improve(ife.False)
-	if err != nil {
-		return ife, err
-	}
+func (ife *IfExpr) Improve(imp *sxeval.Improver) sxeval.Expr {
+	testExpr := imp.Improve(ife.Test)
+	trueExpr := imp.Improve(ife.True)
+	falseExpr := imp.Improve(ife.False)
 
 	// Check for nested IfExpr in testExpr
 	//
@@ -114,9 +105,9 @@ func (ife *IfExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 			falseIsTrue := sx.IsTrue(nestedFalseExpr.ConstObject())
 			switch {
 			case trueIsTrue && falseIsTrue:
-				return trueExpr, nil
+				return trueExpr
 			case !trueIsTrue && !falseIsTrue:
-				return falseExpr, nil
+				return falseExpr
 			case trueIsTrue && !falseIsTrue:
 				testExpr = nestedIfe.Test
 			default /* !trueIsTrue && falseIsTrue */ :
@@ -129,15 +120,15 @@ func (ife *IfExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	// Check for constant condition
 	if objectExpr, isConstObject := sxeval.GetConstExpr(testExpr); isConstObject {
 		if sx.IsTrue(objectExpr.ConstObject()) {
-			return trueExpr, nil
+			return trueExpr
 		}
-		return falseExpr, nil
+		return falseExpr
 	}
 
 	ife.Test = testExpr
 	ife.True = trueExpr
 	ife.False = falseExpr
-	return ife, nil
+	return ife
 }
 
 // Compute the expression in a frame and return the result.
