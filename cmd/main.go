@@ -210,6 +210,15 @@ var builtins = []*sxeval.Builtin{
 			panic(arg)
 		},
 	},
+	{
+		Name:     "stack",
+		MinArity: 0,
+		MaxArity: 0,
+		TestPure: nil,
+		Fn0: func(env *sxeval.Environment) (sx.Object, error) {
+			return env.Stack(), nil
+		},
+	},
 }
 
 func (me *mainEngine) bindOwn(root *sxeval.Binding) {

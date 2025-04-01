@@ -14,7 +14,6 @@
 package sxeval_test
 
 import (
-	"log"
 	"strconv"
 	"testing"
 
@@ -91,13 +90,8 @@ func BenchmarkFib(b *testing.B) {
 func BenchmarkAddExec(b *testing.B) {
 	env, expr := prepareAddBenchmark()
 
-	var stack []sx.Object
 	for b.Loop() {
-		stack = make([]sx.Object, 0, 10) // simulates the alloc of CompiledExpr
 		_, _ = env.Run(expr)
-	}
-	if b == nil {
-		log.Println(stack)
 	}
 }
 
@@ -110,6 +104,9 @@ func BenchmarkAddCompiled(b *testing.B) {
 
 	for b.Loop() {
 		_, _ = env.Run(expr)
+	}
+	if stack := env.Stack(); len(stack) > 0 {
+		b.Error("stack not empty", stack)
 	}
 }
 

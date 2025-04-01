@@ -28,6 +28,7 @@ type Environment struct {
 	binding  *Binding
 	tco      *tcodata
 	observer *observer
+	stack    sx.Vector
 }
 
 // tcodata contains everything to implement Tail Call Optimization (tco)
@@ -70,6 +71,7 @@ func MakeExecutionEnvironment(bind *Binding) *Environment {
 			improve: nil,
 			compile: nil,
 		},
+		stack: nil,
 	}
 }
 
@@ -417,4 +419,44 @@ func (e NotBoundError) Error() string {
 		second = true
 	}
 	return sb.String()
+}
+
+// ----- Threaded code infrastructure, mostly stack operations
+
+// Reset the stack.
+func (env *Environment) Reset() {
+	if env.stack != nil {
+		env.stack = env.stack[:0]
+	}
+}
+
+// Stack returns the stack.
+func (env *Environment) Stack() sx.Vector { return env.stack }
+
+// Push a value to the stack
+func (env *Environment) Push(val sx.Object) {
+	env.stack = append(env.stack, val)
+}
+
+// Pop a value from the stack
+func (env *Environment) Pop() sx.Object {
+	sp := len(env.stack) - 1
+	val := env.stack[sp]
+	env.stack = env.stack[0:sp]
+	return val
+}
+
+// Top returns the value on top of the stack
+func (env *Environment) Top() sx.Object { return env.stack[len(env.stack)-1] }
+
+// Set the value on top of the stack
+func (env *Environment) Set(val sx.Object) { env.stack[len(env.stack)-1] = val }
+
+// Kill some elements on the stack
+func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-num] }
+
+// Args returns a given number of values on top of the stack as a slice.
+func (env *Environment) Args(numargs int) sx.Vector {
+	sp := len(env.stack)
+	return env.stack[sp-numargs : sp]
 }

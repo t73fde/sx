@@ -75,51 +75,50 @@ func (sxc *Compiler) Emit(fn IFunc, s string, vals ...string) {
 
 // TODO: EmitNOP that returns a patch function, to be used for jumps
 
-// EmitBCall emits an intruction to call a builtin with more than two args
-func (sxc *Compiler) EmitBCall(b *Builtin, nargs int) {
-	sxc.AdjustStack(-nargs + 1)
+// EmitBCall emits an instruction to call a builtin with more than two args
+func (sxc *Compiler) EmitBCall(b *Builtin, numargs int) {
+	sxc.AdjustStack(-numargs + 1)
 	// TODO: cache fn
-	fn := func(interp *Interpreter) error {
-		sp := interp.sp
-		obj, err := b.Fn(interp.env, interp.stack[sp-nargs:sp])
-		interp.Kill(nargs - 1)
-		interp.Set(obj)
+	fn := func(env *Environment) error {
+		obj, err := b.Fn(env, env.Args(numargs))
+		env.Kill(numargs - 1)
+		env.Set(obj)
 		return err
 	}
-	sxc.Emit(fn, "BCALL", strconv.Itoa(nargs), b.Name)
+	sxc.Emit(fn, "BCALL", strconv.Itoa(numargs), b.Name)
 }
 
-// EmitBCall0 emits an intruction to call a builtin with no args
+// EmitBCall0 emits an instruction to call a builtin with no args
 func (sxc *Compiler) EmitBCall0(b *Builtin) {
 	sxc.AdjustStack(1)
 	// TODO: cache fn
-	fn := func(interp *Interpreter) error {
-		obj, err := b.Fn0(interp.env)
-		interp.Push(obj)
+	fn := func(env *Environment) error {
+		obj, err := b.Fn0(env)
+		env.Push(obj)
 		return err
 	}
 	sxc.Emit(fn, "BCALL-0", b.Name)
 }
 
-// EmitBCall1 emits an intruction to call a builtin with one arg
+// EmitBCall1 emits an instruction to call a builtin with one arg
 func (sxc *Compiler) EmitBCall1(b *Builtin) {
 	// TODO: cache fn
-	fn := func(interp *Interpreter) error {
-		obj, err := b.Fn1(interp.env, interp.Top())
-		interp.Set(obj)
+	fn := func(env *Environment) error {
+		obj, err := b.Fn1(env, env.Top())
+		env.Set(obj)
 		return err
 	}
 	sxc.Emit(fn, "BCALL-1", b.Name)
 }
 
-// EmitBCall2 emits an intruction to call a builtin with two args
+// EmitBCall2 emits an instruction to call a builtin with two args
 func (sxc *Compiler) EmitBCall2(b *Builtin) {
 	sxc.AdjustStack(-1)
 	// TODO: cache fn
-	fn := func(interp *Interpreter) error {
-		val1, val0 := interp.Pop(), interp.Top()
-		obj, err := b.Fn2(interp.env, val0, val1)
-		interp.Set(obj)
+	fn := func(env *Environment) error {
+		val1, val0 := env.Pop(), env.Top()
+		obj, err := b.Fn2(env, val0, val1)
+		env.Set(obj)
 		return err
 	}
 	sxc.Emit(fn, "BCALL-2", b.Name)
@@ -148,6 +147,9 @@ type CompiledExpr struct {
 	source    Expr // Source of program
 }
 
+// IFunc is a compiled command.
+type IFunc func(*Environment) error
+
 // Unparse the expression as an sx.Object
 func (comp *CompiledExpr) Unparse() sx.Object { return &ExprObj{expr: comp} }
 
@@ -158,16 +160,15 @@ func (comp *CompiledExpr) Compute(env *Environment) (sx.Object, error) {
 	program := comp.program
 	ip := 0
 
-	interp := NewInterpreter(env, comp.stacksize)
 	for ip < len(program) {
-		err := program[ip](&interp)
+		err := program[ip](env)
 		if err != nil {
 			// TODO: ip recalc
 			return nil, err
 		}
 		ip++
 	}
-	return interp.stack[interp.sp-1], nil
+	return env.Pop(), nil
 }
 
 // Print the expression on the given writer.

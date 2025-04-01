@@ -82,8 +82,8 @@ func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
 // Compile the expression
 func (nilExpr) Compile(sxc *Compiler) error {
 	sxc.AdjustStack(1)
-	sxc.Emit(func(interp *Interpreter) error {
-		interp.Push(sx.Nil())
+	sxc.Emit(func(env *Environment) error {
+		env.Push(sx.Nil())
 		return nil
 	}, "PUSH-NIL")
 	return nil
@@ -112,8 +112,8 @@ func (oe ObjExpr) Improve(imp *Improver) (Expr, error) {
 // Compile the expression
 func (oe ObjExpr) Compile(sxc *Compiler) error {
 	sxc.AdjustStack(1)
-	sxc.Emit(func(interp *Interpreter) error {
-		interp.Push(oe.Obj)
+	sxc.Emit(func(env *Environment) error {
+		env.Push(oe.Obj)
 		return nil
 	}, "PUSH", oe.Obj.String())
 	return nil
@@ -201,9 +201,9 @@ func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.sym }
 // Compile the expression
 func (rse ResolveSymbolExpr) Compile(sxc *Compiler) error {
 	sxc.AdjustStack(1)
-	sxc.Emit(func(interp *Interpreter) error {
-		obj, err := interp.env.ResolveNWithError(rse.sym, rse.skip)
-		interp.Push(obj)
+	sxc.Emit(func(env *Environment) error {
+		obj, err := env.ResolveNWithError(rse.sym, rse.skip)
+		env.Push(obj)
 		return err
 	}, "RESOLVE", strconv.Itoa(rse.skip), rse.sym.String())
 	return nil
