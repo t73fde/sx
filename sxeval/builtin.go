@@ -97,7 +97,7 @@ func (b *Builtin) Call0(env *Environment) (sx.Object, error) {
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 	obj, err := b.Fn0(env)
-	return b.handleCallError(obj, err)
+	return obj, b.handleCallError(err)
 }
 
 // Call1 the builtin function with the given environment and one argument.
@@ -119,7 +119,7 @@ func (b *Builtin) Call1(env *Environment, arg sx.Object) (sx.Object, error) {
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 	obj, err := b.Fn1(env, arg)
-	return b.handleCallError(obj, err)
+	return obj, b.handleCallError(err)
 }
 
 // Call2 the builtin function with the given environment and two arguments.
@@ -141,7 +141,7 @@ func (b *Builtin) Call2(env *Environment, arg0, arg1 sx.Object) (sx.Object, erro
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 	obj, err := b.Fn2(env, arg0, arg1)
-	return b.handleCallError(obj, err)
+	return obj, b.handleCallError(err)
 }
 
 // Call the builtin function with the given environment and arguments.
@@ -183,15 +183,15 @@ func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
 		return nil, CallError{Name: b.Name, Err: err}
 	}
 	obj, err := b.Fn(env, args)
-	return b.handleCallError(obj, err)
+	return obj, b.handleCallError(err)
 }
 
-func (b *Builtin) handleCallError(obj sx.Object, err error) (sx.Object, error) {
+func (b *Builtin) handleCallError(err error) error {
 	if err != nil && !b.NoCallError {
 		var callError CallError
 		if !errors.As(err, &callError) {
 			err = CallError{Name: b.Name, Err: err}
 		}
 	}
-	return obj, err
+	return err
 }

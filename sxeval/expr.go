@@ -541,7 +541,7 @@ func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
 		return nil, err
 	}
 	obj, err := bce.Proc.Fn(env, objArgs)
-	return bce.Proc.handleCallError(obj, err)
+	return obj, bce.Proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
@@ -588,7 +588,7 @@ func (bce *BuiltinCall0Expr) Improve(*Improver) (Expr, error) {
 // Compute the value of this expression in the given environment.
 func (bce *BuiltinCall0Expr) Compute(env *Environment) (sx.Object, error) {
 	obj, err := bce.Proc.Fn0(env)
-	return bce.Proc.handleCallError(obj, err)
+	return obj, bce.Proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
@@ -641,7 +641,7 @@ func (bce *BuiltinCall1Expr) Compute(env *Environment) (sx.Object, error) {
 	}
 
 	obj, err := bce.Proc.Fn1(env, val)
-	return bce.Proc.handleCallError(obj, err)
+	return obj, bce.Proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
@@ -701,7 +701,7 @@ func (bce *BuiltinCall2Expr) Compute(env *Environment) (sx.Object, error) {
 	}
 
 	obj, err := bce.Proc.Fn2(env, val0, val1)
-	return bce.Proc.handleCallError(obj, err)
+	return obj, bce.Proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
