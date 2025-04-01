@@ -141,8 +141,6 @@ func (mc MissingCompileError) Error() string {
 
 // ----- CompiledExpr: the result of a compilation
 
-var _ Expr = (*CompiledExpr)(nil)
-
 // CompiledExpr is an expression that contains a program.
 type CompiledExpr struct {
 	program   []Instruction
@@ -151,13 +149,16 @@ type CompiledExpr struct {
 }
 
 // Unparse the expression as an sx.Object
-func (comp *CompiledExpr) Unparse() sx.Object { return &ExprObj{expr: comp} }
+func (cpe *CompiledExpr) Unparse() sx.Object { return &ExprObj{expr: cpe} }
+
+// Compile the expression: nothing to do since it is already compiled.
+func (cpe *CompiledExpr) Compile(*Compiler) error { return nil }
 
 // Compute the expression in an environment and return the result.
 // It may have side-effects, on the given environment, or on the
 // general environment of the system.
-func (comp *CompiledExpr) Compute(env *Environment) (sx.Object, error) {
-	program := comp.program
+func (cpe *CompiledExpr) Compute(env *Environment) (sx.Object, error) {
+	program := cpe.program
 	ip := 0
 
 	for ip < len(program) {
@@ -172,12 +173,12 @@ func (comp *CompiledExpr) Compute(env *Environment) (sx.Object, error) {
 }
 
 // Print the expression on the given writer.
-func (comp *CompiledExpr) Print(w io.Writer) (int, error) {
-	length, err := fmt.Fprintf(w, "{COMPILED %d %d ", comp.stacksize, len(comp.program))
+func (cpe *CompiledExpr) Print(w io.Writer) (int, error) {
+	length, err := fmt.Fprintf(w, "{COMPILED %d %d ", cpe.stacksize, len(cpe.program))
 	if err != nil {
 		return length, err
 	}
-	l, err := comp.source.Print(w)
+	l, err := cpe.source.Print(w)
 	length += l
 	if err != nil {
 		return length, err
