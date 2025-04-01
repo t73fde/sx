@@ -31,10 +31,13 @@ type Compilable interface {
 type Compiler struct {
 	env      *Environment
 	observer CompileObserver
-	program  []IFunc
+	program  []Instruction
 	curStack int
 	maxStack int
 }
+
+// Instruction is a compiled command to execute one aspect of an expression.
+type Instruction func(*Environment) error
 
 // CompileObserver monitors the inner workings of the compilation.
 type CompileObserver interface {
@@ -66,7 +69,7 @@ func (sxc *Compiler) AdjustStack(offset int) {
 }
 
 // Emit a threaded code.
-func (sxc *Compiler) Emit(fn IFunc, s string, vals ...string) {
+func (sxc *Compiler) Emit(fn Instruction, s string, vals ...string) {
 	if ob := sxc.observer; ob != nil {
 		ob.LogCompile(sxc, s, vals...)
 	}
@@ -142,13 +145,10 @@ var _ Expr = (*CompiledExpr)(nil)
 
 // CompiledExpr is an expression that contains a program.
 type CompiledExpr struct {
-	program   []IFunc
+	program   []Instruction
 	stacksize int
 	source    Expr // Source of program
 }
-
-// IFunc is a compiled command.
-type IFunc func(*Environment) error
 
 // Unparse the expression as an sx.Object
 func (comp *CompiledExpr) Unparse() sx.Object { return &ExprObj{expr: comp} }
