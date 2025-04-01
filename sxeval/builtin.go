@@ -80,110 +80,113 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 
 // Call0 the builtin function with the given environment and no arguments.
 func (b *Builtin) Call0(env *Environment) (sx.Object, error) {
-	// Check arity
-	minArity, maxArity := b.MinArity, b.MaxArity
-	if minArity == maxArity {
-		if minArity != 0 {
-			err := fmt.Errorf("exactly %d arguments required, but none given", minArity)
-			return nil, CallError{Name: b.Name, Err: err}
-		}
-	} else if maxArity < 0 {
-		if 0 < minArity {
-			err := fmt.Errorf("at least %d arguments required, but none given", minArity)
-			return nil, CallError{Name: b.Name, Err: err}
-		}
-	} else if 0 < minArity {
-		err := fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
-		return nil, CallError{Name: b.Name, Err: err}
+	if err := b.CheckCall0Arity(); err != nil {
+		return sx.Nil(), b.handleCallError(err)
 	}
 	obj, err := b.Fn0(env)
 	return obj, b.handleCallError(err)
 }
 
-// Call1 the builtin function with the given environment and one argument.
-func (b *Builtin) Call1(env *Environment, arg sx.Object) (sx.Object, error) {
-	// Check arity
+// CheckCall0Arity checks the builtin to allow zero args.
+func (b *Builtin) CheckCall0Arity() error {
 	minArity, maxArity := b.MinArity, b.MaxArity
 	if minArity == maxArity {
-		if minArity != 1 {
-			err := fmt.Errorf("exactly %d arguments required, but 1 given: [%v]", minArity, arg)
-			return nil, CallError{Name: b.Name, Err: err}
+		if minArity != 0 {
+			return fmt.Errorf("exactly %d arguments required, but none given", minArity)
 		}
 	} else if maxArity < 0 {
-		if 1 < minArity {
-			err := fmt.Errorf("at least %d arguments required, but only 1 given: [%v]", minArity, arg)
-			return nil, CallError{Name: b.Name, Err: err}
+		if 0 < minArity {
+			return fmt.Errorf("at least %d arguments required, but none given", minArity)
 		}
-	} else if 1 < minArity || maxArity < 1 {
-		err := fmt.Errorf("between %d and %d arguments required, but 1 given: [%v]", minArity, maxArity, arg)
-		return nil, CallError{Name: b.Name, Err: err}
+	} else if 0 < minArity {
+		return fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
+	}
+	return nil
+}
+
+// Call1 the builtin function with the given environment and one argument.
+func (b *Builtin) Call1(env *Environment, arg sx.Object) (sx.Object, error) {
+	if err := b.CheckCall1Arity(func() sx.Object { return arg }); err != nil {
+		return sx.Nil(), b.handleCallError(err)
 	}
 	obj, err := b.Fn1(env, arg)
 	return obj, b.handleCallError(err)
 }
 
-// Call2 the builtin function with the given environment and two arguments.
-func (b *Builtin) Call2(env *Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-	// Check arity
+// CheckCall1Arity checks the builtin function to allow one arg.
+func (b *Builtin) CheckCall1Arity(argFn func() sx.Object) error {
 	minArity, maxArity := b.MinArity, b.MaxArity
 	if minArity == maxArity {
-		if minArity != 2 {
-			err := fmt.Errorf("exactly %d arguments required, but 2 given: [%v %v]", minArity, arg0, arg1)
-			return nil, CallError{Name: b.Name, Err: err}
+		if minArity != 1 {
+			return fmt.Errorf("exactly %d arguments required, but 1 given: [%v]", minArity, argFn())
 		}
 	} else if maxArity < 0 {
-		if 2 < minArity {
-			err := fmt.Errorf("at least %d arguments required, but only 2 given: [%v %v]", minArity, arg0, arg1)
-			return nil, CallError{Name: b.Name, Err: err}
+		if 1 < minArity {
+			return fmt.Errorf("at least %d arguments required, but only 1 given: [%v]", minArity, argFn())
 		}
-	} else if 2 < minArity || maxArity < 2 {
-		err := fmt.Errorf("between %d and %d arguments required, but 2 given: [%v %v]", minArity, maxArity, arg0, arg1)
-		return nil, CallError{Name: b.Name, Err: err}
+	} else if 1 < minArity || maxArity < 1 {
+		return fmt.Errorf("between %d and %d arguments required, but 1 given: [%v]", minArity, maxArity, argFn())
+	}
+	return nil
+}
+
+// Call2 the builtin function with the given environment and two arguments.
+func (b *Builtin) Call2(env *Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+	if err := b.CheckCall2Arity(func() (sx.Object, sx.Object) { return arg0, arg1 }); err != nil {
+		return sx.Nil(), b.handleCallError(err)
 	}
 	obj, err := b.Fn2(env, arg0, arg1)
 	return obj, b.handleCallError(err)
 }
 
+// CheckCall2Arity checks the builtin to allow two args.
+func (b *Builtin) CheckCall2Arity(argsFn func() (sx.Object, sx.Object)) error {
+	// Check arity
+	minArity, maxArity := b.MinArity, b.MaxArity
+	if minArity == maxArity {
+		if minArity != 2 {
+			arg0, arg1 := argsFn()
+			return fmt.Errorf("exactly %d arguments required, but 2 given: [%v %v]", minArity, arg0, arg1)
+		}
+	} else if maxArity < 0 {
+		if 2 < minArity {
+			arg0, arg1 := argsFn()
+			return fmt.Errorf("at least %d arguments required, but only 2 given: [%v %v]", minArity, arg0, arg1)
+		}
+	} else if 2 < minArity || maxArity < 2 {
+		arg0, arg1 := argsFn()
+		return fmt.Errorf("between %d and %d arguments required, but 2 given: [%v %v]", minArity, maxArity, arg0, arg1)
+	}
+	return nil
+}
+
 // Call the builtin function with the given environment and arguments.
 func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
-	// Check arity
-	nargs := len(args)
+	if err := b.CheckCallArity(len(args), func() []sx.Object { return args }); err != nil {
+		return sx.Nil(), b.handleCallError(err)
+	}
+	obj, err := b.Fn(env, args)
+	return obj, b.handleCallError(err)
+}
+
+// CheckCallArity check the builtin function to match allowed number of args.
+func (b *Builtin) CheckCallArity(nargs int, argsFn func() []sx.Object) error {
 	if nargs > math.MaxInt16 {
-		err := fmt.Errorf("more than %d arguments are not supported, but %d given", math.MaxInt16, nargs)
-		return nil, CallError{Name: b.Name, Err: err}
+		return fmt.Errorf("more than %d arguments are not supported, but %d given", math.MaxInt16, nargs)
 	}
 	numArgs, minArity, maxArity := int16(nargs), b.MinArity, b.MaxArity
 	if minArity == maxArity {
 		if numArgs != minArity {
-			var err error
-			if numArgs == 0 {
-				err = fmt.Errorf("exactly %d arguments required, but none given", minArity)
-			} else {
-				err = fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, []sx.Object(args))
-			}
-			return nil, CallError{Name: b.Name, Err: err}
+			return fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, argsFn())
 		}
 	} else if maxArity < 0 {
 		if numArgs < minArity {
-			var err error
-			if numArgs == 0 {
-				err = fmt.Errorf("at least %d arguments required, but none given", minArity)
-			} else {
-				err = fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, []sx.Object(args))
-			}
-			return nil, CallError{Name: b.Name, Err: err}
+			return fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, argsFn())
 		}
 	} else if numArgs < minArity || maxArity < numArgs {
-		var err error
-		if numArgs == 0 {
-			err = fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
-		} else {
-			err = fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, []sx.Object(args))
-		}
-		return nil, CallError{Name: b.Name, Err: err}
+		return fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, argsFn())
 	}
-	obj, err := b.Fn(env, args)
-	return obj, b.handleCallError(err)
+	return nil
 }
 
 func (b *Builtin) handleCallError(err error) error {
