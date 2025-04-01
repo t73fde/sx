@@ -64,7 +64,7 @@ func (sxc *Compiler) AdjustStack(offset int) {
 	}
 	sxc.maxStack = max(sxc.maxStack, sxc.curStack)
 	if ob := sxc.observer; ob != nil {
-		ob.LogCompile(sxc, "ADJUST", strconv.Itoa(offset))
+		ob.LogCompile(sxc, "adjust", strconv.Itoa(offset))
 	}
 }
 
@@ -88,7 +88,43 @@ func (sxc *Compiler) EmitKill(num int) {
 	}
 }
 
-// TODO: EmitNOP that returns a patch function, to be used for jumps
+// NopInstruction is an empty intruction. It does nothing.
+func NopInstruction(*Environment) error { return nil }
+
+// EmitJumpNIL emits some preliminary code to jump if TOS is nil.
+// It returns a patch function to update the jump target.
+func (sxc *Compiler) EmitJumpNIL() func() {
+	sxc.AdjustStack(-1)
+	pc := len(sxc.program)
+	sxc.Emit(NopInstruction, "JUMP-NIL", strconv.Itoa(pc), "<- to be patched")
+	return func() {
+		pos := len(sxc.program)
+		if ob := sxc.observer; ob != nil {
+			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-NIL", strconv.Itoa(pos))
+		}
+		sxc.program[pc] = func(env *Environment) error {
+			val := env.Pop()
+			if sx.IsNil(val) {
+				return jumpToError{pos: pos}
+			}
+			return nil
+		}
+	}
+}
+
+// EmitJump emits some preliminary code to jump unconditionally.
+// It returns a patch function to update the jump target.
+func (sxc *Compiler) EmitJump() func() {
+	pc := len(sxc.program)
+	sxc.Emit(NopInstruction, "JUMP", strconv.Itoa(pc), "<- to be patched")
+	return func() {
+		pos := len(sxc.program)
+		if ob := sxc.observer; ob != nil {
+			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP", strconv.Itoa(pos))
+		}
+		sxc.program[pc] = func(*Environment) error { return jumpToError{pos: pos} }
+	}
+}
 
 // EmitBCall emits an instruction to call a builtin with more than two args
 func (sxc *Compiler) EmitBCall(b *Builtin, numargs int) {
@@ -176,7 +212,10 @@ func (cpe *CompiledExpr) Compute(env *Environment) (sx.Object, error) {
 	for ip < len(program) {
 		err := program[ip](env)
 		if err != nil {
-			// TODO: ip recalc
+			if jerr, ok := err.(jumpToError); ok {
+				ip = jerr.pos
+				continue
+			}
 			return nil, err
 		}
 		ip++
@@ -199,3 +238,7 @@ func (cpe *CompiledExpr) Print(w io.Writer) (int, error) {
 	length += l
 	return length, err
 }
+
+type jumpToError struct{ pos int }
+
+func (jerr jumpToError) Error() string { return fmt.Sprintf("jump: %d", jerr.pos) }

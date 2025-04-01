@@ -140,6 +140,25 @@ func (ife *IfExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	return ife, nil
 }
 
+// Compile the expression.
+func (ife *IfExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
+	if err := sxc.Compile(ife.Test, false); err != nil {
+		return err
+	}
+	condPatch := sxc.EmitJumpNIL()
+	if err := sxc.Compile(ife.True, tailPos); err != nil {
+		return err
+	}
+	jumpPatch := sxc.EmitJump()
+	condPatch()
+	if err := sxc.Compile(ife.False, tailPos); err != nil {
+		return err
+	}
+	sxc.AdjustStack(-1) // Otherwise true and false branch will be counted double
+	jumpPatch()
+	return nil
+}
+
 // Compute the expression in a frame and return the result.
 func (ife *IfExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	test, err := env.Execute(ife.Test)
