@@ -83,7 +83,7 @@ func (sxc *Compiler) EmitBCall(b *Builtin, numargs int) {
 		obj, err := b.Fn(env, env.Args(numargs))
 		env.Kill(numargs - 1)
 		env.Set(obj)
-		return err
+		return b.handleCallError(err)
 	}
 	sxc.Emit(fn, "BCALL", strconv.Itoa(numargs), b.Name)
 }
@@ -95,7 +95,7 @@ func (sxc *Compiler) EmitBCall0(b *Builtin) {
 	fn := func(env *Environment) error {
 		obj, err := b.Fn0(env)
 		env.Push(obj)
-		return err
+		return b.handleCallError(err)
 	}
 	sxc.Emit(fn, "BCALL-0", b.Name)
 }
@@ -106,7 +106,7 @@ func (sxc *Compiler) EmitBCall1(b *Builtin) {
 	fn := func(env *Environment) error {
 		obj, err := b.Fn1(env, env.Top())
 		env.Set(obj)
-		return err
+		return b.handleCallError(err)
 	}
 	sxc.Emit(fn, "BCALL-1", b.Name)
 }
@@ -119,7 +119,7 @@ func (sxc *Compiler) EmitBCall2(b *Builtin) {
 		val1, val0 := env.Pop(), env.Top()
 		obj, err := b.Fn2(env, val0, val1)
 		env.Set(obj)
-		return err
+		return b.handleCallError(err)
 	}
 	sxc.Emit(fn, "BCALL-2", b.Name)
 }
