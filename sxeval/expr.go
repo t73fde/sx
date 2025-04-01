@@ -174,6 +174,17 @@ func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
 	return imp.Improve(&ResolveSymbolExpr{sym: use.sym, skip: imp.Height()})
 }
 
+// Compile the expression.
+func (use UnboundSymbolExpr) Compile(sxc *Compiler) error {
+	sxc.AdjustStack(1)
+	sxc.Emit(func(env *Environment) error {
+		obj, err := env.ResolveUnboundWithError(use.sym)
+		env.Push(obj)
+		return err
+	}, "UNBOUND", use.sym.String())
+	return nil
+}
+
 // Compute the expression in a frame and return the result.
 func (use UnboundSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.ResolveUnboundWithError(use.sym)
@@ -198,7 +209,7 @@ func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
 // Unparse the expression back into a form object.
 func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.sym }
 
-// Compile the expression
+// Compile the expression.
 func (rse ResolveSymbolExpr) Compile(sxc *Compiler) error {
 	sxc.AdjustStack(1)
 	sxc.Emit(func(env *Environment) error {
@@ -234,6 +245,17 @@ func (lse *LookupSymbolExpr) GetLevel() int { return lse.lvl }
 
 // Unparse the expression back into a form object.
 func (lse *LookupSymbolExpr) Unparse() sx.Object { return lse.sym }
+
+// Compile the expression.
+func (lse LookupSymbolExpr) Compile(sxc *Compiler) error {
+	sxc.AdjustStack(1)
+	sxc.Emit(func(env *Environment) error {
+		obj, err := env.LookupNWithError(lse.sym, lse.lvl)
+		env.Push(obj)
+		return err
+	}, "LOOKUP", strconv.Itoa(lse.lvl), lse.sym.String())
+	return nil
+}
 
 // Compute the expression in a frame and return the result.
 func (lse *LookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {

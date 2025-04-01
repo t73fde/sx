@@ -291,11 +291,11 @@ var errExecuteAgain = errors.New("TCO trampoline")
 func (env *Environment) addExecuteError(expr Expr, err error) error {
 	var execError ExecuteError
 	if errors.As(err, &execError) {
-		execError.Stack = append(execError.Stack, EnvironmentExpr{env, expr})
+		execError.Stack = append(execError.Stack, CallInfo{env, expr})
 		return execError
 	}
 	return ExecuteError{
-		Stack: []EnvironmentExpr{{env, expr}},
+		Stack: []CallInfo{{env, expr}},
 		err:   err,
 	}
 }
@@ -303,13 +303,13 @@ func (env *Environment) addExecuteError(expr Expr, err error) error {
 // ExecuteError is the error that may occur if an expression is computed.
 // It contains the call stack.
 type ExecuteError struct {
-	Stack []EnvironmentExpr
+	Stack []CallInfo
 	err   error
 }
 
-// EnvironmentExpr stores the curent environment and the expression to be
+// CallInfo stores the curent environment and the expression to be
 // computed, for better error messages.
-type EnvironmentExpr struct {
+type CallInfo struct {
 	Env  *Environment
 	Expr Expr
 }
