@@ -149,6 +149,27 @@ func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	return le, err
 }
 
+// Compile the expression.
+func (le *LetExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
+	for _, val := range le.Vals {
+		if err := sxc.Compile(val, false); err != nil {
+			return nil
+		}
+	}
+	syms := le.Symbols
+	sxc.Emit(func(env *sxeval.Environment) error {
+		letEnv := env.NewLexicalEnvironment(env.Binding(), "let", len(syms))
+		for i, arg := range env.Args(len(syms)) {
+			if err := letEnv.Bind(syms[i], arg); err != nil {
+				return err
+			}
+		}
+		return sxeval.SwitchEnvironment(letEnv)
+	}, "LET", fmt.Sprintf("%v", syms))
+	sxc.EmitKill(len(syms))
+	return sxc.Compile(le.Body, tailPos)
+}
+
 // Compute the expression in a frame and return the result.
 func (le *LetExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	letEnv := env.NewLexicalEnvironment(env.Binding(), "let", len(le.Symbols))
@@ -247,6 +268,23 @@ func (le1 *Let1Expr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		le1.Body = expr
 	}
 	return le1, err
+}
+
+// Compile the expression.
+func (le1 *Let1Expr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
+	if err := sxc.Compile(le1.Value, false); err != nil {
+		return nil
+	}
+	sxc.AdjustStack(-1)
+	sym := le1.Symbol
+	sxc.Emit(func(env *sxeval.Environment) error {
+		letEnv := env.NewLexicalEnvironment(env.Binding(), "let1", 1)
+		if err := letEnv.Bind(sym, env.Pop()); err != nil {
+			return err
+		}
+		return sxeval.SwitchEnvironment(letEnv)
+	}, "LET1", sym.String())
+	return sxc.Compile(le1.Body, tailPos)
 }
 
 // Compute the expression in a frame and return the result.

@@ -206,21 +206,27 @@ func (cpe *CompiledExpr) Compile(*Compiler, bool) error { return nil }
 // It may have side-effects, on the given environment, or on the
 // general environment of the system.
 func (cpe *CompiledExpr) Compute(env *Environment) (sx.Object, error) {
+	currEnv := env
 	program := cpe.program
 	ip := 0
 
 	for ip < len(program) {
-		err := program[ip](env)
+		err := program[ip](currEnv)
 		if err != nil {
 			if jerr, ok := err.(jumpToError); ok {
 				ip = jerr.pos
+				continue
+			}
+			if nee, ok := err.(newEnvError); ok {
+				currEnv = nee.env
+				ip++
 				continue
 			}
 			return nil, err
 		}
 		ip++
 	}
-	return env.Pop(), nil
+	return currEnv.Pop(), nil
 }
 
 // Print the expression on the given writer.
@@ -242,3 +248,10 @@ func (cpe *CompiledExpr) Print(w io.Writer) (int, error) {
 type jumpToError struct{ pos int }
 
 func (jerr jumpToError) Error() string { return fmt.Sprintf("jump: %d", jerr.pos) }
+
+type newEnvError struct{ env *Environment }
+
+func (nee newEnvError) Error() string { return fmt.Sprintf("switch: %s", nee.env.binding.Name()) }
+
+// SwitchEnvironment make the interpreter to switch to a new environment.
+func SwitchEnvironment(env *Environment) error { return newEnvError{env} }
