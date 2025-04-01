@@ -24,7 +24,7 @@ import (
 
 // Compilable is an interface, Expr should implement if they support compilation.
 type Compilable interface {
-	Compile(*Compiler) error
+	Compile(*Compiler, bool) error
 }
 
 // Compiler is the data to be used at compilation time.
@@ -49,9 +49,9 @@ type CompileObserver interface {
 func (sxc *Compiler) Stats() (int, int, int) { return len(sxc.program), sxc.curStack, sxc.maxStack }
 
 // Compile the given expression. Do not call `expr.Compile()` directly.
-func (sxc *Compiler) Compile(expr Expr) error {
+func (sxc *Compiler) Compile(expr Expr, tailPos bool) error {
 	if iexpr, ok := expr.(Compilable); ok {
-		return iexpr.Compile(sxc)
+		return iexpr.Compile(sxc, tailPos)
 	}
 	return MissingCompileError{Expr: expr}
 }
@@ -164,7 +164,7 @@ type CompiledExpr struct {
 func (cpe *CompiledExpr) Unparse() sx.Object { return &ExprObj{expr: cpe} }
 
 // Compile the expression: nothing to do since it is already compiled.
-func (cpe *CompiledExpr) Compile(*Compiler) error { return nil }
+func (cpe *CompiledExpr) Compile(*Compiler, bool) error { return nil }
 
 // Compute the expression in an environment and return the result.
 // It may have side-effects, on the given environment, or on the

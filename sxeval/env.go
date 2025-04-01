@@ -148,7 +148,7 @@ func (env *Environment) Compile(expr Expr) (*CompiledExpr, error) {
 		curStack: 0,
 		maxStack: 0,
 	}
-	if err := sxc.Compile(expr); err != nil {
+	if err := sxc.Compile(expr, false); err != nil {
 		return nil, err
 	}
 	if sxc.curStack != 1 {

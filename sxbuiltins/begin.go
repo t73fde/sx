@@ -115,14 +115,14 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compile the expression.
-func (be *BeginExpr) Compile(sxc *sxeval.Compiler) error {
+func (be *BeginExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 	// Small optimization: every numKill expressions, the stack is cleaned.
 	// This makes the code smaller and possibly faster.
 	const numKill = 8
 	cnt := 0
 	for _, expr := range be.Front {
 		cnt++
-		if err := sxc.Compile(expr); err != nil {
+		if err := sxc.Compile(expr, false); err != nil {
 			return nil
 		}
 		if cnt >= numKill {
@@ -131,7 +131,7 @@ func (be *BeginExpr) Compile(sxc *sxeval.Compiler) error {
 		}
 	}
 	sxc.EmitKill(cnt)
-	return sxc.Compile(be.Last)
+	return sxc.Compile(be.Last, true)
 }
 
 // Compute the expression in a frame and return the result.

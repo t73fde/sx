@@ -80,7 +80,7 @@ func (nilExpr) Unparse() sx.Object { return sx.Nil() }
 func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
 
 // Compile the expression
-func (nilExpr) Compile(sxc *Compiler) error {
+func (nilExpr) Compile(sxc *Compiler, _ bool) error {
 	sxc.AdjustStack(1)
 	sxc.Emit(func(env *Environment) error {
 		env.Push(sx.Nil())
@@ -110,7 +110,7 @@ func (oe ObjExpr) Improve(imp *Improver) (Expr, error) {
 }
 
 // Compile the expression
-func (oe ObjExpr) Compile(sxc *Compiler) error {
+func (oe ObjExpr) Compile(sxc *Compiler, _ bool) error {
 	sxc.AdjustStack(1)
 	sxc.Emit(func(env *Environment) error {
 		env.Push(oe.Obj)
@@ -175,7 +175,7 @@ func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
 }
 
 // Compile the expression.
-func (use UnboundSymbolExpr) Compile(sxc *Compiler) error {
+func (use UnboundSymbolExpr) Compile(sxc *Compiler, _ bool) error {
 	sxc.AdjustStack(1)
 	sxc.Emit(func(env *Environment) error {
 		obj, err := env.ResolveUnboundWithError(use.sym)
@@ -210,7 +210,7 @@ func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
 func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.sym }
 
 // Compile the expression.
-func (rse ResolveSymbolExpr) Compile(sxc *Compiler) error {
+func (rse ResolveSymbolExpr) Compile(sxc *Compiler, _ bool) error {
 	sxc.AdjustStack(1)
 	sxc.Emit(func(env *Environment) error {
 		obj, err := env.ResolveNWithError(rse.sym, rse.skip)
@@ -247,7 +247,7 @@ func (lse *LookupSymbolExpr) GetLevel() int { return lse.lvl }
 func (lse *LookupSymbolExpr) Unparse() sx.Object { return lse.sym }
 
 // Compile the expression.
-func (lse LookupSymbolExpr) Compile(sxc *Compiler) error {
+func (lse LookupSymbolExpr) Compile(sxc *Compiler, _ bool) error {
 	sxc.AdjustStack(1)
 	sxc.Emit(func(env *Environment) error {
 		obj, err := env.LookupNWithError(lse.sym, lse.lvl)
@@ -554,9 +554,9 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 }
 
 // Compile the expression.
-func (bce *BuiltinCallExpr) Compile(sxc *Compiler) error {
+func (bce *BuiltinCallExpr) Compile(sxc *Compiler, _ bool) error {
 	for _, args := range bce.Args {
-		if err := sxc.Compile(args); err != nil {
+		if err := sxc.Compile(args, false); err != nil {
 			return err
 		}
 	}
@@ -603,7 +603,7 @@ func (bce *BuiltinCall0Expr) Improve(*Improver) (Expr, error) {
 }
 
 // Compile the expression.
-func (bce *BuiltinCall0Expr) Compile(sxc *Compiler) error {
+func (bce *BuiltinCall0Expr) Compile(sxc *Compiler, _ bool) error {
 	sxc.EmitBCall0(bce.Proc)
 	return nil
 }
@@ -644,8 +644,8 @@ func (bce *BuiltinCall1Expr) Improve(*Improver) (Expr, error) {
 }
 
 // Compile the expression.
-func (bce *BuiltinCall1Expr) Compile(sxc *Compiler) error {
-	if err := sxc.Compile(bce.Arg); err != nil {
+func (bce *BuiltinCall1Expr) Compile(sxc *Compiler, _ bool) error {
+	if err := sxc.Compile(bce.Arg, false); err != nil {
 		return err
 	}
 	sxc.EmitBCall1(bce.Proc)
@@ -696,11 +696,11 @@ func (bce *BuiltinCall2Expr) Improve(*Improver) (Expr, error) {
 }
 
 // Compile the expression.
-func (bce *BuiltinCall2Expr) Compile(sxc *Compiler) error {
-	if err := sxc.Compile(bce.Arg0); err != nil {
+func (bce *BuiltinCall2Expr) Compile(sxc *Compiler, _ bool) error {
+	if err := sxc.Compile(bce.Arg0, false); err != nil {
 		return err
 	}
-	if err := sxc.Compile(bce.Arg1); err != nil {
+	if err := sxc.Compile(bce.Arg1, false); err != nil {
 		return err
 	}
 	sxc.EmitBCall2(bce.Proc)
