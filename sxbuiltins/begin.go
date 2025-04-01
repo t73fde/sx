@@ -114,6 +114,26 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	return be, nil
 }
 
+// Compile the expression.
+func (be *BeginExpr) Compile(sxc *sxeval.Compiler) error {
+	// Small optimization: every numKill expressions, the stack is cleaned.
+	// This makes the code smaller and possibly faster.
+	const numKill = 8
+	cnt := 0
+	for _, expr := range be.Front {
+		cnt++
+		if err := sxc.Compile(expr); err != nil {
+			return nil
+		}
+		if cnt >= numKill {
+			sxc.EmitKill(cnt)
+			cnt = 0
+		}
+	}
+	sxc.EmitKill(cnt)
+	return sxc.Compile(be.Last)
+}
+
 // Compute the expression in a frame and return the result.
 func (be *BeginExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	for _, e := range be.Front {

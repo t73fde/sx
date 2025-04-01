@@ -453,6 +453,9 @@ func (env *Environment) Top() sx.Object { return env.stack[len(env.stack)-1] }
 // Set the value on top of the stack
 func (env *Environment) Set(val sx.Object) { env.stack[len(env.stack)-1] = val }
 
+// Kill1 removes the TOS.
+func (env *Environment) Kill1() { env.stack = env.stack[:len(env.stack)-1] }
+
 // Kill some elements on the stack
 func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-num] }
 

@@ -76,6 +76,18 @@ func (sxc *Compiler) Emit(fn Instruction, s string, vals ...string) {
 	sxc.program = append(sxc.program, fn)
 }
 
+// EmitKill emits code to remove some TOS elements.
+func (sxc *Compiler) EmitKill(num int) {
+	if num > 0 {
+		sxc.AdjustStack(-num)
+		if num == 1 {
+			sxc.Emit(func(env *Environment) error { env.Kill1(); return nil }, "KILL-1")
+		} else {
+			sxc.Emit(func(env *Environment) error { env.Kill(num); return nil }, "KILL", strconv.Itoa(num))
+		}
+	}
+}
+
 // TODO: EmitNOP that returns a patch function, to be used for jumps
 
 // EmitBCall emits an instruction to call a builtin with more than two args
