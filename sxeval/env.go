@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"t73f.de/r/sx"
@@ -154,7 +155,7 @@ func (env *Environment) Compile(expr Expr) (Expr, error) {
 		panic(fmt.Sprintf("wrong stack position: %d", sxc.curStack))
 	}
 	return &CompiledExpr{
-		program:   sxc.program,
+		program:   slices.Clip(sxc.program),
 		stacksize: sxc.maxStack,
 		source:    expr,
 	}, nil
