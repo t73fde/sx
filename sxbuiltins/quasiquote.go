@@ -382,6 +382,18 @@ func (mle MakeListExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	return mle, err
 }
 
+// Compile the expression.
+func (mle MakeListExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
+	if err := sxc.Compile(mle.Elem, false); err != nil {
+		return err
+	}
+	sxc.Emit(func(env *sxeval.Environment) error {
+		env.Set(sx.Cons(env.Top(), sx.Nil()))
+		return nil
+	}, "MAKELIST")
+	return nil
+}
+
 // Compute the expression in a frame and return the result.
 func (mle MakeListExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	elem, err := env.Execute(mle.Elem)
