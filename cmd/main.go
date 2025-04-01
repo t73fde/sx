@@ -379,9 +379,9 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			fmt.Println(";p", err)
 			continue
 		}
-		expr2, err := env.Compile(expr)
+		cexpr, err := env.Compile(expr)
 		if err == nil {
-			expr = expr2
+			expr = cexpr
 		} else {
 			fmt.Println(";c", err)
 		}

@@ -97,13 +97,13 @@ func BenchmarkAddExec(b *testing.B) {
 
 func BenchmarkAddCompiled(b *testing.B) {
 	env, expr := prepareAddBenchmark()
-	expr, err := env.Compile(expr)
+	cexpr, err := env.Compile(expr)
 	if err != nil {
 		panic(err)
 	}
 
 	for b.Loop() {
-		_, _ = env.Run(expr)
+		_, _ = env.Run(cexpr)
 	}
 	if stack := env.Stack(); len(stack) > 0 {
 		b.Error("stack not empty", stack)

@@ -140,7 +140,7 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 }
 
 // Compile the expression
-func (env *Environment) Compile(expr Expr) (Expr, error) {
+func (env *Environment) Compile(expr Expr) (*CompiledExpr, error) {
 	sxc := Compiler{
 		env:      env,
 		observer: env.observer.compile,
