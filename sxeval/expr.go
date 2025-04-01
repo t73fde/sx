@@ -518,52 +518,17 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 		return imp.Improve(&BuiltinCall2Expr{bce.Proc, bce.Args[0], bce.Args[1]})
 	}
 
-	// Check arity
-	b := bce.Proc
-	nargs := len(bce.Args)
-	if nargs > math.MaxInt16 {
-		err := fmt.Errorf("more than %d arguments are not supported, but %d given", math.MaxInt16, nargs)
-		return nil, CallError{Name: b.Name, Err: err}
+	argsFn := func() []sx.Object {
+		result := make([]sx.Object, len(bce.Args))
+		for i, arg := range bce.Args {
+			result[i] = arg.Unparse()
+		}
+		return result
 	}
-	numArgs, minArity, maxArity := int16(nargs), b.MinArity, b.MaxArity
-	if minArity == maxArity {
-		if numArgs != minArity {
-			var err error
-			if numArgs == 0 {
-				err = fmt.Errorf("exactly %d arguments required, but none given", minArity)
-			} else {
-				err = fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, unparsedArgs(bce.Args))
-			}
-			return nil, CallError{Name: b.Name, Err: err}
-		}
-	} else if maxArity < 0 {
-		if numArgs < minArity {
-			var err error
-			if numArgs == 0 {
-				err = fmt.Errorf("at least %d arguments required, but none given", minArity)
-			} else {
-				err = fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, unparsedArgs(bce.Args))
-			}
-			return nil, CallError{Name: b.Name, Err: err}
-		}
-	} else if numArgs < minArity || maxArity < numArgs {
-		var err error
-		if numArgs == 0 {
-			err = fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
-		} else {
-			err = fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, unparsedArgs(bce.Args))
-		}
-		return nil, CallError{Name: b.Name, Err: err}
+	if err := bce.Proc.CheckCallArity(len(bce.Args), argsFn); err != nil {
+		return nil, bce.Proc.handleCallError(err)
 	}
 	return bce, nil
-}
-
-func unparsedArgs(args []Expr) []sx.Object {
-	result := make([]sx.Object, len(args))
-	for i, arg := range args {
-		result[i] = arg.Unparse()
-	}
-	return result
 }
 
 // Compile the expression.
@@ -584,7 +549,7 @@ func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
 		return nil, err
 	}
 	obj, err := bce.Proc.Fn(env, objArgs)
-	return bce.Proc.handleCallError(obj, err)
+	return obj, bce.Proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
@@ -609,21 +574,8 @@ func (bce *BuiltinCall0Expr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCall0Expr) Improve(*Improver) (Expr, error) {
-	b := bce.Proc
-	minArity, maxArity := bce.Proc.MinArity, bce.Proc.MaxArity
-	if minArity == maxArity {
-		if minArity != 0 {
-			err := fmt.Errorf("exactly %d arguments required, but none given", minArity)
-			return bce, CallError{Name: b.Name, Err: err}
-		}
-	} else if maxArity < 0 {
-		if 0 < minArity {
-			err := fmt.Errorf("at least %d arguments required, but none given", minArity)
-			return bce, CallError{Name: b.Name, Err: err}
-		}
-	} else if 0 < minArity {
-		err := fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
-		return bce, CallError{Name: b.Name, Err: err}
+	if err := bce.Proc.CheckCall0Arity(); err != nil {
+		return nil, bce.Proc.handleCallError(err)
 	}
 	return bce, nil
 }
@@ -637,7 +589,7 @@ func (bce *BuiltinCall0Expr) Compile(sxc *Compiler) error {
 // Compute the value of this expression in the given environment.
 func (bce *BuiltinCall0Expr) Compute(env *Environment) (sx.Object, error) {
 	obj, err := bce.Proc.Fn0(env)
-	return bce.Proc.handleCallError(obj, err)
+	return obj, bce.Proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
@@ -663,21 +615,8 @@ func (bce *BuiltinCall1Expr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCall1Expr) Improve(*Improver) (Expr, error) {
-	b := bce.Proc
-	minArity, maxArity := bce.Proc.MinArity, bce.Proc.MaxArity
-	if minArity == maxArity {
-		if minArity != 1 {
-			err := fmt.Errorf("exactly %d arguments required, but 1 given: [%v]", minArity, bce.Arg.Unparse())
-			return bce, CallError{Name: b.Name, Err: err}
-		}
-	} else if maxArity < 0 {
-		if 1 < minArity {
-			err := fmt.Errorf("at least %d arguments required, but only 1 given: [%v]", minArity, bce.Arg.Unparse())
-			return bce, CallError{Name: b.Name, Err: err}
-		}
-	} else if 1 < minArity || maxArity < 1 {
-		err := fmt.Errorf("between %d and %d arguments required, but 1 given: [%v]", minArity, maxArity, bce.Arg.Unparse())
-		return bce, CallError{Name: b.Name, Err: err}
+	if err := bce.Proc.CheckCall1Arity(func() sx.Object { return bce.Arg.Unparse() }); err != nil {
+		return nil, bce.Proc.handleCallError(err)
 	}
 	return bce, nil
 }
@@ -699,7 +638,7 @@ func (bce *BuiltinCall1Expr) Compute(env *Environment) (sx.Object, error) {
 	}
 
 	obj, err := bce.Proc.Fn1(env, val)
-	return bce.Proc.handleCallError(obj, err)
+	return obj, bce.Proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
@@ -728,21 +667,8 @@ func (bce *BuiltinCall2Expr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCall2Expr) Improve(*Improver) (Expr, error) {
-	b := bce.Proc
-	minArity, maxArity := bce.Proc.MinArity, bce.Proc.MaxArity
-	if minArity == maxArity {
-		if minArity != 2 {
-			err := fmt.Errorf("exactly %d arguments required, but 2 given: [%v %v]", minArity, bce.Arg0.Unparse(), bce.Arg1.Unparse())
-			return bce, CallError{Name: b.Name, Err: err}
-		}
-	} else if maxArity < 0 {
-		if 2 < minArity {
-			err := fmt.Errorf("at least %d arguments required, but only 2 given: [%v %v]", minArity, bce.Arg0.Unparse(), bce.Arg1.Unparse())
-			return bce, CallError{Name: b.Name, Err: err}
-		}
-	} else if 2 < minArity || maxArity < 2 {
-		err := fmt.Errorf("between %d and %d arguments required, but 2 given: [%v %v]", minArity, maxArity, bce.Arg0.Unparse(), bce.Arg1.Unparse())
-		return bce, CallError{Name: b.Name, Err: err}
+	if err := bce.Proc.CheckCall2Arity(func() (sx.Object, sx.Object) { return bce.Arg0.Unparse(), bce.Arg1.Unparse() }); err != nil {
+		return nil, bce.Proc.handleCallError(err)
 	}
 	return bce, nil
 }
@@ -771,7 +697,7 @@ func (bce *BuiltinCall2Expr) Compute(env *Environment) (sx.Object, error) {
 	}
 
 	obj, err := bce.Proc.Fn2(env, val0, val1)
-	return bce.Proc.handleCallError(obj, err)
+	return obj, bce.Proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
