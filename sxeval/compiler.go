@@ -14,6 +14,7 @@
 package sxeval
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -243,8 +244,8 @@ func (cpe *ProgramExpr) Interpret(env *Environment) (*Environment, error) {
 				ip = jerr.pos
 				continue
 			}
-			if nee, ok := err.(newEnvError); ok {
-				currEnv = nee.env
+			if err == errSwitchEnv {
+				currEnv = currEnv.tco.env
 				ip++
 				continue
 			}
@@ -275,9 +276,10 @@ type jumpToError struct{ pos int }
 
 func (jerr jumpToError) Error() string { return fmt.Sprintf("jump: %d", jerr.pos) }
 
-type newEnvError struct{ env *Environment }
-
-func (nee newEnvError) Error() string { return fmt.Sprintf("switch: %s", nee.env.binding.Name()) }
+var errSwitchEnv = errors.New("switch-env")
 
 // SwitchEnvironment make the interpreter to switch to a new environment.
-func SwitchEnvironment(env *Environment) error { return newEnvError{env} }
+func SwitchEnvironment(env *Environment) error {
+	env.tco.env = env
+	return errSwitchEnv
+}
