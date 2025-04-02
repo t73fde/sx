@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"slices"
 	"strings"
 
 	"t73f.de/r/sx"
@@ -141,24 +140,8 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 
 // Compile the expression
 func (env *Environment) Compile(expr Expr) (*ProgramExpr, error) {
-	sxc := Compiler{
-		env:      env,
-		observer: env.observer.compile,
-		program:  nil,
-		curStack: 0,
-		maxStack: 0,
-	}
-	if err := sxc.Compile(expr, true); err != nil {
-		return nil, err
-	}
-	if sxc.curStack != 1 {
-		panic(fmt.Sprintf("wrong stack position: %d", sxc.curStack))
-	}
-	return &ProgramExpr{
-		program:   slices.Clip(sxc.program),
-		stacksize: sxc.maxStack,
-		source:    expr,
-	}, nil
+	sxc := env.MakeCompiler()
+	return sxc.CompileProgram(expr)
 }
 
 // Run the given expression.
@@ -171,6 +154,17 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 	return &ParseEnvironment{
 		binding:  env.binding,
 		observer: env.observer.parse,
+	}
+}
+
+// MakeCompiler builds a new compiler for the given environment.
+func (env *Environment) MakeCompiler() *Compiler {
+	return &Compiler{
+		env:      env,
+		observer: env.observer.compile,
+		program:  nil,
+		curStack: 0,
+		maxStack: 0,
 	}
 }
 

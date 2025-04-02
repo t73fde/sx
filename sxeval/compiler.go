@@ -16,6 +16,7 @@ package sxeval
 import (
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -47,6 +48,21 @@ type CompileObserver interface {
 // Stats returns some basic statistics of the Compiler: length of program,
 // current stack position, maximum stack position
 func (sxc *Compiler) Stats() (int, int, int) { return len(sxc.program), sxc.curStack, sxc.maxStack }
+
+// CompileProgram builds a ProgramExpr by compiling the Expr.
+func (sxc *Compiler) CompileProgram(expr Expr) (*ProgramExpr, error) {
+	if err := sxc.Compile(expr, true); err != nil {
+		return nil, err
+	}
+	if sxc.curStack != 1 {
+		return nil, fmt.Errorf("wrong stack position: %d", sxc.curStack)
+	}
+	return &ProgramExpr{
+		program:   slices.Clip(sxc.program),
+		stacksize: sxc.maxStack,
+		source:    expr,
+	}, nil
+}
 
 // Compile the given expression. Do not call `expr.Compile()` directly.
 func (sxc *Compiler) Compile(expr Expr, tailPos bool) error {
