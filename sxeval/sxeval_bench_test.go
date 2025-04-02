@@ -81,6 +81,9 @@ func BenchmarkFib(b *testing.B) {
 	if err != nil {
 		panic(err)
 	}
+	if pe, err := env.Compile(expr); err == nil {
+		expr = pe
+	}
 
 	for b.Loop() {
 		_, _ = env.Run(expr)

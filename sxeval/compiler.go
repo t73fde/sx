@@ -31,6 +31,7 @@ type Compilable interface {
 
 // Compiler is the data to be used at compilation time.
 type Compiler struct {
+	level    int
 	env      *Environment
 	observer CompileObserver
 	program  []Instruction
@@ -46,9 +47,23 @@ type CompileObserver interface {
 	LogCompile(*Compiler, string, ...string)
 }
 
-// Stats returns some basic statistics of the Compiler: length of program,
-// current stack position, maximum stack position
-func (sxc *Compiler) Stats() (int, int, int) { return len(sxc.program), sxc.curStack, sxc.maxStack }
+// MakeChildCompiler builds a new compiler.
+func (sxc *Compiler) MakeChildCompiler() *Compiler {
+	return &Compiler{
+		level:    sxc.level + 1,
+		env:      sxc.env,
+		observer: sxc.observer,
+		program:  nil,
+		curStack: 0,
+		maxStack: 0,
+	}
+}
+
+// Stats returns some basic statistics of the Compiler: level,
+// length of program, current stack position, maximum stack position
+func (sxc *Compiler) Stats() (int, int, int, int) {
+	return sxc.level, len(sxc.program), sxc.curStack, sxc.maxStack
+}
 
 // CompileProgram builds a ProgramExpr by compiling the Expr.
 func (sxc *Compiler) CompileProgram(expr Expr) (*ProgramExpr, error) {

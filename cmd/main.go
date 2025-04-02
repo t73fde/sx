@@ -125,8 +125,8 @@ func (me *mainEngine) AfterImprove(imp *sxeval.Improver, _, result sxeval.Expr, 
 
 func (me *mainEngine) LogCompile(sxc *sxeval.Compiler, s string, vals ...string) {
 	if me.logCompile {
-		pc, curPos, maxPos := sxc.Stats()
-		fmt.Printf(";C %d %d %d: %s", maxPos, curPos, pc, s)
+		level, pc, curPos, maxPos := sxc.Stats()
+		fmt.Printf(";C%d %d %d %d: %s", level, maxPos, curPos, pc, s)
 		for _, val := range vals {
 			fmt.Print(" ", val)
 		}

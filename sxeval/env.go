@@ -160,6 +160,7 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 // MakeCompiler builds a new compiler for the given environment.
 func (env *Environment) MakeCompiler() *Compiler {
 	return &Compiler{
+		level:    0,
 		env:      env,
 		observer: env.observer.compile,
 		program:  nil,
