@@ -241,6 +241,46 @@ func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	return le, err
 }
 
+// Compile the expression.
+func (le *LambdaExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
+	name, params, rest, expr := le.Name, le.Params, le.Rest, le.Expr
+	if le.Type == 0 {
+		sxc.AdjustStack(1)
+		sxc.Emit(func(env *sxeval.Environment) error {
+			env.Push(&LexLambda{
+				Binding: env.Binding(),
+				Name:    name,
+				Params:  params,
+				Rest:    rest,
+				Expr:    expr,
+			})
+			return nil
+		}, "PUSH-LAMBDA", name)
+	} else if le.Type > 0 {
+		// Adjust is done by EmitPush
+		sxc.EmitPush(&DynLambda{
+			Name:   name,
+			Params: params,
+			Rest:   rest,
+			Expr:   expr,
+		})
+	} else {
+		sxc.AdjustStack(1)
+		sxc.Emit(func(env *sxeval.Environment) error {
+			env.Push(&Macro{
+				Env:     env,
+				Binding: env.Binding(),
+				Name:    name,
+				Params:  params,
+				Rest:    rest,
+				Expr:    expr,
+			})
+			return nil
+		}, "PUSH-MACRO", name)
+	}
+	return nil
+}
+
 // Compute the expression in a frame and return the result.
 func (le *LambdaExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	leType := le.Type
