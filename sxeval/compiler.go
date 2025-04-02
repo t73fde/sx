@@ -81,6 +81,7 @@ func (sxc *Compiler) CompileProgram(expr Expr) (*ProgramExpr, error) {
 	return &ProgramExpr{
 		program:   slices.Clip(sxc.program),
 		stacksize: sxc.maxStack,
+		level:     sxc.level,
 		source:    expr,
 	}, nil
 }
@@ -246,6 +247,7 @@ func (mc MissingCompileError) Error() string {
 type ProgramExpr struct {
 	program   []Instruction
 	stacksize int
+	level     int
 	source    Expr // Source of program
 }
 
@@ -294,7 +296,7 @@ func (cpe *ProgramExpr) Interpret(env *Environment) (*Environment, error) {
 
 // Print the expression on the given writer.
 func (cpe *ProgramExpr) Print(w io.Writer) (int, error) {
-	length, err := fmt.Fprintf(w, "{COMPILED %d %d ", cpe.stacksize, len(cpe.program))
+	length, err := fmt.Fprintf(w, "{COMPILED-%d %d %d ", cpe.level, cpe.stacksize, len(cpe.program))
 	if err != nil {
 		return length, err
 	}

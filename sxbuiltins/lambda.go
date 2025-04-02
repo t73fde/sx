@@ -248,7 +248,9 @@ func (le *LambdaExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 	if err != nil {
 		return err
 	}
-	name, params, rest, expr := le.Name, le.Params, le.Rest, pe //le.Expr
+	le.Expr = pe
+
+	name, params, rest, expr := le.Name, le.Params, le.Rest, le.Expr
 	if le.Type == 0 {
 		sxc.AdjustStack(1)
 		sxc.Emit(func(env *sxeval.Environment) error {
