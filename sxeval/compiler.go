@@ -93,6 +93,22 @@ func (sxc *Compiler) Emit(fn Instruction, s string, vals ...string) {
 	sxc.program = append(sxc.program, fn)
 }
 
+// EmitPush emits code to push a value on the stack.
+func (sxc *Compiler) EmitPush(val sx.Object) {
+	sxc.AdjustStack(1)
+	if sx.IsNil(val) {
+		sxc.Emit(func(env *Environment) error {
+			env.Push(sx.Nil())
+			return nil
+		}, "PUSH-NIL")
+	} else {
+		sxc.Emit(func(env *Environment) error {
+			env.Push(val)
+			return nil
+		}, "PUSH", val.String())
+	}
+}
+
 // EmitKill emits code to remove some TOS elements.
 func (sxc *Compiler) EmitKill(num int) {
 	if num > 0 {

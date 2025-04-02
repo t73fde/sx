@@ -81,11 +81,7 @@ func (nilExpr) Compute(*Environment) (sx.Object, error) { return sx.Nil(), nil }
 
 // Compile the expression
 func (nilExpr) Compile(sxc *Compiler, _ bool) error {
-	sxc.AdjustStack(1)
-	sxc.Emit(func(env *Environment) error {
-		env.Push(sx.Nil())
-		return nil
-	}, "PUSH-NIL")
+	sxc.EmitPush(sx.Nil())
 	return nil
 }
 
@@ -111,11 +107,7 @@ func (oe ObjExpr) Improve(imp *Improver) (Expr, error) {
 
 // Compile the expression
 func (oe ObjExpr) Compile(sxc *Compiler, _ bool) error {
-	sxc.AdjustStack(1)
-	sxc.Emit(func(env *Environment) error {
-		env.Push(oe.Obj)
-		return nil
-	}, "PUSH", oe.Obj.String())
+	sxc.EmitPush(oe.Obj)
 	return nil
 }
 
