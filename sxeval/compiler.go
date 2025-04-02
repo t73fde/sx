@@ -52,6 +52,11 @@ func (sxc *Compiler) Stats() (int, int, int) { return len(sxc.program), sxc.curS
 
 // CompileProgram builds a ProgramExpr by compiling the Expr.
 func (sxc *Compiler) CompileProgram(expr Expr) (*ProgramExpr, error) {
+	// Reset compile state
+	sxc.program = nil
+	sxc.curStack = 0
+	sxc.maxStack = 0
+
 	if err := sxc.Compile(expr, true); err != nil {
 		return nil, err
 	}
