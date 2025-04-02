@@ -155,7 +155,11 @@ func createBindingForTCO() *sxeval.Binding {
 			}
 			panic(err)
 		}
-		_, err = env.Eval(obj)
+		expr, err := parseAndMore(env, obj)
+		if err != nil {
+			panic(err)
+		}
+		_, err = env.Execute(expr)
 		if err != nil {
 			panic(err)
 		}

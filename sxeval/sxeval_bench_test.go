@@ -30,7 +30,7 @@ func BenchmarkEvenTCO(b *testing.B) {
 		b.Run(strconv.Itoa(tc), func(b *testing.B) {
 			env := sxeval.MakeExecutionEnvironment(root)
 			obj := sx.MakeList(evenSym, sx.Int64(tc))
-			expr, err := env.Parse(obj)
+			expr, err := parseAndMore(env, obj)
 			if err != nil {
 				panic(err)
 			}
@@ -47,7 +47,7 @@ func BenchmarkFac(b *testing.B) {
 	facSym := sx.MakeSymbol("fac")
 	obj := sx.MakeList(facSym, sx.Int64(20))
 	env := sxeval.MakeExecutionEnvironment(root)
-	expr, err := env.Parse(obj)
+	expr, err := parseAndMore(env, obj)
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +62,7 @@ func BenchmarkFaa(b *testing.B) {
 	faaSym := sx.MakeSymbol("faa")
 	obj := sx.MakeList(faaSym, sx.Int64(20), sx.Int64(1))
 	env := sxeval.MakeExecutionEnvironment(root)
-	expr, err := env.Parse(obj)
+	expr, err := parseAndMore(env, obj)
 	if err != nil {
 		panic(err)
 	}
@@ -77,17 +77,26 @@ func BenchmarkFib(b *testing.B) {
 	fibSym := sx.MakeSymbol("fib")
 	obj := sx.MakeList(fibSym, sx.Int64(10))
 	env := sxeval.MakeExecutionEnvironment(root)
-	expr, err := env.Parse(obj)
+	expr, err := parseAndMore(env, obj)
 	if err != nil {
 		panic(err)
-	}
-	if pe, err := env.Compile(expr); err == nil {
-		expr = pe
 	}
 
 	for b.Loop() {
 		_, _ = env.Run(expr)
 	}
+}
+
+func parseAndMore(env *sxeval.Environment, obj sx.Object) (sxeval.Expr, error) {
+	expr, err := env.Parse(obj)
+	if err != nil {
+		return nil, err
+	}
+	pe, err := env.Compile(expr)
+	if err == nil {
+		return pe, nil
+	}
+	return expr, nil
 }
 
 func BenchmarkAddExec(b *testing.B) {
