@@ -140,7 +140,7 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 }
 
 // Compile the expression
-func (env *Environment) Compile(expr Expr) (*CompiledExpr, error) {
+func (env *Environment) Compile(expr Expr) (*ProgramExpr, error) {
 	sxc := Compiler{
 		env:      env,
 		observer: env.observer.compile,
@@ -154,7 +154,7 @@ func (env *Environment) Compile(expr Expr) (*CompiledExpr, error) {
 	if sxc.curStack != 1 {
 		panic(fmt.Sprintf("wrong stack position: %d", sxc.curStack))
 	}
-	return &CompiledExpr{
+	return &ProgramExpr{
 		program:   slices.Clip(sxc.program),
 		stacksize: sxc.maxStack,
 		source:    expr,

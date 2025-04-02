@@ -187,25 +187,35 @@ func (mc MissingCompileError) Error() string {
 	return sb.String()
 }
 
-// ----- CompiledExpr: the result of a compilation
+// ----- ProgramExpr: the result of a compilation
 
-// CompiledExpr is an expression that contains a program.
-type CompiledExpr struct {
+// ProgramExpr is an expression that contains a program.
+type ProgramExpr struct {
 	program   []Instruction
 	stacksize int
 	source    Expr // Source of program
 }
 
 // Unparse the expression as an sx.Object
-func (cpe *CompiledExpr) Unparse() sx.Object { return &ExprObj{expr: cpe} }
+func (cpe *ProgramExpr) Unparse() sx.Object { return &ExprObj{expr: cpe} }
 
 // Compile the expression: nothing to do since it is already compiled.
-func (cpe *CompiledExpr) Compile(*Compiler, bool) error { return nil }
+func (cpe *ProgramExpr) Compile(*Compiler, bool) error { return nil }
 
 // Compute the expression in an environment and return the result.
 // It may have side-effects, on the given environment, or on the
 // general environment of the system.
-func (cpe *CompiledExpr) Compute(env *Environment) (sx.Object, error) {
+func (cpe *ProgramExpr) Compute(env *Environment) (sx.Object, error) {
+	currEnv, err := cpe.Interpret(env)
+	if err != nil {
+		currEnv.Reset()
+		return sx.Nil(), err
+	}
+	return currEnv.Pop(), nil
+}
+
+// Interpret the program in an environment.
+func (cpe *ProgramExpr) Interpret(env *Environment) (*Environment, error) {
 	currEnv := env
 	program := cpe.program
 	ip := 0
@@ -222,15 +232,15 @@ func (cpe *CompiledExpr) Compute(env *Environment) (sx.Object, error) {
 				ip++
 				continue
 			}
-			return nil, err
+			return currEnv, err
 		}
 		ip++
 	}
-	return currEnv.Pop(), nil
+	return currEnv, nil
 }
 
 // Print the expression on the given writer.
-func (cpe *CompiledExpr) Print(w io.Writer) (int, error) {
+func (cpe *ProgramExpr) Print(w io.Writer) (int, error) {
 	length, err := fmt.Fprintf(w, "{COMPILED %d %d ", cpe.stacksize, len(cpe.program))
 	if err != nil {
 		return length, err
