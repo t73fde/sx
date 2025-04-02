@@ -548,7 +548,7 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 		return result
 	}
 	if err := bce.Proc.CheckCallArity(len(bce.Args), argsFn); err != nil {
-		return nil, bce.Proc.handleCallError(err)
+		return nil, CallError{Name: bce.Proc.Name, Err: err}
 	}
 	return bce, nil
 }
@@ -597,7 +597,7 @@ func (bce *BuiltinCall0Expr) Unparse() sx.Object {
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCall0Expr) Improve(*Improver) (Expr, error) {
 	if err := bce.Proc.CheckCall0Arity(); err != nil {
-		return nil, bce.Proc.handleCallError(err)
+		return nil, CallError{Name: bce.Proc.Name, Err: err}
 	}
 	return bce, nil
 }
@@ -638,7 +638,7 @@ func (bce *BuiltinCall1Expr) Unparse() sx.Object {
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCall1Expr) Improve(*Improver) (Expr, error) {
 	if err := bce.Proc.CheckCall1Arity(func() sx.Object { return bce.Arg.Unparse() }); err != nil {
-		return nil, bce.Proc.handleCallError(err)
+		return nil, CallError{Name: bce.Proc.Name, Err: err}
 	}
 	return bce, nil
 }
@@ -690,7 +690,7 @@ func (bce *BuiltinCall2Expr) Unparse() sx.Object {
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCall2Expr) Improve(*Improver) (Expr, error) {
 	if err := bce.Proc.CheckCall2Arity(func() (sx.Object, sx.Object) { return bce.Arg0.Unparse(), bce.Arg1.Unparse() }); err != nil {
-		return nil, bce.Proc.handleCallError(err)
+		return nil, CallError{Name: bce.Proc.Name, Err: err}
 	}
 	return bce, nil
 }
