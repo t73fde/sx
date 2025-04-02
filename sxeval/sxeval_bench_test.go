@@ -108,26 +108,55 @@ func BenchmarkAddExec(b *testing.B) {
 }
 
 func BenchmarkAddCompiled(b *testing.B) {
+	b.SetParallelism(1)
 	env, expr := prepareAddBenchmark()
 	cexpr, err := env.Compile(expr)
 	if err != nil {
-		panic(err)
+		b.Error(err)
+		return
+	}
+
+	got, err := env.Run(cexpr)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+	if exp := sx.Int64(561); !got.IsEqual(exp) {
+		b.Errorf("expected result %v, but got %v", exp, got)
+	}
+	if stack := env.Stack(); len(stack) > 0 {
+		b.Error("stack not empty", stack)
 	}
 
 	for b.Loop() {
 		_, _ = env.Run(cexpr)
 	}
 	if stack := env.Stack(); len(stack) > 0 {
-		b.Error("stack not empty", stack)
+		b.Error("stack not empty", len(stack))
 	}
 }
 
 func prepareAddBenchmark() (*sxeval.Environment, sxeval.Expr) {
 	root := createBindingForTCO()
 	obj := sx.MakeList(
-		sx.MakeSymbol("*"),
-		sx.MakeList(sx.MakeSymbol("+"), sx.MakeSymbol("a"), sx.Int64(4), sx.Int64(11), sx.Int64(13)),
-		sx.Int64(17))
+		sx.MakeSymbol("let"),
+		sx.MakeList(
+			sx.MakeList(sx.MakeSymbol("a"), sx.Int64(5))),
+		// sx.MakeList(sx.MakeSymbol("x"), sx.Nil())),
+		sx.MakeList(
+			sx.MakeSymbol("if"),
+			sx.MakeSymbol("a"),
+			sx.MakeList(
+				sx.MakeSymbol("if"),
+				sx.MakeSymbol("x"),
+				sx.Nil(),
+				sx.MakeList(
+					sx.MakeSymbol("*"),
+					sx.MakeList(sx.MakeSymbol("+"), sx.MakeSymbol("a"), sx.Int64(4), sx.Int64(11), sx.Int64(13)),
+					sx.Int64(17)),
+			)),
+	)
+
 	env := sxeval.MakeExecutionEnvironment(root)
 	expr, err := env.Parse(obj)
 	if err != nil {

@@ -129,6 +129,7 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 
 ;; Variable to disable constant folding
 (defvar a 3)
+(defvar x ())
 `
 
 func createBindingForTCO() *sxeval.Binding {
@@ -136,6 +137,7 @@ func createBindingForTCO() *sxeval.Binding {
 	_ = root.BindSpecial(&sxbuiltins.DefVarS)
 	_ = root.BindSpecial(&sxbuiltins.DefunS)
 	_ = root.BindSpecial(&sxbuiltins.IfS)
+	_ = root.BindSpecial(&sxbuiltins.LetS)
 	_ = root.BindBuiltin(&sxbuiltins.Equal)
 	_ = root.BindBuiltin(&sxbuiltins.NumLessEqual)
 	_ = root.BindBuiltin(&sxbuiltins.Add)
