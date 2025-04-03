@@ -25,7 +25,6 @@ func BenchmarkEvenTCO(b *testing.B) {
 	testcases := [...]int{0, 1, 2, 4, 16, 64, 256, 1024, 4096, 16384, 65536}
 	root := createBindingForTCO()
 	evenSym := sx.MakeSymbol("even?")
-	b.ResetTimer()
 	for _, tc := range testcases {
 		b.Run(strconv.Itoa(tc), func(b *testing.B) {
 			env := sxeval.MakeExecutionEnvironment(root)
