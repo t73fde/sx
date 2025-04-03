@@ -30,9 +30,6 @@ var Vector = sxeval.Builtin{
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		return sx.Vector{arg}, nil
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		return sx.Vector{arg0, arg1}, nil
-	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		return args, nil
 	},

@@ -35,9 +35,6 @@ var Error = sxeval.Builtin{
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		return nil, fmt.Errorf("%s", arg.GoString())
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		return nil, fmt.Errorf("%s %s", arg0.GoString(), arg1.GoString())
-	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		var sb strings.Builder
 		for i, arg := range args {
@@ -64,12 +61,12 @@ var NotBoundError = sxeval.Builtin{
 		}
 		return nil, sxeval.NotBoundError{Binding: env.Binding(), Sym: sym}
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		sym, err := GetSymbol(arg0, 0)
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		sym, err := GetSymbol(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		bind, err := GetBinding(arg1, 1)
+		bind, err := GetBinding(args[1], 1)
 		if err != nil {
 			return nil, err
 		}

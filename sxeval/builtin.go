@@ -38,9 +38,6 @@ type Builtin struct {
 	// The actual builtin function, with one argument
 	Fn1 func(*Environment, sx.Object) (sx.Object, error)
 
-	// The actual builtin function, with two arguments
-	Fn2 func(*Environment, sx.Object, sx.Object) (sx.Object, error)
-
 	// The actual builtin function, with any number of arguments
 	Fn func(*Environment, sx.Vector) (sx.Object, error)
 
@@ -89,9 +86,6 @@ func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
 		return obj, b.handleCallError(err)
 	case 1:
 		obj, err := b.Fn1(env, args[0])
-		return obj, b.handleCallError(err)
-	case 2:
-		obj, err := b.Fn2(env, args[0], args[1])
 		return obj, b.handleCallError(err)
 	default:
 		obj, err := b.Fn(env, args)

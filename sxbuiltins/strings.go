@@ -47,17 +47,6 @@ var Concat = sxeval.Builtin{
 		s, err := GetString(arg, 0)
 		return s, err
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		s0, err := GetString(arg0, 0)
-		if err != nil {
-			return nil, err
-		}
-		s1, err := GetString(arg1, 1)
-		if err != nil {
-			return nil, err
-		}
-		return sx.MakeString(s0.GetValue() + s1.GetValue()), nil
-	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		s, err := GetString(args[0], 0)
 		if err != nil {

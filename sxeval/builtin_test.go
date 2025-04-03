@@ -31,9 +31,6 @@ func TestBuiltinSimple(t *testing.T) {
 		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 			return sx.MakeList(), nil
 		},
-		Fn2: func(_ *sxeval.Environment, arg0, _ sx.Object) (sx.Object, error) {
-			return sx.MakeList(arg0), nil
-		},
 		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 			return sx.MakeList(args[1:]...), nil
 		},

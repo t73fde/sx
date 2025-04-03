@@ -28,8 +28,8 @@ var Cons = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		return sx.Cons(arg0, arg1), nil
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		return sx.Cons(args[0], args[1]), nil
 	},
 }
 
@@ -197,9 +197,6 @@ var List = sxeval.Builtin{
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		return sx.Cons(arg, sx.Nil()), nil
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		return sx.Cons(arg0, sx.Cons(arg1, sx.Nil())), nil
-	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		return sx.MakeList(args...), nil
 	},
@@ -213,9 +210,6 @@ var ListStar = sxeval.Builtin{
 	TestPure: sxeval.AssertPure,
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		return arg, nil
-	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		return sx.Cons(arg0, arg1), nil
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		argPos := len(args) - 2
@@ -240,36 +234,6 @@ var Append = sxeval.Builtin{
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		lst, err := GetList(arg, 0)
 		return lst, err
-	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		lst0, err := GetList(arg0, 0)
-		if err != nil {
-			return nil, err
-		}
-		lst1, err := GetList(arg1, 1)
-		if err != nil {
-			return nil, err
-		}
-		if lst0 == nil {
-			return lst1, nil
-		}
-
-		result := sx.Cons(lst0.Car(), lst0.Cdr())
-		prev := result
-		for {
-			curr := prev.Cdr()
-			if next, isPair := sx.GetPair(curr); isPair {
-				if next == nil {
-					prev.SetCdr(lst1)
-					return result, nil
-				}
-				cpy := sx.Cons(next.Car(), next.Cdr())
-				prev.SetCdr(cpy)
-				prev = cpy
-				continue
-			}
-			return nil, sx.ErrImproper{Pair: lst0}
-		}
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		if len(args) == 0 {
@@ -323,12 +287,12 @@ var Assoc = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		lst, err := GetList(arg0, 0)
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		lst, err := GetList(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		return lst.Assoc(arg1), nil
+		return lst.Assoc(args[1]), nil
 	},
 }
 

@@ -384,8 +384,6 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 		return imp.Improve(&BuiltinCall0Expr{bce.Proc})
 	case 1:
 		return imp.Improve(&BuiltinCall1Expr{bce.Proc, bce.Args[0]})
-	case 2:
-		return imp.Improve(&BuiltinCall2Expr{bce.Proc, bce.Args[0], bce.Args[1]})
 	}
 	return bce, nil
 }
@@ -462,45 +460,6 @@ func (bce *BuiltinCall1Expr) Compute(env *Environment) (sx.Object, error) {
 func (bce *BuiltinCall1Expr) Print(w io.Writer) (int, error) {
 	ce := CallExpr{ObjExpr{bce.Proc}, []Expr{bce.Arg}}
 	return ce.doPrint(w, "{BCALL-1 ")
-}
-
-// BuiltinCall2Expr calls a builtin with two args and returns the resulting object.
-// It is an optimization of `CallExpr.`
-type BuiltinCall2Expr struct {
-	Proc *Builtin
-	Arg0 Expr
-	Arg1 Expr
-}
-
-func (bce *BuiltinCall2Expr) String() string {
-	return fmt.Sprintf("%v %v %v", bce.Proc, bce.Arg0, bce.Arg1)
-}
-
-// Unparse the expression back into a form object.
-func (bce *BuiltinCall2Expr) Unparse() sx.Object {
-	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg0, bce.Arg1}}
-	return ce.Unparse()
-}
-
-// Compute the value of this expression in the given environment.
-func (bce *BuiltinCall2Expr) Compute(env *Environment) (sx.Object, error) {
-	val0, err := env.Execute(bce.Arg0)
-	if err != nil {
-		return nil, err
-	}
-	val1, err := env.Execute(bce.Arg1)
-	if err != nil {
-		return nil, err
-	}
-
-	obj, err := bce.Proc.Fn2(env, val0, val1)
-	return obj, bce.Proc.handleCallError(err)
-}
-
-// Print the expression to a io.Writer.
-func (bce *BuiltinCall2Expr) Print(w io.Writer) (int, error) {
-	ce := CallExpr{ObjExpr{bce.Proc}, []Expr{bce.Arg0, bce.Arg1}}
-	return ce.doPrint(w, "{BCALL-2 ")
 }
 
 // --- ExprObj ---------------------------------------------------------------
