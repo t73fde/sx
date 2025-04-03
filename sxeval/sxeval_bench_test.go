@@ -14,6 +14,7 @@
 package sxeval_test
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -101,6 +102,12 @@ func parseAndMore(env *sxeval.Environment, obj sx.Object) (sxeval.Expr, error) {
 func BenchmarkAddExec(b *testing.B) {
 	env, expr := prepareAddBenchmark()
 
+	err := checkAddBenchmark(env, expr)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+
 	for b.Loop() {
 		_, _ = env.Run(expr)
 	}
@@ -114,16 +121,10 @@ func BenchmarkAddCompiled(b *testing.B) {
 		return
 	}
 
-	got, err := env.Run(cexpr)
+	err = checkAddBenchmark(env, cexpr)
 	if err != nil {
 		b.Error(err)
 		return
-	}
-	if exp := sx.Int64(561); !got.IsEqual(exp) {
-		b.Errorf("expected result %v, but got %v", exp, got)
-	}
-	if stack := env.Stack(); len(stack) > 0 {
-		b.Error("stack not empty", stack)
 	}
 
 	for b.Loop() {
@@ -161,4 +162,18 @@ func prepareAddBenchmark() (*sxeval.Environment, sxeval.Expr) {
 		panic(err)
 	}
 	return env, expr
+}
+
+func checkAddBenchmark(env *sxeval.Environment, expr sxeval.Expr) error {
+	got, err := env.Run(expr)
+	if err != nil {
+		return err
+	}
+	if exp := sx.Int64(561); !got.IsEqual(exp) {
+		return fmt.Errorf("expected result %v, but got %v", exp, got)
+	}
+	if stack := env.Stack(); len(stack) > 0 {
+		return fmt.Errorf("stack not empty: %v", stack)
+	}
+	return nil
 }
