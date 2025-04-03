@@ -28,6 +28,11 @@ type Expr interface {
 	// Unparse the expression as an sx.Object
 	Unparse() sx.Object
 
+	// Compile the expression for the given compiler and and indication about
+	// tail-call position. May return MissingCompileError to signal that
+	// compilation is not possible / currently not implemented.
+	Compile(*Compiler, bool) error
+
 	// Compute the expression in a frame and return the result.
 	// It may have side-effects, on the given environment, or on the
 	// general environment of the system.
@@ -306,6 +311,9 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 	}
 	return ce, nil
 }
+
+// Compile the expression.
+func (ce *CallExpr) Compile(*Compiler, bool) error { return MissingCompileError{Expr: ce} }
 
 // Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {

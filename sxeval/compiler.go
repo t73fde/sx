@@ -24,11 +24,6 @@ import (
 	"t73f.de/r/sx"
 )
 
-// Compilable is an interface, Expr should implement if they support compilation.
-type Compilable interface {
-	Compile(*Compiler, bool) error
-}
-
 // Compiler is the data to be used at compilation time.
 type Compiler struct {
 	level    int
@@ -88,10 +83,7 @@ func (sxc *Compiler) CompileProgram(expr Expr) (*ProgramExpr, error) {
 
 // Compile the given expression. Do not call `expr.Compile()` directly.
 func (sxc *Compiler) Compile(expr Expr, tailPos bool) error {
-	if iexpr, ok := expr.(Compilable); ok {
-		return iexpr.Compile(sxc, tailPos)
-	}
-	return MissingCompileError{Expr: expr}
+	return expr.Compile(sxc, tailPos)
 }
 
 // AdjustStack to track the current (and maximum) position of the abstract stack pointer.

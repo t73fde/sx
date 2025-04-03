@@ -264,6 +264,8 @@ func (ce *applyExpr) Unparse() sx.Object {
 	return args.Cons(ce.Proc.(sx.Object))
 }
 
+func (ce *applyExpr) Compile(*Compiler, bool) error { return MissingCompileError{Expr: ce} }
+
 func (ce *applyExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.Apply(ce.Proc, ce.Args)
 }
