@@ -217,7 +217,7 @@ var builtins = []*sxeval.Builtin{
 		MaxArity: 0,
 		TestPure: nil,
 		Fn0: func(env *sxeval.Environment) (sx.Object, error) {
-			return slices.Clone(env.Stack()), nil
+			return sx.Vector(slices.Clone(env.Stack())), nil
 		},
 	},
 }
