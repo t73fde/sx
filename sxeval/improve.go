@@ -104,14 +104,5 @@ func (imp *Improver) Bind(sym *sx.Symbol) error {
 // It is only called, if no full execution environment is needed, only a binding.
 func (imp *Improver) Call(fn Callable, args sx.Vector) (sx.Object, error) {
 	env := MakeExecutionEnvironment(imp.binding)
-	switch len(args) {
-	case 0:
-		return fn.Call0(env)
-	case 1:
-		return fn.Call1(env, args[0])
-	case 2:
-		return fn.Call2(env, args[0], args[1])
-	default:
-		return fn.Call(env, args)
-	}
+	return fn.Call(env, args)
 }

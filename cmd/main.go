@@ -457,13 +457,6 @@ func printExpr(expr sxeval.Expr, level int) {
 			printExpr(e.Vals[i], -level)
 		}
 		printExpr(e.Body, level)
-	case *sxbuiltins.Let1Expr:
-		fmt.Println("LET1")
-		level++
-		fmt.Print(strings.Repeat(" ", level*2))
-		fmt.Print(e.Symbol, ":")
-		printExpr(e.Value, -level)
-		printExpr(e.Body, level)
 	case *sxbuiltins.IfExpr:
 		fmt.Println("IF")
 		printExpr(e.Test, level+1)

@@ -304,14 +304,6 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 		}
 		ce.Args[i] = expr
 	}
-	switch len(ce.Args) {
-	case 0:
-		return imp.Improve(&Call0Expr{proc})
-	case 1:
-		return imp.Improve(&Call1Expr{proc, ce.Args[0]})
-	case 2:
-		return imp.Improve(&Call2Expr{proc, ce.Args[0], ce.Args[1]})
-	}
 	return ce, nil
 }
 
@@ -388,99 +380,6 @@ func (e NotCallableError) Error() string {
 }
 func (e NotCallableError) String() string { return e.Error() }
 
-// Call0Expr calls a procedure with no arg and returns the resulting objects.
-type Call0Expr struct{ Proc Expr }
-
-func (c0e *Call0Expr) String() string { return fmt.Sprintf("%v", c0e.Proc) }
-
-// Unparse the expression back into a form object.
-func (c0e *Call0Expr) Unparse() sx.Object { return sx.MakeList(c0e.Proc.Unparse()) }
-
-// Compute the expression in a frame and return the result.
-func (c0e *Call0Expr) Compute(env *Environment) (sx.Object, error) {
-	proc, err := computeProc(env, c0e.Proc)
-	if err != nil {
-		return nil, err
-	}
-	return proc.Call0(env)
-}
-
-// Print the expression on the given writer.
-func (c0e *Call0Expr) Print(w io.Writer) (int, error) {
-	ce := CallExpr{c0e.Proc, nil}
-	return ce.doPrint(w, "{CALL-0 ")
-}
-
-// Call1Expr calls a procedure with one arg and returns the resulting objects.
-type Call1Expr struct {
-	Proc Expr
-	Arg  Expr
-}
-
-func (c1e *Call1Expr) String() string { return fmt.Sprintf("%v %v", c1e.Proc, c1e.Arg) }
-
-// Unparse the expression back into a form object.
-func (c1e *Call1Expr) Unparse() sx.Object {
-	return sx.MakeList(c1e.Proc.Unparse(), c1e.Arg.Unparse())
-}
-
-// Compute the expression in a frame and return the result.
-func (c1e *Call1Expr) Compute(env *Environment) (sx.Object, error) {
-	proc, err := computeProc(env, c1e.Proc)
-	if err != nil {
-		return nil, err
-	}
-
-	val, err := env.Execute(c1e.Arg)
-	if err != nil {
-		return nil, err
-	}
-	return proc.Call1(env, val)
-}
-
-// Print the expression on the given writer.
-func (c1e *Call1Expr) Print(w io.Writer) (int, error) {
-	ce := CallExpr{c1e.Proc, []Expr{c1e.Arg}}
-	return ce.doPrint(w, "{CALL-1 ")
-}
-
-// Call2Expr calls a procedure with two args and returns the resulting objects.
-type Call2Expr struct {
-	Proc Expr
-	Arg0 Expr
-	Arg1 Expr
-}
-
-func (c2e *Call2Expr) String() string { return fmt.Sprintf("%v %v %v", c2e.Proc, c2e.Arg0, c2e.Arg1) }
-
-// Unparse the expression back into a form object.
-func (c2e *Call2Expr) Unparse() sx.Object {
-	return sx.MakeList(c2e.Proc.Unparse(), c2e.Arg0.Unparse(), c2e.Arg1.Unparse())
-}
-
-// Compute the expression in a frame and return the result.
-func (c2e *Call2Expr) Compute(env *Environment) (sx.Object, error) {
-	proc, err := computeProc(env, c2e.Proc)
-	if err != nil {
-		return nil, err
-	}
-	val0, err := env.Execute(c2e.Arg0)
-	if err != nil {
-		return nil, err
-	}
-	val1, err := env.Execute(c2e.Arg1)
-	if err != nil {
-		return nil, err
-	}
-	return proc.Call2(env, val0, val1)
-}
-
-// Print the expression on the given writer.
-func (c2e *Call2Expr) Print(w io.Writer) (int, error) {
-	ce := CallExpr{c2e.Proc, []Expr{c2e.Arg0, c2e.Arg1}}
-	return ce.doPrint(w, "{CALL-2 ")
-}
-
 // BuiltinCallExpr calls a builtin and returns the resulting object.
 // It is an optimization of `CallExpr.`
 type BuiltinCallExpr struct {
@@ -523,15 +422,6 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 		}
 	}
 
-	switch len(bce.Args) {
-	case 0:
-		return imp.Improve(&BuiltinCall0Expr{bce.Proc})
-	case 1:
-		return imp.Improve(&BuiltinCall1Expr{bce.Proc, bce.Args[0]})
-	case 2:
-		return imp.Improve(&BuiltinCall2Expr{bce.Proc, bce.Args[0], bce.Args[1]})
-	}
-
 	argsFn := func() []sx.Object {
 		result := make([]sx.Object, len(bce.Args))
 		for i, arg := range bce.Args {
@@ -541,6 +431,15 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 	}
 	if err := bce.Proc.CheckCallArity(len(bce.Args), argsFn); err != nil {
 		return nil, CallError{Name: bce.Proc.Name, Err: err}
+	}
+
+	switch len(bce.Args) {
+	case 0:
+		return imp.Improve(&BuiltinCall0Expr{bce.Proc})
+	case 1:
+		return imp.Improve(&BuiltinCall1Expr{bce.Proc, bce.Args[0]})
+	case 2:
+		return imp.Improve(&BuiltinCall2Expr{bce.Proc, bce.Args[0], bce.Args[1]})
 	}
 	return bce, nil
 }
@@ -586,14 +485,6 @@ func (bce *BuiltinCall0Expr) Unparse() sx.Object {
 	return ce.Unparse()
 }
 
-// Improve the expression into a possible simpler one.
-func (bce *BuiltinCall0Expr) Improve(*Improver) (Expr, error) {
-	if err := bce.Proc.CheckCall0Arity(); err != nil {
-		return nil, CallError{Name: bce.Proc.Name, Err: err}
-	}
-	return bce, nil
-}
-
 // Compile the expression.
 func (bce *BuiltinCall0Expr) Compile(sxc *Compiler, _ bool) error {
 	sxc.EmitBCall0(bce.Proc)
@@ -625,14 +516,6 @@ func (bce *BuiltinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.P
 func (bce *BuiltinCall1Expr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg}}
 	return ce.Unparse()
-}
-
-// Improve the expression into a possible simpler one.
-func (bce *BuiltinCall1Expr) Improve(*Improver) (Expr, error) {
-	if err := bce.Proc.CheckCall1Arity(func() sx.Object { return bce.Arg.Unparse() }); err != nil {
-		return nil, CallError{Name: bce.Proc.Name, Err: err}
-	}
-	return bce, nil
 }
 
 // Compile the expression.
@@ -677,14 +560,6 @@ func (bce *BuiltinCall2Expr) String() string {
 func (bce *BuiltinCall2Expr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg0, bce.Arg1}}
 	return ce.Unparse()
-}
-
-// Improve the expression into a possible simpler one.
-func (bce *BuiltinCall2Expr) Improve(*Improver) (Expr, error) {
-	if err := bce.Proc.CheckCall2Arity(func() (sx.Object, sx.Object) { return bce.Arg0.Unparse(), bce.Arg1.Unparse() }); err != nil {
-		return nil, CallError{Name: bce.Proc.Name, Err: err}
-	}
-	return bce, nil
 }
 
 // Compile the expression.
