@@ -272,9 +272,9 @@ func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {
 			if err = computeArgs(env, ce.Args); err != nil {
 				return nil, err
 			}
-			obj, err := proc.Call(env, env.Args(len(ce.Args)))
+			obj, err2 := proc.Call(env, env.Args(len(ce.Args)))
 			env.Kill(len(ce.Args))
-			return obj, err
+			return obj, err2
 		}
 	}
 	return nil, NotCallableError{Obj: val}
