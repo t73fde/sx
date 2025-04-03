@@ -213,8 +213,6 @@ func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector) (re
 // Apply the given Callable with the arguments.
 func (env *Environment) Apply(fn Callable, args sx.Vector) (res sx.Object, err error) {
 	switch len(args) {
-	case 1:
-		res, err = fn.Call1(env, args[0])
 	case 2:
 		res, err = fn.Call2(env, args[0], args[1])
 	default:

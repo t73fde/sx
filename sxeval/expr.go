@@ -261,8 +261,6 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 	switch len(ce.Args) {
 	case 0:
 		return imp.Improve(&Call0Expr{proc})
-	case 1:
-		return imp.Improve(&Call1Expr{proc, ce.Args[0]})
 	case 2:
 		return imp.Improve(&Call2Expr{proc, ce.Args[0], ce.Args[1]})
 	}
@@ -363,39 +361,6 @@ func (c0e *Call0Expr) Compute(env *Environment) (sx.Object, error) {
 func (c0e *Call0Expr) Print(w io.Writer) (int, error) {
 	ce := CallExpr{c0e.Proc, nil}
 	return ce.doPrint(w, "{CALL-0 ")
-}
-
-// Call1Expr calls a procedure with one arg and returns the resulting objects.
-type Call1Expr struct {
-	Proc Expr
-	Arg  Expr
-}
-
-func (c1e *Call1Expr) String() string { return fmt.Sprintf("%v %v", c1e.Proc, c1e.Arg) }
-
-// Unparse the expression back into a form object.
-func (c1e *Call1Expr) Unparse() sx.Object {
-	return sx.MakeList(c1e.Proc.Unparse(), c1e.Arg.Unparse())
-}
-
-// Compute the expression in a frame and return the result.
-func (c1e *Call1Expr) Compute(env *Environment) (sx.Object, error) {
-	proc, err := computeProc(env, c1e.Proc)
-	if err != nil {
-		return nil, err
-	}
-
-	val, err := env.Execute(c1e.Arg)
-	if err != nil {
-		return nil, err
-	}
-	return proc.Call1(env, val)
-}
-
-// Print the expression on the given writer.
-func (c1e *Call1Expr) Print(w io.Writer) (int, error) {
-	ce := CallExpr{c1e.Proc, []Expr{c1e.Arg}}
-	return ce.doPrint(w, "{CALL-1 ")
 }
 
 // Call2Expr calls a procedure with two args and returns the resulting objects.
@@ -584,10 +549,28 @@ func (bce *BuiltinCall1Expr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCall1Expr) Improve(*Improver) (Expr, error) {
-	if err := bce.Proc.CheckCall1Arity(func() sx.Object { return bce.Arg.Unparse() }); err != nil {
+	if err := bce.checkCall1Arity(func() sx.Object { return bce.Arg.Unparse() }); err != nil {
 		return nil, CallError{Name: bce.Proc.Name, Err: err}
 	}
 	return bce, nil
+}
+
+// checkCall1Arity checks the builtin function to allow one arg.
+func (bce *BuiltinCall1Expr) checkCall1Arity(argFn func() sx.Object) error {
+	b := bce.Proc
+	minArity, maxArity := b.MinArity, b.MaxArity
+	if minArity == maxArity {
+		if minArity != 1 {
+			return fmt.Errorf("exactly %d arguments required, but 1 given: [%v]", minArity, argFn())
+		}
+	} else if maxArity < 0 {
+		if 1 < minArity {
+			return fmt.Errorf("at least %d arguments required, but only 1 given: [%v]", minArity, argFn())
+		}
+	} else if 1 < minArity || maxArity < 1 {
+		return fmt.Errorf("between %d and %d arguments required, but 1 given: [%v]", minArity, maxArity, argFn())
+	}
+	return nil
 }
 
 // Compute the value of this expression in the given environment.

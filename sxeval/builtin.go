@@ -78,32 +78,6 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 	return false
 }
 
-// Call1 the builtin function with the given environment and one argument.
-func (b *Builtin) Call1(env *Environment, arg sx.Object) (sx.Object, error) {
-	if err := b.CheckCall1Arity(func() sx.Object { return arg }); err != nil {
-		return sx.Nil(), b.handleCallError(err)
-	}
-	obj, err := b.Fn1(env, arg)
-	return obj, b.handleCallError(err)
-}
-
-// CheckCall1Arity checks the builtin function to allow one arg.
-func (b *Builtin) CheckCall1Arity(argFn func() sx.Object) error {
-	minArity, maxArity := b.MinArity, b.MaxArity
-	if minArity == maxArity {
-		if minArity != 1 {
-			return fmt.Errorf("exactly %d arguments required, but 1 given: [%v]", minArity, argFn())
-		}
-	} else if maxArity < 0 {
-		if 1 < minArity {
-			return fmt.Errorf("at least %d arguments required, but only 1 given: [%v]", minArity, argFn())
-		}
-	} else if 1 < minArity || maxArity < 1 {
-		return fmt.Errorf("between %d and %d arguments required, but 1 given: [%v]", minArity, maxArity, argFn())
-	}
-	return nil
-}
-
 // Call2 the builtin function with the given environment and two arguments.
 func (b *Builtin) Call2(env *Environment, arg0, arg1 sx.Object) (sx.Object, error) {
 	if err := b.CheckCall2Arity(func() (sx.Object, sx.Object) { return arg0, arg1 }); err != nil {
@@ -142,6 +116,9 @@ func (b *Builtin) Call(env *Environment, args sx.Vector) (sx.Object, error) {
 	switch len(args) {
 	case 0:
 		obj, err := b.Fn0(env)
+		return obj, b.handleCallError(err)
+	case 1:
+		obj, err := b.Fn1(env, args[0])
 		return obj, b.handleCallError(err)
 	default:
 		obj, err := b.Fn(env, args)

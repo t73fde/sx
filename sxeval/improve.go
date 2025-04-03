@@ -105,8 +105,6 @@ func (imp *Improver) Bind(sym *sx.Symbol) error {
 func (imp *Improver) Call(fn Callable, args sx.Vector) (sx.Object, error) {
 	env := MakeExecutionEnvironment(imp.binding)
 	switch len(args) {
-	case 1:
-		return fn.Call1(env, args[0])
 	case 2:
 		return fn.Call2(env, args[0], args[1])
 	default:

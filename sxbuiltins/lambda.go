@@ -354,36 +354,6 @@ func (ll *LexLambda) GoString() string { return ll.String() }
 // produce any other side effects.
 func (ll *LexLambda) IsPure(sx.Vector) bool { return false }
 
-// Call1 the Procedure with one argument.
-func (ll *LexLambda) Call1(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
-	numParams := len(ll.Params)
-	if 1 < numParams {
-		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[1:])
-	}
-	bindSize := numParams
-	if ll.Rest != nil {
-		bindSize++
-	}
-	lexicalEnv := env.NewLexicalEnvironment(ll.Binding, ll.Name, bindSize)
-	if len(ll.Params) == 1 {
-		err := lexicalEnv.Bind(ll.Params[0], arg)
-		if err == nil && ll.Rest != nil {
-			err = lexicalEnv.Bind(ll.Rest, sx.Nil())
-		}
-		if err != nil {
-			return nil, err
-		}
-	} else if ll.Rest != nil {
-		err := lexicalEnv.Bind(ll.Rest, sx.Cons(arg, sx.Nil()))
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, fmt.Errorf("%s: excess arguments: [%v]", ll.Name, arg)
-	}
-	return lexicalEnv.ExecuteTCO(ll.Expr)
-}
-
 // Call2 the Procedure with two arguments.
 func (ll *LexLambda) Call2(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
 	numParams := len(ll.Params)
@@ -511,18 +481,6 @@ func (dl *DynLambda) GoString() string { return dl.String() }
 // IsPure tests if the Procedure needs an environment value and does not
 // produce any other side effects.
 func (dl *DynLambda) IsPure(sx.Vector) bool { return false }
-
-// Call1 the Procedure with one argument.
-func (dl *DynLambda) Call1(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
-	// A DynLambda is just a LexLambda with a different Binding.
-	return (&LexLambda{
-		Binding: env.Binding(),
-		Name:    dl.Name,
-		Params:  dl.Params,
-		Rest:    dl.Rest,
-		Expr:    dl.Expr,
-	}).Call1(env, arg)
-}
 
 // Call2 the Procedure with two arguments.
 func (dl *DynLambda) Call2(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
