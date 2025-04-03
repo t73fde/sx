@@ -28,7 +28,7 @@ type Environment struct {
 	binding  *Binding
 	tco      *tcodata
 	observer *observer
-	stack    []sx.Object
+	stackp   *[]sx.Object
 }
 
 // tcodata contains everything to implement Tail Call Optimization (tco)
@@ -59,6 +59,7 @@ func (env *Environment) String() string { return env.binding.name }
 
 // MakeExecutionEnvironment creates an environment for later execution of an expression.
 func MakeExecutionEnvironment(bind *Binding) *Environment {
+	stack := make([]sx.Object, 0, 1024)
 	return &Environment{
 		binding: bind,
 		tco: &tcodata{
@@ -71,7 +72,7 @@ func MakeExecutionEnvironment(bind *Binding) *Environment {
 			improve: nil,
 			compile: nil,
 		},
-		stack: make([]sx.Object, 0, 1024),
+		stackp: &stack,
 	}
 }
 
@@ -234,6 +235,7 @@ func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector) (sx
 			expr: nil,
 		},
 		observer: env.observer,
+		stackp:   env.stackp,
 	}
 	return macroEnv.Apply(fn, args)
 }
@@ -412,38 +414,49 @@ func (e NotBoundError) Error() string {
 
 // Reset the stack.
 func (env *Environment) Reset() {
-	if env.stack != nil {
-		env.stack = env.stack[:0]
+	if *env.stackp != nil {
+		*env.stackp = (*env.stackp)[:0]
 	}
 }
 
 // Stack returns the stack.
-func (env *Environment) Stack() []sx.Object { return env.stack }
+func (env *Environment) Stack() []sx.Object { return *env.stackp }
 
 // Push a value to the stack
 func (env *Environment) Push(val sx.Object) {
-	env.stack = append(env.stack, val)
+	*env.stackp = append(*env.stackp, val)
 }
 
 // Pop a value from the stack
 func (env *Environment) Pop() sx.Object {
-	sp := len(env.stack) - 1
-	val := env.stack[sp]
-	env.stack = env.stack[0:sp]
+	stack := *env.stackp
+	sp := len(stack) - 1
+	val := stack[sp]
+	*env.stackp = stack[0:sp]
 	return val
 }
 
 // Top returns the value on top of the stack
-func (env *Environment) Top() sx.Object { return env.stack[len(env.stack)-1] }
+func (env *Environment) Top() sx.Object {
+	stack := *env.stackp
+	return stack[len(stack)-1]
+}
 
 // Set the value on top of the stack
-func (env *Environment) Set(val sx.Object) { env.stack[len(env.stack)-1] = val }
+func (env *Environment) Set(val sx.Object) {
+	stack := *env.stackp
+	stack[len(stack)-1] = val
+}
 
 // Kill some elements on the stack
-func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-num] }
+func (env *Environment) Kill(num int) {
+	stack := *env.stackp
+	*env.stackp = stack[:len(stack)-num]
+}
 
 // Args returns a given number of values on top of the stack as a slice.
 func (env *Environment) Args(numargs int) sx.Vector {
-	sp := len(env.stack)
-	return env.stack[sp-numargs : sp]
+	stack := *env.stackp
+	sp := len(stack)
+	return stack[sp-numargs : sp]
 }

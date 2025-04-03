@@ -309,26 +309,18 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 
 // Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment) (sx.Object, error) {
-	proc, err := computeProc(env, ce.Proc)
-	if err != nil {
-		return nil, err
-	}
-	if err = computeArgs(env, ce.Args); err != nil {
-		return nil, err
-	}
-	obj, err := proc.Call(env, env.Args(len(ce.Args)))
-	env.Kill(len(ce.Args))
-	return obj, err
-}
-
-func computeProc(env *Environment, proc Expr) (Callable, error) {
-	val, err := env.Execute(proc)
+	val, err := env.Execute(ce.Proc)
 	if err != nil {
 		return nil, err
 	}
 	if !sx.IsNil(val) {
-		if proc, ok := val.(Callable); ok {
-			return proc, nil
+		if proc, isCallable := val.(Callable); isCallable {
+			if err = computeArgs(env, ce.Args); err != nil {
+				return nil, err
+			}
+			obj, err := proc.Call(env, env.Args(len(ce.Args)))
+			env.Kill(len(ce.Args))
+			return obj, err
 		}
 	}
 	return nil, NotCallableError{Obj: val}
