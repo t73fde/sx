@@ -122,17 +122,10 @@ func (le *LetExpr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
-	switch len(le.Vals) {
-	case 0:
+	if len(le.Vals) == 0 {
 		return imp.Improve(le.Body)
-	case 1:
-		le1 := &Let1Expr{
-			Symbol: le.Symbols[0],
-			Value:  le.Vals[0],
-			Body:   le.Body,
-		}
-		return imp.Improve(le1)
 	}
+
 	letEnv := imp.MakeChildImprover("let-improve", len(le.Vals))
 	for i, val := range le.Vals {
 		expr, err := imp.Improve(val)
@@ -208,88 +201,6 @@ func (le *LetExpr) Print(w io.Writer) (int, error) {
 		return length, err
 	}
 	l, err = le.Body.Print(w)
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = io.WriteString(w, "}")
-	length += l
-	return length, err
-}
-
-// Let1Expr is a special case of `LetExpr`, where there is just one binding.
-type Let1Expr struct {
-	Symbol *sx.Symbol
-	Value  sxeval.Expr
-	Body   sxeval.Expr
-}
-
-// Unparse the expression as an sx.Object
-func (le1 *Let1Expr) Unparse() sx.Object {
-	return sx.MakeList(
-		sx.MakeSymbol(letName),
-		sx.Cons(sx.MakeList(le1.Symbol, le1.Value.Unparse()), sx.Nil()),
-		le1.Body.Unparse(),
-	)
-}
-
-// Improve the expression into a possible simpler one.
-func (le1 *Let1Expr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
-	letEnv := imp.MakeChildImprover("let1-improve", 1)
-	expr, err := imp.Improve(le1.Value)
-	if err != nil {
-		return le1, err
-	}
-	le1.Value = expr
-	_ = letEnv.Bind(le1.Symbol)
-	expr, err = letEnv.Improve(le1.Body)
-	if err == nil {
-		le1.Body = expr
-	}
-	return le1, err
-}
-
-// Compute the expression in a frame and return the result.
-func (le1 *Let1Expr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	letEnv := env.NewLexicalEnvironment(env.Binding(), "let1", 1)
-	obj, err := env.Execute(le1.Value)
-	if err != nil {
-		return nil, err
-	}
-	if err = letEnv.Bind(le1.Symbol, obj); err != nil {
-		return nil, err
-	}
-	return letEnv.ExecuteTCO(le1.Body)
-}
-
-// Print the expression on the given writer.
-func (le1 *Let1Expr) Print(w io.Writer) (int, error) {
-	length, err := io.WriteString(w, "{LET1 ((")
-	if err != nil {
-		return length, err
-	}
-	var l int
-	l, err = le1.Symbol.Print(w)
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = io.WriteString(w, " ")
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = le1.Value.Print(w)
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = io.WriteString(w, ")) ")
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = le1.Body.Print(w)
 	length += l
 	if err != nil {
 		return length, err
