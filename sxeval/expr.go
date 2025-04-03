@@ -356,7 +356,7 @@ func (c0e *Call0Expr) Compute(env *Environment) (sx.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return proc.Call0(env)
+	return proc.Call(env, nil)
 }
 
 // Print the expression on the given writer.
@@ -531,10 +531,28 @@ func (bce *BuiltinCall0Expr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCall0Expr) Improve(*Improver) (Expr, error) {
-	if err := bce.Proc.CheckCall0Arity(); err != nil {
+	if err := bce.checkCall0Arity(); err != nil {
 		return nil, CallError{Name: bce.Proc.Name, Err: err}
 	}
 	return bce, nil
+}
+
+// checkCall0Arity checks the builtin to allow zero args.
+func (bce *BuiltinCall0Expr) checkCall0Arity() error {
+	b := bce.Proc
+	minArity, maxArity := b.MinArity, b.MaxArity
+	if minArity == maxArity {
+		if minArity != 0 {
+			return fmt.Errorf("exactly %d arguments required, but none given", minArity)
+		}
+	} else if maxArity < 0 {
+		if 0 < minArity {
+			return fmt.Errorf("at least %d arguments required, but none given", minArity)
+		}
+	} else if 0 < minArity {
+		return fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
+	}
+	return nil
 }
 
 // Compute the value of this expression in the given environment.
