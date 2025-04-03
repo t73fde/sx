@@ -32,6 +32,11 @@ type Compiler struct {
 	program  []Instruction
 	curStack int
 	maxStack int
+
+	bcallInstrCache  map[*Builtin]Instruction
+	bcall0InstrCache map[*Builtin]Instruction
+	bcall1InstrCache map[*Builtin]Instruction
+	bcall2InstrCache map[*Builtin]Instruction
 }
 
 // Instruction is a compiled command to execute one aspect of an expression.
@@ -44,13 +49,28 @@ type CompileObserver interface {
 
 // MakeChildCompiler builds a new compiler.
 func (sxc *Compiler) MakeChildCompiler() *Compiler {
-	return &Compiler{
-		level:    sxc.level + 1,
-		env:      sxc.env,
-		observer: sxc.observer,
-		program:  nil,
-		curStack: 0,
-		maxStack: 0,
+	result := *sxc
+	result.level++
+	result.resetState()
+	return &result
+}
+
+func (sxc *Compiler) resetState() {
+	sxc.program = nil
+	sxc.curStack = 0
+	sxc.maxStack = 0
+
+	if sxc.bcallInstrCache == nil {
+		sxc.bcallInstrCache = make(map[*Builtin]Instruction)
+	}
+	if sxc.bcall0InstrCache == nil {
+		sxc.bcall0InstrCache = make(map[*Builtin]Instruction)
+	}
+	if sxc.bcall1InstrCache == nil {
+		sxc.bcall1InstrCache = make(map[*Builtin]Instruction)
+	}
+	if sxc.bcall2InstrCache == nil {
+		sxc.bcall2InstrCache = make(map[*Builtin]Instruction)
 	}
 }
 
@@ -62,10 +82,7 @@ func (sxc *Compiler) Stats() (int, int, int, int) {
 
 // CompileProgram builds a ProgramExpr by compiling the Expr.
 func (sxc *Compiler) CompileProgram(expr Expr) (*ProgramExpr, error) {
-	// Reset compile state
-	sxc.program = nil
-	sxc.curStack = 0
-	sxc.maxStack = 0
+	sxc.resetState()
 
 	if err := sxc.Compile(expr, true); err != nil {
 		return nil, err
@@ -171,12 +188,15 @@ func (sxc *Compiler) EmitJump() func() {
 // EmitBCall emits an instruction to call a builtin with more than two args
 func (sxc *Compiler) EmitBCall(b *Builtin, numargs int) {
 	sxc.AdjustStack(-numargs + 1)
-	// TODO: cache fn
-	fn := func(env *Environment) error {
-		obj, err := b.Fn(env, env.Args(numargs))
-		env.Kill(numargs - 1)
-		env.Set(obj)
-		return b.handleCallError(err)
+	fn, found := sxc.bcallInstrCache[b]
+	if !found {
+		fn = func(env *Environment) error {
+			obj, err := b.Fn(env, env.Args(numargs))
+			env.Kill(numargs - 1)
+			env.Set(obj)
+			return b.handleCallError(err)
+		}
+		sxc.bcallInstrCache[b] = fn
 	}
 	sxc.Emit(fn, "BCALL", strconv.Itoa(numargs), b.Name)
 }
@@ -184,22 +204,28 @@ func (sxc *Compiler) EmitBCall(b *Builtin, numargs int) {
 // EmitBCall0 emits an instruction to call a builtin with no args
 func (sxc *Compiler) EmitBCall0(b *Builtin) {
 	sxc.AdjustStack(1)
-	// TODO: cache fn
-	fn := func(env *Environment) error {
-		obj, err := b.Fn0(env)
-		env.Push(obj)
-		return b.handleCallError(err)
+	fn, found := sxc.bcall0InstrCache[b]
+	if !found {
+		fn = func(env *Environment) error {
+			obj, err := b.Fn0(env)
+			env.Push(obj)
+			return b.handleCallError(err)
+		}
+		sxc.bcall0InstrCache[b] = fn
 	}
 	sxc.Emit(fn, "BCALL-0", b.Name)
 }
 
 // EmitBCall1 emits an instruction to call a builtin with one arg
 func (sxc *Compiler) EmitBCall1(b *Builtin) {
-	// TODO: cache fn
-	fn := func(env *Environment) error {
-		obj, err := b.Fn1(env, env.Top())
-		env.Set(obj)
-		return b.handleCallError(err)
+	fn, found := sxc.bcall1InstrCache[b]
+	if !found {
+		fn = func(env *Environment) error {
+			obj, err := b.Fn1(env, env.Top())
+			env.Set(obj)
+			return b.handleCallError(err)
+		}
+		sxc.bcall1InstrCache[b] = fn
 	}
 	sxc.Emit(fn, "BCALL-1", b.Name)
 }
@@ -207,12 +233,15 @@ func (sxc *Compiler) EmitBCall1(b *Builtin) {
 // EmitBCall2 emits an instruction to call a builtin with two args
 func (sxc *Compiler) EmitBCall2(b *Builtin) {
 	sxc.AdjustStack(-1)
-	// TODO: cache fn
-	fn := func(env *Environment) error {
-		val1, val0 := env.Pop(), env.Top()
-		obj, err := b.Fn2(env, val0, val1)
-		env.Set(obj)
-		return b.handleCallError(err)
+	fn, found := sxc.bcall2InstrCache[b]
+	if !found {
+		fn = func(env *Environment) error {
+			val1, val0 := env.Pop(), env.Top()
+			obj, err := b.Fn2(env, val0, val1)
+			env.Set(obj)
+			return b.handleCallError(err)
+		}
+		sxc.bcall2InstrCache[b] = fn
 	}
 	sxc.Emit(fn, "BCALL-2", b.Name)
 }
