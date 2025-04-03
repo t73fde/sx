@@ -198,7 +198,7 @@ func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 }
 
 // ApplyMacro executes the Callable in a macro environment.
-func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector) (res sx.Object, err error) {
+func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector) (sx.Object, error) {
 	macroEnv := Environment{
 		binding: env.binding.MakeChildBinding(name, 0),
 		tco: &tcodata{
@@ -211,13 +211,8 @@ func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector) (re
 }
 
 // Apply the given Callable with the arguments.
-func (env *Environment) Apply(fn Callable, args sx.Vector) (res sx.Object, err error) {
-	switch len(args) {
-	case 2:
-		res, err = fn.Call2(env, args[0], args[1])
-	default:
-		res, err = fn.Call(env, args)
-	}
+func (env *Environment) Apply(fn Callable, args sx.Vector) (sx.Object, error) {
+	res, err := fn.Call(env, args)
 	if err == nil {
 		return res, nil
 	}

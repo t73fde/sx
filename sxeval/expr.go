@@ -258,12 +258,6 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 		}
 		ce.Args[i] = expr
 	}
-	switch len(ce.Args) {
-	case 0:
-		return imp.Improve(&Call0Expr{proc})
-	case 2:
-		return imp.Improve(&Call2Expr{proc, ce.Args[0], ce.Args[1]})
-	}
 	return ce, nil
 }
 
@@ -339,66 +333,6 @@ func (e NotCallableError) Error() string {
 	return fmt.Sprintf("not callable: %T/%v", e.Obj, e.Obj)
 }
 func (e NotCallableError) String() string { return e.Error() }
-
-// Call0Expr calls a procedure with no arg and returns the resulting objects.
-type Call0Expr struct{ Proc Expr }
-
-func (c0e *Call0Expr) String() string { return fmt.Sprintf("%v", c0e.Proc) }
-
-// Unparse the expression back into a form object.
-func (c0e *Call0Expr) Unparse() sx.Object { return sx.MakeList(c0e.Proc.Unparse()) }
-
-// Compute the expression in a frame and return the result.
-func (c0e *Call0Expr) Compute(env *Environment) (sx.Object, error) {
-	proc, err := computeProc(env, c0e.Proc)
-	if err != nil {
-		return nil, err
-	}
-	return proc.Call(env, nil)
-}
-
-// Print the expression on the given writer.
-func (c0e *Call0Expr) Print(w io.Writer) (int, error) {
-	ce := CallExpr{c0e.Proc, nil}
-	return ce.doPrint(w, "{CALL-0 ")
-}
-
-// Call2Expr calls a procedure with two args and returns the resulting objects.
-type Call2Expr struct {
-	Proc Expr
-	Arg0 Expr
-	Arg1 Expr
-}
-
-func (c2e *Call2Expr) String() string { return fmt.Sprintf("%v %v %v", c2e.Proc, c2e.Arg0, c2e.Arg1) }
-
-// Unparse the expression back into a form object.
-func (c2e *Call2Expr) Unparse() sx.Object {
-	return sx.MakeList(c2e.Proc.Unparse(), c2e.Arg0.Unparse(), c2e.Arg1.Unparse())
-}
-
-// Compute the expression in a frame and return the result.
-func (c2e *Call2Expr) Compute(env *Environment) (sx.Object, error) {
-	proc, err := computeProc(env, c2e.Proc)
-	if err != nil {
-		return nil, err
-	}
-	val0, err := env.Execute(c2e.Arg0)
-	if err != nil {
-		return nil, err
-	}
-	val1, err := env.Execute(c2e.Arg1)
-	if err != nil {
-		return nil, err
-	}
-	return proc.Call2(env, val0, val1)
-}
-
-// Print the expression on the given writer.
-func (c2e *Call2Expr) Print(w io.Writer) (int, error) {
-	ce := CallExpr{c2e.Proc, []Expr{c2e.Arg0, c2e.Arg1}}
-	return ce.doPrint(w, "{CALL-2 ")
-}
 
 // BuiltinCallExpr calls a builtin and returns the resulting object.
 // It is an optimization of `CallExpr.`
@@ -610,10 +544,31 @@ func (bce *BuiltinCall2Expr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCall2Expr) Improve(*Improver) (Expr, error) {
-	if err := bce.Proc.CheckCall2Arity(func() (sx.Object, sx.Object) { return bce.Arg0.Unparse(), bce.Arg1.Unparse() }); err != nil {
+	if err := bce.checkCall2Arity(func() (sx.Object, sx.Object) { return bce.Arg0.Unparse(), bce.Arg1.Unparse() }); err != nil {
 		return nil, CallError{Name: bce.Proc.Name, Err: err}
 	}
 	return bce, nil
+}
+
+// checkCall2Arity checks the builtin to allow two args.
+func (bce *BuiltinCall2Expr) checkCall2Arity(argsFn func() (sx.Object, sx.Object)) error {
+	b := bce.Proc
+	minArity, maxArity := b.MinArity, b.MaxArity
+	if minArity == maxArity {
+		if minArity != 2 {
+			arg0, arg1 := argsFn()
+			return fmt.Errorf("exactly %d arguments required, but 2 given: [%v %v]", minArity, arg0, arg1)
+		}
+	} else if maxArity < 0 {
+		if 2 < minArity {
+			arg0, arg1 := argsFn()
+			return fmt.Errorf("at least %d arguments required, but only 2 given: [%v %v]", minArity, arg0, arg1)
+		}
+	} else if 2 < minArity || maxArity < 2 {
+		arg0, arg1 := argsFn()
+		return fmt.Errorf("between %d and %d arguments required, but 2 given: [%v %v]", minArity, maxArity, arg0, arg1)
+	}
+	return nil
 }
 
 // Compute the value of this expression in the given environment.
