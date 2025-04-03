@@ -108,7 +108,6 @@ func BenchmarkAddExec(b *testing.B) {
 }
 
 func BenchmarkAddCompiled(b *testing.B) {
-	b.SetParallelism(1)
 	env, expr := prepareAddBenchmark()
 	cexpr, err := env.Compile(expr)
 	if err != nil {
@@ -141,8 +140,8 @@ func prepareAddBenchmark() (*sxeval.Environment, sxeval.Expr) {
 	obj := sx.MakeList(
 		sx.MakeSymbol("let"),
 		sx.MakeList(
-			sx.MakeList(sx.MakeSymbol("a"), sx.Int64(5))),
-		// sx.MakeList(sx.MakeSymbol("x"), sx.Nil())),
+			sx.MakeList(sx.MakeSymbol("a"), sx.Int64(5)),
+			sx.MakeList(sx.MakeSymbol("x"), sx.Nil())),
 		sx.MakeList(
 			sx.MakeSymbol("if"),
 			sx.MakeSymbol("a"),

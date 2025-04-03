@@ -150,6 +150,7 @@ func (le *LetExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 		}
 	}
 	syms := le.Symbols
+	sxc.AdjustStack(-len(syms))
 	sxc.Emit(func(env *sxeval.Environment) error {
 		letEnv := env.NewLexicalEnvironment(env.Binding(), "let", len(syms))
 		for i, arg := range env.Args(len(syms)) {
@@ -157,9 +158,9 @@ func (le *LetExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 				return err
 			}
 		}
+		env.Kill(len(syms))
 		return sxeval.SwitchEnvironment(letEnv)
 	}, "LET", fmt.Sprintf("%v", syms))
-	sxc.EmitKill(len(syms))
 	return sxc.Compile(le.Body, tailPos)
 }
 

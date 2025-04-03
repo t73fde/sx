@@ -134,11 +134,7 @@ func (sxc *Compiler) EmitPush(val sx.Object) {
 func (sxc *Compiler) EmitKill(num int) {
 	if num > 0 {
 		sxc.AdjustStack(-num)
-		if num == 1 {
-			sxc.Emit(func(env *Environment) error { env.Kill1(); return nil }, "KILL-1")
-		} else {
-			sxc.Emit(func(env *Environment) error { env.Kill(num); return nil }, "KILL", strconv.Itoa(num))
-		}
+		sxc.Emit(func(env *Environment) error { env.Kill(num); return nil }, "KILL", strconv.Itoa(num))
 	}
 }
 
@@ -276,18 +272,15 @@ func (cpe *ProgramExpr) Interpret(env *Environment) (*Environment, error) {
 	ip := 0
 
 	for ip < len(program) {
-		err := program[ip](currEnv)
-		if err != nil {
+		if err := program[ip](currEnv); err != nil {
 			if jerr, ok := err.(jumpToError); ok {
 				ip = jerr.pos
 				continue
 			}
-			if err == errSwitchEnv {
-				currEnv = currEnv.tco.env
-				ip++
-				continue
+			if err != errSwitchEnv {
+				return currEnv, err
 			}
-			return currEnv, err
+			currEnv = currEnv.tco.env
 		}
 		ip++
 	}
