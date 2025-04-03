@@ -376,15 +376,6 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 		}
 	}
 
-	switch len(bce.Args) {
-	case 0:
-		return imp.Improve(&BuiltinCall0Expr{bce.Proc})
-	case 1:
-		return imp.Improve(&BuiltinCall1Expr{bce.Proc, bce.Args[0]})
-	case 2:
-		return imp.Improve(&BuiltinCall2Expr{bce.Proc, bce.Args[0], bce.Args[1]})
-	}
-
 	argsFn := func() []sx.Object {
 		result := make([]sx.Object, len(bce.Args))
 		for i, arg := range bce.Args {
@@ -394,6 +385,15 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 	}
 	if err := bce.Proc.CheckCallArity(len(bce.Args), argsFn); err != nil {
 		return nil, CallError{Name: bce.Proc.Name, Err: err}
+	}
+
+	switch len(bce.Args) {
+	case 0:
+		return imp.Improve(&BuiltinCall0Expr{bce.Proc})
+	case 1:
+		return imp.Improve(&BuiltinCall1Expr{bce.Proc, bce.Args[0]})
+	case 2:
+		return imp.Improve(&BuiltinCall2Expr{bce.Proc, bce.Args[0], bce.Args[1]})
 	}
 	return bce, nil
 }
@@ -428,32 +428,6 @@ func (bce *BuiltinCall0Expr) Unparse() sx.Object {
 	return ce.Unparse()
 }
 
-// Improve the expression into a possible simpler one.
-func (bce *BuiltinCall0Expr) Improve(*Improver) (Expr, error) {
-	if err := bce.checkCall0Arity(); err != nil {
-		return nil, CallError{Name: bce.Proc.Name, Err: err}
-	}
-	return bce, nil
-}
-
-// checkCall0Arity checks the builtin to allow zero args.
-func (bce *BuiltinCall0Expr) checkCall0Arity() error {
-	b := bce.Proc
-	minArity, maxArity := b.MinArity, b.MaxArity
-	if minArity == maxArity {
-		if minArity != 0 {
-			return fmt.Errorf("exactly %d arguments required, but none given", minArity)
-		}
-	} else if maxArity < 0 {
-		if 0 < minArity {
-			return fmt.Errorf("at least %d arguments required, but none given", minArity)
-		}
-	} else if 0 < minArity {
-		return fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
-	}
-	return nil
-}
-
 // Compute the value of this expression in the given environment.
 func (bce *BuiltinCall0Expr) Compute(env *Environment) (sx.Object, error) {
 	obj, err := bce.Proc.Fn0(env)
@@ -479,32 +453,6 @@ func (bce *BuiltinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.P
 func (bce *BuiltinCall1Expr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg}}
 	return ce.Unparse()
-}
-
-// Improve the expression into a possible simpler one.
-func (bce *BuiltinCall1Expr) Improve(*Improver) (Expr, error) {
-	if err := bce.checkCall1Arity(func() sx.Object { return bce.Arg.Unparse() }); err != nil {
-		return nil, CallError{Name: bce.Proc.Name, Err: err}
-	}
-	return bce, nil
-}
-
-// checkCall1Arity checks the builtin function to allow one arg.
-func (bce *BuiltinCall1Expr) checkCall1Arity(argFn func() sx.Object) error {
-	b := bce.Proc
-	minArity, maxArity := b.MinArity, b.MaxArity
-	if minArity == maxArity {
-		if minArity != 1 {
-			return fmt.Errorf("exactly %d arguments required, but 1 given: [%v]", minArity, argFn())
-		}
-	} else if maxArity < 0 {
-		if 1 < minArity {
-			return fmt.Errorf("at least %d arguments required, but only 1 given: [%v]", minArity, argFn())
-		}
-	} else if 1 < minArity || maxArity < 1 {
-		return fmt.Errorf("between %d and %d arguments required, but 1 given: [%v]", minArity, maxArity, argFn())
-	}
-	return nil
 }
 
 // Compute the value of this expression in the given environment.
@@ -540,35 +488,6 @@ func (bce *BuiltinCall2Expr) String() string {
 func (bce *BuiltinCall2Expr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg0, bce.Arg1}}
 	return ce.Unparse()
-}
-
-// Improve the expression into a possible simpler one.
-func (bce *BuiltinCall2Expr) Improve(*Improver) (Expr, error) {
-	if err := bce.checkCall2Arity(func() (sx.Object, sx.Object) { return bce.Arg0.Unparse(), bce.Arg1.Unparse() }); err != nil {
-		return nil, CallError{Name: bce.Proc.Name, Err: err}
-	}
-	return bce, nil
-}
-
-// checkCall2Arity checks the builtin to allow two args.
-func (bce *BuiltinCall2Expr) checkCall2Arity(argsFn func() (sx.Object, sx.Object)) error {
-	b := bce.Proc
-	minArity, maxArity := b.MinArity, b.MaxArity
-	if minArity == maxArity {
-		if minArity != 2 {
-			arg0, arg1 := argsFn()
-			return fmt.Errorf("exactly %d arguments required, but 2 given: [%v %v]", minArity, arg0, arg1)
-		}
-	} else if maxArity < 0 {
-		if 2 < minArity {
-			arg0, arg1 := argsFn()
-			return fmt.Errorf("at least %d arguments required, but only 2 given: [%v %v]", minArity, arg0, arg1)
-		}
-	} else if 2 < minArity || maxArity < 2 {
-		arg0, arg1 := argsFn()
-		return fmt.Errorf("between %d and %d arguments required, but 2 given: [%v %v]", minArity, maxArity, arg0, arg1)
-	}
-	return nil
 }
 
 // Compute the value of this expression in the given environment.

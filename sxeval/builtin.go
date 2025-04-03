@@ -107,13 +107,22 @@ func (b *Builtin) CheckCallArity(nargs int, argsFn func() []sx.Object) error {
 	numArgs, minArity, maxArity := int16(nargs), b.MinArity, b.MaxArity
 	if minArity == maxArity {
 		if numArgs != minArity {
+			if nargs == 0 {
+				return fmt.Errorf("exactly %d arguments required, but none given", minArity)
+			}
 			return fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, argsFn())
 		}
 	} else if maxArity < 0 {
 		if numArgs < minArity {
+			if nargs == 0 {
+				return fmt.Errorf("at least %d arguments required, but none given", minArity)
+			}
 			return fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, argsFn())
 		}
 	} else if numArgs < minArity || maxArity < numArgs {
+		if nargs == 0 {
+			return fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
+		}
 		return fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, argsFn())
 	}
 	return nil
