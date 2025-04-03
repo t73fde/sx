@@ -116,11 +116,11 @@ func (sxc *Compiler) AdjustStack(offset int) {
 }
 
 // Emit a threaded code.
-func (sxc *Compiler) Emit(fn Instruction, s string, vals ...string) {
+func (sxc *Compiler) Emit(instr Instruction, s string, vals ...string) {
 	if ob := sxc.observer; ob != nil {
 		ob.LogCompile(sxc, s, vals...)
 	}
-	sxc.program = append(sxc.program, fn)
+	sxc.program = append(sxc.program, instr)
 }
 
 // EmitPush emits code to push a value on the stack.
@@ -188,62 +188,62 @@ func (sxc *Compiler) EmitJump() func() {
 // EmitBCall emits an instruction to call a builtin with more than two args
 func (sxc *Compiler) EmitBCall(b *Builtin, numargs int) {
 	sxc.AdjustStack(-numargs + 1)
-	fn, found := sxc.bcallInstrCache[b]
+	instr, found := sxc.bcallInstrCache[b]
 	if !found {
-		fn = func(env *Environment) error {
+		instr = func(env *Environment) error {
 			obj, err := b.Fn(env, env.Args(numargs))
 			env.Kill(numargs - 1)
 			env.Set(obj)
 			return b.handleCallError(err)
 		}
-		sxc.bcallInstrCache[b] = fn
+		sxc.bcallInstrCache[b] = instr
 	}
-	sxc.Emit(fn, "BCALL", strconv.Itoa(numargs), b.Name)
+	sxc.Emit(instr, "BCALL", strconv.Itoa(numargs), b.Name)
 }
 
 // EmitBCall0 emits an instruction to call a builtin with no args
 func (sxc *Compiler) EmitBCall0(b *Builtin) {
 	sxc.AdjustStack(1)
-	fn, found := sxc.bcall0InstrCache[b]
+	instr, found := sxc.bcall0InstrCache[b]
 	if !found {
-		fn = func(env *Environment) error {
+		instr = func(env *Environment) error {
 			obj, err := b.Fn0(env)
 			env.Push(obj)
 			return b.handleCallError(err)
 		}
-		sxc.bcall0InstrCache[b] = fn
+		sxc.bcall0InstrCache[b] = instr
 	}
-	sxc.Emit(fn, "BCALL-0", b.Name)
+	sxc.Emit(instr, "BCALL-0", b.Name)
 }
 
 // EmitBCall1 emits an instruction to call a builtin with one arg
 func (sxc *Compiler) EmitBCall1(b *Builtin) {
-	fn, found := sxc.bcall1InstrCache[b]
+	instr, found := sxc.bcall1InstrCache[b]
 	if !found {
-		fn = func(env *Environment) error {
+		instr = func(env *Environment) error {
 			obj, err := b.Fn1(env, env.Top())
 			env.Set(obj)
 			return b.handleCallError(err)
 		}
-		sxc.bcall1InstrCache[b] = fn
+		sxc.bcall1InstrCache[b] = instr
 	}
-	sxc.Emit(fn, "BCALL-1", b.Name)
+	sxc.Emit(instr, "BCALL-1", b.Name)
 }
 
 // EmitBCall2 emits an instruction to call a builtin with two args
 func (sxc *Compiler) EmitBCall2(b *Builtin) {
 	sxc.AdjustStack(-1)
-	fn, found := sxc.bcall2InstrCache[b]
+	instr, found := sxc.bcall2InstrCache[b]
 	if !found {
-		fn = func(env *Environment) error {
+		instr = func(env *Environment) error {
 			val1, val0 := env.Pop(), env.Top()
 			obj, err := b.Fn2(env, val0, val1)
 			env.Set(obj)
 			return b.handleCallError(err)
 		}
-		sxc.bcall2InstrCache[b] = fn
+		sxc.bcall2InstrCache[b] = instr
 	}
-	sxc.Emit(fn, "BCALL-2", b.Name)
+	sxc.Emit(instr, "BCALL-2", b.Name)
 }
 
 // MissingCompileError is signaled if an expression cannot be compiled
