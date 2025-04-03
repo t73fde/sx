@@ -21,6 +21,7 @@ import (
 	"io"
 	"os"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"sync"
 
@@ -194,6 +195,15 @@ var builtins = []*sxeval.Builtin{
 		},
 		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 			panic(arg)
+		},
+	},
+	{
+		Name:     "stack",
+		MinArity: 0,
+		MaxArity: 0,
+		TestPure: nil,
+		Fn0: func(env *sxeval.Environment) (sx.Object, error) {
+			return sx.Vector(slices.Clone(env.Stack())), nil
 		},
 	},
 }

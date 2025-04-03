@@ -28,6 +28,7 @@ type Environment struct {
 	binding  *Binding
 	tco      *tcodata
 	observer *observer
+	stack    []sx.Object
 }
 
 // tcodata contains everything to implement Tail Call Optimization (tco)
@@ -68,6 +69,7 @@ func MakeExecutionEnvironment(bind *Binding) *Environment {
 			parse:   nil,
 			improve: nil,
 		},
+		stack: make([]sx.Object, 0, 1024),
 	}
 }
 
@@ -378,4 +380,23 @@ func (e NotBoundError) Error() string {
 		second = true
 	}
 	return sb.String()
+}
+
+// ----- Stack operations
+
+// Stack returns the stack.
+func (env *Environment) Stack() []sx.Object { return env.stack }
+
+// Push a value to the stack
+func (env *Environment) Push(val sx.Object) {
+	env.stack = append(env.stack, val)
+}
+
+// Kill some elements on the stack
+func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-num] }
+
+// Args returns a given number of values on top of the stack as a slice.
+func (env *Environment) Args(numargs int) []sx.Object {
+	sp := len(env.stack)
+	return env.stack[sp-numargs : sp]
 }
