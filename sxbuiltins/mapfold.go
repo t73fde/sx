@@ -72,7 +72,8 @@ var Map = sxeval.Builtin{
 			return sx.Nil(), nil
 		}
 
-		val, err := env.Apply(fn, sx.Vector{lst.Car()})
+		params := sx.Vector{lst.Car()}
+		val, err := env.Apply(fn, params)
 		if err != nil {
 			return sx.Nil(), err
 		}
@@ -85,14 +86,16 @@ var Map = sxeval.Builtin{
 			}
 			pair, isPair := sx.GetPair(cdr2)
 			if !isPair {
-				val2, err2 := env.Apply(fn, sx.Vector{cdr2})
+				params[0] = cdr2
+				val2, err2 := env.Apply(fn, params)
 				if err2 != nil {
 					return result, err2
 				}
 				curr.SetCdr(val2)
 				break
 			}
-			val2, err2 := env.Apply(fn, sx.Vector{pair.Car()})
+			params[0] = pair.Car()
+			val2, err2 := env.Apply(fn, params)
 			if err2 != nil {
 				return result, err2
 			}
@@ -109,7 +112,7 @@ var Apply = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: nil, // Might be changed in the future
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector) (res sx.Object, err error) {
 		fn, err := GetCallable(args[0], 0)
 		if err != nil {
 			return nil, err
@@ -121,15 +124,20 @@ var Apply = sxeval.Builtin{
 		if lst == nil {
 			return env.Apply(fn, nil)
 		}
-		applyArgs := sx.Vector{lst.Car()}
+
+		env.Push(lst.Car())
+		argCount := 1
 		for node := lst; ; {
 			cdr := node.Cdr()
 			if sx.IsNil(cdr) {
-				return env.Apply(fn, applyArgs)
+				res, err = env.Apply(fn, env.Args(argCount))
+				env.Kill(argCount)
+				return res, err
 			}
 			if next, isPair := sx.GetPair(cdr); isPair {
 				node = next
-				applyArgs = append(applyArgs, node.Car())
+				env.Push(node.Car())
+				argCount++
 				continue
 			}
 			return nil, sx.ErrImproper{Pair: lst}
