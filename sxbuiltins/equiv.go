@@ -26,9 +26,6 @@ var Identical = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		return sx.MakeBoolean(arg0 == arg1), nil
-	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		for i := 1; i < len(args); i++ {
 			if args[0] != args[i] {
@@ -45,9 +42,6 @@ var Equal = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		return sx.MakeBoolean(arg0.IsEqual(arg1)), nil
-	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		for i := 1; i < len(args); i++ {
 			if !args[0].IsEqual(args[i]) {

@@ -36,7 +36,6 @@ type Compiler struct {
 	bcallInstrCache  map[*Builtin]Instruction
 	bcall0InstrCache map[*Builtin]Instruction
 	bcall1InstrCache map[*Builtin]Instruction
-	bcall2InstrCache map[*Builtin]Instruction
 }
 
 // Instruction is a compiled command to execute one aspect of an expression.
@@ -68,9 +67,6 @@ func (sxc *Compiler) resetState() {
 	}
 	if sxc.bcall1InstrCache == nil {
 		sxc.bcall1InstrCache = make(map[*Builtin]Instruction)
-	}
-	if sxc.bcall2InstrCache == nil {
-		sxc.bcall2InstrCache = make(map[*Builtin]Instruction)
 	}
 }
 
@@ -228,22 +224,6 @@ func (sxc *Compiler) EmitBCall1(b *Builtin) {
 		sxc.bcall1InstrCache[b] = instr
 	}
 	sxc.Emit(instr, "BCALL-1", b.Name)
-}
-
-// EmitBCall2 emits an instruction to call a builtin with two args
-func (sxc *Compiler) EmitBCall2(b *Builtin) {
-	sxc.AdjustStack(-1)
-	instr, found := sxc.bcall2InstrCache[b]
-	if !found {
-		instr = func(env *Environment) error {
-			val1, val0 := env.Pop(), env.Top()
-			obj, err := b.Fn2(env, val0, val1)
-			env.Set(obj)
-			return b.handleCallError(err)
-		}
-		sxc.bcall2InstrCache[b] = instr
-	}
-	sxc.Emit(instr, "BCALL-2", b.Name)
 }
 
 // MissingCompileError is signaled if an expression cannot be compiled

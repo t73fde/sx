@@ -98,12 +98,12 @@ var BindingLookup = sxeval.Builtin{
 		}
 		return sx.MakeUndefined(), nil
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		sym, err := GetSymbol(arg0, 0)
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		sym, err := GetSymbol(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		bind, err := GetBinding(arg1, 1)
+		bind, err := GetBinding(args[1], 1)
 		if err != nil {
 			return nil, err
 		}
@@ -131,12 +131,12 @@ var BindingResolve = sxeval.Builtin{
 		}
 		return sx.MakeUndefined(), nil
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		sym, err := GetSymbol(arg0, 0)
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		sym, err := GetSymbol(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		bind, err := GetBinding(arg1, 1)
+		bind, err := GetBinding(args[1], 1)
 		if err != nil {
 			return nil, err
 		}

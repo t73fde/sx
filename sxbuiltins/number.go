@@ -45,17 +45,6 @@ var Add = sxeval.Builtin{
 		num, err := GetNumber(arg, 0)
 		return num, err
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		num0, err := GetNumber(arg0, 0)
-		if err != nil {
-			return nil, err
-		}
-		num1, err := GetNumber(arg1, 1)
-		if err != nil {
-			return nil, err
-		}
-		return sx.NumAdd(num0, num1), nil
-	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(0))
 		for i := range len(args) {
@@ -78,17 +67,6 @@ var Sub = sxeval.Builtin{
 	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 		num, err := GetNumber(arg, 0)
 		return sx.NumNeg(num), err
-	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		num0, err := GetNumber(arg0, 0)
-		if err != nil {
-			return nil, err
-		}
-		num1, err := GetNumber(arg1, 1)
-		if err != nil {
-			return nil, err
-		}
-		return sx.NumSub(num0, num1), nil
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		acc, err := GetNumber(args[0], 0)
@@ -119,17 +97,6 @@ var Mul = sxeval.Builtin{
 		num, err := GetNumber(arg, 0)
 		return num, err
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		num0, err := GetNumber(arg0, 0)
-		if err != nil {
-			return nil, err
-		}
-		num1, err := GetNumber(arg1, 1)
-		if err != nil {
-			return nil, err
-		}
-		return sx.NumMul(num0, num1), nil
-	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(1))
 		for i := range len(args) {
@@ -149,12 +116,12 @@ var Div = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		num0, err := GetNumber(arg0, 0)
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		num0, err := GetNumber(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		num1, err := GetNumber(arg1, 1)
+		num1, err := GetNumber(args[1], 1)
 		if err != nil {
 			return nil, err
 		}
@@ -168,12 +135,12 @@ var Mod = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		num0, err := GetNumber(arg0, 0)
+	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		num0, err := GetNumber(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		num1, err := GetNumber(arg1, 1)
+		num1, err := GetNumber(args[1], 1)
 		if err != nil {
 			return nil, err
 		}

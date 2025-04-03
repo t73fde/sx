@@ -39,9 +39,6 @@ func createTestBinding() *sxeval.Binding {
 		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 			return sx.MakeString(arg.GoString()), nil
 		},
-		Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-			return sx.MakeString(arg0.GoString() + arg1.GoString()), nil
-		},
 		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 			var sb strings.Builder
 			for _, val := range args {

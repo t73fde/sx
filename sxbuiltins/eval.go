@@ -32,12 +32,12 @@ var ParseExpression = sxeval.Builtin{
 		}
 		return sxeval.MakeExprObj(expr), nil
 	},
-	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		bind, err := GetBinding(arg1, 1)
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		bind, err := GetBinding(args[1], 1)
 		if err != nil {
 			return nil, err
 		}
-		expr, err := env.RebindExecutionEnvironment(bind).Parse(arg0)
+		expr, err := env.RebindExecutionEnvironment(bind).Parse(args[0])
 		if err != nil {
 			return nil, err
 		}
@@ -76,12 +76,12 @@ var RunExpression = sxeval.Builtin{
 		return obj, err
 
 	},
-	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		expr, err := GetExprObj(arg0, 0)
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		expr, err := GetExprObj(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		bind, err := GetBinding(arg1, 1)
+		bind, err := GetBinding(args[1], 1)
 		if err != nil {
 			return nil, err
 		}
@@ -103,13 +103,13 @@ var Eval = sxeval.Builtin{
 		}
 		return env.Run(expr)
 	},
-	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		bind, err := GetBinding(arg1, 1)
+	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		bind, err := GetBinding(args[1], 1)
 		if err != nil {
 			return nil, err
 		}
 		argEnv := env.RebindExecutionEnvironment(bind)
-		expr, err := getEvalExpr(argEnv, arg0)
+		expr, err := getEvalExpr(argEnv, args[0])
 		if err != nil {
 			return nil, err
 		}
