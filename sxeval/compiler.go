@@ -269,20 +269,17 @@ func (cpe *ProgramExpr) Compute(env *Environment) (sx.Object, error) {
 func (cpe *ProgramExpr) Interpret(env *Environment) (*Environment, error) {
 	currEnv := env
 	program := cpe.program
-	ip := 0
 
-	for ip < len(program) {
+	for ip := 0; ip < len(program); ip++ {
 		if err := program[ip](currEnv); err != nil {
-			if jerr, ok := err.(jumpToError); ok {
-				ip = jerr.pos
-				continue
-			}
-			if err != errSwitchEnv {
+			if err == errSwitchEnv {
+				currEnv = currEnv.tco.env
+			} else if jerr, ok := err.(jumpToError); ok {
+				ip = jerr.pos - 1
+			} else {
 				return currEnv, err
 			}
-			currEnv = currEnv.tco.env
 		}
-		ip++
 	}
 	return currEnv, nil
 }
