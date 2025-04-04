@@ -136,6 +136,7 @@ var specials = []*sxeval.Special{
 var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Equal,                    // =
 	&sxbuiltins.Identical,                // ==
+	&sxbuiltins.SymbolP,                  // symbol?
 	&sxbuiltins.NullP,                    // null?
 	&sxbuiltins.Cons,                     // cons
 	&sxbuiltins.PairP, &sxbuiltins.ListP, // pair?, list?

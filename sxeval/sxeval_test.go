@@ -110,7 +110,12 @@ func TestEval(t *testing.T) {
 	testcases.Run(t, root)
 }
 
-var sxPrelude = `;; Indirekt recursive definition of even/odd
+var sxPrelude = `;; Some helpers
+(defvar NIL ())
+(defvar T 'T)
+(defmacro not (x) (list 'if x NIL T))
+
+;; Indirekt recursive definition of even/odd
 (defvar odd? ()) ; define symbol odd? to make lookup in even? faster, because it is known.
 (defun even? (n) (if (= n 0) 1 (odd? (- n 1))))
 (defun odd? (n) (if (= n 0) () (even? (- n 1))))
@@ -123,14 +128,25 @@ var sxPrelude = `;; Indirekt recursive definition of even/odd
 
 ;; Naive fibonacci
 (defun fib (n) (if (<= n 1) 1 (+ (fib (- n 1)) (fib (- n 2)))))
+
+;; Takeuchi benchmark
+(defun tak (x y z)
+  (if (not (< y x))
+      z
+      (tak (tak (- x 1) y z)
+           (tak (- y 1) z x)
+           (tak (- z 1) x y))))
 `
 
 func createBindingForTCO() *sxeval.Binding {
-	root := sxeval.MakeRootBinding(6)
+	root := sxeval.MakeRootBinding(32)
+	_ = root.BindSpecial(&sxbuiltins.QuoteS)
 	_ = root.BindSpecial(&sxbuiltins.DefVarS)
+	_ = root.BindSpecial(&sxbuiltins.DefMacroS)
 	_ = root.BindSpecial(&sxbuiltins.DefunS)
 	_ = root.BindSpecial(&sxbuiltins.IfS)
 	_ = root.BindBuiltin(&sxbuiltins.Equal)
+	_ = root.BindBuiltin(&sxbuiltins.NumLess)
 	_ = root.BindBuiltin(&sxbuiltins.NumLessEqual)
 	_ = root.BindBuiltin(&sxbuiltins.Add)
 	_ = root.BindBuiltin(&sxbuiltins.Sub)
