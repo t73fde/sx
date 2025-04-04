@@ -84,6 +84,26 @@ func (imp *Improver) ImproveSlice(exprs []Expr) error {
 	return nil
 }
 
+// ImproveFoldCall improves a call if all args are constants and the
+// callable is pure. If successful, the new expression is returned.
+// Otherwise the expression is nil.
+func (imp *Improver) ImproveFoldCall(proc Callable, args []Expr) (Expr, error) {
+	vals := make(sx.Vector, len(args))
+	for i, arg := range args {
+		if objExpr, isConstObject := arg.(ConstObjectExpr); isConstObject {
+			vals[i] = objExpr.ConstObject()
+		} else {
+			return nil, nil
+		}
+	}
+	if proc.IsPure(vals) {
+		if result, err := imp.Call(proc, vals); err == nil {
+			return imp.Improve(ObjExpr{Obj: result})
+		}
+	}
+	return nil, nil
+}
+
 // Height returns the difference between the actual and the base height.
 func (imp *Improver) Height() int { return imp.height - imp.base.height }
 
