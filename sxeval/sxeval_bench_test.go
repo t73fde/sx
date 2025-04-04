@@ -23,7 +23,7 @@ import (
 )
 
 func BenchmarkEvenTCO(b *testing.B) {
-	testcases := [...]int{0, 1, 2, 4, 16, 64, 256, 1024, 4096, 16384, 65536}
+	testcases := [...]int{0, 1, 2, 4, 16, 64, 512, 4096, 65536}
 	root := createBindingForTCO()
 	evenSym := sx.MakeSymbol("even?")
 	for _, tc := range testcases {
@@ -108,6 +108,23 @@ func BenchmarkAddExec(b *testing.B) {
 		return
 	}
 
+	for b.Loop() {
+		_, _ = env.Run(expr)
+	}
+}
+
+func BenchmarkTak(b *testing.B) {
+	root := createBindingForTCO()
+	obj := sx.MakeList(sx.MakeSymbol("tak"), sx.Int64(15), sx.Int64(10), sx.Int64(5))
+	env := sxeval.MakeExecutionEnvironment(root)
+	expr, err := env.Parse(obj)
+	if err != nil {
+		b.Error(err)
+	}
+
+	if _, err = env.Run(expr); err != nil {
+		b.Error(err)
+	}
 	for b.Loop() {
 		_, _ = env.Run(expr)
 	}
