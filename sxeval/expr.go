@@ -457,11 +457,7 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 	mayInline := true
 	args := make(sx.Vector, len(bce.Args))
 	for i, arg := range bce.Args {
-		expr, err := imp.Improve(arg)
-		if err != nil {
-			return bce, err
-		}
-		if objExpr, isConstObject := expr.(ConstObjectExpr); isConstObject {
+		if objExpr, isConstObject := arg.(ConstObjectExpr); isConstObject {
 			args[i] = objExpr.ConstObject()
 		} else {
 			mayInline = false
