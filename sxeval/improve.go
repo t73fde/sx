@@ -72,6 +72,18 @@ func (imp *Improver) Improve(expr Expr) (Expr, error) {
 	return expr, nil
 }
 
+// ImproveSlice improves the given slice by updating it.
+func (imp *Improver) ImproveSlice(exprs []Expr) error {
+	for i, expr := range exprs {
+		iexpr, err := imp.Improve(expr)
+		if err != nil {
+			return err
+		}
+		exprs[i] = iexpr
+	}
+	return nil
+}
+
 // Height returns the difference between the actual and the base height.
 func (imp *Improver) Height() int { return imp.height - imp.base.height }
 

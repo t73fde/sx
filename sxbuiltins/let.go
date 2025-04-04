@@ -133,16 +133,15 @@ func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		}
 		return imp.Improve(le1)
 	}
-	letEnv := imp.MakeChildImprover("let-improve", len(le.Vals))
-	for i, val := range le.Vals {
-		expr, err := imp.Improve(val)
-		if err != nil {
-			return le, err
-		}
-		le.Vals[i] = expr
-		_ = letEnv.Bind(le.Symbols[i])
+	if err := imp.ImproveSlice(le.Vals); err != nil {
+		return le, err
 	}
-	expr, err := letEnv.Improve(le.Body)
+
+	letImp := imp.MakeChildImprover("let-improve", len(le.Vals))
+	for _, sym := range le.Symbols {
+		_ = letImp.Bind(sym)
+	}
+	expr, err := letImp.Improve(le.Body)
 	if err == nil {
 		le.Body = expr
 	}

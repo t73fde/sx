@@ -85,21 +85,21 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	if frontLen == 0 {
 		return last, nil
 	}
+	if err = imp.ImproveSlice(be.Front); err != nil {
+		return be, err
+	}
+
 	seq := make([]sxeval.Expr, 0, frontLen)
 	for _, expr := range be.Front {
-		re, err2 := imp.Improve(expr)
-		if err2 != nil {
-			return be, err2
-		}
-		if _, isConstObject := re.(sxeval.ConstObjectExpr); isConstObject {
+		if _, isConstObject := expr.(sxeval.ConstObjectExpr); isConstObject {
 			// A constant object has no side effect, it can be ignored in the sequence
 			continue
 		}
-		if _, isSymbol := re.(sxeval.SymbolExpr); isSymbol {
+		if _, isSymbol := expr.(sxeval.SymbolExpr); isSymbol {
 			// A symbol has no side effect, it can be ignored in the sequence
 			continue
 		}
-		seq = append(seq, re)
+		seq = append(seq, expr)
 	}
 	if seqLen := len(seq); seqLen == 0 {
 		return last, nil
