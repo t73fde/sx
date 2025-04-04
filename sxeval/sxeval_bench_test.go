@@ -14,7 +14,7 @@
 package sxeval_test
 
 import (
-	"strconv"
+	"fmt"
 	"testing"
 
 	"t73f.de/r/sx"
@@ -26,7 +26,7 @@ func BenchmarkEvenTCO(b *testing.B) {
 	root := createBindingForTCO()
 	evenSym := sx.MakeSymbol("even?")
 	for _, tc := range testcases {
-		b.Run(strconv.Itoa(tc), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
 			env := sxeval.MakeExecutionEnvironment(root)
 			obj := sx.MakeList(evenSym, sx.Int64(tc))
 			expr, err := env.Parse(obj)
