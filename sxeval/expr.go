@@ -241,6 +241,9 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 	if err != nil {
 		return ce, err
 	}
+	if err = imp.ImproveSlice(ce.Args); err != nil {
+		return ce, err
+	}
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
 		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
 			bce := &BuiltinCallExpr{
@@ -250,10 +253,7 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 			return imp.Improve(bce)
 		}
 	}
-	ce.Proc = proc
-	if err = imp.ImproveSlice(ce.Args); err != nil {
-		return ce, err
-	}
+
 	switch len(ce.Args) {
 	case 0:
 		return imp.Improve(&Call0Expr{proc})
@@ -262,6 +262,7 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 	case 2:
 		return imp.Improve(&Call2Expr{proc, ce.Args[0], ce.Args[1]})
 	}
+	ce.Proc = proc
 	return ce, nil
 }
 
@@ -448,10 +449,6 @@ func (bce *BuiltinCallExpr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
-	if err := imp.ImproveSlice(bce.Args); err != nil {
-		return bce, err
-	}
-
 	// Improve checks if the Builtin is pure and if all args are
 	// constant sx.Object's. If this is true, it will call the builtin with
 	// the args. If no error was signaled, the result object will be used
