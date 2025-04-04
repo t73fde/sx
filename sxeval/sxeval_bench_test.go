@@ -15,7 +15,6 @@ package sxeval_test
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	"t73f.de/r/sx"
@@ -27,7 +26,7 @@ func BenchmarkEvenTCO(b *testing.B) {
 	root := createBindingForTCO()
 	evenSym := sx.MakeSymbol("even?")
 	for _, tc := range testcases {
-		b.Run(strconv.Itoa(tc), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
 			env := sxeval.MakeExecutionEnvironment(root)
 			obj := sx.MakeList(evenSym, sx.Int64(tc))
 			expr, err := parseAndMore(env, obj)
@@ -69,10 +68,17 @@ func runBenchmark(b *testing.B, sexpr sx.Object) {
 	if _, err = env.Run(expr); err != nil {
 		b.Error(err)
 	}
+	if stack := env.Stack(); len(stack) > 0 {
+		b.Error("stack not empty, but:", stack)
+	}
 	for b.Loop() {
 		_, _ = env.Run(expr)
 	}
+	if stack := env.Stack(); len(stack) > 0 {
+		b.Error("stack not empty, found", len(stack), "elements")
+	}
 }
+
 func parseAndMore(env *sxeval.Environment, obj sx.Object) (sxeval.Expr, error) {
 	expr, err := env.Parse(obj)
 	if err != nil {

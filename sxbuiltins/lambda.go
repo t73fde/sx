@@ -226,15 +226,15 @@ func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	if le.Rest != nil {
 		bindSize++
 	}
-	fnEnv := imp.MakeChildImprover(le.Name+"-improve", bindSize)
+	lambdaImp := imp.MakeChildImprover(le.Name+"-improve", bindSize)
 	for _, sym := range le.Params {
-		_ = fnEnv.Bind(sym)
+		_ = lambdaImp.Bind(sym)
 	}
 	if rest := le.Rest; rest != nil {
-		_ = fnEnv.Bind(rest)
+		_ = lambdaImp.Bind(rest)
 	}
 
-	expr, err := fnEnv.Improve(le.Expr)
+	expr, err := lambdaImp.Improve(le.Expr)
 	if err == nil {
 		le.Expr = expr
 	}

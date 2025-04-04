@@ -293,6 +293,8 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 		return ce, err
 	}
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
+		// Builtin checking must be done in advance, because folding and arity separation
+		// has to be ensured in the context that BuiltinCallExpr will be created separately too.
 		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
 			bce := &BuiltinCallExpr{
 				Proc: b,
@@ -301,14 +303,18 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 			return imp.Improve(bce)
 		}
 	}
-	ce.Proc = proc
-	for i, arg := range ce.Args {
-		expr, err2 := imp.Improve(arg)
-		if err2 != nil {
-			return ce, err
-		}
-		ce.Args[i] = expr
+
+	if err = imp.ImproveSlice(ce.Args); err != nil {
+		return ce, err
 	}
+	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
+		if c, isCallable := objExpr.Obj.(Callable); isCallable {
+			if foldExpr, foldErr := imp.ImproveFoldCall(c, ce.Args); foldErr == nil && foldExpr != nil {
+				return foldExpr, nil
+			}
+		}
+	}
+	ce.Proc = proc
 	return ce, nil
 }
 
@@ -397,29 +403,13 @@ func (bce *BuiltinCallExpr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
-	// Improve checks if the Builtin is pure and if all args are
-	// constant sx.Object's. If this is true, it will call the builtin with
-	// the args. If no error was signaled, the result object will be used
-	// instead the BuiltinCallExpr. This assumes that there is no side effect
-	// when the builtin is called. This is checked with `Builtin.IsPure`.
-	mayInline := true
-	args := make(sx.Vector, len(bce.Args))
-	for i, arg := range bce.Args {
-		expr, err := imp.Improve(arg)
-		if err != nil {
-			return bce, err
-		}
-		if objExpr, isConstObject := expr.(ConstObjectExpr); isConstObject {
-			args[i] = objExpr.ConstObject()
-		} else {
-			mayInline = false
-		}
-		bce.Args[i] = expr
+	// Must call ImproveSlice b/c BuiltinCallExpr may be created not just via
+	// CallExpr.Improve. Notably: QuasiQuote.
+	if err := imp.ImproveSlice(bce.Args); err != nil {
+		return bce, err
 	}
-	if mayInline && bce.Proc.IsPure(args) {
-		if result, err := imp.Call(bce.Proc, args); err == nil {
-			return imp.Improve(ObjExpr{Obj: result})
-		}
+	if expr, err := imp.ImproveFoldCall(bce.Proc, bce.Args); err == nil && expr != nil {
+		return expr, nil
 	}
 
 	argsFn := func() []sx.Object {
