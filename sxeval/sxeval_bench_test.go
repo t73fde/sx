@@ -68,7 +68,13 @@ func runBenchmark(b *testing.B, sexpr sx.Object) {
 	if _, err = env.Run(expr); err != nil {
 		b.Error(err)
 	}
+	if stack := env.Stack(); len(stack) > 0 {
+		b.Error("stack not empty, but:", stack)
+	}
 	for b.Loop() {
 		_, _ = env.Run(expr)
+	}
+	if stack := env.Stack(); len(stack) > 0 {
+		b.Error("stack not empty, found", len(stack), "elements")
 	}
 }
