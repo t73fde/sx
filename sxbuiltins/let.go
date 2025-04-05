@@ -126,7 +126,7 @@ func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	case 0:
 		return imp.Improve(le.Body)
 	case 1:
-		le1 := &Let1Expr{
+		le1 := &let1Expr{
 			Symbol: le.Symbols[0],
 			Value:  le.Vals[0],
 			Body:   le.Body,
@@ -216,15 +216,15 @@ func (le *LetExpr) Print(w io.Writer) (int, error) {
 	return length, err
 }
 
-// Let1Expr is a special case of `LetExpr`, where there is just one binding.
-type Let1Expr struct {
+// let1Expr is a special case of `LetExpr`, where there is just one binding.
+type let1Expr struct {
 	Symbol *sx.Symbol
 	Value  sxeval.Expr
 	Body   sxeval.Expr
 }
 
 // Unparse the expression as an sx.Object
-func (le1 *Let1Expr) Unparse() sx.Object {
+func (le1 *let1Expr) Unparse() sx.Object {
 	return sx.MakeList(
 		sx.MakeSymbol(letName),
 		sx.Cons(sx.MakeList(le1.Symbol, le1.Value.Unparse()), sx.Nil()),
@@ -233,7 +233,7 @@ func (le1 *Let1Expr) Unparse() sx.Object {
 }
 
 // Improve the expression into a possible simpler one.
-func (le1 *Let1Expr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
+func (le1 *let1Expr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	letEnv := imp.MakeChildImprover("let1-improve", 1)
 	expr, err := imp.Improve(le1.Value)
 	if err != nil {
@@ -249,7 +249,7 @@ func (le1 *Let1Expr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (le1 *Let1Expr) Compute(env *sxeval.Environment) (sx.Object, error) {
+func (le1 *let1Expr) Compute(env *sxeval.Environment) (sx.Object, error) {
 	letEnv := env.NewLexicalEnvironment(env.Binding(), "let1", 1)
 	obj, err := env.Execute(le1.Value)
 	if err != nil {
@@ -262,7 +262,7 @@ func (le1 *Let1Expr) Compute(env *sxeval.Environment) (sx.Object, error) {
 }
 
 // Print the expression on the given writer.
-func (le1 *Let1Expr) Print(w io.Writer) (int, error) {
+func (le1 *let1Expr) Print(w io.Writer) (int, error) {
 	length, err := io.WriteString(w, "{LET1 ((")
 	if err != nil {
 		return length, err
