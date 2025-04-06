@@ -420,11 +420,6 @@ func printExpr(expr sxeval.Expr, level int) {
 	}
 
 	switch e := expr.(type) {
-	case *sxeval.BuiltinCallExpr:
-		fmt.Printf("B-CALL %v\n", e.Proc.Name)
-		for _, arg := range e.Args {
-			printExpr(arg, level+1)
-		}
 	case *sxeval.CallExpr:
 		fmt.Println("CALL")
 		printExpr(e.Proc, level+1)
@@ -433,10 +428,6 @@ func printExpr(expr sxeval.Expr, level int) {
 		}
 	case sxeval.UnboundSymbolExpr:
 		fmt.Printf("UNBOUND %v\n", e.GetSymbol())
-	case sxeval.ResolveSymbolExpr:
-		fmt.Printf("RESOLVE %v\n", e.GetSymbol())
-	case *sxeval.LookupSymbolExpr:
-		fmt.Printf("LOOKUP/%d %v\n", e.GetLevel(), e.GetSymbol())
 	case sxeval.ObjExpr:
 		fmt.Printf("OBJ %T/%v\n", e.Obj, e.Obj)
 	case *sxbuiltins.LambdaExpr:

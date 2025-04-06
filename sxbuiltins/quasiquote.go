@@ -128,7 +128,7 @@ func combineArgs(args []sxeval.Expr) sxeval.Expr {
 	mleCount := countMLE(args)
 	if mleCount < len(args)-1 {
 		newArgs := collectMakeList(args)
-		return &sxeval.BuiltinCallExpr{Proc: &Append, Args: newArgs}
+		return &sxeval.CallExpr{Proc: &sxeval.ObjExpr{Obj: &Append}, Args: newArgs}
 	}
 	newArgs := make([]sxeval.Expr, len(args))
 	for i := range mleCount {
@@ -180,7 +180,7 @@ func listArgs(args []sxeval.Expr) sxeval.Expr {
 	}
 	if countQuote(args) < len(args) {
 		lstArgs := resolveMakeListQuoted(args)
-		return &sxeval.BuiltinCallExpr{Proc: &List, Args: lstArgs}
+		return &sxeval.CallExpr{Proc: &sxeval.ObjExpr{Obj: &List}, Args: lstArgs}
 	}
 	lstArgs := make(sx.Vector, len(args))
 	for i, arg := range args {
@@ -239,10 +239,10 @@ func listStarArgs(args []sxeval.Expr) sxeval.Expr {
 		return lstArgs[0]
 	case 2:
 		lstArgs := resolveMakeListQuoted(args)
-		return &sxeval.BuiltinCallExpr{Proc: &Cons, Args: lstArgs}
+		return &sxeval.CallExpr{Proc: &sxeval.ObjExpr{Obj: &Cons}, Args: lstArgs}
 	default:
 		lstArgs := resolveMakeListQuoted(args)
-		return &sxeval.BuiltinCallExpr{Proc: &ListStar, Args: lstArgs}
+		return &sxeval.CallExpr{Proc: &sxeval.ObjExpr{Obj: &ListStar}, Args: lstArgs}
 	}
 }
 
