@@ -173,12 +173,12 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.CallableP,         // callable?
 	&sxbuiltins.Macroexpand0,      // macroexpand-0
 	&sxbuiltins.DefinedP,          // defined?
-	&sxbuiltins.CurrentBinding,    // current-environment
-	&sxbuiltins.ParentBinding,     // parent-environment
-	&sxbuiltins.Bindings,          // environment-bindings
+	&sxbuiltins.CurrentBinding,    // current-binding
+	&sxbuiltins.ParentBinding,     // parent-binding
+	&sxbuiltins.Bindings,          // bindings
 	&sxbuiltins.BoundP,            // bound?
-	&sxbuiltins.BindingLookup,     // environment-lookup
-	&sxbuiltins.BindingResolve,    // environment-resolve
+	&sxbuiltins.BindingLookup,     // binding-lookup
+	&sxbuiltins.BindingResolve,    // binding-resolve
 	&sxbuiltins.Pretty,            // pp
 	&sxbuiltins.Error,             // error
 	&sxbuiltins.NotBoundError,     // not-bound-error
