@@ -148,9 +148,9 @@ func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
 		return imp.Improve(ObjExpr{Obj: obj})
 	}
 	if depth >= 0 {
-		return imp.Improve(&LookupSymbolExpr{sym: use.sym, lvl: depth})
+		return imp.Improve(&lookupSymbolExpr{sym: use.sym, lvl: depth})
 	}
-	return imp.Improve(&ResolveSymbolExpr{sym: use.sym, skip: imp.Height()})
+	return imp.Improve(&resolveSymbolExpr{sym: use.sym, skip: imp.Height()})
 }
 
 // Compute the expression in a frame and return the result.
@@ -163,53 +163,53 @@ func (use UnboundSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{UNBOUND %v}", use.sym)
 }
 
-// ResolveSymbolExpr is a special `UnboundSymbolExpr` that must be resolved in
+// resolveSymbolExpr is a special `UnboundSymbolExpr` that must be resolved in
 // the base environment. Traversal through all nested lexical bindings is not
 // needed.
-type ResolveSymbolExpr struct {
+type resolveSymbolExpr struct {
 	sym  *sx.Symbol
 	skip int
 }
 
 // GetSymbol returns the symbol that later must be resolved.
-func (rse ResolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
+func (rse resolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
 
 // Unparse the expression back into a form object.
-func (rse ResolveSymbolExpr) Unparse() sx.Object { return rse.sym }
+func (rse resolveSymbolExpr) Unparse() sx.Object { return rse.sym }
 
 // Compute the expression in a frame and return the result.
-func (rse ResolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
+func (rse resolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.ResolveNWithError(rse.sym, rse.skip)
 }
 
 // Print the expression on the given writer.
-func (rse ResolveSymbolExpr) Print(w io.Writer) (int, error) {
+func (rse resolveSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{RESOLVE/%d %v}", rse.skip, rse.sym)
 }
 
-// LookupSymbolExpr is a special UnboundSymbolExpr that gives an indication
+// lookupSymbolExpr is a special UnboundSymbolExpr that gives an indication
 // about the nesting level of `Binding`s, where the symbol will be bound.
-type LookupSymbolExpr struct {
+type lookupSymbolExpr struct {
 	sym *sx.Symbol
 	lvl int
 }
 
 // GetSymbol returns the symbol that must later be looked up.
-func (lse *LookupSymbolExpr) GetSymbol() *sx.Symbol { return lse.sym }
+func (lse *lookupSymbolExpr) GetSymbol() *sx.Symbol { return lse.sym }
 
 // GetLevel returns the nesting level to later start a look up.
-func (lse *LookupSymbolExpr) GetLevel() int { return lse.lvl }
+func (lse *lookupSymbolExpr) GetLevel() int { return lse.lvl }
 
 // Unparse the expression back into a form object.
-func (lse *LookupSymbolExpr) Unparse() sx.Object { return lse.sym }
+func (lse *lookupSymbolExpr) Unparse() sx.Object { return lse.sym }
 
 // Compute the expression in a frame and return the result.
-func (lse *LookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
+func (lse *lookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
 	return env.LookupNWithError(lse.sym, lse.lvl)
 }
 
 // Print the expression on the given writer.
-func (lse LookupSymbolExpr) Print(w io.Writer) (int, error) {
+func (lse lookupSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{LOOKUP/%d %v}", lse.lvl, lse.sym)
 }
 
@@ -235,17 +235,24 @@ func (ce *CallExpr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
-	// If the ce.Proc is a builtin, improve to a BuiltinCallExpr.
-
 	proc, err := imp.Improve(ce.Proc)
 	if err != nil {
 		return ce, err
 	}
+	if err = imp.ImproveSlice(ce.Args); err != nil {
+		return ce, err
+	}
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
-		// Builtin checking must be done in advance, because folding and arity separation
-		// has to be ensured in the context that BuiltinCallExpr will be created separately too.
+		// If call can be folded into a constant value, use that value.
+		if c, isCallable := objExpr.Obj.(Callable); isCallable {
+			if foldExpr, foldErr := imp.ImproveFoldCall(c, ce.Args); foldErr == nil && foldExpr != nil {
+				return foldExpr, nil
+			}
+		}
+
+		// If the ce.Proc is a builtin, improve to a BuiltinCallExpr.
 		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
-			bce := &BuiltinCallExpr{
+			bce := &builtinCallExpr{
 				Proc: b,
 				Args: ce.Args,
 			}
@@ -253,16 +260,6 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 		}
 	}
 
-	if err = imp.ImproveSlice(ce.Args); err != nil {
-		return ce, err
-	}
-	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
-		if c, isCallable := objExpr.Obj.(Callable); isCallable {
-			if foldExpr, foldErr := imp.ImproveFoldCall(c, ce.Args); foldErr == nil && foldExpr != nil {
-				return foldExpr, nil
-			}
-		}
-	}
 	ce.Proc = proc
 	return ce, nil
 }
@@ -332,32 +329,23 @@ func (e NotCallableError) Error() string {
 }
 func (e NotCallableError) String() string { return e.Error() }
 
-// BuiltinCallExpr calls a builtin and returns the resulting object.
+// builtinCallExpr calls a builtin and returns the resulting object.
 // It is an optimization of `CallExpr.`
-type BuiltinCallExpr struct {
+type builtinCallExpr struct {
 	Proc *Builtin
 	Args []Expr
 }
 
-func (bce *BuiltinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
+func (bce *builtinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
 
 // Unparse the expression back into a form object.
-func (bce *BuiltinCallExpr) Unparse() sx.Object {
+func (bce *builtinCallExpr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: bce.Args}
 	return ce.Unparse()
 }
 
 // Improve the expression into a possible simpler one.
-func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
-	// Must call ImproveSlice b/c BuiltinCallExpr may be created not just via
-	// CallExpr.Improve. Notably: QuasiQuote.
-	if err := imp.ImproveSlice(bce.Args); err != nil {
-		return bce, err
-	}
-	if expr, err := imp.ImproveFoldCall(bce.Proc, bce.Args); err == nil && expr != nil {
-		return expr, nil
-	}
-
+func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
 	argsFn := func() []sx.Object {
 		result := make([]sx.Object, len(bce.Args))
 		for i, arg := range bce.Args {
@@ -371,15 +359,15 @@ func (bce *BuiltinCallExpr) Improve(imp *Improver) (Expr, error) {
 
 	switch len(bce.Args) {
 	case 0:
-		return imp.Improve(&BuiltinCall0Expr{bce.Proc})
+		return imp.Improve(&builtinCall0Expr{bce.Proc})
 	case 1:
-		return imp.Improve(&BuiltinCall1Expr{bce.Proc, bce.Args[0]})
+		return imp.Improve(&builtinCall1Expr{bce.Proc, bce.Args[0]})
 	}
 	return bce, nil
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
+func (bce *builtinCallExpr) Compute(env *Environment) (sx.Object, error) {
 	if err := computeArgs(env, bce.Args); err != nil {
 		return nil, err
 	}
@@ -389,54 +377,54 @@ func (bce *BuiltinCallExpr) Compute(env *Environment) (sx.Object, error) {
 }
 
 // Print the expression to a io.Writer.
-func (bce *BuiltinCallExpr) Print(w io.Writer) (int, error) {
+func (bce *builtinCallExpr) Print(w io.Writer) (int, error) {
 	ce := CallExpr{ObjExpr{bce.Proc}, bce.Args}
 	return ce.doPrint(w, "{BCALL ")
 }
 
-// BuiltinCall0Expr calls a builtin with no arg and returns the resulting object.
+// builtinCall0Expr calls a builtin with no arg and returns the resulting object.
 // It is an optimization of `CallExpr.`
-type BuiltinCall0Expr struct {
+type builtinCall0Expr struct {
 	Proc *Builtin
 }
 
-func (bce *BuiltinCall0Expr) String() string { return fmt.Sprintf("%v", bce.Proc) }
+func (bce *builtinCall0Expr) String() string { return fmt.Sprintf("%v", bce.Proc) }
 
 // Unparse the expression back into a form object.
-func (bce *BuiltinCall0Expr) Unparse() sx.Object {
+func (bce *builtinCall0Expr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: nil}
 	return ce.Unparse()
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *BuiltinCall0Expr) Compute(env *Environment) (sx.Object, error) {
+func (bce *builtinCall0Expr) Compute(env *Environment) (sx.Object, error) {
 	obj, err := bce.Proc.Fn0(env)
 	return obj, bce.Proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
-func (bce *BuiltinCall0Expr) Print(w io.Writer) (int, error) {
+func (bce *builtinCall0Expr) Print(w io.Writer) (int, error) {
 	ce := CallExpr{ObjExpr{bce.Proc}, nil}
 	return ce.doPrint(w, "{BCALL-0 ")
 }
 
-// BuiltinCall1Expr calls a builtin with one arg and returns the resulting object.
+// builtinCall1Expr calls a builtin with one arg and returns the resulting object.
 // It is an optimization of `CallExpr.`
-type BuiltinCall1Expr struct {
+type builtinCall1Expr struct {
 	Proc *Builtin
 	Arg  Expr
 }
 
-func (bce *BuiltinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Arg) }
+func (bce *builtinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Arg) }
 
 // Unparse the expression back into a form object.
-func (bce *BuiltinCall1Expr) Unparse() sx.Object {
+func (bce *builtinCall1Expr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg}}
 	return ce.Unparse()
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *BuiltinCall1Expr) Compute(env *Environment) (sx.Object, error) {
+func (bce *builtinCall1Expr) Compute(env *Environment) (sx.Object, error) {
 	val, err := env.Execute(bce.Arg)
 	if err != nil {
 		return nil, err
@@ -447,7 +435,7 @@ func (bce *BuiltinCall1Expr) Compute(env *Environment) (sx.Object, error) {
 }
 
 // Print the expression to a io.Writer.
-func (bce *BuiltinCall1Expr) Print(w io.Writer) (int, error) {
+func (bce *builtinCall1Expr) Print(w io.Writer) (int, error) {
 	ce := CallExpr{ObjExpr{bce.Proc}, []Expr{bce.Arg}}
 	return ce.doPrint(w, "{BCALL-1 ")
 }
