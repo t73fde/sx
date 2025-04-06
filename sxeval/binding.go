@@ -51,9 +51,7 @@ func makeBinding(name string, parent *Binding, sizeHint int) *Binding {
 }
 
 // MakeRootBinding creates a new root binding.
-func MakeRootBinding(sizeHint int) *Binding {
-	return makeBinding("root", nil, sizeHint)
-}
+func MakeRootBinding(sizeHint int) *Binding { return makeBinding("root", nil, sizeHint) }
 
 // MakeChildBinding creates a new binding with a given parent.
 func (b *Binding) MakeChildBinding(name string, sizeHint int) *Binding {
@@ -159,14 +157,10 @@ func (b *Binding) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
 }
 
 // Symbols returns all bound symbols, sorted by its GoString.
-func (b *Binding) Symbols() []*sx.Symbol {
-	return b.impl.symbols()
-}
+func (b *Binding) Symbols() []*sx.Symbol { return b.impl.symbols() }
 
 // Bindings returns all bindings as an a-list in some random order.
-func (b *Binding) Bindings() *sx.Pair {
-	return b.impl.alist()
-}
+func (b *Binding) Bindings() *sx.Pair { return b.impl.alist() }
 
 // Freeze sets the binding in a read-only state.
 func (b *Binding) Freeze() { b.frozen = true }

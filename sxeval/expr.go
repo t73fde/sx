@@ -155,7 +155,11 @@ func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
 
 // Compute the expression in a frame and return the result.
 func (use UnboundSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	return env.ResolveUnboundWithError(use.sym)
+	if obj, found := env.binding.Resolve(use.sym); found {
+		return obj, nil
+	}
+	return nil, env.MakeNotBoundError(use.sym)
+
 }
 
 // Print the expression on the given writer.
@@ -171,15 +175,15 @@ type resolveSymbolExpr struct {
 	skip int
 }
 
-// GetSymbol returns the symbol that later must be resolved.
-func (rse resolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
-
 // Unparse the expression back into a form object.
 func (rse resolveSymbolExpr) Unparse() sx.Object { return rse.sym }
 
 // Compute the expression in a frame and return the result.
 func (rse resolveSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	return env.ResolveNWithError(rse.sym, rse.skip)
+	if obj, found := env.binding.ResolveN(rse.sym, rse.skip); found {
+		return obj, nil
+	}
+	return nil, env.MakeNotBoundError(rse.sym)
 }
 
 // Print the expression on the given writer.
@@ -194,18 +198,15 @@ type lookupSymbolExpr struct {
 	lvl int
 }
 
-// GetSymbol returns the symbol that must later be looked up.
-func (lse *lookupSymbolExpr) GetSymbol() *sx.Symbol { return lse.sym }
-
-// GetLevel returns the nesting level to later start a look up.
-func (lse *lookupSymbolExpr) GetLevel() int { return lse.lvl }
-
 // Unparse the expression back into a form object.
 func (lse *lookupSymbolExpr) Unparse() sx.Object { return lse.sym }
 
 // Compute the expression in a frame and return the result.
 func (lse *lookupSymbolExpr) Compute(env *Environment) (sx.Object, error) {
-	return env.LookupNWithError(lse.sym, lse.lvl)
+	if obj, found := env.binding.LookupN(lse.sym, lse.lvl); found {
+		return obj, nil
+	}
+	return nil, env.MakeNotBoundError(lse.sym)
 }
 
 // Print the expression on the given writer.
@@ -353,7 +354,7 @@ func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
 		}
 		return result
 	}
-	if err := bce.Proc.CheckCallArity(len(bce.Args), argsFn); err != nil {
+	if err := bce.Proc.checkCallArity(len(bce.Args), argsFn); err != nil {
 		return nil, CallError{Name: bce.Proc.Name, Err: err}
 	}
 

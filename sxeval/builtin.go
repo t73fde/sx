@@ -77,7 +77,7 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 
 // Call the builtin function with the given environment and arguments.
 func (b *Builtin) Call(env *Environment, args sx.Vector) (obj sx.Object, err error) {
-	if err := b.CheckCallArity(len(args), func() []sx.Object { return args }); err != nil {
+	if err := b.checkCallArity(len(args), func() []sx.Object { return args }); err != nil {
 		return sx.Nil(), b.handleCallError(err)
 	}
 	switch len(args) {
@@ -91,8 +91,8 @@ func (b *Builtin) Call(env *Environment, args sx.Vector) (obj sx.Object, err err
 	return obj, b.handleCallError(err)
 }
 
-// CheckCallArity check the builtin function to match allowed number of args.
-func (b *Builtin) CheckCallArity(nargs int, argsFn func() []sx.Object) error {
+// checkCallArity check the builtin function to match allowed number of args.
+func (b *Builtin) checkCallArity(nargs int, argsFn func() []sx.Object) error {
 	if nargs > math.MaxInt16 {
 		return fmt.Errorf("more than %d arguments are not supported, but %d given", math.MaxInt16, nargs)
 	}

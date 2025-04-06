@@ -38,44 +38,37 @@ type tcodata struct {
 }
 
 type observer struct {
-	execute ExecuteObserver
+	execute ComputeObserver
 	parse   ParseObserver
 	improve ImproveObserver
 }
 
-// ExecuteObserver observes the execution of expressions.
-type ExecuteObserver interface {
-	// BeforeExecution is called immediate before the given expression is executed.
-	// The observer may change the expression or abort execution with an error.
-	BeforeExecution(*Environment, Expr) (Expr, error)
+// ComputeObserver observes the execution of expressions.
+type ComputeObserver interface {
+	// BeforeCompute is called immediate before the given expression is computed.
+	// The observer may change the expression or abort computation with an error.
+	BeforeCompute(*Environment, Expr) (Expr, error)
 
-	// AfterExecution is called immediate after the given expression was executed,
+	// AfterCompute is called immediate after the given expression was computed,
 	// resulting in an `sx.Object` and an error.
-	AfterExecution(*Environment, Expr, sx.Object, error)
+	AfterCompute(*Environment, Expr, sx.Object, error)
 }
 
 func (env *Environment) String() string { return env.binding.name }
 
-// MakeExecutionEnvironment creates an environment for later execution of an expression.
-func MakeExecutionEnvironment(bind *Binding) *Environment {
+// MakeComputeEnvironment creates an environment for later computation of expressions.
+func MakeComputeEnvironment(bind *Binding) *Environment {
 	stack := make([]sx.Object, 0, 1024)
 	return &Environment{
-		binding: bind,
-		tco: &tcodata{
-			env:  nil,
-			expr: nil,
-		},
-		observer: &observer{
-			execute: nil,
-			parse:   nil,
-			improve: nil,
-		},
-		stackp: &stack,
+		binding:  bind,
+		tco:      &tcodata{},
+		observer: &observer{},
+		stackp:   &stack,
 	}
 }
 
-// SetExecutor sets the given executor.
-func (env *Environment) SetExecutor(observe ExecuteObserver) *Environment {
+// SetComputeObserver sets the given compute observer.
+func (env *Environment) SetComputeObserver(observe ComputeObserver) *Environment {
 	env.newObserver().execute = observe
 	return env
 }
@@ -156,15 +149,15 @@ func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numB
 func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 	if exec := env.observer.execute; exec != nil {
 		for {
-			expr, err = exec.BeforeExecution(env, expr)
+			expr, err = exec.BeforeCompute(env, expr)
 			if err == nil {
 				res, err = expr.Compute(env)
 				if err == nil {
-					exec.AfterExecution(env, expr, res, err)
+					exec.AfterCompute(env, expr, res, err)
 					return res, nil
 				}
 			}
-			exec.AfterExecution(env, expr, res, err)
+			exec.AfterCompute(env, expr, res, err)
 			if err == errExecuteAgain {
 				env = env.tco.env
 				expr = env.tco.expr
@@ -203,11 +196,8 @@ func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
 // ApplyMacro executes the Callable in a macro environment.
 func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector) (sx.Object, error) {
 	macroEnv := Environment{
-		binding: env.binding.MakeChildBinding(name, 0),
-		tco: &tcodata{
-			env:  nil,
-			expr: nil,
-		},
+		binding:  env.binding.MakeChildBinding(name, 0),
+		tco:      &tcodata{},
 		observer: env.observer,
 		stackp:   env.stackp,
 	}
@@ -308,36 +298,6 @@ func (env *Environment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 // symbol is not found, a false is returned.
 func (env *Environment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return env.binding.Resolve(sym)
-}
-
-// LookupNWithError tries to look up a symbol in a parent environment of this
-// environment, which is n levels away. If this is not possible,
-// a NotBoundError is returned.
-func (env *Environment) LookupNWithError(sym *sx.Symbol, n int) (sx.Object, error) {
-	if obj, found := env.binding.LookupN(sym, n); found {
-		return obj, nil
-	}
-	return nil, env.MakeNotBoundError(sym)
-}
-
-// ResolveNWithError tries to resolve the symbol in this environment, after
-// skipping some parent levels. If it is not possible to resolve the symbol,
-// a NotBoundError is returned.
-func (env *Environment) ResolveNWithError(sym *sx.Symbol, skip int) (sx.Object, error) {
-	if obj, found := env.binding.ResolveN(sym, skip); found {
-		return obj, nil
-	}
-	return nil, env.MakeNotBoundError(sym)
-}
-
-// ResolveUnboundWithError tries to resolve a symbol in this environment,
-// or in its parent environments.
-// If not possible, a NotBoundError is returned.
-func (env *Environment) ResolveUnboundWithError(sym *sx.Symbol) (sx.Object, error) {
-	if obj, found := env.binding.Resolve(sym); found {
-		return obj, nil
-	}
-	return nil, env.MakeNotBoundError(sym)
 }
 
 // FindBinding returns the binding, where the symbol is bound to a value.
