@@ -235,15 +235,22 @@ func (ce *CallExpr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
-	// If the ce.Proc is a builtin, improve to a BuiltinCallExpr.
-
 	proc, err := imp.Improve(ce.Proc)
 	if err != nil {
 		return ce, err
 	}
+	if err = imp.ImproveSlice(ce.Args); err != nil {
+		return ce, err
+	}
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
-		// Builtin checking must be done in advance, because folding and arity separation
-		// has to be ensured in the context that BuiltinCallExpr will be created separately too.
+		// If call can be folded into a constant value, use that value.
+		if c, isCallable := objExpr.Obj.(Callable); isCallable {
+			if foldExpr, foldErr := imp.ImproveFoldCall(c, ce.Args); foldErr == nil && foldExpr != nil {
+				return foldExpr, nil
+			}
+		}
+
+		// If the ce.Proc is a builtin, improve to a BuiltinCallExpr.
 		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
 			bce := &builtinCallExpr{
 				Proc: b,
@@ -253,16 +260,6 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 		}
 	}
 
-	if err = imp.ImproveSlice(ce.Args); err != nil {
-		return ce, err
-	}
-	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
-		if c, isCallable := objExpr.Obj.(Callable); isCallable {
-			if foldExpr, foldErr := imp.ImproveFoldCall(c, ce.Args); foldErr == nil && foldExpr != nil {
-				return foldExpr, nil
-			}
-		}
-	}
 	switch len(ce.Args) {
 	case 0:
 		return imp.Improve(&call0Expr{proc})
@@ -458,15 +455,6 @@ func (bce *builtinCallExpr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
-	// Must call ImproveSlice b/c BuiltinCallExpr may be created not just via
-	// CallExpr.Improve. Notably: QuasiQuote.
-	if err := imp.ImproveSlice(bce.Args); err != nil {
-		return bce, err
-	}
-	if expr, err := imp.ImproveFoldCall(bce.Proc, bce.Args); err == nil && expr != nil {
-		return expr, nil
-	}
-
 	switch len(bce.Args) {
 	case 0:
 		return imp.Improve(&builtinCall0Expr{bce.Proc})
