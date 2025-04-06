@@ -89,13 +89,8 @@ func (tcs tTestCases) Run(t *testing.T) {
 func createBinding() *sxeval.Binding {
 	numBuiltins := len(specials) + len(builtins) + len(objects)
 	root := sxeval.MakeRootBinding(numBuiltins)
-
-	for _, syntax := range specials {
-		_ = root.BindSpecial(syntax)
-	}
-	for _, b := range builtins {
-		_ = root.BindBuiltin(b)
-	}
+	_ = sxeval.BindSpecials(root, specials...)
+	_ = sxeval.BindBuiltins(root, builtins...)
 	root.Freeze()
 	env := root.MakeChildBinding("vars", len(objects))
 	for _, obj := range objects {

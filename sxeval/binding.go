@@ -128,16 +128,6 @@ func (b *Binding) Bind(sym *sx.Symbol, obj sx.Object) error {
 	return nil
 }
 
-// BindSpecial will bind a Special to its name.
-func (b *Binding) BindSpecial(syn *Special) error {
-	return b.Bind(sx.MakeSymbol(syn.Name), syn)
-}
-
-// BindBuiltin binds the given builtin with its given name.
-func (b *Binding) BindBuiltin(bi *Builtin) error {
-	return b.Bind(sx.MakeSymbol(bi.Name), bi)
-}
-
 // Lookup will search for a local binding of the given symbol. If not
 // found, the search will *not* be continued in the parent binding.
 // Use the global `Resolve` function, if you want a search up to the parent.

@@ -48,6 +48,21 @@ type Builtin struct {
 // AssertPure is a TestPure function that alsways returns true.
 func AssertPure(sx.Vector) bool { return true }
 
+// Bind the builtin to a given environment.
+func (b *Builtin) Bind(bi *Binding) error {
+	return bi.Bind(sx.MakeSymbol(b.Name), b)
+}
+
+// BindBuiltins will bind many builtins to an environment.
+func BindBuiltins(bi *Binding, bs ...*Builtin) error {
+	for _, b := range bs {
+		if err := b.Bind(bi); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // --- Builtin methods to implement sx.Object
 
 // IsNil checks if the concrete object is nil.

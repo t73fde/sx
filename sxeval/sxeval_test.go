@@ -101,7 +101,7 @@ func TestEval(t *testing.T) {
 		// {name: "err-callable", src: "(hello)", mustErr: true},
 	}
 	root := createTestBinding()
-	_ = root.BindSpecial(&sxeval.Special{
+	_ = sxeval.BindSpecials(root, &sxeval.Special{
 		Name: "quote",
 		Fn: func(_ *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 			return sxeval.ObjExpr{Obj: args.Car()}, nil
@@ -140,19 +140,19 @@ var sxPrelude = `;; Some helpers
 
 func createBindingForTCO() *sxeval.Binding {
 	root := sxeval.MakeRootBinding(32)
-	_ = root.BindSpecial(&sxbuiltins.QuoteS)
-	_ = root.BindSpecial(&sxbuiltins.DefVarS)
-	_ = root.BindSpecial(&sxbuiltins.DefMacroS)
-	_ = root.BindSpecial(&sxbuiltins.DefunS)
-	_ = root.BindSpecial(&sxbuiltins.IfS)
-	_ = root.BindBuiltin(&sxbuiltins.Equal)
-	_ = root.BindBuiltin(&sxbuiltins.NumLess)
-	_ = root.BindBuiltin(&sxbuiltins.NumLessEqual)
-	_ = root.BindBuiltin(&sxbuiltins.Add)
-	_ = root.BindBuiltin(&sxbuiltins.Sub)
-	_ = root.BindBuiltin(&sxbuiltins.Mul)
-	_ = root.BindBuiltin(&sxbuiltins.Map)
-	_ = root.BindBuiltin(&sxbuiltins.List)
+	_ = sxbuiltins.QuoteS.Bind(root)
+	_ = sxbuiltins.DefVarS.Bind(root)
+	_ = sxbuiltins.DefMacroS.Bind(root)
+	_ = sxbuiltins.DefunS.Bind(root)
+	_ = sxbuiltins.IfS.Bind(root)
+	_ = sxbuiltins.Equal.Bind(root)
+	_ = sxbuiltins.NumLess.Bind(root)
+	_ = sxbuiltins.NumLessEqual.Bind(root)
+	_ = sxbuiltins.Add.Bind(root)
+	_ = sxbuiltins.Sub.Bind(root)
+	_ = sxbuiltins.Mul.Bind(root)
+	_ = sxbuiltins.Map.Bind(root)
+	_ = sxbuiltins.List.Bind(root)
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxPrelude))
 	bind := root.MakeChildBinding("TCO", 128)

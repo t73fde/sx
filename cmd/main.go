@@ -43,7 +43,7 @@ type mainEngine struct {
 	execCount    int
 }
 
-// ----- ExecuteObserver methods
+// ----- ComputeObserver methods
 
 func (me *mainEngine) BeforeCompute(env *sxeval.Environment, expr sxeval.Expr) (sxeval.Expr, error) {
 	if me.logExecutor {
@@ -210,87 +210,84 @@ var builtins = []*sxeval.Builtin{
 }
 
 func (me *mainEngine) bindOwn(root *sxeval.Binding) {
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-reader",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logReader
-			me.logReader = !res
-			return sx.MakeBoolean(res), nil
+	_ = sxeval.BindBuiltins(root,
+		&sxeval.Builtin{
+			Name:     "log-reader",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+				res := me.logReader
+				me.logReader = !res
+				return sx.MakeBoolean(res), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-parse",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logParse
-			me.logParse = !res
-			return sx.MakeBoolean(res), nil
+		&sxeval.Builtin{
+			Name:     "log-parse",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+				res := me.logParse
+				me.logParse = !res
+				return sx.MakeBoolean(res), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-improve",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logImprove
-			me.logImprove = !res
-			return sx.MakeBoolean(res), nil
+		&sxeval.Builtin{
+			Name:     "log-improve",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+				res := me.logImprove
+				me.logImprove = !res
+				return sx.MakeBoolean(res), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-expr",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logExpr
-			me.logExpr = !res
-			return sx.MakeBoolean(res), nil
+		&sxeval.Builtin{
+			Name:     "log-expr",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+				res := me.logExpr
+				me.logExpr = !res
+				return sx.MakeBoolean(res), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-executor",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logExecutor
-			me.logExecutor = !res
-			return sx.MakeBoolean(res), nil
+		&sxeval.Builtin{
+			Name:     "log-executor",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+				res := me.logExecutor
+				me.logExecutor = !res
+				return sx.MakeBoolean(res), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-off",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			me.logReader = false
-			me.logParse = false
-			me.logImprove = false
-			me.logExecutor = false
-			return sx.Nil(), nil
+		&sxeval.Builtin{
+			Name:     "log-off",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+				me.logReader = false
+				me.logParse = false
+				me.logImprove = false
+				me.logExecutor = false
+				return sx.Nil(), nil
+			},
 		},
-	})
-
+	)
 }
 
 func main() {
 	rd := sxreader.MakeReader(os.Stdin)
 
 	root := sxeval.MakeRootBinding(len(specials) + len(builtins) + 16)
-	for _, synDef := range specials {
-		_ = root.BindSpecial(synDef)
-	}
-	for _, b := range builtins {
-		_ = root.BindBuiltin(b)
-	}
+	_ = sxeval.BindSpecials(root, specials...)
+	_ = sxeval.BindBuiltins(root, builtins...)
 	_ = root.Bind(sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined())
 	_ = root.Bind(sx.MakeSymbol("NIL"), sx.Nil())
 	_ = root.Bind(sx.MakeSymbol("T"), sx.MakeSymbol("T"))
