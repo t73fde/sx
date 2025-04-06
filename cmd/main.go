@@ -169,7 +169,7 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Length, &sxbuiltins.LengthEqual, // length, length=
 	&sxbuiltins.LengthLess, &sxbuiltins.LengthGreater, // length<, length>
 	&sxbuiltins.Nth,               // nth
-	&sxbuiltins.Sequence2List,     // ->list
+	&sxbuiltins.Sequence2List,     // seq->list
 	&sxbuiltins.CallableP,         // callable?
 	&sxbuiltins.Macroexpand0,      // macroexpand-0
 	&sxbuiltins.DefinedP,          // defined?

@@ -114,7 +114,7 @@ var Nth = sxeval.Builtin{
 
 // Sequence2List returns the sequence as a (pair) list.
 var Sequence2List = sxeval.Builtin{
-	Name:     "->list",
+	Name:     "seq->list",
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
