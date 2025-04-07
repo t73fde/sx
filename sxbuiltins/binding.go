@@ -26,7 +26,7 @@ var CurrentBinding = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: 0,
 	TestPure: nil,
-	Fn0: func(env *sxeval.Environment) (sx.Object, error) {
+	Fn0: func(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
 		return env.Binding(), nil
 	},
 }
@@ -38,7 +38,7 @@ var ParentBinding = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		bind, err := GetBinding(arg, 0)
 		if err != nil {
 			return nil, err
@@ -56,7 +56,7 @@ var Bindings = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		bind, err := GetBinding(arg, 0)
 		if err != nil {
 			return nil, err
@@ -71,7 +71,7 @@ var BoundP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(arg, 0)
 		if err != nil {
 			return nil, err
@@ -88,7 +88,7 @@ var BindingLookup = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(arg, 0)
 		if err != nil {
 			return nil, err
@@ -98,7 +98,7 @@ var BindingLookup = sxeval.Builtin{
 		}
 		return sx.MakeUndefined(), nil
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, bi *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(args[0], 0)
 		if err != nil {
 			return nil, err
@@ -121,7 +121,7 @@ var BindingResolve = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(arg, 0)
 		if err != nil {
 			return nil, err
@@ -131,7 +131,7 @@ var BindingResolve = sxeval.Builtin{
 		}
 		return sx.MakeUndefined(), nil
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, bi *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(args[0], 0)
 		if err != nil {
 			return nil, err

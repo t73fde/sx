@@ -141,15 +141,15 @@ func (ife *IfExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (ife *IfExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	test, err := env.Execute(ife.Test)
+func (ife *IfExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+	test, err := env.Execute(ife.Test, bind)
 	if err != nil {
 		return nil, err
 	}
 	if sx.IsTrue(test) {
-		return env.ExecuteTCO(ife.True)
+		return env.ExecuteTCO(ife.True, bind)
 	}
-	return env.ExecuteTCO(ife.False)
+	return env.ExecuteTCO(ife.False, bind)
 }
 
 // Print the expression on the given writer.

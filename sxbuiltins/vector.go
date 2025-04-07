@@ -26,11 +26,11 @@ var Vector = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn0:      func(_ *sxeval.Environment) (sx.Object, error) { return sx.Nil(), nil },
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn0:      func(_ *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) { return sx.Nil(), nil },
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		return sx.Vector{arg}, nil
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
 		return args, nil
 	},
 }
@@ -41,7 +41,7 @@ var VectorP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		_, isVector := sx.GetVector(arg)
 		return sx.MakeBoolean(isVector), nil
 	},
@@ -53,7 +53,7 @@ var VectorSetBang = sxeval.Builtin{
 	MinArity: 3,
 	MaxArity: 3,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
 		v, err := GetVector(args[0], 0)
 		if err != nil {
 			return nil, err

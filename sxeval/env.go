@@ -35,6 +35,7 @@ type Environment struct {
 type tcodata struct {
 	env  *Environment
 	expr Expr
+	bind *Binding
 }
 
 type observer struct {
@@ -126,7 +127,7 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 
 // Run the given expression.
 func (env *Environment) Run(expr Expr) (sx.Object, error) {
-	return env.Execute(expr)
+	return env.Execute(expr, env.binding)
 }
 
 // MakeParseEnvironment builds a parsing environment to parse a form.
@@ -146,12 +147,12 @@ func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numB
 }
 
 // Execute the given expression.
-func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
+func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err error) {
 	if exec := env.observer.execute; exec != nil {
 		for {
 			expr, err = exec.BeforeCompute(env, expr)
 			if err == nil {
-				res, err = expr.Compute(env)
+				res, err = expr.Compute(env, bind)
 				if err == nil {
 					exec.AfterCompute(env, expr, res, err)
 					return res, nil
@@ -168,7 +169,7 @@ func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 	}
 
 	for {
-		res, err = expr.Compute(env)
+		res, err = expr.Compute(env, bind)
 		if err == nil {
 			return res, nil
 		}
@@ -183,35 +184,36 @@ func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 
 // ExecuteTCO is called when the expression should be executed at last
 // position, aka as tail call order.
-func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
+func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) (sx.Object, error) {
 	// Uncomment this line to test for non-TCO
 	// return env.Execute(expr)
 
 	// Just return relevant data for real TCO
 	env.tco.env = env
 	env.tco.expr = expr
+	env.tco.bind = bind
 	return nil, errExecuteAgain
 }
 
 // ApplyMacro executes the Callable in a macro environment.
-func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector) (sx.Object, error) {
+func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
 	macroEnv := Environment{
 		binding:  env.binding.MakeChildBinding(name, 0),
 		tco:      &tcodata{},
 		observer: env.observer,
 		stackp:   env.stackp,
 	}
-	return macroEnv.Apply(fn, args)
+	return macroEnv.Apply(fn, args, macroEnv.binding)
 }
 
 // Apply the given Callable with the arguments.
-func (env *Environment) Apply(fn Callable, args sx.Vector) (sx.Object, error) {
-	res, err := fn.Call(env, args)
+func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
+	res, err := fn.Call(env, args, bind)
 	if err == nil {
 		return res, nil
 	}
 	if err == errExecuteAgain {
-		return env.tco.env.Execute(env.tco.expr)
+		return env.tco.env.Execute(env.tco.expr, env.tco.bind)
 	}
 	return nil, env.addExecuteError(&applyExpr{Proc: fn, Args: args}, err)
 }
@@ -228,8 +230,8 @@ func (ce *applyExpr) Unparse() sx.Object {
 	return args.Cons(ce.Proc.(sx.Object))
 }
 
-func (ce *applyExpr) Compute(env *Environment) (sx.Object, error) {
-	return env.Apply(ce.Proc, ce.Args)
+func (ce *applyExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+	return env.Apply(ce.Proc, ce.Args, bind)
 }
 
 func (ce *applyExpr) Print(w io.Writer) (int, error) {
