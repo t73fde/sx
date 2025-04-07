@@ -140,19 +140,19 @@ var sxPrelude = `;; Some helpers
 
 func createBindingForTCO() *sxeval.Binding {
 	root := sxeval.MakeRootBinding(32)
-	_ = sxbuiltins.QuoteS.Bind(root)
-	_ = sxbuiltins.DefVarS.Bind(root)
-	_ = sxbuiltins.DefMacroS.Bind(root)
-	_ = sxbuiltins.DefunS.Bind(root)
-	_ = sxbuiltins.IfS.Bind(root)
-	_ = sxbuiltins.Equal.Bind(root)
-	_ = sxbuiltins.NumLess.Bind(root)
-	_ = sxbuiltins.NumLessEqual.Bind(root)
-	_ = sxbuiltins.Add.Bind(root)
-	_ = sxbuiltins.Sub.Bind(root)
-	_ = sxbuiltins.Mul.Bind(root)
-	_ = sxbuiltins.Map.Bind(root)
-	_ = sxbuiltins.List.Bind(root)
+	if err := sxbuiltins.LoadPrelude(root); err != nil {
+		panic(err)
+	}
+	if err := sxeval.BindSpecials(root,
+		&sxbuiltins.QuoteS, &sxbuiltins.DefVarS, &sxbuiltins.DefunS); err != nil {
+		panic(err)
+	}
+	if err := sxeval.BindBuiltins(root,
+		&sxbuiltins.Equal, &sxbuiltins.NumLess, &sxbuiltins.NumLessEqual,
+		&sxbuiltins.Add, &sxbuiltins.Sub, &sxbuiltins.Mul,
+		&sxbuiltins.Map, &sxbuiltins.List); err != nil {
+		panic(err)
+	}
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxPrelude))
 	bind := root.MakeChildBinding("TCO", 128)
