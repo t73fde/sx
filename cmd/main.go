@@ -45,19 +45,18 @@ type mainEngine struct {
 
 // ----- ComputeObserver methods
 
-func (me *mainEngine) BeforeCompute(env *sxeval.Environment, expr sxeval.Expr) (sxeval.Expr, error) {
+func (me *mainEngine) BeforeCompute(_ *sxeval.Environment, expr sxeval.Expr, bind *sxeval.Binding) (sxeval.Expr, error) {
 	if me.logExecutor {
-		// spaces := strings.Repeat(" ", me.execLevel)
-		// me.execLevel++
-		// bind := env.Binding()
-		// fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
-		// _, _ = expr.Print(os.Stdout)
-		// fmt.Println()
+		spaces := strings.Repeat(" ", me.execLevel)
+		me.execLevel++
+		fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
+		_, _ = expr.Print(os.Stdout)
+		fmt.Println()
 	}
 	return expr, nil
 }
 
-func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, obj sx.Object, err error) {
+func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, _ *sxeval.Binding, obj sx.Object, err error) {
 	if me.logExecutor {
 		spaces := strings.Repeat(" ", me.execLevel-1)
 		me.execCount++
@@ -194,7 +193,7 @@ var builtins = []*sxeval.Builtin{
 		Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
 			panic("common panic")
 		},
-		Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
+		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 			panic(arg)
 		},
 	},
@@ -203,7 +202,7 @@ var builtins = []*sxeval.Builtin{
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn0: func(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+		Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
 			return sx.Vector(slices.Clone(env.Stack())), nil
 		},
 	},

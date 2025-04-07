@@ -32,7 +32,7 @@ var ParseExpression = sxeval.Builtin{
 		}
 		return sxeval.MakeExprObj(expr), nil
 	},
-	Fn: func(env *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		bind, err := GetBinding(args[1], 1)
 		if err != nil {
 			return nil, err
@@ -50,8 +50,8 @@ var UnparseExpression = sxeval.Builtin{
 	Name:     "unparse-expression",
 	MinArity: 1,
 	MaxArity: 1,
-	TestPure: nil,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
+	TestPure: sxeval.AssertPure,
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		expr, err := GetExprObj(arg, 0)
 		if err != nil {
 			return nil, err

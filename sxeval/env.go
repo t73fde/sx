@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"strings"
 
 	"t73f.de/r/sx"
 )
@@ -46,11 +45,11 @@ type observer struct {
 type ComputeObserver interface {
 	// BeforeCompute is called immediate before the given expression is computed.
 	// The observer may change the expression or abort computation with an error.
-	BeforeCompute(*Environment, Expr) (Expr, error)
+	BeforeCompute(*Environment, Expr, *Binding) (Expr, error)
 
 	// AfterCompute is called immediate after the given expression was computed,
 	// resulting in an `sx.Object` and an error.
-	AfterCompute(*Environment, Expr, sx.Object, error)
+	AfterCompute(*Environment, Expr, *Binding, sx.Object, error)
 }
 
 // MakeComputeEnvironment creates an environment for later computation of expressions.
@@ -125,27 +124,19 @@ func (env *Environment) MakeParseEnvironment(bind *Binding) *ParseEnvironment {
 	}
 }
 
-// // NewLexicalEnvironment builds a new lexical environment with the given parent
-// // binding, environment name, and the number of bindings to store.
-// func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
-// 	result := *env
-// 	result.binding = parent.MakeChildBinding(name, numBindings)
-// 	return &result
-// }
-
 // Execute the given expression.
 func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err error) {
 	if exec := env.observer.execute; exec != nil {
 		for {
-			expr, err = exec.BeforeCompute(env, expr)
+			expr, err = exec.BeforeCompute(env, expr, bind)
 			if err == nil {
 				res, err = expr.Compute(env, bind)
 				if err == nil {
-					exec.AfterCompute(env, expr, res, err)
+					exec.AfterCompute(env, expr, bind, res, err)
 					return res, nil
 				}
 			}
-			exec.AfterCompute(env, expr, res, err)
+			exec.AfterCompute(env, expr, bind, res, err)
 			if err == errExecuteAgain {
 				expr = env.tco.expr
 				bind = env.tco.bind
@@ -184,12 +175,7 @@ func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) (sx.Object, error) 
 // ApplyMacro executes the Callable in a macro environment.
 func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
 	macroBind := bind.MakeChildBinding(name, 0)
-	macroEnv := Environment{
-		tco:      &tcodata{},
-		observer: env.observer,
-		stackp:   env.stackp,
-	}
-	return macroEnv.Apply(fn, args, macroBind)
+	return env.Apply(fn, args, macroBind)
 }
 
 // Apply the given Callable with the arguments.
@@ -270,66 +256,6 @@ func (ee ExecuteError) PrintStack(w io.Writer, prefix string, logger *slog.Logge
 		_, _ = io.WriteString(w, "\n")
 	}
 
-}
-
-// // Bind the symbol to an object value in this environment.
-// func (env *Environment) Bind(sym *sx.Symbol, obj sx.Object) error {
-// 	return env.binding.Bind(sym, obj)
-// }
-
-// // Lookup a symbol in this environment. If not found, false is returned.
-// func (env *Environment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
-// 	return env.binding.Lookup(sym)
-// }
-
-// // Resolve a symbol in this environment or in its parent environments. If the
-// // symbol is not found, a false is returned.
-// func (env *Environment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
-// 	return env.binding.Resolve(sym)
-// }
-
-// FindBinding returns the binding, where the symbol is bound to a value.
-// If no binding was found, nil is returned.
-func (env *Environment) FindBinding(sym *sx.Symbol, bind *Binding) *Binding {
-	for curr := bind; curr != nil; curr = curr.parent {
-		if _, found := curr.Lookup(sym); found {
-			return curr
-		}
-	}
-	return nil
-}
-
-// // Binding returns the binding of this environment.
-// func (env *Environment) Binding() *Binding { return env.binding }
-
-// MakeNotBoundError builds an error to signal that a symbol was not bound in
-// the environment.
-func (env *Environment) MakeNotBoundError(sym *sx.Symbol, bind *Binding) NotBoundError {
-	return NotBoundError{Binding: bind, Sym: sym}
-}
-
-// NotBoundError signals that a symbol was not found in a binding.
-type NotBoundError struct {
-	Binding *Binding
-	Sym     *sx.Symbol
-}
-
-func (e NotBoundError) Error() string {
-	var sb strings.Builder
-	if e.Sym == nil {
-		sb.WriteString("symbol == nil, not bound in ")
-	} else {
-		fmt.Fprintf(&sb, "symbol %q not bound in ", e.Sym.String())
-	}
-	second := false
-	for binding := e.Binding; binding != nil; binding = binding.Parent() {
-		if second {
-			sb.WriteString("->")
-		}
-		fmt.Fprintf(&sb, "%q", binding.Name())
-		second = true
-	}
-	return sb.String()
 }
 
 // ----- Stack operations

@@ -154,11 +154,11 @@ func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (use UnboundSymbolExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+func (use UnboundSymbolExpr) Compute(_ *Environment, bind *Binding) (sx.Object, error) {
 	if obj, found := bind.Resolve(use.sym); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(use.sym, bind)
+	return nil, bind.MakeNotBoundError(use.sym)
 
 }
 
@@ -175,15 +175,18 @@ type resolveSymbolExpr struct {
 	skip int
 }
 
+// GetSymbol returns the symbol to be resolved.
+func (rse resolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
+
 // Unparse the expression back into a form object.
 func (rse resolveSymbolExpr) Unparse() sx.Object { return rse.sym }
 
 // Compute the expression in a frame and return the result.
-func (rse resolveSymbolExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+func (rse resolveSymbolExpr) Compute(_ *Environment, bind *Binding) (sx.Object, error) {
 	if obj, found := bind.ResolveN(rse.sym, rse.skip); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(rse.sym, bind)
+	return nil, bind.MakeNotBoundError(rse.sym)
 }
 
 // Print the expression on the given writer.
@@ -198,15 +201,18 @@ type lookupSymbolExpr struct {
 	lvl int
 }
 
+// GetSymbol returns the symbol to be looked up.
+func (lse *lookupSymbolExpr) GetSymbol() *sx.Symbol { return lse.sym }
+
 // Unparse the expression back into a form object.
 func (lse *lookupSymbolExpr) Unparse() sx.Object { return lse.sym }
 
 // Compute the expression in a frame and return the result.
-func (lse *lookupSymbolExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+func (lse *lookupSymbolExpr) Compute(_ *Environment, bind *Binding) (sx.Object, error) {
 	if obj, found := bind.LookupN(lse.sym, lse.lvl); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(lse.sym, bind)
+	return nil, bind.MakeNotBoundError(lse.sym)
 }
 
 // Print the expression on the given writer.

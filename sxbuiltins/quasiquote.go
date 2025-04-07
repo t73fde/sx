@@ -28,16 +28,14 @@ import (
 // QuasiquoteS parses a form that is quasi-quotated
 var QuasiquoteS = sxeval.Special{
 	Name: sx.SymbolQuasiquote.String(),
-	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs
 		}
 		if !sx.IsNil(args.Cdr()) {
 			return nil, fmt.Errorf("more than one argument: %v", args)
 		}
-		qqp := qqParser{
-			pframe: pf,
-		}
+		qqp := qqParser{pe: pe}
 		return qqp.parseQQ(args.Car())
 	},
 }
@@ -62,11 +60,9 @@ var UnquoteSplicingS = sxeval.Special{
 
 var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.SymbolQuasiquote.GetValue())
 
-type qqParser struct {
-	pframe *sxeval.ParseEnvironment
-}
+type qqParser struct{ pe *sxeval.ParseEnvironment }
 
-func (qqp *qqParser) parse(obj sx.Object) (sxeval.Expr, error) { return qqp.pframe.Parse(obj) }
+func (qqp *qqParser) parse(obj sx.Object) (sxeval.Expr, error) { return qqp.pe.Parse(obj) }
 
 func (qqp *qqParser) parseQQ(obj sx.Object) (sxeval.Expr, error) {
 	pair, isPair := sx.GetPair(obj)

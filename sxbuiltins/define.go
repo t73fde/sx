@@ -166,9 +166,9 @@ func (se *SetXExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 
 // Compute the expression in a frame and return the result.
 func (se *SetXExpr) Compute(env *sxeval.Environment, bi *sxeval.Binding) (sx.Object, error) {
-	bind := env.FindBinding(se.Sym, bi)
+	bind := bi.FindBinding(se.Sym)
 	if bind == nil {
-		return nil, env.MakeNotBoundError(se.Sym, bi)
+		return nil, bi.MakeNotBoundError(se.Sym)
 	}
 	val, err := env.Execute(se.Val, bi)
 	if err == nil {

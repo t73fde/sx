@@ -92,7 +92,7 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 
 // Call the builtin function with the given environment and arguments.
 func (b *Builtin) Call(env *Environment, args sx.Vector, bind *Binding) (obj sx.Object, err error) {
-	if err := b.checkCallArity(len(args), func() []sx.Object { return args }); err != nil {
+	if err = b.checkCallArity(len(args), func() []sx.Object { return args }); err != nil {
 		return sx.Nil(), b.handleCallError(err)
 	}
 	switch len(args) {

@@ -355,7 +355,7 @@ func (ll *LexLambda) GoString() string { return ll.String() }
 func (ll *LexLambda) IsPure(sx.Vector) bool { return false }
 
 // Call the Procedure with any number of arguments.
-func (ll *LexLambda) Call(env *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
+func (ll *LexLambda) Call(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 	numParams := len(ll.Params)
 	if len(args) < numParams {
 		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[len(args):])
