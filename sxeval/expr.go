@@ -155,10 +155,10 @@ func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
 
 // Compute the expression in a frame and return the result.
 func (use UnboundSymbolExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	if obj, found := env.binding.Resolve(use.sym); found {
+	if obj, found := bind.Resolve(use.sym); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(use.sym)
+	return nil, env.MakeNotBoundError(use.sym, bind)
 
 }
 
@@ -180,10 +180,10 @@ func (rse resolveSymbolExpr) Unparse() sx.Object { return rse.sym }
 
 // Compute the expression in a frame and return the result.
 func (rse resolveSymbolExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	if obj, found := env.binding.ResolveN(rse.sym, rse.skip); found {
+	if obj, found := bind.ResolveN(rse.sym, rse.skip); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(rse.sym)
+	return nil, env.MakeNotBoundError(rse.sym, bind)
 }
 
 // Print the expression on the given writer.
@@ -203,10 +203,10 @@ func (lse *lookupSymbolExpr) Unparse() sx.Object { return lse.sym }
 
 // Compute the expression in a frame and return the result.
 func (lse *lookupSymbolExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	if obj, found := env.binding.LookupN(lse.sym, lse.lvl); found {
+	if obj, found := bind.LookupN(lse.sym, lse.lvl); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(lse.sym)
+	return nil, env.MakeNotBoundError(lse.sym, bind)
 }
 
 // Print the expression on the given writer.

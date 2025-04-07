@@ -26,8 +26,8 @@ var CurrentBinding = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: 0,
 	TestPure: nil,
-	Fn0: func(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-		return env.Binding(), nil
+	Fn0: func(_ *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+		return bind, nil
 	},
 }
 
@@ -38,7 +38,7 @@ var ParentBinding = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		bind, err := GetBinding(arg, 0)
 		if err != nil {
 			return nil, err
@@ -71,12 +71,12 @@ var BoundP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(arg, 0)
 		if err != nil {
 			return nil, err
 		}
-		_, found := env.Resolve(sym)
+		_, found := bind.Resolve(sym)
 		return sx.MakeBoolean(found), nil
 	},
 }
@@ -88,12 +88,12 @@ var BindingLookup = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(arg, 0)
 		if err != nil {
 			return nil, err
 		}
-		if obj, found := env.Binding().Lookup(sym); found {
+		if obj, found := bind.Lookup(sym); found {
 			return obj, nil
 		}
 		return sx.MakeUndefined(), nil
@@ -121,12 +121,12 @@ var BindingResolve = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(arg, 0)
 		if err != nil {
 			return nil, err
 		}
-		if obj, found := env.Binding().Resolve(sym); found {
+		if obj, found := bind.Resolve(sym); found {
 			return obj, nil
 		}
 		return sx.MakeUndefined(), nil

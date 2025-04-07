@@ -59,9 +59,9 @@ var NotBoundError = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		return nil, sxeval.NotBoundError{Binding: env.Binding(), Sym: sym}
+		return nil, env.MakeNotBoundError(sym, bind)
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(args[0], 0)
 		if err != nil {
 			return nil, err
@@ -70,7 +70,7 @@ var NotBoundError = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		return nil, sxeval.NotBoundError{Binding: bind, Sym: sym}
+		return nil, env.MakeNotBoundError(sym, bind)
 	},
 	NoCallError: true,
 }

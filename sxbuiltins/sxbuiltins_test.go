@@ -47,7 +47,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 
 			var sb strings.Builder
 			bind := root.MakeChildBinding(tc.name, 0)
-			env := sxeval.MakeComputeEnvironment(bind)
+			env := sxeval.MakeComputeEnvironment()
 			for {
 				obj, err := rd.Read()
 				if err != nil {
@@ -61,7 +61,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 					t.Errorf("Error %v while reading %s", err, tc.src)
 					return
 				}
-				res, err := env.Eval(obj)
+				res, err := env.Eval(obj, bind)
 				if err != nil {
 					if tc.withErr {
 						sb.WriteString(fmt.Errorf("{[{%w}]}", err).Error())

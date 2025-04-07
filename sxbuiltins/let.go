@@ -143,17 +143,17 @@ func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 
 // Compute the expression in a frame and return the result.
 func (le *LetExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-	letEnv := env.NewLexicalEnvironment(env.Binding(), "let", len(le.Symbols))
+	letBind := bind.MakeChildBinding("let", len(le.Symbols))
 	for i, sym := range le.Symbols {
 		obj, err := env.Execute(le.Vals[i], bind)
 		if err != nil {
 			return nil, err
 		}
-		if err = letEnv.Bind(sym, obj); err != nil {
+		if err = letBind.Bind(sym, obj); err != nil {
 			return nil, err
 		}
 	}
-	return letEnv.ExecuteTCO(le.Body, bind)
+	return env.ExecuteTCO(le.Body, letBind)
 }
 
 // Print the expression on the given writer.

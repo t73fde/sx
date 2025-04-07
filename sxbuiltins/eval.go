@@ -26,7 +26,7 @@ var ParseExpression = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil,
 	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		expr, err := env.Parse(arg)
+		expr, err := env.Parse(arg, bind)
 		if err != nil {
 			return nil, err
 		}
@@ -37,7 +37,7 @@ var ParseExpression = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		expr, err := env.RebindExecutionEnvironment(bind).Parse(args[0])
+		expr, err := env.Parse(args[0], bind)
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +72,7 @@ var RunExpression = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		obj, err := env.Run(expr.GetExpr())
+		obj, err := env.Run(expr.GetExpr(), bind)
 		return obj, err
 
 	},
@@ -85,7 +85,7 @@ var RunExpression = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		obj, err := env.RebindExecutionEnvironment(bind).Run(expr.GetExpr())
+		obj, err := env.Run(expr.GetExpr(), bind)
 		return obj, err
 	},
 }
@@ -97,29 +97,28 @@ var Eval = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil,
 	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		expr, err := getEvalExpr(env, arg)
+		expr, err := getEvalExpr(env, arg, bind)
 		if err != nil {
 			return nil, err
 		}
-		return env.Run(expr)
+		return env.Run(expr, bind)
 	},
-	Fn: func(env *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		bind, err := GetBinding(args[1], 1)
 		if err != nil {
 			return nil, err
 		}
-		argEnv := env.RebindExecutionEnvironment(bind)
-		expr, err := getEvalExpr(argEnv, args[0])
+		expr, err := getEvalExpr(env, args[0], bind)
 		if err != nil {
 			return nil, err
 		}
-		return argEnv.Run(expr)
+		return env.Run(expr, bind)
 	},
 }
 
-func getEvalExpr(env *sxeval.Environment, arg sx.Object) (sxeval.Expr, error) {
+func getEvalExpr(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sxeval.Expr, error) {
 	if exprObj, isExpr := sxeval.GetExprObj(arg); isExpr {
 		return exprObj.GetExpr(), nil
 	}
-	return env.Parse(arg)
+	return env.Parse(arg, bind)
 }

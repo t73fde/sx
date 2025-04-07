@@ -47,12 +47,12 @@ type mainEngine struct {
 
 func (me *mainEngine) BeforeCompute(env *sxeval.Environment, expr sxeval.Expr) (sxeval.Expr, error) {
 	if me.logExecutor {
-		spaces := strings.Repeat(" ", me.execLevel)
-		me.execLevel++
-		bind := env.Binding()
-		fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
-		_, _ = expr.Print(os.Stdout)
-		fmt.Println()
+		// spaces := strings.Repeat(" ", me.execLevel)
+		// me.execLevel++
+		// bind := env.Binding()
+		// fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
+		// _, _ = expr.Print(os.Stdout)
+		// fmt.Println()
 	}
 	return expr, nil
 }
@@ -327,7 +327,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 	}()
 
 	for {
-		env := sxeval.MakeComputeEnvironment(bind)
+		env := sxeval.MakeComputeEnvironment()
 		env.SetComputeObserver(me).SetParseObserver(me).SetImproveObserver(me)
 		fmt.Print("> ")
 		obj, err := rd.Read()
@@ -341,7 +341,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 		if me.logReader {
 			fmt.Println(";<", obj)
 		}
-		expr, err := env.Parse(obj)
+		expr, err := env.Parse(obj, bind)
 		if err != nil {
 			fmt.Println(";p", err)
 			continue
@@ -356,7 +356,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			continue
 		}
 		me.execCount = 0
-		res, err := env.Run(expr)
+		res, err := env.Run(expr, bind)
 		if me.logExecutor {
 			fmt.Println(";#", me.execCount)
 		}
@@ -438,7 +438,7 @@ var prelude string
 
 func readPrelude(root *sxeval.Binding) error {
 	rd := sxreader.MakeReader(strings.NewReader(prelude))
-	env := sxeval.MakeComputeEnvironment(root)
+	env := sxeval.MakeComputeEnvironment()
 	for {
 		form, err := rd.Read()
 		if err != nil {
@@ -447,7 +447,7 @@ func readPrelude(root *sxeval.Binding) error {
 			}
 			return err
 		}
-		_, err = env.Eval(form)
+		_, err = env.Eval(form, root)
 		if err != nil {
 			return err
 		}
