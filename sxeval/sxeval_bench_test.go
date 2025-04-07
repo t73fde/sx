@@ -27,15 +27,15 @@ func BenchmarkEvenTCO(b *testing.B) {
 	evenSym := sx.MakeSymbol("even?")
 	for _, tc := range testcases {
 		b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
-			env := sxeval.MakeComputeEnvironment(root)
+			env := sxeval.MakeEnvironment()
 			obj := sx.MakeList(evenSym, sx.Int64(tc))
-			expr, err := env.Parse(obj)
+			expr, err := env.Parse(obj, root)
 			if err != nil {
 				b.Error(err)
 			}
 			b.ResetTimer()
 			for b.Loop() {
-				_, _ = env.Run(expr)
+				_, _ = env.Run(expr, root)
 			}
 		})
 	}
@@ -59,20 +59,20 @@ func BenchmarkTak(b *testing.B) {
 
 func runBenchmark(b *testing.B, sexpr sx.Object) {
 	root := createBindingForTCO()
-	env := sxeval.MakeComputeEnvironment(root)
-	expr, err := env.Parse(sexpr)
+	env := sxeval.MakeEnvironment()
+	expr, err := env.Parse(sexpr, root)
 	if err != nil {
 		b.Error(err)
 	}
 
-	if _, err = env.Run(expr); err != nil {
+	if _, err = env.Run(expr, root); err != nil {
 		b.Error(err)
 	}
 	if stack := env.Stack(); len(stack) > 0 {
 		b.Error("stack not empty, but:", stack)
 	}
 	for b.Loop() {
-		_, _ = env.Run(expr)
+		_, _ = env.Run(expr, root)
 	}
 	if stack := env.Stack(); len(stack) > 0 {
 		b.Error("stack not empty, found", len(stack), "elements")

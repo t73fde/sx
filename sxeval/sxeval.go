@@ -31,7 +31,7 @@ type Callable interface {
 	IsPure(sx.Vector) bool
 
 	// Call the value with the given args in the given environment.
-	Call(*Environment, sx.Vector) (sx.Object, error)
+	Call(*Environment, sx.Vector, *Binding) (sx.Object, error)
 }
 
 // GetCallable returns the object as a Callable, if possible.

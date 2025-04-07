@@ -146,6 +146,17 @@ func (b *Binding) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
 	return b.Lookup(sym)
 }
 
+// FindBinding returns the binding, where the symbol is bound to a value.
+// If no binding was found, nil is returned.
+func (b *Binding) FindBinding(sym *sx.Symbol) *Binding {
+	for curr := b; curr != nil; curr = curr.parent {
+		if _, found := curr.Lookup(sym); found {
+			return curr
+		}
+	}
+	return nil
+}
+
 // Symbols returns all bound symbols, sorted by its GoString.
 func (b *Binding) Symbols() []*sx.Symbol { return b.impl.symbols() }
 
@@ -201,6 +212,36 @@ func (b *Binding) ResolveN(sym *sx.Symbol, n int) (sx.Object, bool) {
 		}
 	}
 	return sx.Nil(), false
+}
+
+// MakeNotBoundError builds an error to signal that a symbol was not bound in
+// the environment.
+func (b *Binding) MakeNotBoundError(sym *sx.Symbol) NotBoundError {
+	return NotBoundError{Binding: b, Sym: sym}
+}
+
+// NotBoundError signals that a symbol was not found in a binding.
+type NotBoundError struct {
+	Binding *Binding
+	Sym     *sx.Symbol
+}
+
+func (e NotBoundError) Error() string {
+	var sb strings.Builder
+	if e.Sym == nil {
+		sb.WriteString("symbol == nil, not bound in ")
+	} else {
+		fmt.Fprintf(&sb, "symbol %q not bound in ", e.Sym.String())
+	}
+	second := false
+	for binding := e.Binding; binding != nil; binding = binding.Parent() {
+		if second {
+			sb.WriteString("->")
+		}
+		fmt.Fprintf(&sb, "%q", binding.Name())
+		second = true
+	}
+	return sb.String()
 }
 
 // GetBinding returns the object as a binding, if possible.

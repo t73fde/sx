@@ -45,11 +45,10 @@ type mainEngine struct {
 
 // ----- ComputeObserver methods
 
-func (me *mainEngine) BeforeCompute(env *sxeval.Environment, expr sxeval.Expr) (sxeval.Expr, error) {
+func (me *mainEngine) BeforeCompute(_ *sxeval.Environment, expr sxeval.Expr, bind *sxeval.Binding) (sxeval.Expr, error) {
 	if me.logExecutor {
 		spaces := strings.Repeat(" ", me.execLevel)
 		me.execLevel++
-		bind := env.Binding()
 		fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
 		_, _ = expr.Print(os.Stdout)
 		fmt.Println()
@@ -57,7 +56,7 @@ func (me *mainEngine) BeforeCompute(env *sxeval.Environment, expr sxeval.Expr) (
 	return expr, nil
 }
 
-func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, obj sx.Object, err error) {
+func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, _ *sxeval.Binding, obj sx.Object, err error) {
 	if me.logExecutor {
 		spaces := strings.Repeat(" ", me.execLevel-1)
 		me.execCount++
@@ -191,10 +190,10 @@ var builtins = []*sxeval.Builtin{
 		MinArity: 0,
 		MaxArity: 1,
 		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
+		Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
 			panic("common panic")
 		},
-		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 			panic(arg)
 		},
 	},
@@ -203,7 +202,7 @@ var builtins = []*sxeval.Builtin{
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn0: func(env *sxeval.Environment) (sx.Object, error) {
+		Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
 			return sx.Vector(slices.Clone(env.Stack())), nil
 		},
 	},
@@ -216,7 +215,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
 				res := me.logReader
 				me.logReader = !res
 				return sx.MakeBoolean(res), nil
@@ -227,7 +226,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
 				res := me.logParse
 				me.logParse = !res
 				return sx.MakeBoolean(res), nil
@@ -238,7 +237,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
 				res := me.logImprove
 				me.logImprove = !res
 				return sx.MakeBoolean(res), nil
@@ -249,7 +248,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
 				res := me.logExpr
 				me.logExpr = !res
 				return sx.MakeBoolean(res), nil
@@ -260,7 +259,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
 				res := me.logExecutor
 				me.logExecutor = !res
 				return sx.MakeBoolean(res), nil
@@ -271,7 +270,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
 				me.logReader = false
 				me.logParse = false
 				me.logImprove = false
@@ -327,7 +326,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 	}()
 
 	for {
-		env := sxeval.MakeComputeEnvironment(bind)
+		env := sxeval.MakeEnvironment()
 		env.SetComputeObserver(me).SetParseObserver(me).SetImproveObserver(me)
 		fmt.Print("> ")
 		obj, err := rd.Read()
@@ -341,7 +340,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 		if me.logReader {
 			fmt.Println(";<", obj)
 		}
-		expr, err := env.Parse(obj)
+		expr, err := env.Parse(obj, bind)
 		if err != nil {
 			fmt.Println(";p", err)
 			continue
@@ -356,7 +355,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			continue
 		}
 		me.execCount = 0
-		res, err := env.Run(expr)
+		res, err := env.Run(expr, bind)
 		if me.logExecutor {
 			fmt.Println(";#", me.execCount)
 		}
@@ -438,7 +437,7 @@ var prelude string
 
 func readPrelude(root *sxeval.Binding) error {
 	rd := sxreader.MakeReader(strings.NewReader(prelude))
-	env := sxeval.MakeComputeEnvironment(root)
+	env := sxeval.MakeEnvironment()
 	for {
 		form, err := rd.Read()
 		if err != nil {
@@ -447,7 +446,7 @@ func readPrelude(root *sxeval.Binding) error {
 			}
 			return err
 		}
-		_, err = env.Eval(form)
+		_, err = env.Eval(form, root)
 		if err != nil {
 			return err
 		}

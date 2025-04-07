@@ -80,10 +80,10 @@ func (de *DefineExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (de *DefineExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	val, err := env.Execute(de.Val)
+func (de *DefineExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+	val, err := env.Execute(de.Val, bind)
 	if err == nil {
-		err = env.Bind(de.Sym, val)
+		err = bind.Bind(de.Sym, val)
 	}
 	return val, err
 }
@@ -165,12 +165,12 @@ func (se *SetXExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	bind := env.FindBinding(se.Sym)
+func (se *SetXExpr) Compute(env *sxeval.Environment, bi *sxeval.Binding) (sx.Object, error) {
+	bind := bi.FindBinding(se.Sym)
 	if bind == nil {
-		return nil, env.MakeNotBoundError(se.Sym)
+		return nil, bi.MakeNotBoundError(se.Sym)
 	}
-	val, err := env.Execute(se.Val)
+	val, err := env.Execute(se.Val, bi)
 	if err == nil {
 		err = bind.Bind(se.Sym, val)
 	}

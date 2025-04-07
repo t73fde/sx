@@ -47,7 +47,7 @@ func (sp *Special) Bind(bi *Binding) error {
 	return bi.Bind(sx.MakeSymbol(sp.Name), sp)
 }
 
-// BindBuiltins will bind many builtins to an environment.
+// BindSpecials will bind many builtins to an environment.
 func BindSpecials(bi *Binding, sps ...*Special) error {
 	for _, sp := range sps {
 		if err := sp.Bind(bi); err != nil {
