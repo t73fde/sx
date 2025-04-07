@@ -15,7 +15,6 @@
 package main
 
 import (
-	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -313,7 +312,7 @@ func main() {
 		logExecutor: true,
 	}
 	me.bindOwn(root)
-	err := readPrelude(root)
+	err := sxbuiltins.LoadPrelude(root)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to read prelude: %v\n", err)
 		os.Exit(17)
@@ -454,27 +453,6 @@ func printExpr(expr sxeval.Expr, level int) {
 			fmt.Println("NIL")
 		default:
 			fmt.Printf("%T/%v\n", expr, expr)
-		}
-	}
-}
-
-//go:embed prelude.sxn
-var prelude string
-
-func readPrelude(root *sxeval.Binding) error {
-	rd := sxreader.MakeReader(strings.NewReader(prelude))
-	env := sxeval.MakeEnvironment()
-	for {
-		form, err := rd.Read()
-		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			return err
-		}
-		_, err = env.Eval(form, root)
-		if err != nil {
-			return err
 		}
 	}
 }
