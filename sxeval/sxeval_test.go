@@ -120,13 +120,18 @@ func createBindingForTCO() *sxeval.Binding {
 		panic(err)
 	}
 	if err := sxeval.BindSpecials(root,
-		&sxbuiltins.QuoteS, &sxbuiltins.DefVarS, &sxbuiltins.DefunS); err != nil {
+		&sxbuiltins.QuoteS, &sxbuiltins.DefVarS, &sxbuiltins.DefunS,
+		&sxbuiltins.LambdaS); err != nil {
 		panic(err)
 	}
 	if err := sxeval.BindBuiltins(root,
 		&sxbuiltins.Equal, &sxbuiltins.NumLess, &sxbuiltins.NumLessEqual,
 		&sxbuiltins.Add, &sxbuiltins.Sub, &sxbuiltins.Mul,
-		&sxbuiltins.Map, &sxbuiltins.List); err != nil {
+		&sxbuiltins.Map, &sxbuiltins.List,
+		&sxbuiltins.NumberP, &sxbuiltins.SymbolP, &sxbuiltins.PairP,
+		&sxbuiltins.Cadr, &sxbuiltins.Caddr,
+		&sxbuiltins.Error,
+	); err != nil {
 		panic(err)
 	}
 	root.Freeze()
@@ -157,14 +162,18 @@ func TestTailCallOptimization(t *testing.T) {
 		{name: "trivial-map-odd", src: "(map odd? (list 0 1 2 3 4 5 6))", exp: "(() 1 () 1 () 1 ())"},
 		{name: "heavy-even", src: "(even? 1000000)", exp: "1"},
 
-		// The following is not a TCO test, but a test for a correct fac implementation.
-		{name: "fac20", src: "(fac 10)", exp: "3628800"},
-
-		// The following is not a TCO test, but a test for a correct faa implementation.
-		{name: "faa20", src: "(faa 10 1)", exp: "3628800"},
-
-		// The following is not a TCO test, but a test for a correct fac implementation.
+		// The following are not TCO tests, but tests for correct implementations.
+		{name: "fac10", src: "(fac 10)", exp: "3628800"},
+		{name: "faa10", src: "(faa 10 1)", exp: "3628800"},
 		{name: "fib20", src: "(fib 6)", exp: "13"},
+		{name: "tak-10-5-3", src: "(tak 10 5 2)", exp: "5"},
+		{name: "deriv-x", src: "(deriv 'x 'x)", exp: "1"},
+		{name: "deriv-c", src: "(deriv 'c 'x)", exp: "0"},
+		{name: "deriv-+cx", src: "(deriv '(+ c x) 'x)", exp: "(+ 0 1)"},
+		{name: "deriv-*cx", src: "(deriv '(* c x) 'x)", exp: "(+ (* 0 x) (* c 1))"},
+		//{name: "deriv-x2", src: "(deriv '(expr x 3) 'x)", exp: "1"},
+		{name: "deriv-x2", src: "(deriv '(expt x 3) 'x)", exp: "(* 3 (* (expt x 2) 1))"},
+		//{name: "test-deriv", src: "(test-deriv deriv-test-cases)", exp: ""},
 	}
 	root := createBindingForTCO()
 	testcases.Run(t, root)

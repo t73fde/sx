@@ -32,3 +32,57 @@
       (tak (tak (- x 1) y z)
            (tak (- y 1) z x)
            (tak (- z 1) x y))))
+
+;; Symbolic derivation
+(defun deriv (expr var)
+  (cond
+    ;; Konstante => 0
+    ((number? expr) 0)
+    ;; Variable selbst => 1
+    ((= expr var) 1)
+    ;; Andere Variable => 0
+    ((symbol? expr) 0)
+
+    ;; Summe => f' + g'
+    ((and (pair? expr) (= (car expr) '+))
+     (list '+ (deriv (cadr expr) var)
+               (deriv (caddr expr) var)))
+
+    ;; Produktregel: (f * g)' = f' * g + f * g'
+    ((and (pair? expr) (= (car expr) '*))
+     (list '+ 
+           (list '* (deriv (cadr expr) var) (caddr expr))
+           (list '* (cadr expr) (deriv (caddr expr) var))))
+
+    ;; Potenzregel: (x^n)' = n * x^(n-1), nur wenn n Zahl
+    ((and (pair? expr) (= (car expr) 'expt)
+          (number? (caddr expr)))
+     (let ((base (cadr expr))
+           (exponent (caddr expr)))
+       (list '* exponent
+             (list '* (list 'expt base (- exponent 1))
+                        (deriv base var)))))
+
+    ;; Default: Ausdruck nicht erkannt
+    (T (error "Unbekannter Ausdruck" expr))))
+
+(defun test-deriv (test-cases)
+  (map (lambda (expr) (deriv expr 'x)) test-cases))
+
+(defvar deriv-test-cases
+(list
+   'x
+   42
+   'y
+   '(+ x 3)
+   '(* x x)
+   '(* 2 x)
+   '(+ (* 3 x) (* x x))
+   '(* (+ x 1) (+ x 2))
+   '(expt x 5)
+   '(+ (expt x 3) (* x (expt x 2)))
+   '(* (expt x 3) (expt x 2))
+   '(+ (* x y) (* y x))
+   '(* (+ x 1) (* x (+ x 2)))
+   '(+ (expt x 2) (expt x 3))
+   '(+ (expt (+ x 1) 3) (* x x))))

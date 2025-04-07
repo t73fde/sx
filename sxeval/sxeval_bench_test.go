@@ -57,6 +57,10 @@ func BenchmarkTak(b *testing.B) {
 	runBenchmark(b, sx.MakeList(sx.MakeSymbol("tak"), sx.Int64(15), sx.Int64(10), sx.Int64(5)))
 }
 
+func BenchmarkDeriv(b *testing.B) {
+	runBenchmark(b, sx.MakeList(sx.MakeSymbol("test-deriv"), sx.MakeSymbol("deriv-test-cases")))
+}
+
 func runBenchmark(b *testing.B, sexpr sx.Object) {
 	root := createBindingForTCO()
 	env := sxeval.MakeEnvironment()
