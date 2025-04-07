@@ -32,7 +32,6 @@ type Environment struct {
 
 // tcodata contains everything to implement Tail Call Optimization (tco)
 type tcodata struct {
-	env  *Environment
 	expr Expr
 	bind *Binding
 }
@@ -148,8 +147,8 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 			}
 			exec.AfterCompute(env, expr, res, err)
 			if err == errExecuteAgain {
-				env = env.tco.env
 				expr = env.tco.expr
+				bind = env.tco.bind
 				continue
 			}
 			return res, env.addExecuteError(expr, err)
@@ -162,8 +161,8 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 			return res, nil
 		}
 		if err == errExecuteAgain {
-			env = env.tco.env
 			expr = env.tco.expr
+			bind = env.tco.bind
 			continue
 		}
 		return res, env.addExecuteError(expr, err)
@@ -174,10 +173,9 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 // position, aka as tail call order.
 func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) (sx.Object, error) {
 	// Uncomment this line to test for non-TCO
-	// return env.Execute(expr)
+	// return env.Execute(expr, bind)
 
 	// Just return relevant data for real TCO
-	env.tco.env = env
 	env.tco.expr = expr
 	env.tco.bind = bind
 	return nil, errExecuteAgain
@@ -201,7 +199,7 @@ func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Ob
 		return res, nil
 	}
 	if err == errExecuteAgain {
-		return env.tco.env.Execute(env.tco.expr, env.tco.bind)
+		return env.Execute(env.tco.expr, env.tco.bind)
 	}
 	return nil, env.addExecuteError(&applyExpr{Proc: fn, Args: args}, err)
 }
