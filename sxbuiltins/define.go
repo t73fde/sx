@@ -85,17 +85,17 @@ func (de *DefineExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 		return err
 	}
 	sym := de.Sym
-	sxc.Emit(func(env *sxeval.Environment) error {
-		return env.Bind(sym, env.Top())
+	sxc.Emit(func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		return bind.Bind(sym, env.Top())
 	}, "DEFINE", sym.String())
 	return nil
 }
 
 // Compute the expression in a frame and return the result.
-func (de *DefineExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	val, err := env.Execute(de.Val)
+func (de *DefineExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+	val, err := env.Execute(de.Val, bind)
 	if err == nil {
-		err = env.Bind(de.Sym, val)
+		err = bind.Bind(de.Sym, val)
 	}
 	return val, err
 }
@@ -182,10 +182,10 @@ func (se *SetXExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 		return err
 	}
 	sym := se.Sym
-	sxc.Emit(func(env *sxeval.Environment) error {
-		bind := env.FindBinding(se.Sym)
+	sxc.Emit(func(env *sxeval.Environment, bi *sxeval.Binding) error {
+		bind := bi.FindBinding(sym)
 		if bind == nil {
-			return env.MakeNotBoundError(se.Sym)
+			return bi.MakeNotBoundError(sym)
 		}
 		return bind.Bind(sym, env.Top())
 	}, "SET!", sym.String())
@@ -193,12 +193,12 @@ func (se *SetXExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (se *SetXExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	bind := env.FindBinding(se.Sym)
+func (se *SetXExpr) Compute(env *sxeval.Environment, bi *sxeval.Binding) (sx.Object, error) {
+	bind := bi.FindBinding(se.Sym)
 	if bind == nil {
-		return nil, env.MakeNotBoundError(se.Sym)
+		return nil, bi.MakeNotBoundError(se.Sym)
 	}
-	val, err := env.Execute(se.Val)
+	val, err := env.Execute(se.Val, bi)
 	if err == nil {
 		err = bind.Bind(se.Sym, val)
 	}

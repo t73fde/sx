@@ -33,13 +33,13 @@ type Builtin struct {
 	TestPure func(sx.Vector) bool
 
 	// The actual builtin function, with no argument
-	Fn0 func(*Environment) (sx.Object, error)
+	Fn0 func(*Environment, *Binding) (sx.Object, error)
 
 	// The actual builtin function, with one argument
-	Fn1 func(*Environment, sx.Object) (sx.Object, error)
+	Fn1 func(*Environment, sx.Object, *Binding) (sx.Object, error)
 
 	// The actual builtin function, with any number of arguments
-	Fn func(*Environment, sx.Vector) (sx.Object, error)
+	Fn func(*Environment, sx.Vector, *Binding) (sx.Object, error)
 
 	// Do not add a CallError
 	NoCallError bool
@@ -47,6 +47,21 @@ type Builtin struct {
 
 // AssertPure is a TestPure function that alsways returns true.
 func AssertPure(sx.Vector) bool { return true }
+
+// Bind the builtin to a given environment.
+func (b *Builtin) Bind(bi *Binding) error {
+	return bi.Bind(sx.MakeSymbol(b.Name), b)
+}
+
+// BindBuiltins will bind many builtins to an environment.
+func BindBuiltins(bi *Binding, bs ...*Builtin) error {
+	for _, b := range bs {
+		if err := b.Bind(bi); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // --- Builtin methods to implement sx.Object
 
@@ -76,23 +91,23 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 }
 
 // Call the builtin function with the given environment and arguments.
-func (b *Builtin) Call(env *Environment, args sx.Vector) (obj sx.Object, err error) {
-	if err := b.CheckCallArity(len(args), func() []sx.Object { return args }); err != nil {
+func (b *Builtin) Call(env *Environment, args sx.Vector, bind *Binding) (obj sx.Object, err error) {
+	if err = b.checkCallArity(len(args), func() []sx.Object { return args }); err != nil {
 		return sx.Nil(), b.handleCallError(err)
 	}
 	switch len(args) {
 	case 0:
-		obj, err = b.Fn0(env)
+		obj, err = b.Fn0(env, bind)
 	case 1:
-		obj, err = b.Fn1(env, args[0])
+		obj, err = b.Fn1(env, args[0], bind)
 	default:
-		obj, err = b.Fn(env, args)
+		obj, err = b.Fn(env, args, bind)
 	}
 	return obj, b.handleCallError(err)
 }
 
-// CheckCallArity check the builtin function to match allowed number of args.
-func (b *Builtin) CheckCallArity(nargs int, argsFn func() []sx.Object) error {
+// checkCallArity check the builtin function to match allowed number of args.
+func (b *Builtin) checkCallArity(nargs int, argsFn func() []sx.Object) error {
 	if nargs > math.MaxInt16 {
 		return fmt.Errorf("more than %d arguments are not supported, but %d given", math.MaxInt16, nargs)
 	}

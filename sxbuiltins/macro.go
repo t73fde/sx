@@ -89,7 +89,7 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, er
 		Rest:    m.Rest,
 		Expr:    m.Expr,
 	}
-	return m.Env.ApplyMacro(proc.Name, &proc, macroArgs)
+	return m.Env.ApplyMacro(proc.Name, &proc, macroArgs, m.Binding)
 }
 
 // Macroexpand0 implements one level of macro expansion.
@@ -100,13 +100,13 @@ var Macroexpand0 = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		lst, err := GetList(arg, 0)
 		if err == nil && lst != nil {
 			if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
-				if obj, found := env.Resolve(sym); found {
+				if obj, found := bind.Resolve(sym); found {
 					if macro, isMacro := obj.(*Macro); isMacro {
-						return macro.Expand(env.MakeParseEnvironment(), lst.Tail())
+						return macro.Expand(env.MakeParseEnvironment(bind), lst.Tail())
 					}
 				}
 			}

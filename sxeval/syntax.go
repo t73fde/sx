@@ -42,6 +42,21 @@ type Special struct {
 	Fn   func(*ParseEnvironment, *sx.Pair) (Expr, error)
 }
 
+// Bind the special form to a given environment.
+func (sp *Special) Bind(bi *Binding) error {
+	return bi.Bind(sx.MakeSymbol(sp.Name), sp)
+}
+
+// BindSpecials will bind many builtins to an environment.
+func BindSpecials(bi *Binding, sps ...*Special) error {
+	for _, sp := range sps {
+		if err := sp.Bind(bi); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // IsNil returns true if the object must be treated like a sx.Nil() object.
 func (sp *Special) IsNil() bool { return sp == nil }
 

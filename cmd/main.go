@@ -44,13 +44,12 @@ type mainEngine struct {
 	execCount    int
 }
 
-// ----- ExecuteObserver methods
+// ----- ComputeObserver methods
 
-func (me *mainEngine) BeforeExecution(env *sxeval.Environment, expr sxeval.Expr) (sxeval.Expr, error) {
+func (me *mainEngine) BeforeCompute(_ *sxeval.Environment, expr sxeval.Expr, bind *sxeval.Binding) (sxeval.Expr, error) {
 	if me.logExecutor {
 		spaces := strings.Repeat(" ", me.execLevel)
 		me.execLevel++
-		bind := env.Binding()
 		fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
 		_, _ = expr.Print(os.Stdout)
 		fmt.Println()
@@ -58,7 +57,7 @@ func (me *mainEngine) BeforeExecution(env *sxeval.Environment, expr sxeval.Expr)
 	return expr, nil
 }
 
-func (me *mainEngine) AfterExecution(_ *sxeval.Environment, _ sxeval.Expr, obj sx.Object, err error) {
+func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, _ *sxeval.Binding, obj sx.Object, err error) {
 	if me.logExecutor {
 		spaces := strings.Repeat(" ", me.execLevel-1)
 		me.execCount++
@@ -183,13 +182,13 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Length, &sxbuiltins.LengthEqual, // length, length=
 	&sxbuiltins.LengthLess, &sxbuiltins.LengthGreater, // length<, length>
 	&sxbuiltins.Nth,               // nth
-	&sxbuiltins.Sequence2List,     // ->list
+	&sxbuiltins.Sequence2List,     // seq->list
 	&sxbuiltins.CallableP,         // callable?
 	&sxbuiltins.Macroexpand0,      // macroexpand-0
 	&sxbuiltins.DefinedP,          // defined?
 	&sxbuiltins.CurrentBinding,    // current-binding
 	&sxbuiltins.ParentBinding,     // parent-binding
-	&sxbuiltins.Bindings,          // environment-bindings
+	&sxbuiltins.Bindings,          // bindings
 	&sxbuiltins.BoundP,            // bound?
 	&sxbuiltins.BindingLookup,     // binding-lookup
 	&sxbuiltins.BindingResolve,    // binding-resolve
@@ -205,10 +204,10 @@ var builtins = []*sxeval.Builtin{
 		MinArity: 0,
 		MaxArity: 1,
 		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
+		Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
 			panic("common panic")
 		},
-		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 			panic(arg)
 		},
 	},
@@ -217,105 +216,91 @@ var builtins = []*sxeval.Builtin{
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn0: func(env *sxeval.Environment) (sx.Object, error) {
+		Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
 			return sx.Vector(slices.Clone(env.Stack())), nil
 		},
 	},
 }
 
 func (me *mainEngine) bindOwn(root *sxeval.Binding) {
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-reader",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logReader
-			me.logReader = !res
-			return sx.MakeBoolean(res), nil
+	_ = sxeval.BindBuiltins(root,
+		&sxeval.Builtin{
+			Name:     "log-reader",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+				res := me.logReader
+				me.logReader = !res
+				return sx.MakeBoolean(res), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-parse",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logParse
-			me.logParse = !res
-			return sx.MakeBoolean(res), nil
+		&sxeval.Builtin{
+			Name:     "log-parse",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+				res := me.logParse
+				me.logParse = !res
+				return sx.MakeBoolean(res), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-improve",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logImprove
-			me.logImprove = !res
-			return sx.MakeBoolean(res), nil
+		&sxeval.Builtin{
+			Name:     "log-improve",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+				res := me.logImprove
+				me.logImprove = !res
+				return sx.MakeBoolean(res), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-compile",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logCompile
-			me.logCompile = !res
-			return sx.MakeBoolean(res), nil
+		&sxeval.Builtin{
+			Name:     "log-expr",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+				res := me.logExpr
+				me.logExpr = !res
+				return sx.MakeBoolean(res), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-expr",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logExpr
-			me.logExpr = !res
-			return sx.MakeBoolean(res), nil
+		&sxeval.Builtin{
+			Name:     "log-executor",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+				res := me.logExecutor
+				me.logExecutor = !res
+				return sx.MakeBoolean(res), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-executor",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			res := me.logExecutor
-			me.logExecutor = !res
-			return sx.MakeBoolean(res), nil
+		&sxeval.Builtin{
+			Name:     "log-off",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+				me.logReader = false
+				me.logParse = false
+				me.logImprove = false
+				me.logExecutor = false
+				return sx.Nil(), nil
+			},
 		},
-	})
-	_ = root.BindBuiltin(&sxeval.Builtin{
-		Name:     "log-off",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
-		Fn0: func(*sxeval.Environment) (sx.Object, error) {
-			me.logReader = false
-			me.logParse = false
-			me.logImprove = false
-			me.logExecutor = false
-			return sx.Nil(), nil
-		},
-	})
-
+	)
 }
 
 func main() {
 	rd := sxreader.MakeReader(os.Stdin)
 
 	root := sxeval.MakeRootBinding(len(specials) + len(builtins) + 16)
-	for _, synDef := range specials {
-		_ = root.BindSpecial(synDef)
-	}
-	for _, b := range builtins {
-		_ = root.BindBuiltin(b)
-	}
+	_ = sxeval.BindSpecials(root, specials...)
+	_ = sxeval.BindBuiltins(root, builtins...)
 	_ = root.Bind(sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined())
 	_ = root.Bind(sx.MakeSymbol("NIL"), sx.Nil())
 	_ = root.Bind(sx.MakeSymbol("T"), sx.MakeSymbol("T"))
@@ -361,8 +346,8 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 	}()
 
 	for {
-		env := sxeval.MakeExecutionEnvironment(bind)
-		env.SetExecutor(me).SetParseObserver(me).SetImproveObserver(me).SetCompileObserver(me)
+		env := sxeval.MakeEnvironment()
+		env.SetComputeObserver(me).SetParseObserver(me).SetImproveObserver(me)
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {
@@ -375,7 +360,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 		if me.logReader {
 			fmt.Println(";<", obj)
 		}
-		expr, err := env.Parse(obj)
+		expr, err := env.Parse(obj, bind)
 		if err != nil {
 			fmt.Println(";p", err)
 			continue
@@ -396,7 +381,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			continue
 		}
 		me.execCount = 0
-		res, err := env.Run(expr)
+		res, err := env.Run(expr, bind)
 		if me.logExecutor {
 			fmt.Println(";#", me.execCount)
 		}
@@ -478,7 +463,7 @@ var prelude string
 
 func readPrelude(root *sxeval.Binding) error {
 	rd := sxreader.MakeReader(strings.NewReader(prelude))
-	env := sxeval.MakeExecutionEnvironment(root)
+	env := sxeval.MakeEnvironment()
 	for {
 		form, err := rd.Read()
 		if err != nil {
@@ -487,7 +472,7 @@ func readPrelude(root *sxeval.Binding) error {
 			}
 			return err
 		}
-		_, err = env.Eval(form)
+		_, err = env.Eval(form, root)
 		if err != nil {
 			return err
 		}

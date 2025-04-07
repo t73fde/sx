@@ -135,13 +135,13 @@ func (be *BeginExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (be *BeginExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
+func (be *BeginExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
 	for _, e := range be.Front {
-		if _, err := env.Execute(e); err != nil {
+		if _, err := env.Execute(e, bind); err != nil {
 			return nil, err
 		}
 	}
-	return env.ExecuteTCO(be.Last)
+	return env.ExecuteTCO(be.Last, bind)
 }
 
 // Print the expression on the given writer.

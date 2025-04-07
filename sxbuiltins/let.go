@@ -150,32 +150,32 @@ func (le *LetExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 	}
 	syms := le.Symbols
 	sxc.AdjustStack(-len(syms))
-	sxc.Emit(func(env *sxeval.Environment) error {
-		letEnv := env.NewLexicalEnvironment(env.Binding(), "let", len(syms))
+	sxc.Emit(func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		letBind := bind.MakeChildBinding("let", len(syms))
 		for i, arg := range env.Args(len(syms)) {
-			if err := letEnv.Bind(syms[i], arg); err != nil {
+			if err := letBind.Bind(syms[i], arg); err != nil {
 				return err
 			}
 		}
 		env.Kill(len(syms))
-		return sxeval.SwitchEnvironment(letEnv)
+		return sxeval.SwitchBinding(env, letBind)
 	}, "LET", fmt.Sprintf("%v", syms))
 	return sxc.Compile(le.Body, tailPos)
 }
 
 // Compute the expression in a frame and return the result.
-func (le *LetExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	letEnv := env.NewLexicalEnvironment(env.Binding(), "let", len(le.Symbols))
+func (le *LetExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+	letBind := bind.MakeChildBinding("let", len(le.Symbols))
 	for i, sym := range le.Symbols {
-		obj, err := env.Execute(le.Vals[i])
+		obj, err := env.Execute(le.Vals[i], bind)
 		if err != nil {
 			return nil, err
 		}
-		if err = letEnv.Bind(sym, obj); err != nil {
+		if err = letBind.Bind(sym, obj); err != nil {
 			return nil, err
 		}
 	}
-	return letEnv.ExecuteTCO(le.Body)
+	return env.ExecuteTCO(le.Body, letBind)
 }
 
 // Print the expression on the given writer.

@@ -36,20 +36,20 @@ type ParseObserver interface {
 }
 
 // Parse the form into an expression.
-func (pf *ParseEnvironment) Parse(form sx.Object) (expr Expr, err error) {
-	if observer := pf.observer; observer != nil {
+func (pe *ParseEnvironment) Parse(form sx.Object) (expr Expr, err error) {
+	if observer := pe.observer; observer != nil {
 		var obj sx.Object
-		obj, err = observer.BeforeParse(pf, form)
+		obj, err = observer.BeforeParse(pe, form)
 		if err == nil {
-			expr, err = pf.parseForm(obj)
+			expr, err = pe.parseForm(obj)
 		}
-		observer.AfterParse(pf, obj, expr, err)
+		observer.AfterParse(pe, obj, expr, err)
 		return expr, err
 	}
-	return pf.parseForm(form)
+	return pe.parseForm(form)
 }
 
-func (pf *ParseEnvironment) parseForm(form sx.Object) (Expr, error) {
+func (pe *ParseEnvironment) parseForm(form sx.Object) (Expr, error) {
 restart:
 	if sx.IsNil(form) {
 		return NilExpr, nil
@@ -58,12 +58,12 @@ restart:
 	case *sx.Symbol:
 		return UnboundSymbolExpr{sym: f}, nil
 	case *sx.Pair:
-		expr, err := pf.parsePair(f)
+		expr, err := pe.parsePair(f)
 		if err == nil {
 			return expr, nil
 		}
 		if again, isAgain := err.(errParseAgain); isAgain {
-			pf, form = again.pf, again.form
+			pe, form = again.pe, again.form
 			goto restart
 		}
 		return nil, err
@@ -73,18 +73,18 @@ restart:
 	return ObjExpr{Obj: form}, nil
 }
 
-func (pf *ParseEnvironment) parsePair(pair *sx.Pair) (Expr, error) {
+func (pe *ParseEnvironment) parsePair(pair *sx.Pair) (Expr, error) {
 	var proc Expr
 	first := pair.Car()
 	if sym, isSymbol := sx.GetSymbol(first); isSymbol {
-		if val, found := pf.Resolve(sym); found {
+		if val, found := pe.Resolve(sym); found {
 			if sp, isSyntax := GetSyntax(val); isSyntax {
-				return sp.Parse(pf, pair.Tail())
+				return sp.Parse(pe, pair.Tail())
 			}
 		}
 		proc = UnboundSymbolExpr{sym: sym}
 	} else {
-		p, err := pf.Parse(first)
+		p, err := pe.Parse(first)
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +101,7 @@ func (pf *ParseEnvironment) parsePair(pair *sx.Pair) (Expr, error) {
 		if !isPair {
 			return nil, sx.ErrImproper{Pair: pair}
 		}
-		expr, err2 := pf.Parse(elem.Car())
+		expr, err2 := pe.Parse(elem.Car())
 		if err2 != nil {
 			return nil, err2
 		}
@@ -117,36 +117,36 @@ func (pf *ParseEnvironment) parsePair(pair *sx.Pair) (Expr, error) {
 }
 
 // ParseAgain signals the parser that the form must be parsed again, e.g. for macro expansion.
-func (pf *ParseEnvironment) ParseAgain(form sx.Object) error {
-	return errParseAgain{pf: pf, form: form}
+func (pe *ParseEnvironment) ParseAgain(form sx.Object) error {
+	return errParseAgain{pe: pe, form: form}
 }
 
 // errParseAgain is a non-error error signalling that the given form should be
 // parsed again in the given environment.
 type errParseAgain struct {
-	pf   *ParseEnvironment
+	pe   *ParseEnvironment
 	form sx.Object
 }
 
 func (e errParseAgain) Error() string { return fmt.Sprintf("Again: %T/%v", e.form, e.form) }
 
 // MakeChildEnvironment creates a child enviroment.
-func (pf *ParseEnvironment) MakeChildEnvironment(name string, baseSize int) *ParseEnvironment {
+func (pe *ParseEnvironment) MakeChildEnvironment(name string, baseSize int) *ParseEnvironment {
 	return &ParseEnvironment{
-		binding:  pf.binding.MakeChildBinding(name, baseSize),
-		observer: pf.observer,
+		binding:  pe.binding.MakeChildBinding(name, baseSize),
+		observer: pe.observer,
 	}
 }
 
 // Bind the symbol to the object in this environment.
-func (pf *ParseEnvironment) Bind(sym *sx.Symbol, obj sx.Object) error {
-	return pf.binding.Bind(sym, obj)
+func (pe *ParseEnvironment) Bind(sym *sx.Symbol, obj sx.Object) error {
+	return pe.binding.Bind(sym, obj)
 }
 
 // Resolve the symbol w.r.t. this environment and return the bound object or false.
-func (pf *ParseEnvironment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
-	return pf.binding.Resolve(sym)
+func (pe *ParseEnvironment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
+	return pe.binding.Resolve(sym)
 }
 
 // Binding returns the binding of this parse environment.
-func (pf *ParseEnvironment) Binding() *Binding { return pf.binding }
+func (pe *ParseEnvironment) Binding() *Binding { return pe.binding }

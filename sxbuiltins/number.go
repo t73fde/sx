@@ -26,7 +26,7 @@ var NumberP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		_, ok := sx.GetNumber(arg)
 		return sx.MakeBoolean(ok), nil
 	},
@@ -38,14 +38,14 @@ var Add = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+	Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
 		return sx.Int64(0), nil
 	},
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		num, err := GetNumber(arg, 0)
 		return num, err
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(0))
 		for i := range len(args) {
 			num, err := GetNumber(args[i], i)
@@ -64,11 +64,11 @@ var Sub = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		num, err := GetNumber(arg, 0)
 		return sx.NumNeg(num), err
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		acc, err := GetNumber(args[0], 0)
 		if err != nil {
 			return nil, err
@@ -90,14 +90,14 @@ var Mul = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+	Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
 		return sx.Int64(1), nil
 	},
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		num, err := GetNumber(arg, 0)
 		return num, err
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		acc := sx.Number(sx.Int64(1))
 		for i := range len(args) {
 			num, err := GetNumber(args[i], i)
@@ -116,7 +116,7 @@ var Div = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		num0, err := GetNumber(args[0], 0)
 		if err != nil {
 			return nil, err
@@ -135,7 +135,7 @@ var Mod = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		num0, err := GetNumber(args[0], 0)
 		if err != nil {
 			return nil, err

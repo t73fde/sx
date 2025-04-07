@@ -27,15 +27,15 @@ func BenchmarkEvenTCO(b *testing.B) {
 	evenSym := sx.MakeSymbol("even?")
 	for _, tc := range testcases {
 		b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
-			env := sxeval.MakeExecutionEnvironment(root)
+			env := sxeval.MakeEnvironment()
 			obj := sx.MakeList(evenSym, sx.Int64(tc))
-			expr, err := parseAndMore(env, obj)
+			expr, err := parseAndMore(env, obj, root)
 			if err != nil {
 				b.Error(err)
 			}
 			b.ResetTimer()
 			for b.Loop() {
-				_, _ = env.Run(expr)
+				_, _ = env.Run(expr, root)
 			}
 		})
 	}
@@ -59,28 +59,28 @@ func BenchmarkTak(b *testing.B) {
 
 func runBenchmark(b *testing.B, sexpr sx.Object) {
 	root := createBindingForTCO()
-	env := sxeval.MakeExecutionEnvironment(root)
-	expr, err := parseAndMore(env, sexpr)
+	env := sxeval.MakeEnvironment()
+	expr, err := parseAndMore(env, sexpr, root)
 	if err != nil {
 		b.Error(err)
 	}
 
-	if _, err = env.Run(expr); err != nil {
+	if _, err = env.Run(expr, root); err != nil {
 		b.Error(err)
 	}
 	if stack := env.Stack(); len(stack) > 0 {
 		b.Error("stack not empty, but:", stack)
 	}
 	for b.Loop() {
-		_, _ = env.Run(expr)
+		_, _ = env.Run(expr, root)
 	}
 	if stack := env.Stack(); len(stack) > 0 {
 		b.Error("stack not empty, found", len(stack), "elements")
 	}
 }
 
-func parseAndMore(env *sxeval.Environment, obj sx.Object) (sxeval.Expr, error) {
-	expr, err := env.Parse(obj)
+func parseAndMore(env *sxeval.Environment, obj sx.Object, bind *sxeval.Binding) (sxeval.Expr, error) {
+	expr, err := env.Parse(obj, bind)
 	if err != nil {
 		return nil, err
 	}
@@ -92,42 +92,42 @@ func parseAndMore(env *sxeval.Environment, obj sx.Object) (sxeval.Expr, error) {
 }
 
 func BenchmarkAddExec(b *testing.B) {
-	env, expr := prepareAddBenchmark()
+	env, expr, root := prepareAddBenchmark()
 
-	err := checkAddBenchmark(env, expr)
+	err := checkAddBenchmark(env, expr, root)
 	if err != nil {
 		b.Error(err)
 		return
 	}
 
 	for b.Loop() {
-		_, _ = env.Run(expr)
+		_, _ = env.Run(expr, root)
 	}
 }
 
 func BenchmarkAddCompiled(b *testing.B) {
-	env, expr := prepareAddBenchmark()
+	env, expr, root := prepareAddBenchmark()
 	cexpr, err := env.Compile(expr)
 	if err != nil {
 		b.Error(err)
 		return
 	}
 
-	err = checkAddBenchmark(env, cexpr)
+	err = checkAddBenchmark(env, cexpr, root)
 	if err != nil {
 		b.Error(err)
 		return
 	}
 
 	for b.Loop() {
-		_, _ = env.Run(cexpr)
+		_, _ = env.Run(cexpr, root)
 	}
 	if stack := env.Stack(); len(stack) > 0 {
 		b.Error("stack not empty", len(stack))
 	}
 }
 
-func prepareAddBenchmark() (*sxeval.Environment, sxeval.Expr) {
+func prepareAddBenchmark() (*sxeval.Environment, sxeval.Expr, *sxeval.Binding) {
 	root := createBindingForTCO()
 	obj := sx.MakeList(
 		sx.MakeSymbol("let"),
@@ -148,16 +148,16 @@ func prepareAddBenchmark() (*sxeval.Environment, sxeval.Expr) {
 			)),
 	)
 
-	env := sxeval.MakeExecutionEnvironment(root)
-	expr, err := env.Parse(obj)
+	env := sxeval.MakeEnvironment()
+	expr, err := env.Parse(obj, root)
 	if err != nil {
 		panic(err)
 	}
-	return env, expr
+	return env, expr, root
 }
 
-func checkAddBenchmark(env *sxeval.Environment, expr sxeval.Expr) error {
-	got, err := env.Run(expr)
+func checkAddBenchmark(env *sxeval.Environment, expr sxeval.Expr, bind *sxeval.Binding) error {
+	got, err := env.Run(expr, bind)
 	if err != nil {
 		return err
 	}

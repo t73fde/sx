@@ -91,10 +91,10 @@ var tcsSequence = tTestCases{
 	{name: "nth-vector-1", src: "(nth (vector 1) 0)", exp: "1"},
 	{name: "nth-vector-4", src: "(nth (vector 1 2 3 4 5 6) 4)", exp: "5"},
 
-	{name: "err-tolist-0", src: "(->list)", exp: "{[{->list: exactly 1 arguments required, but none given}]}", withErr: true},
-	{name: "err-tolist-1", src: "(->list 1)", exp: "{[{->list: argument 1 is not a sequence, but sx.Int64/1}]}", withErr: true},
-	{name: "->list-nil", src: "(->list ())", exp: "()"},
-	{name: "->list-some", src: "(->list (list 1 2 3 4))", exp: "(1 2 3 4)"},
-	{name: "->list-nil-vector", src: "(->list (vector))", exp: "()"},
-	{name: "->list-some-vector", src: "(->list (vector 1 2 3))", exp: "(1 2 3)"},
+	{name: "err-seq->list-0", src: "(seq->list)", exp: "{[{seq->list: exactly 1 arguments required, but none given}]}", withErr: true},
+	{name: "err-seq->list-1", src: "(seq->list 1)", exp: "{[{seq->list: argument 1 is not a sequence, but sx.Int64/1}]}", withErr: true},
+	{name: "seq->list-nil", src: "(seq->list ())", exp: "()"},
+	{name: "seq->list-some", src: "(seq->list (list 1 2 3 4))", exp: "(1 2 3 4)"},
+	{name: "seq->list-nil-vector", src: "(seq->list (vector))", exp: "()"},
+	{name: "seq->list-some-vector", src: "(seq->list (vector 1 2 3))", exp: "(1 2 3)"},
 }

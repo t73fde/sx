@@ -33,13 +33,13 @@ func createTestBinding() *sxeval.Binding {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+		Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
 			return sx.String{}, nil
 		},
-		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 			return sx.MakeString(arg.GoString()), nil
 		},
-		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 			var sb strings.Builder
 			for _, val := range args {
 				_, err := sb.WriteString(val.GoString())
@@ -74,8 +74,8 @@ func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 				return
 			}
 			bind := root.MakeChildBinding(tc.name, 0)
-			env := sxeval.MakeExecutionEnvironment(bind)
-			res, err := env.Eval(obj)
+			env := sxeval.MakeEnvironment()
+			res, err := env.Eval(obj, bind)
 			if err != nil {
 				t.Error(err) // TODO: temp
 				return
@@ -101,7 +101,7 @@ func TestEval(t *testing.T) {
 		// {name: "err-callable", src: "(hello)", mustErr: true},
 	}
 	root := createTestBinding()
-	_ = root.BindSpecial(&sxeval.Special{
+	_ = sxeval.BindSpecials(root, &sxeval.Special{
 		Name: "quote",
 		Fn: func(_ *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 			return sxeval.ObjExpr{Obj: args.Car()}, nil
@@ -144,24 +144,24 @@ var sxPrelude = `;; Some helpers
 
 func createBindingForTCO() *sxeval.Binding {
 	root := sxeval.MakeRootBinding(32)
-	_ = root.BindSpecial(&sxbuiltins.QuoteS)
-	_ = root.BindSpecial(&sxbuiltins.DefVarS)
-	_ = root.BindSpecial(&sxbuiltins.DefMacroS)
-	_ = root.BindSpecial(&sxbuiltins.DefunS)
-	_ = root.BindSpecial(&sxbuiltins.IfS)
-	_ = root.BindSpecial(&sxbuiltins.LetS)
-	_ = root.BindBuiltin(&sxbuiltins.Equal)
-	_ = root.BindBuiltin(&sxbuiltins.NumLess)
-	_ = root.BindBuiltin(&sxbuiltins.NumLessEqual)
-	_ = root.BindBuiltin(&sxbuiltins.Add)
-	_ = root.BindBuiltin(&sxbuiltins.Sub)
-	_ = root.BindBuiltin(&sxbuiltins.Mul)
-	_ = root.BindBuiltin(&sxbuiltins.Map)
-	_ = root.BindBuiltin(&sxbuiltins.List)
+	_ = sxbuiltins.QuoteS.Bind(root)
+	_ = sxbuiltins.DefVarS.Bind(root)
+	_ = sxbuiltins.DefMacroS.Bind(root)
+	_ = sxbuiltins.DefunS.Bind(root)
+	_ = sxbuiltins.IfS.Bind(root)
+	_ = sxbuiltins.LetS.Bind(root)
+	_ = sxbuiltins.Equal.Bind(root)
+	_ = sxbuiltins.NumLess.Bind(root)
+	_ = sxbuiltins.NumLessEqual.Bind(root)
+	_ = sxbuiltins.Add.Bind(root)
+	_ = sxbuiltins.Sub.Bind(root)
+	_ = sxbuiltins.Mul.Bind(root)
+	_ = sxbuiltins.Map.Bind(root)
+	_ = sxbuiltins.List.Bind(root)
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxPrelude))
 	bind := root.MakeChildBinding("TCO", 128)
-	env := sxeval.MakeExecutionEnvironment(bind)
+	env := sxeval.MakeEnvironment()
 	for {
 		obj, err := rd.Read()
 		if err != nil {
@@ -170,11 +170,11 @@ func createBindingForTCO() *sxeval.Binding {
 			}
 			panic(err)
 		}
-		expr, err := parseAndMore(env, obj)
+		expr, err := parseAndMore(env, obj, bind)
 		if err != nil {
 			panic(err)
 		}
-		if _, err = env.Run(expr); err != nil {
+		if _, err = env.Run(expr, bind); err != nil {
 			panic(err)
 		}
 	}

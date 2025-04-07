@@ -28,16 +28,14 @@ import (
 // QuasiquoteS parses a form that is quasi-quotated
 var QuasiquoteS = sxeval.Special{
 	Name: sx.SymbolQuasiquote.String(),
-	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs
 		}
 		if !sx.IsNil(args.Cdr()) {
 			return nil, fmt.Errorf("more than one argument: %v", args)
 		}
-		qqp := qqParser{
-			pframe: pf,
-		}
+		qqp := qqParser{pe: pe}
 		return qqp.parseQQ(args.Car())
 	},
 }
@@ -62,11 +60,9 @@ var UnquoteSplicingS = sxeval.Special{
 
 var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.SymbolQuasiquote.GetValue())
 
-type qqParser struct {
-	pframe *sxeval.ParseEnvironment
-}
+type qqParser struct{ pe *sxeval.ParseEnvironment }
 
-func (qqp *qqParser) parse(obj sx.Object) (sxeval.Expr, error) { return qqp.pframe.Parse(obj) }
+func (qqp *qqParser) parse(obj sx.Object) (sxeval.Expr, error) { return qqp.pe.Parse(obj) }
 
 func (qqp *qqParser) parseQQ(obj sx.Object) (sxeval.Expr, error) {
 	pair, isPair := sx.GetPair(obj)
@@ -387,7 +383,7 @@ func (mle MakeListExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 	if err := sxc.Compile(mle.Elem, false); err != nil {
 		return err
 	}
-	sxc.Emit(func(env *sxeval.Environment) error {
+	sxc.Emit(func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		env.Set(sx.Cons(env.Top(), sx.Nil()))
 		return nil
 	}, "MAKELIST")
@@ -395,8 +391,8 @@ func (mle MakeListExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (mle MakeListExpr) Compute(env *sxeval.Environment) (sx.Object, error) {
-	elem, err := env.Execute(mle.Elem)
+func (mle MakeListExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+	elem, err := env.Execute(mle.Elem, bind)
 	if err != nil {
 		return nil, err
 	}

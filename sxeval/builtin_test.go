@@ -27,11 +27,11 @@ func TestBuiltinSimple(t *testing.T) {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn0:      func(*sxeval.Environment) (sx.Object, error) { return nil, nil },
-		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+		Fn0:      func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) { return nil, nil },
+		Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 			return sx.MakeList(), nil
 		},
-		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+		Fn: func(_ *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
 			return sx.MakeList(args[1:]...), nil
 		},
 	}
@@ -56,7 +56,7 @@ func TestBuiltinSimple(t *testing.T) {
 
 	args := sx.Vector{}
 	for i := range 10 {
-		res, err := b.Call(nil, args)
+		res, err := b.Call(nil, args, nil)
 		if err != nil {
 			t.Error(err)
 			break

@@ -39,7 +39,7 @@ type Compiler struct {
 }
 
 // Instruction is a compiled command to execute one aspect of an expression.
-type Instruction func(*Environment) error
+type Instruction func(*Environment, *Binding) error
 
 // CompileObserver monitors the inner workings of the compilation.
 type CompileObserver interface {
@@ -123,12 +123,12 @@ func (sxc *Compiler) Emit(instr Instruction, s string, vals ...string) {
 func (sxc *Compiler) EmitPush(val sx.Object) {
 	sxc.AdjustStack(1)
 	if sx.IsNil(val) {
-		sxc.Emit(func(env *Environment) error {
+		sxc.Emit(func(env *Environment, _ *Binding) error {
 			env.Push(sx.Nil())
 			return nil
 		}, "PUSH-NIL")
 	} else {
-		sxc.Emit(func(env *Environment) error {
+		sxc.Emit(func(env *Environment, _ *Binding) error {
 			env.Push(val)
 			return nil
 		}, "PUSH", val.String())
@@ -139,12 +139,12 @@ func (sxc *Compiler) EmitPush(val sx.Object) {
 func (sxc *Compiler) EmitKill(num int) {
 	if num > 0 {
 		sxc.AdjustStack(-num)
-		sxc.Emit(func(env *Environment) error { env.Kill(num); return nil }, "KILL", strconv.Itoa(num))
+		sxc.Emit(func(env *Environment, _ *Binding) error { env.Kill(num); return nil }, "KILL", strconv.Itoa(num))
 	}
 }
 
 // NopInstruction is an empty intruction. It does nothing.
-func NopInstruction(*Environment) error { return nil }
+func NopInstruction(*Environment, *Binding) error { return nil }
 
 // EmitJumpNIL emits some preliminary code to jump if TOS is nil.
 // It returns a patch function to update the jump target.
@@ -157,7 +157,7 @@ func (sxc *Compiler) EmitJumpNIL() func() {
 		if ob := sxc.observer; ob != nil {
 			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-NIL", strconv.Itoa(pos))
 		}
-		sxc.program[pc] = func(env *Environment) error {
+		sxc.program[pc] = func(env *Environment, _ *Binding) error {
 			val := env.Pop()
 			if sx.IsNil(val) {
 				return jumpToError{pos: pos}
@@ -177,7 +177,7 @@ func (sxc *Compiler) EmitJump() func() {
 		if ob := sxc.observer; ob != nil {
 			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP", strconv.Itoa(pos))
 		}
-		sxc.program[pc] = func(*Environment) error { return jumpToError{pos: pos} }
+		sxc.program[pc] = func(*Environment, *Binding) error { return jumpToError{pos: pos} }
 	}
 }
 
@@ -186,8 +186,8 @@ func (sxc *Compiler) EmitBCall(b *Builtin, numargs int) {
 	sxc.AdjustStack(-numargs + 1)
 	instr, found := sxc.bcallInstrCache[b]
 	if !found {
-		instr = func(env *Environment) error {
-			obj, err := b.Fn(env, env.Args(numargs))
+		instr = func(env *Environment, bind *Binding) error {
+			obj, err := b.Fn(env, env.Args(numargs), bind)
 			env.Kill(numargs - 1)
 			env.Set(obj)
 			return b.handleCallError(err)
@@ -202,8 +202,8 @@ func (sxc *Compiler) EmitBCall0(b *Builtin) {
 	sxc.AdjustStack(1)
 	instr, found := sxc.bcall0InstrCache[b]
 	if !found {
-		instr = func(env *Environment) error {
-			obj, err := b.Fn0(env)
+		instr = func(env *Environment, bind *Binding) error {
+			obj, err := b.Fn0(env, bind)
 			env.Push(obj)
 			return b.handleCallError(err)
 		}
@@ -216,8 +216,8 @@ func (sxc *Compiler) EmitBCall0(b *Builtin) {
 func (sxc *Compiler) EmitBCall1(b *Builtin) {
 	instr, found := sxc.bcall1InstrCache[b]
 	if !found {
-		instr = func(env *Environment) error {
-			obj, err := b.Fn1(env, env.Top())
+		instr = func(env *Environment, bind *Binding) error {
+			obj, err := b.Fn1(env, env.Top(), bind)
 			env.Set(obj)
 			return b.handleCallError(err)
 		}
@@ -257,32 +257,32 @@ func (cpe *ProgramExpr) Compile(*Compiler, bool) error { return nil }
 // Compute the expression in an environment and return the result.
 // It may have side-effects, on the given environment, or on the
 // general environment of the system.
-func (cpe *ProgramExpr) Compute(env *Environment) (sx.Object, error) {
-	currEnv, err := cpe.Interpret(env)
+func (cpe *ProgramExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+	err := cpe.Interpret(env, bind)
 	if err != nil {
-		currEnv.Reset()
+		env.Reset()
 		return sx.Nil(), err
 	}
-	return currEnv.Pop(), nil
+	return env.Pop(), nil
 }
 
 // Interpret the program in an environment.
-func (cpe *ProgramExpr) Interpret(env *Environment) (*Environment, error) {
-	currEnv := env
+func (cpe *ProgramExpr) Interpret(env *Environment, bind *Binding) error {
+	currBind := bind
 	program := cpe.program
 
 	for ip := 0; ip < len(program); ip++ {
-		if err := program[ip](currEnv); err != nil {
-			if err == errSwitchEnv {
-				currEnv = currEnv.tco.env
+		if err := program[ip](env, currBind); err != nil {
+			if err == errSwitchBinding {
+				currBind = env.tco.binding
 			} else if jerr, ok := err.(jumpToError); ok {
 				ip = jerr.pos - 1
 			} else {
-				return currEnv, err
+				return err
 			}
 		}
 	}
-	return currEnv, nil
+	return nil
 }
 
 // Print the expression on the given writer.
@@ -305,10 +305,10 @@ type jumpToError struct{ pos int }
 
 func (jerr jumpToError) Error() string { return fmt.Sprintf("jump: %d", jerr.pos) }
 
-var errSwitchEnv = errors.New("switch-env")
+var errSwitchBinding = errors.New("switch-binding")
 
-// SwitchEnvironment make the interpreter to switch to a new environment.
-func SwitchEnvironment(env *Environment) error {
-	env.tco.env = env
-	return errSwitchEnv
+// SwitchBinding make the interpreter to switch to a new binding.
+func SwitchBinding(env *Environment, bind *Binding) error {
+	env.tco.binding = bind
+	return errSwitchBinding
 }

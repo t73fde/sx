@@ -28,14 +28,14 @@ var Error = sxeval.Builtin{
 	Name:     "error",
 	MinArity: 0,
 	MaxArity: -1,
-	TestPure: nil,
-	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+	TestPure: nil, // is not pure, because error must occur at runtime.
+	Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
 		return nil, fmt.Errorf("unspecified user error")
 	},
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		return nil, fmt.Errorf("%s", arg.GoString())
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		var sb strings.Builder
 		for i, arg := range args {
 			if i > 0 {
@@ -54,14 +54,14 @@ var NotBoundError = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(arg, 0)
 		if err != nil {
 			return nil, err
 		}
-		return nil, sxeval.NotBoundError{Binding: env.Binding(), Sym: sym}
+		return nil, bind.MakeNotBoundError(sym)
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		sym, err := GetSymbol(args[0], 0)
 		if err != nil {
 			return nil, err
@@ -70,7 +70,7 @@ var NotBoundError = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		return nil, sxeval.NotBoundError{Binding: bind, Sym: sym}
+		return nil, bind.MakeNotBoundError(sym)
 	},
 	NoCallError: true,
 }
