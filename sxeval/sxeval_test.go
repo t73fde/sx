@@ -14,6 +14,7 @@
 package sxeval_test
 
 import (
+	_ "embed"
 	"io"
 	"strings"
 	"testing"
@@ -110,33 +111,8 @@ func TestEval(t *testing.T) {
 	testcases.Run(t, root)
 }
 
-var sxPrelude = `;; Some helpers
-(defvar NIL ())
-(defvar T 'T)
-(defmacro not (x) (list 'if x NIL T))
-
-;; Indirekt recursive definition of even/odd
-(defvar odd? ()) ; define symbol odd? to make lookup in even? faster, because it is known.
-(defun even? (n) (if (= n 0) 1 (odd? (- n 1))))
-(defun odd? (n) (if (= n 0) () (even? (- n 1))))
-
-;; Naive implementation of fac
-(defun fac (n) (if (= n 0) 1 (* n (fac (- n 1)))))
-
-;; Accumulator based implementation of fac
-(defun faa (n acc) (if (= n 0) acc (faa (- n 1) (* acc n))))
-
-;; Naive fibonacci
-(defun fib (n) (if (<= n 1) 1 (+ (fib (- n 1)) (fib (- n 2)))))
-
-;; Takeuchi benchmark
-(defun tak (x y z)
-  (if (not (< y x))
-      z
-      (tak (tak (- x 1) y z)
-           (tak (- y 1) z x)
-           (tak (- z 1) x y))))
-`
+//go:embed tests.sxn
+var sxevalTests string
 
 func createBindingForTCO() *sxeval.Binding {
 	root := sxeval.MakeRootBinding(32)
@@ -154,7 +130,7 @@ func createBindingForTCO() *sxeval.Binding {
 		panic(err)
 	}
 	root.Freeze()
-	rd := sxreader.MakeReader(strings.NewReader(sxPrelude))
+	rd := sxreader.MakeReader(strings.NewReader(sxevalTests))
 	bind := root.MakeChildBinding("TCO", 128)
 	env := sxeval.MakeEnvironment()
 	for {
