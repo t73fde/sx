@@ -74,7 +74,7 @@ func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 				return
 			}
 			bind := root.MakeChildBinding(tc.name, 0)
-			env := sxeval.MakeComputeEnvironment()
+			env := sxeval.MakeEnvironment()
 			res, err := env.Eval(obj, bind)
 			if err != nil {
 				t.Error(err) // TODO: temp
@@ -156,7 +156,7 @@ func createBindingForTCO() *sxeval.Binding {
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxPrelude))
 	bind := root.MakeChildBinding("TCO", 128)
-	env := sxeval.MakeComputeEnvironment()
+	env := sxeval.MakeEnvironment()
 	for {
 		obj, err := rd.Read()
 		if err != nil {

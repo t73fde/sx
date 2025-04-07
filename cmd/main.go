@@ -326,7 +326,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 	}()
 
 	for {
-		env := sxeval.MakeComputeEnvironment()
+		env := sxeval.MakeEnvironment()
 		env.SetComputeObserver(me).SetParseObserver(me).SetImproveObserver(me)
 		fmt.Print("> ")
 		obj, err := rd.Read()
@@ -437,7 +437,7 @@ var prelude string
 
 func readPrelude(root *sxeval.Binding) error {
 	rd := sxreader.MakeReader(strings.NewReader(prelude))
-	env := sxeval.MakeComputeEnvironment()
+	env := sxeval.MakeEnvironment()
 	for {
 		form, err := rd.Read()
 		if err != nil {

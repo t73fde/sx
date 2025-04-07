@@ -24,19 +24,19 @@ import (
 
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
-	tco      *tcodata
-	observer *observer
-	stackp   *[]sx.Object
+	stack    []sx.Object
+	tco      tcodata
+	observer observer
 }
 
 // tcodata contains everything to implement Tail Call Optimization (tco)
 type tcodata struct {
-	expr Expr
-	bind *Binding
+	expr    Expr
+	binding *Binding
 }
 
 type observer struct {
-	execute ComputeObserver
+	compute ComputeObserver
 	parse   ParseObserver
 	improve ImproveObserver
 }
@@ -52,38 +52,30 @@ type ComputeObserver interface {
 	AfterCompute(*Environment, Expr, *Binding, sx.Object, error)
 }
 
-// MakeComputeEnvironment creates an environment for later computation of expressions.
-func MakeComputeEnvironment() *Environment {
-	stack := make([]sx.Object, 0, 1024)
+// MakeEnvironment creates an environment for later parsing, improving, and
+// computation of expressions.
+func MakeEnvironment() *Environment {
 	return &Environment{
-		tco:      &tcodata{},
-		observer: &observer{},
-		stackp:   &stack,
+		stack: make([]sx.Object, 0, 1024),
 	}
 }
 
 // SetComputeObserver sets the given compute observer.
 func (env *Environment) SetComputeObserver(observe ComputeObserver) *Environment {
-	env.newObserver().execute = observe
+	env.observer.compute = observe
 	return env
 }
 
 // SetParseObserver sets the given parsing observer.
 func (env *Environment) SetParseObserver(observe ParseObserver) *Environment {
-	env.newObserver().parse = observe
+	env.observer.parse = observe
 	return env
 }
 
 // SetImproveObserver sets the given improve observer.
 func (env *Environment) SetImproveObserver(observe ImproveObserver) *Environment {
-	env.newObserver().improve = observe
+	env.observer.improve = observe
 	return env
-}
-
-func (env *Environment) newObserver() *observer {
-	ob := *env.observer
-	env.observer = &ob
-	return env.observer
 }
 
 // Eval parses the given object and runs it in the environment.
@@ -111,11 +103,6 @@ func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
 	return imp.Improve(expr)
 }
 
-// Run the given expression.
-func (env *Environment) Run(expr Expr, bind *Binding) (sx.Object, error) {
-	return env.Execute(expr, bind)
-}
-
 // MakeParseEnvironment builds a parsing environment to parse a form.
 func (env *Environment) MakeParseEnvironment(bind *Binding) *ParseEnvironment {
 	return &ParseEnvironment{
@@ -124,9 +111,14 @@ func (env *Environment) MakeParseEnvironment(bind *Binding) *ParseEnvironment {
 	}
 }
 
+// Run the given expression.
+func (env *Environment) Run(expr Expr, bind *Binding) (sx.Object, error) {
+	return env.Execute(expr, bind)
+}
+
 // Execute the given expression.
 func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err error) {
-	if exec := env.observer.execute; exec != nil {
+	if exec := env.observer.compute; exec != nil {
 		for {
 			expr, err = exec.BeforeCompute(env, expr, bind)
 			if err == nil {
@@ -139,7 +131,7 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 			exec.AfterCompute(env, expr, bind, res, err)
 			if err == errExecuteAgain {
 				expr = env.tco.expr
-				bind = env.tco.bind
+				bind = env.tco.binding
 				continue
 			}
 			return res, env.addExecuteError(expr, err)
@@ -153,7 +145,7 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 		}
 		if err == errExecuteAgain {
 			expr = env.tco.expr
-			bind = env.tco.bind
+			bind = env.tco.binding
 			continue
 		}
 		return res, env.addExecuteError(expr, err)
@@ -168,7 +160,7 @@ func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) (sx.Object, error) 
 
 	// Just return relevant data for real TCO
 	env.tco.expr = expr
-	env.tco.bind = bind
+	env.tco.binding = bind
 	return nil, errExecuteAgain
 }
 
@@ -185,7 +177,7 @@ func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Ob
 		return res, nil
 	}
 	if err == errExecuteAgain {
-		return env.Execute(env.tco.expr, env.tco.bind)
+		return env.Execute(env.tco.expr, env.tco.binding)
 	}
 	return nil, env.addExecuteError(&applyExpr{Proc: fn, Args: args}, err)
 }
@@ -261,22 +253,16 @@ func (ee ExecuteError) PrintStack(w io.Writer, prefix string, logger *slog.Logge
 // ----- Stack operations
 
 // Stack returns the stack.
-func (env *Environment) Stack() []sx.Object { return *env.stackp }
+func (env *Environment) Stack() []sx.Object { return env.stack }
 
 // Push a value to the stack
-func (env *Environment) Push(val sx.Object) {
-	*env.stackp = append(*env.stackp, val)
-}
+func (env *Environment) Push(val sx.Object) { env.stack = append(env.stack, val) }
 
 // Kill some elements on the stack
-func (env *Environment) Kill(num int) {
-	stack := *env.stackp
-	*env.stackp = stack[:len(stack)-num]
-}
+func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-num] }
 
 // Args returns a given number of values on top of the stack as a slice.
 func (env *Environment) Args(numargs int) []sx.Object {
-	stack := *env.stackp
-	sp := len(stack)
-	return stack[sp-numargs : sp]
+	sp := len(env.stack)
+	return env.stack[sp-numargs : sp]
 }
