@@ -257,6 +257,17 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			},
 		},
 		&sxeval.Builtin{
+			Name:     "log-compile",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+				res := me.logCompile
+				me.logCompile = !res
+				return sx.MakeBoolean(res), nil
+			},
+		},
+		&sxeval.Builtin{
 			Name:     "log-expr",
 			MinArity: 0,
 			MaxArity: 0,
@@ -346,7 +357,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 
 	for {
 		env := sxeval.MakeEnvironment()
-		env.SetComputeObserver(me).SetParseObserver(me).SetImproveObserver(me)
+		env.SetComputeObserver(me).SetParseObserver(me).SetImproveObserver(me).SetCompileObserver(me)
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {
