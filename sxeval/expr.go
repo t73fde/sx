@@ -331,7 +331,62 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 }
 
 // Compile the expression.
-func (ce *CallExpr) Compile(*Compiler, bool) error { return MissingCompileError{Expr: ce} }
+func (ce *CallExpr) Compile(sxc *Compiler, tailPos bool) error {
+	if err := compileArgs(sxc, ce.Args); err != nil {
+		return err
+	}
+	if err := sxc.Compile(ce.Proc, false); err != nil {
+		return err
+	}
+	numargs := len(ce.Args)
+	sxc.AdjustStack(-numargs)
+	if !tailPos {
+		sxc.Emit(func(env *Environment, bind *Binding) error {
+			val := env.Pop()
+			if !sx.IsNil(val) {
+				if proc, isCallable := val.(Callable); isCallable {
+					obj, err := proc.Call(env, env.Args(numargs), bind)
+					env.Kill(numargs)
+					if err == nil {
+						env.Push(obj)
+					} else if err == errExecuteAgain {
+						obj, err = env.Execute(env.tco.expr, env.tco.binding)
+						if err == nil {
+							env.Push(obj)
+						}
+					}
+					return err
+				}
+			}
+			return NotCallableError{Obj: val}
+		}, "CALL", strconv.Itoa(numargs))
+	} else {
+		sxc.Emit(func(env *Environment, bind *Binding) error {
+			val := env.Pop()
+			if !sx.IsNil(val) {
+				if proc, isCallable := val.(Callable); isCallable {
+					obj, err := proc.Call(env, env.Args(numargs), bind)
+					env.Kill(numargs)
+					if err == nil {
+						env.Push(obj)
+					}
+					return err
+				}
+			}
+			return NotCallableError{Obj: val}
+		}, "CALL-TCO", strconv.Itoa(numargs))
+	}
+	return nil
+}
+
+func compileArgs(sxc *Compiler, args []Expr) error {
+	for _, arg := range args {
+		if err := sxc.Compile(arg, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
@@ -437,10 +492,8 @@ func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
 
 // Compile the expression.
 func (bce *builtinCallExpr) Compile(sxc *Compiler, _ bool) error {
-	for _, args := range bce.Args {
-		if err := sxc.Compile(args, false); err != nil {
-			return err
-		}
+	if err := compileArgs(sxc, bce.Args); err != nil {
+		return err
 	}
 	sxc.EmitBCall(bce.Proc, len(bce.Args))
 	return nil

@@ -277,6 +277,20 @@ func (cpe *ProgramExpr) Interpret(env *Environment, bind *Binding) error {
 				currBind = env.tco.binding
 			} else if jerr, ok := err.(jumpToError); ok {
 				ip = jerr.pos - 1
+			} else if err == errExecuteAgain {
+				currBind = env.tco.binding
+				expr := env.tco.expr
+				if newCpe, isProgram := expr.(*ProgramExpr); isProgram {
+					program = newCpe.program
+					ip = -1
+					continue
+				}
+				obj, err := env.Execute(expr, currBind)
+				if err == nil {
+					env.Push(obj)
+					continue
+				}
+				return err
 			} else {
 				return err
 			}
