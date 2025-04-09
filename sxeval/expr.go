@@ -112,7 +112,8 @@ func (oe ObjExpr) Improve(imp *Improver) (Expr, error) {
 
 // Compile the expression
 func (oe ObjExpr) Compile(sxc *Compiler, _ bool) error {
-	sxc.EmitPush(oe.Obj)
+	obj := oe.Obj
+	sxc.EmitPush(obj)
 	return nil
 }
 
@@ -174,13 +175,14 @@ func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
 // Compile the expression.
 func (use UnboundSymbolExpr) Compile(sxc *Compiler, _ bool) error {
 	sxc.AdjustStack(1)
+	sym := use.sym
 	sxc.Emit(func(env *Environment, bind *Binding) error {
-		if obj, found := bind.Resolve(use.sym); found {
+		if obj, found := bind.Resolve(sym); found {
 			env.Push(obj)
 			return nil
 		}
-		return bind.MakeNotBoundError(use.sym)
-	}, "UNBOUND", use.sym.String())
+		return bind.MakeNotBoundError(sym)
+	}, "UNBOUND", sym.String())
 	return nil
 }
 
@@ -222,7 +224,7 @@ func (rse resolveSymbolExpr) Compile(sxc *Compiler, _ bool) error {
 			return nil
 		}
 		return bind.MakeNotBoundError(sym)
-	}, "RESOLVE", strconv.Itoa(rse.skip), rse.sym.String())
+	}, "RESOLVE", strconv.Itoa(skip), sym.String())
 	return nil
 }
 
@@ -262,7 +264,7 @@ func (lse lookupSymbolExpr) Compile(sxc *Compiler, _ bool) error {
 			return nil
 		}
 		return bind.MakeNotBoundError(sym)
-	}, "LOOKUP", strconv.Itoa(lse.lvl), lse.sym.String())
+	}, "LOOKUP", strconv.Itoa(lvl), sym.String())
 	return nil
 }
 

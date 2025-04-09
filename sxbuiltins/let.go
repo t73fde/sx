@@ -150,16 +150,26 @@ func (le *LetExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 	}
 	syms := le.Symbols
 	sxc.AdjustStack(-len(syms))
-	sxc.Emit(func(env *sxeval.Environment, bind *sxeval.Binding) error {
-		letBind := bind.MakeChildBinding("let", len(syms))
-		for i, arg := range env.Args(len(syms)) {
-			if err := letBind.Bind(syms[i], arg); err != nil {
+	if len(syms) == 1 {
+		sxc.Emit(func(env *sxeval.Environment, bind *sxeval.Binding) error {
+			letBind := bind.MakeChildBinding("let", 1)
+			if err := letBind.Bind(syms[0], env.Pop()); err != nil {
 				return err
 			}
-		}
-		env.Kill(len(syms))
-		return sxeval.SwitchBinding(env, letBind)
-	}, "LET", fmt.Sprintf("%v", syms))
+			return sxeval.SwitchBinding(env, letBind)
+		}, "LET1", syms[0].String())
+	} else {
+		sxc.Emit(func(env *sxeval.Environment, bind *sxeval.Binding) error {
+			letBind := bind.MakeChildBinding("let", len(syms))
+			for i, arg := range env.Args(len(syms)) {
+				if err := letBind.Bind(syms[i], arg); err != nil {
+					return err
+				}
+			}
+			env.Kill(len(syms))
+			return sxeval.SwitchBinding(env, letBind)
+		}, "LET", fmt.Sprintf("%v", syms))
+	}
 	return sxc.Compile(le.Body, tailPos)
 }
 

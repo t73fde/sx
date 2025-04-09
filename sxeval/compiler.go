@@ -186,11 +186,12 @@ func (sxc *Compiler) EmitBCall(b *Builtin, numargs int) {
 	sxc.AdjustStack(-numargs + 1)
 	instr, found := sxc.bcallInstrCache[b]
 	if !found {
+		fn, handleCallError := b.Fn, b.handleCallError
 		instr = func(env *Environment, bind *Binding) error {
-			obj, err := b.Fn(env, env.Args(numargs), bind)
+			obj, err := fn(env, env.Args(numargs), bind)
 			env.Kill(numargs - 1)
 			env.Set(obj)
-			return b.handleCallError(err)
+			return handleCallError(err)
 		}
 		sxc.bcallInstrCache[b] = instr
 	}
@@ -202,10 +203,11 @@ func (sxc *Compiler) EmitBCall0(b *Builtin) {
 	sxc.AdjustStack(1)
 	instr, found := sxc.bcall0InstrCache[b]
 	if !found {
+		fn0, handleCallError := b.Fn0, b.handleCallError
 		instr = func(env *Environment, bind *Binding) error {
-			obj, err := b.Fn0(env, bind)
+			obj, err := fn0(env, bind)
 			env.Push(obj)
-			return b.handleCallError(err)
+			return handleCallError(err)
 		}
 		sxc.bcall0InstrCache[b] = instr
 	}
@@ -216,10 +218,11 @@ func (sxc *Compiler) EmitBCall0(b *Builtin) {
 func (sxc *Compiler) EmitBCall1(b *Builtin) {
 	instr, found := sxc.bcall1InstrCache[b]
 	if !found {
+		fn1, handleCallError := b.Fn1, b.handleCallError
 		instr = func(env *Environment, bind *Binding) error {
-			obj, err := b.Fn1(env, env.Top(), bind)
+			obj, err := fn1(env, env.Top(), bind)
 			env.Set(obj)
-			return b.handleCallError(err)
+			return handleCallError(err)
 		}
 		sxc.bcall1InstrCache[b] = instr
 	}
