@@ -333,52 +333,14 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 }
 
 // Compile the expression.
-func (ce *CallExpr) Compile(sxc *Compiler, tailPos bool) error {
+func (ce *CallExpr) Compile(sxc *Compiler, _ bool) error {
 	if err := compileArgs(sxc, ce.Args); err != nil {
 		return err
 	}
 	if err := sxc.Compile(ce.Proc, false); err != nil {
 		return err
 	}
-	numargs := len(ce.Args)
-	sxc.AdjustStack(-numargs)
-	if !tailPos {
-		sxc.Emit(func(env *Environment, bind *Binding) error {
-			val := env.Pop()
-			if !sx.IsNil(val) {
-				if proc, isCallable := val.(Callable); isCallable {
-					obj, err := proc.Call(env, env.Args(numargs), bind)
-					env.Kill(numargs)
-					if err == nil {
-						env.Push(obj)
-					} else if err == errExecuteAgain {
-						obj, err = env.Execute(env.tco.expr, env.tco.binding)
-						if err == nil {
-							env.Push(obj)
-						}
-					}
-					return err
-				}
-			}
-			return NotCallableError{Obj: val}
-		}, "CALL", strconv.Itoa(numargs))
-	} else {
-		sxc.Emit(func(env *Environment, bind *Binding) error {
-			val := env.Pop()
-			if !sx.IsNil(val) {
-				if proc, isCallable := val.(Callable); isCallable {
-					obj, err := proc.Call(env, env.Args(numargs), bind)
-					env.Kill(numargs)
-					if err == nil {
-						env.Push(obj)
-					}
-					return err
-				}
-			}
-			return NotCallableError{Obj: val}
-		}, "CALL-TCO", strconv.Itoa(numargs))
-	}
-	return nil
+	return MissingCompileError{ce}
 }
 
 func compileArgs(sxc *Compiler, args []Expr) error {

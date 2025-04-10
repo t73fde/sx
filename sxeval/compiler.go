@@ -288,12 +288,12 @@ func (cpe *ProgramExpr) Interpret(env *Environment, bind *Binding) error {
 					ip = -1
 					continue
 				}
-				obj, err := env.Execute(expr, currBind)
-				if err == nil {
+				obj, err2 := env.Execute(expr, currBind)
+				if err2 == nil {
 					env.Push(obj)
 					continue
 				}
-				return err
+				return err2
 			} else {
 				return err
 			}
