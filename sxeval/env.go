@@ -91,6 +91,10 @@ func (env *Environment) Eval(obj sx.Object, bind *Binding) (sx.Object, error) {
 	if err != nil {
 		return sx.Nil(), err
 	}
+	cexpr, err := env.Compile(expr)
+	if err == nil {
+		expr = cexpr
+	}
 	return env.Run(expr, bind)
 }
 
