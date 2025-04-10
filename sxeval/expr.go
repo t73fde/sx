@@ -279,11 +279,12 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) 
 	}
 	if !sx.IsNil(val) {
 		if proc, isCallable := val.(Callable); isCallable {
-			if err = computeArgs(env, ce.Args, bind); err != nil {
+			args := ce.Args
+			if err = computeArgs(env, args, bind); err != nil {
 				return nil, err
 			}
-			obj, err2 := proc.Call(env, env.Args(len(ce.Args)), bind)
-			env.Kill(len(ce.Args))
+			obj, err2 := proc.Call(env, env.Args(len(args)), bind)
+			env.Kill(len(args))
 			return obj, err2
 		}
 	}
@@ -375,12 +376,14 @@ func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
 
 // Compute the value of this expression in the given environment.
 func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	if err := computeArgs(env, bce.Args, bind); err != nil {
+	args := bce.Args
+	if err := computeArgs(env, args, bind); err != nil {
 		return nil, err
 	}
-	obj, err := bce.Proc.Fn(env, env.Args(len(bce.Args)), bind)
-	env.Kill(len(bce.Args))
-	return obj, bce.Proc.handleCallError(err)
+	proc := bce.Proc
+	obj, err := proc.Fn(env, env.Args(len(args)), bind)
+	env.Kill(len(args))
+	return obj, proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
@@ -405,8 +408,9 @@ func (bce *builtinCall0Expr) Unparse() sx.Object {
 
 // Compute the value of this expression in the given environment.
 func (bce *builtinCall0Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	obj, err := bce.Proc.Fn0(env, bind)
-	return obj, bce.Proc.handleCallError(err)
+	proc := bce.Proc
+	obj, err := proc.Fn0(env, bind)
+	return obj, proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
@@ -436,9 +440,9 @@ func (bce *builtinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object
 	if err != nil {
 		return nil, err
 	}
-
-	obj, err := bce.Proc.Fn1(env, val, bind)
-	return obj, bce.Proc.handleCallError(err)
+	proc := bce.Proc
+	obj, err := proc.Fn1(env, val, bind)
+	return obj, proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.

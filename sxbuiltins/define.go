@@ -166,13 +166,14 @@ func (se *SetXExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 
 // Compute the expression in a frame and return the result.
 func (se *SetXExpr) Compute(env *sxeval.Environment, bi *sxeval.Binding) (sx.Object, error) {
-	bind := bi.FindBinding(se.Sym)
+	sym := se.Sym
+	bind := bi.FindBinding(sym)
 	if bind == nil {
-		return nil, bi.MakeNotBoundError(se.Sym)
+		return nil, bi.MakeNotBoundError(sym)
 	}
 	val, err := env.Execute(se.Val, bi)
 	if err == nil {
-		err = bind.Bind(se.Sym, val)
+		err = bind.Bind(sym, val)
 	}
 	return val, err
 }
