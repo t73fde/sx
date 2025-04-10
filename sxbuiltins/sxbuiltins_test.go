@@ -29,10 +29,11 @@ import (
 
 type (
 	tTestCase struct {
-		name    string
-		src     string
-		exp     string
-		withErr bool
+		name      string
+		src       string
+		exp       string
+		withErr   bool
+		nocompare bool
 	}
 	tTestCases []tTestCase
 )
@@ -47,6 +48,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 
 			var sb strings.Builder
 			bind := root.MakeChildBinding(tc.name, 0)
+			ibind := root.MakeChildBinding(tc.name+"I", 0)
 			env := sxeval.MakeEnvironment()
 			for {
 				obj, err := rd.Read()
@@ -77,6 +79,21 @@ func (tcs tTestCases) Run(t *testing.T) {
 					sb.WriteByte(' ')
 				}
 				_, _ = sx.Print(&sb, res)
+
+				iexpr, ierr := env.Parse(obj, ibind)
+				if ierr != nil {
+					t.Errorf("unable to parse %v twice: %v", obj, ierr)
+					return
+				}
+				ires, ierr := env.Run(iexpr, ibind)
+				if ierr != nil {
+					t.Errorf("unable to run %v twice: %v", obj, ierr)
+					return
+				}
+				if !tc.nocompare && !res.IsEqual(ires) {
+					t.Errorf("results of compilation and interpretation of %v differ: %v vs %v", obj, res, ires)
+					return
+				}
 			}
 			if got := sb.String(); got != tc.exp {
 				t.Errorf("%s should result in %q, but got %q", tc.src, tc.exp, got)

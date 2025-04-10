@@ -35,7 +35,7 @@ var tcsLambda = tTestCases{
 	{name: "err-defun-0", src: "(defun)", exp: "{[{defun: no arguments given}]}", withErr: true},
 	{name: "err-defun-nosym", src: "(defun 1)", exp: "{[{defun: not a symbol: sx.Int64/1}]}", withErr: true},
 	{name: "err-defun-a", src: "(defun a)", exp: "{[{defun: parameter spec and body missing}]}", withErr: true},
-	{name: "defun", src: "(defun a () 1)", exp: "#<lambda:a>"},
+	{name: "defun", src: "(defun a () 1)", exp: "#<lambda:a>", nocompare: true},
 	{name: "defun-eval", src: "((defun a () 1))", exp: "1"},
 	{name: "defun-eval-arg", src: "((defun a (a) a) 1)", exp: "1"},
 
@@ -86,7 +86,7 @@ var tcsLambda = tTestCases{
 		withErr: true,
 	},
 
-	{name: "lambda-name", src: "(lambda \"adbmal\" x x)", exp: "#<lambda:adbmal>"},
+	{name: "lambda-name", src: "(lambda \"adbmal\" x x)", exp: "#<lambda:adbmal>", nocompare: true},
 	{
 		name:    "err-lambda-name-body",
 		src:     "(lambda \"adbmal\" x)",
@@ -101,13 +101,15 @@ var tcsLambda = tTestCases{
 	},
 
 	{
-		name: "lambda-lex-resolve",
-		src:  "(defvar y 3) (defun fn (x) (+ x y)) (let ((y 17)) (fn 4))",
-		exp:  "3 #<lambda:fn> 7",
+		name:      "lambda-lex-resolve",
+		src:       "(defvar y 3) (defun fn (x) (+ x y)) (let ((y 17)) (fn 4))",
+		exp:       "3 #<lambda:fn> 7",
+		nocompare: true,
 	},
 	{
-		name: "lambda-dyn-resolve",
-		src:  "(defvar y 3) (defdyn fn (x) (+ x y)) (let ((y 17)) (fn 4))",
-		exp:  "3 #<dyn-lambda:fn> 21",
+		name:      "lambda-dyn-resolve",
+		src:       "(defvar y 3) (defdyn fn (x) (+ x y)) (let ((y 17)) (fn 4))",
+		exp:       "3 #<dyn-lambda:fn> 21",
+		nocompare: true,
 	},
 }
