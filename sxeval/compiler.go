@@ -146,20 +146,19 @@ func (sxc *Compiler) EmitKill(num int) {
 // NopInstruction is an empty intruction. It does nothing.
 func NopInstruction(*Environment, *Binding) error { return nil }
 
-// EmitJumpNIL emits some preliminary code to jump if TOS is nil.
+// EmitJumpFalse emits some preliminary code to jump if TOS is a false value.
 // It returns a patch function to update the jump target.
-func (sxc *Compiler) EmitJumpNIL() func() {
+func (sxc *Compiler) EmitJumpFalse() func() {
 	sxc.AdjustStack(-1)
 	pc := len(sxc.program)
-	sxc.Emit(NopInstruction, "JUMP-NIL", strconv.Itoa(pc), "<- to be patched")
+	sxc.Emit(NopInstruction, "JUMP-FALSE", strconv.Itoa(pc), "<- to be patched")
 	return func() {
 		pos := len(sxc.program)
 		if ob := sxc.observer; ob != nil {
-			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-NIL", strconv.Itoa(pos))
+			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-FALSE", strconv.Itoa(pos))
 		}
 		sxc.program[pc] = func(env *Environment, _ *Binding) error {
-			val := env.Pop()
-			if sx.IsNil(val) {
+			if val := env.Pop(); sx.IsFalse(val) {
 				return jumpToError{pos: pos}
 			}
 			return nil

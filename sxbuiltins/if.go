@@ -145,7 +145,7 @@ func (ife *IfExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 	if err := sxc.Compile(ife.Test, false); err != nil {
 		return err
 	}
-	condPatch := sxc.EmitJumpNIL()
+	condPatch := sxc.EmitJumpFalse()
 	if err := sxc.Compile(ife.True, tailPos); err != nil {
 		return err
 	}
