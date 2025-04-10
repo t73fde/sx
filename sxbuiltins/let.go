@@ -175,9 +175,10 @@ func (le *LetExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 
 // Compute the expression in a frame and return the result.
 func (le *LetExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-	letBind := bind.MakeChildBinding("let", len(le.Symbols))
-	for i, sym := range le.Symbols {
-		obj, err := env.Execute(le.Vals[i], bind)
+	syms, vals := le.Symbols, le.Vals
+	letBind := bind.MakeChildBinding("let", len(syms))
+	for i, sym := range syms {
+		obj, err := env.Execute(vals[i], bind)
 		if err != nil {
 			return nil, err
 		}
