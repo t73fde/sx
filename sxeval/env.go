@@ -172,7 +172,8 @@ func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bin
 
 // Apply the given Callable with the arguments.
 func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
-	res, err := fn.Call(env, args, bind)
+	env.PushArgs(args)
+	res, err := fn.Call(env, len(args), bind)
 	if err == nil {
 		return res, nil
 	}
@@ -257,6 +258,18 @@ func (env *Environment) Stack() []sx.Object { return env.stack }
 
 // Push a value to the stack
 func (env *Environment) Push(val sx.Object) { env.stack = append(env.stack, val) }
+
+// PushArgs pushes a whole slice to the stack.
+func (env *Environment) PushArgs(args []sx.Object) { env.stack = append(env.stack, args...) }
+
+// Pop a value from the stack
+func (env *Environment) Pop() sx.Object {
+	stack := env.stack
+	sp := len(stack) - 1
+	val := stack[sp]
+	env.stack = stack[0:sp]
+	return val
+}
 
 // Kill some elements on the stack
 func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-num] }

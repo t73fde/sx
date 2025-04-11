@@ -355,16 +355,17 @@ func (ll *LexLambda) GoString() string { return ll.String() }
 func (ll *LexLambda) IsPure(sx.Vector) bool { return false }
 
 // Call the Procedure with any number of arguments.
-func (ll *LexLambda) Call(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+func (ll *LexLambda) Call(env *sxeval.Environment, numargs int, _ *sxeval.Binding) (sx.Object, error) {
 	numParams := len(ll.Params)
-	if len(args) < numParams {
-		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[len(args):])
+	if numargs < numParams {
+		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[numargs:])
 	}
 	bindSize := numParams
 	if ll.Rest != nil {
 		bindSize++
 	}
 	lexBind := ll.Binding.MakeChildBinding(ll.Name, bindSize)
+	args := env.Args(numargs)
 	for i, p := range ll.Params {
 		err := lexBind.Bind(p, args[i])
 		if err != nil {
@@ -376,9 +377,10 @@ func (ll *LexLambda) Call(env *sxeval.Environment, args sx.Vector, _ *sxeval.Bin
 		if err != nil {
 			return nil, err
 		}
-	} else if len(args) > numParams {
+	} else if numargs > numParams {
 		return nil, fmt.Errorf("%s: excess arguments: %v", ll.Name, []sx.Object(args[numParams:]))
 	}
+	env.Kill(numargs)
 	return env.ExecuteTCO(ll.Expr, lexBind)
 }
 
@@ -439,7 +441,7 @@ func (dl *DynLambda) GoString() string { return dl.String() }
 func (dl *DynLambda) IsPure(sx.Vector) bool { return false }
 
 // Call the Procedure with any number of arguments.
-func (dl *DynLambda) Call(env *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
+func (dl *DynLambda) Call(env *sxeval.Environment, numargs int, bind *sxeval.Binding) (sx.Object, error) {
 	// A DynLambda is just a LexLambda with a different Binding.
 	return (&LexLambda{
 		Binding: bind,
@@ -447,5 +449,5 @@ func (dl *DynLambda) Call(env *sxeval.Environment, args sx.Vector, bind *sxeval.
 		Params:  dl.Params,
 		Rest:    dl.Rest,
 		Expr:    dl.Expr,
-	}).Call(env, args, bind)
+	}).Call(env, numargs, bind)
 }

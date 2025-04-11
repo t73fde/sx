@@ -54,9 +54,11 @@ func TestBuiltinSimple(t *testing.T) {
 		}
 	}
 
+	env := sxeval.MakeEnvironment()
 	args := sx.Vector{}
 	for i := range 10 {
-		res, err := b.Call(nil, args, nil)
+		env.PushArgs(args)
+		res, err := b.Call(env, len(args), nil)
 		if err != nil {
 			t.Error(err)
 			break

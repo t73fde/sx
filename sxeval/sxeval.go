@@ -30,8 +30,9 @@ type Callable interface {
 	// does not produce any side effects.
 	IsPure(sx.Vector) bool
 
-	// Call the value with the given args in the given environment.
-	Call(*Environment, sx.Vector, *Binding) (sx.Object, error)
+	// Call the value with the given number of args in the given environment.
+	// Args are transported via env.Args(numargs).
+	Call(*Environment, int, *Binding) (sx.Object, error)
 }
 
 // GetCallable returns the object as a Callable, if possible.
