@@ -26,6 +26,7 @@ import (
 type Environment struct {
 	stack    []sx.Object
 	tco      tcodata
+	bstack   []*Binding // saves binding for later restore
 	observer observer
 }
 
@@ -322,4 +323,16 @@ func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-nu
 func (env *Environment) Args(numargs int) sx.Vector {
 	sp := len(env.stack)
 	return env.stack[sp-numargs : sp]
+}
+
+// SaveBinding stores a binding for later restore.
+func (env *Environment) SaveBinding(bind *Binding) { env.bstack = append(env.bstack, bind) }
+
+// RestoreBindung retrieves the last saved binding.
+func (env *Environment) RestoreBindung() *Binding {
+	bstack := env.bstack
+	sp := len(bstack) - 1
+	bind := bstack[sp]
+	env.bstack = bstack[0:sp]
+	return bind
 }
