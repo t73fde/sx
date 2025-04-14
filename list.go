@@ -555,3 +555,10 @@ func (lb *ListBuilder) Last() *Pair { return lb.last }
 
 // IsEmpty returns true, if no element was added.
 func (lb *ListBuilder) IsEmpty() bool { return lb.first == nil }
+
+// Collect all values of the iterator into a list.
+func (lb *ListBuilder) Collect(seq iter.Seq[Object]) {
+	for obj := range seq {
+		lb.Add(obj)
+	}
+}
