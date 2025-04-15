@@ -50,8 +50,9 @@ var tcsLet = tTestCases{
 		withErr: true,
 	},
 	{name: "let-nil-1", src: "(let () 1)", exp: "1"},
-	{name: "let-a-b", src: "(let ((a 1) (b 2)) a b)", exp: "2"},
+	{name: "let-a-b", src: "(let ((a 1) (b 2)) (lambda () a) b)", exp: "2"},
 	{name: "let-nested-0", src: "(let ((a 1)) (let ((a 2)) a))", exp: "2"},
+	{name: "let-no-nested", src: "(let ((a 1)) (let ((a 2)) a) a)", exp: "1"},
 	{
 		name:    "err-let-double-sym",
 		src:     "(let ((a 1) (a 2)) a)",

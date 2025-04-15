@@ -18,109 +18,84 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"strings"
 
 	"t73f.de/r/sx"
 )
 
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
-	binding  *Binding
-	tco      *tcodata
-	observer *observer
+	stack    []sx.Object
+	tco      tcodata
+	observer observer
 }
 
 // tcodata contains everything to implement Tail Call Optimization (tco)
 type tcodata struct {
-	env  *Environment
-	expr Expr
+	expr    Expr
+	binding *Binding
 }
 
 type observer struct {
-	execute ExecuteObserver
+	compute ComputeObserver
 	parse   ParseObserver
 	improve ImproveObserver
 }
 
-// ExecuteObserver observes the execution of expressions.
-type ExecuteObserver interface {
-	// BeforeExecution is called immediate before the given expression is executed.
-	// The observer may change the expression or abort execution with an error.
-	BeforeExecution(*Environment, Expr) (Expr, error)
+// ComputeObserver observes the execution of expressions.
+type ComputeObserver interface {
+	// BeforeCompute is called immediate before the given expression is computed.
+	// The observer may change the expression or abort computation with an error.
+	BeforeCompute(*Environment, Expr, *Binding) (Expr, error)
 
-	// AfterExecution is called immediate after the given expression was executed,
+	// AfterCompute is called immediate after the given expression was computed,
 	// resulting in an `sx.Object` and an error.
-	AfterExecution(*Environment, Expr, sx.Object, error)
+	AfterCompute(*Environment, Expr, *Binding, sx.Object, error)
 }
 
-func (env *Environment) String() string { return env.binding.name }
-
-// MakeExecutionEnvironment creates an environment for later execution of an expression.
-func MakeExecutionEnvironment(bind *Binding) *Environment {
+// MakeEnvironment creates an environment for later parsing, improving, and
+// computation of expressions.
+func MakeEnvironment() *Environment {
 	return &Environment{
-		binding: bind,
-		tco: &tcodata{
-			env:  nil,
-			expr: nil,
-		},
-		observer: &observer{
-			execute: nil,
-			parse:   nil,
-			improve: nil,
-		},
+		stack: make([]sx.Object, 0, 1024),
 	}
 }
 
-// SetExecutor sets the given executor.
-func (env *Environment) SetExecutor(observe ExecuteObserver) *Environment {
-	env.newObserver().execute = observe
+// SetComputeObserver sets the given compute observer.
+func (env *Environment) SetComputeObserver(observe ComputeObserver) *Environment {
+	env.observer.compute = observe
 	return env
 }
 
 // SetParseObserver sets the given parsing observer.
 func (env *Environment) SetParseObserver(observe ParseObserver) *Environment {
-	env.newObserver().parse = observe
+	env.observer.parse = observe
 	return env
 }
 
 // SetImproveObserver sets the given improve observer.
 func (env *Environment) SetImproveObserver(observe ImproveObserver) *Environment {
-	env.newObserver().improve = observe
+	env.observer.improve = observe
 	return env
 }
 
-func (env *Environment) newObserver() *observer {
-	ob := *env.observer
-	env.observer = &ob
-	return env.observer
-}
-
-// RebindExecutionEnvironment clones the original environment, but uses the
-// given binding.
-func (env *Environment) RebindExecutionEnvironment(bind *Binding) *Environment {
-	result := *env
-	result.binding = bind
-	return &result
-}
-
 // Eval parses the given object and runs it in the environment.
-func (env *Environment) Eval(obj sx.Object) (sx.Object, error) {
-	expr, err := env.Parse(obj)
+func (env *Environment) Eval(obj sx.Object, bind *Binding) (sx.Object, error) {
+	expr, err := env.Parse(obj, bind)
 	if err != nil {
 		return sx.Nil(), err
 	}
-	return env.Run(expr)
+	return env.Run(expr, bind)
 }
 
 // Parse the given object.
-func (env *Environment) Parse(obj sx.Object) (Expr, error) {
-	pe := env.MakeParseEnvironment()
+func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
+	pe := env.MakeParseEnvironment(bind)
 	expr, err := pe.Parse(obj)
 	if err != nil {
 		return expr, err
 	}
 	imp := &Improver{
-		binding:  env.binding,
+		binding:  bind,
 		height:   0,
 		observer: env.observer.improve,
 	}
@@ -128,43 +103,35 @@ func (env *Environment) Parse(obj sx.Object) (Expr, error) {
 	return imp.Improve(expr)
 }
 
-// Run the given expression.
-func (env *Environment) Run(expr Expr) (sx.Object, error) {
-	return env.Execute(expr)
-}
-
 // MakeParseEnvironment builds a parsing environment to parse a form.
-func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
+func (env *Environment) MakeParseEnvironment(bind *Binding) *ParseEnvironment {
 	return &ParseEnvironment{
-		binding:  env.binding,
+		binding:  bind,
 		observer: env.observer.parse,
 	}
 }
 
-// NewLexicalEnvironment builds a new lexical environment with the given parent
-// binding, environment name, and the number of bindings to store.
-func (env *Environment) NewLexicalEnvironment(parent *Binding, name string, numBindings int) *Environment {
-	result := *env
-	result.binding = parent.MakeChildBinding(name, numBindings)
-	return &result
+// Run the given expression.
+func (env *Environment) Run(expr Expr, bind *Binding) (sx.Object, error) {
+	return env.Execute(expr, bind)
 }
 
 // Execute the given expression.
-func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
-	if exec := env.observer.execute; exec != nil {
+func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err error) {
+	if exec := env.observer.compute; exec != nil {
 		for {
-			expr, err = exec.BeforeExecution(env, expr)
+			expr, err = exec.BeforeCompute(env, expr, bind)
 			if err == nil {
-				res, err = expr.Compute(env)
+				res, err = expr.Compute(env, bind)
 				if err == nil {
-					exec.AfterExecution(env, expr, res, err)
+					exec.AfterCompute(env, expr, bind, res, err)
 					return res, nil
 				}
 			}
-			exec.AfterExecution(env, expr, res, err)
+			exec.AfterCompute(env, expr, bind, res, err)
 			if err == errExecuteAgain {
-				env = env.tco.env
 				expr = env.tco.expr
+				bind = env.tco.binding
 				continue
 			}
 			return res, env.addExecuteError(expr, err)
@@ -172,13 +139,13 @@ func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 	}
 
 	for {
-		res, err = expr.Compute(env)
+		res, err = expr.Compute(env, bind)
 		if err == nil {
 			return res, nil
 		}
 		if err == errExecuteAgain {
-			env = env.tco.env
 			expr = env.tco.expr
+			bind = env.tco.binding
 			continue
 		}
 		return res, env.addExecuteError(expr, err)
@@ -187,46 +154,30 @@ func (env *Environment) Execute(expr Expr) (res sx.Object, err error) {
 
 // ExecuteTCO is called when the expression should be executed at last
 // position, aka as tail call order.
-func (env *Environment) ExecuteTCO(expr Expr) (sx.Object, error) {
+func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) (sx.Object, error) {
 	// Uncomment this line to test for non-TCO
-	// return env.Execute(expr)
+	// return env.Execute(expr, bind)
 
 	// Just return relevant data for real TCO
-	env.tco.env = env
 	env.tco.expr = expr
+	env.tco.binding = bind
 	return nil, errExecuteAgain
 }
 
 // ApplyMacro executes the Callable in a macro environment.
-func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector) (res sx.Object, err error) {
-	macroEnv := Environment{
-		binding: env.binding.MakeChildBinding(name, 0),
-		tco: &tcodata{
-			env:  nil,
-			expr: nil,
-		},
-		observer: env.observer,
-	}
-	return macroEnv.Apply(fn, args)
+func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
+	macroBind := bind.MakeChildBinding(name, 0)
+	return env.Apply(fn, args, macroBind)
 }
 
 // Apply the given Callable with the arguments.
-func (env *Environment) Apply(fn Callable, args sx.Vector) (res sx.Object, err error) {
-	switch len(args) {
-	case 0:
-		res, err = fn.Call0(env)
-	case 1:
-		res, err = fn.Call1(env, args[0])
-	case 2:
-		res, err = fn.Call2(env, args[0], args[1])
-	default:
-		res, err = fn.Call(env, args)
-	}
+func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
+	res, err := fn.Call(env, args, bind)
 	if err == nil {
 		return res, nil
 	}
 	if err == errExecuteAgain {
-		return env.tco.env.Execute(env.tco.expr)
+		return env.Execute(env.tco.expr, env.tco.binding)
 	}
 	return nil, env.addExecuteError(&applyExpr{Proc: fn, Args: args}, err)
 }
@@ -243,8 +194,8 @@ func (ce *applyExpr) Unparse() sx.Object {
 	return args.Cons(ce.Proc.(sx.Object))
 }
 
-func (ce *applyExpr) Compute(env *Environment) (sx.Object, error) {
-	return env.Apply(ce.Proc, ce.Args)
+func (ce *applyExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+	return env.Apply(ce.Proc, ce.Args, bind)
 }
 
 func (ce *applyExpr) Print(w io.Writer) (int, error) {
@@ -299,92 +250,19 @@ func (ee ExecuteError) PrintStack(w io.Writer, prefix string, logger *slog.Logge
 
 }
 
-// Bind the symbol to an object value in this environment.
-func (env *Environment) Bind(sym *sx.Symbol, obj sx.Object) error {
-	return env.binding.Bind(sym, obj)
-}
+// ----- Stack operations
 
-// Lookup a symbol in this environment. If not found, false is returned.
-func (env *Environment) Lookup(sym *sx.Symbol) (sx.Object, bool) {
-	return env.binding.Lookup(sym)
-}
+// Stack returns the stack.
+func (env *Environment) Stack() []sx.Object { return env.stack }
 
-// Resolve a symbol in this environment or in its parent environments. If the
-// symbol is not found, a false is returned.
-func (env *Environment) Resolve(sym *sx.Symbol) (sx.Object, bool) {
-	return env.binding.Resolve(sym)
-}
+// Push a value to the stack
+func (env *Environment) Push(val sx.Object) { env.stack = append(env.stack, val) }
 
-// LookupNWithError tries to look up a symbol in a parent environment of this
-// environment, which is n levels away. If this is not possible,
-// a NotBoundError is returned.
-func (env *Environment) LookupNWithError(sym *sx.Symbol, n int) (sx.Object, error) {
-	if obj, found := env.binding.LookupN(sym, n); found {
-		return obj, nil
-	}
-	return nil, env.MakeNotBoundError(sym)
-}
+// Kill some elements on the stack
+func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-num] }
 
-// ResolveNWithError tries to resolve the symbol in this environment, after
-// skipping some parent levels. If it is not possible to resolve the symbol,
-// a NotBoundError is returned.
-func (env *Environment) ResolveNWithError(sym *sx.Symbol, skip int) (sx.Object, error) {
-	if obj, found := env.binding.ResolveN(sym, skip); found {
-		return obj, nil
-	}
-	return nil, env.MakeNotBoundError(sym)
-}
-
-// ResolveUnboundWithError tries to resolve a symbol in this environment,
-// or in its parent environments.
-// If not possible, a NotBoundError is returned.
-func (env *Environment) ResolveUnboundWithError(sym *sx.Symbol) (sx.Object, error) {
-	if obj, found := env.binding.Resolve(sym); found {
-		return obj, nil
-	}
-	return nil, env.MakeNotBoundError(sym)
-}
-
-// FindBinding returns the binding, where the symbol is bound to a value.
-// If no binding was found, nil is returned.
-func (env *Environment) FindBinding(sym *sx.Symbol) *Binding {
-	for curr := env.binding; curr != nil; curr = curr.parent {
-		if _, found := curr.Lookup(sym); found {
-			return curr
-		}
-	}
-	return nil
-}
-
-// Binding returns the binding of this environment.
-func (env *Environment) Binding() *Binding { return env.binding }
-
-// MakeNotBoundError builds an error to signal that a symbol was not bound in
-// the environment.
-func (env *Environment) MakeNotBoundError(sym *sx.Symbol) NotBoundError {
-	return NotBoundError{Binding: env.binding, Sym: sym}
-}
-
-// NotBoundError signals that a symbol was not found in a binding.
-type NotBoundError struct {
-	Binding *Binding
-	Sym     *sx.Symbol
-}
-
-func (e NotBoundError) Error() string {
-	var sb strings.Builder
-	if e.Sym == nil {
-		sb.WriteString("symbol == nil, not bound in ")
-	} else {
-		fmt.Fprintf(&sb, "symbol %q not bound in ", e.Sym.String())
-	}
-	second := false
-	for binding := e.Binding; binding != nil; binding = binding.Parent() {
-		if second {
-			sb.WriteString("->")
-		}
-		fmt.Fprintf(&sb, "%q", binding.Name())
-		second = true
-	}
-	return sb.String()
+// Args returns a given number of values on top of the stack as a slice.
+func (env *Environment) Args(numargs int) []sx.Object {
+	sp := len(env.stack)
+	return env.stack[sp-numargs : sp]
 }

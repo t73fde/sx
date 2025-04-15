@@ -28,8 +28,8 @@ var Cons = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		return sx.Cons(arg0, arg1), nil
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+		return sx.Cons(args[0], args[1]), nil
 	},
 }
 
@@ -39,7 +39,7 @@ var PairP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		if sx.IsNil(arg) {
 			return sx.Nil(), nil
 		}
@@ -54,7 +54,7 @@ var NullP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		return sx.MakeBoolean(sx.IsNil(arg)), nil
 	},
 }
@@ -65,7 +65,7 @@ var ListP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		return sx.MakeBoolean(sx.IsList(arg)), nil
 	},
 }
@@ -76,7 +76,7 @@ var Car = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		pair, err := GetPair(arg, 0)
 		if err != nil {
 			return nil, err
@@ -91,7 +91,7 @@ var Cdr = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		pair, err := GetPair(arg, 0)
 		if err != nil {
 			return nil, err
@@ -106,7 +106,7 @@ func makeCxr(spec string) sxeval.Builtin {
 		MinArity: 1,
 		MaxArity: 1,
 		TestPure: sxeval.AssertPure,
-		Fn1: func(_ *sxeval.Environment, arg sx.Object) (result sx.Object, _ error) {
+		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (result sx.Object, _ error) {
 			pair, err := GetPair(arg, 0)
 			if err != nil {
 				return nil, err
@@ -176,7 +176,7 @@ var Last = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		lst, err := GetList(arg, 0)
 		if err != nil {
 			return nil, err
@@ -191,16 +191,13 @@ var List = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+	Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
 		return sx.Nil(), nil
 	},
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		return sx.Cons(arg, sx.Nil()), nil
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		return sx.Cons(arg0, sx.Cons(arg1, sx.Nil())), nil
-	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		return sx.MakeList(args...), nil
 	},
 }
@@ -211,13 +208,10 @@ var ListStar = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		return arg, nil
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		return sx.Cons(arg0, arg1), nil
-	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		argPos := len(args) - 2
 		result := sx.Cons(args[argPos], args[argPos+1])
 		for argPos > 0 {
@@ -234,44 +228,14 @@ var Append = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+	Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
 		return sx.Nil(), nil
 	},
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		lst, err := GetList(arg, 0)
 		return lst, err
 	},
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		lst0, err := GetList(arg0, 0)
-		if err != nil {
-			return nil, err
-		}
-		lst1, err := GetList(arg1, 1)
-		if err != nil {
-			return nil, err
-		}
-		if lst0 == nil {
-			return lst1, nil
-		}
-
-		result := sx.Cons(lst0.Car(), lst0.Cdr())
-		prev := result
-		for {
-			curr := prev.Cdr()
-			if next, isPair := sx.GetPair(curr); isPair {
-				if next == nil {
-					prev.SetCdr(lst1)
-					return result, nil
-				}
-				cpy := sx.Cons(next.Car(), next.Cdr())
-				prev.SetCdr(cpy)
-				prev = cpy
-				continue
-			}
-			return nil, sx.ErrImproper{Pair: lst0}
-		}
-	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		if len(args) == 0 {
 			return sx.Nil(), nil
 		}
@@ -307,7 +271,7 @@ var Reverse = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		lst, err := GetList(arg, 0)
 		if err != nil {
 			return nil, err
@@ -323,12 +287,12 @@ var Assoc = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		lst, err := GetList(arg0, 0)
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+		lst, err := GetList(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		return lst.Assoc(arg1), nil
+		return lst.Assoc(args[1]), nil
 	},
 }
 
@@ -339,7 +303,7 @@ var All = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		return anyAll(arg, sx.IsFalse, false)
 	},
 }
@@ -351,7 +315,7 @@ var Any = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		return anyAll(arg, sx.IsTrue, true)
 	},
 }
@@ -382,7 +346,7 @@ var List2Vector = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		lst, err := GetList(arg, 0)
 		if err != nil {
 			return nil, err

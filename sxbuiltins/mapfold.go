@@ -57,14 +57,14 @@ var Map = sxeval.Builtin{
 			lst = pair
 		}
 	},
-	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
 		// fn must be checked first, because it is an error, if argument 0 is
 		// not a callable, even if the list is empty and fn will never be called.
-		fn, err := GetCallable(arg0, 0)
+		fn, err := GetCallable(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		lst, err := GetList(arg1, 1)
+		lst, err := GetList(args[1], 1)
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +72,8 @@ var Map = sxeval.Builtin{
 			return sx.Nil(), nil
 		}
 
-		val, err := env.Apply(fn, sx.Vector{lst.Car()})
+		params := sx.Vector{lst.Car()}
+		val, err := env.Apply(fn, params, bind)
 		if err != nil {
 			return sx.Nil(), err
 		}
@@ -85,14 +86,16 @@ var Map = sxeval.Builtin{
 			}
 			pair, isPair := sx.GetPair(cdr2)
 			if !isPair {
-				val2, err2 := env.Apply(fn, sx.Vector{cdr2})
+				params[0] = cdr2
+				val2, err2 := env.Apply(fn, params, bind)
 				if err2 != nil {
 					return result, err2
 				}
 				curr.SetCdr(val2)
 				break
 			}
-			val2, err2 := env.Apply(fn, sx.Vector{pair.Car()})
+			params[0] = pair.Car()
+			val2, err2 := env.Apply(fn, params, bind)
 			if err2 != nil {
 				return result, err2
 			}
@@ -109,27 +112,32 @@ var Apply = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: nil, // Might be changed in the future
-	Fn2: func(env *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
-		fn, err := GetCallable(arg0, 0)
+	Fn: func(env *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (res sx.Object, err error) {
+		fn, err := GetCallable(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		lst, err := GetList(arg1, 1)
+		lst, err := GetList(args[1], 1)
 		if err != nil {
 			return nil, err
 		}
 		if lst == nil {
-			return env.Apply(fn, nil)
+			return env.Apply(fn, nil, bind)
 		}
-		args := sx.Vector{lst.Car()}
+
+		env.Push(lst.Car())
+		argCount := 1
 		for node := lst; ; {
 			cdr := node.Cdr()
 			if sx.IsNil(cdr) {
-				return env.Apply(fn, args)
+				res, err = env.Apply(fn, env.Args(argCount), bind)
+				env.Kill(argCount)
+				return res, err
 			}
 			if next, isPair := sx.GetPair(cdr); isPair {
 				node = next
-				args = append(args, node.Car())
+				env.Push(node.Car())
+				argCount++
 				continue
 			}
 			return nil, sx.ErrImproper{Pair: lst}
@@ -143,7 +151,7 @@ var Fold = sxeval.Builtin{
 	MinArity: 3,
 	MaxArity: 3,
 	TestPure: nil, // Might be changed in the future
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
 		fn, err := GetCallable(args[0], 0)
 		if err != nil {
 			return nil, err
@@ -157,7 +165,7 @@ var Fold = sxeval.Builtin{
 		for node := lst; node != nil; {
 			params[0] = node.Car()
 			params[1] = res
-			res, err = env.Apply(fn, params)
+			res, err = env.Apply(fn, params, bind)
 			if err != nil {
 				return nil, err
 			}
@@ -177,7 +185,7 @@ var FoldReverse = sxeval.Builtin{
 	MinArity: 3,
 	MaxArity: 3,
 	TestPure: nil, // Might be changed in the future
-	Fn: func(env *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
 		fn, err := GetCallable(args[0], 0)
 		if err != nil {
 			return nil, err
@@ -195,7 +203,7 @@ var FoldReverse = sxeval.Builtin{
 		for node := rev; node != nil; {
 			params[0] = node.Car()
 			params[1] = res
-			res, err = env.Apply(fn, params)
+			res, err = env.Apply(fn, params, bind)
 			if err != nil {
 				return nil, err
 			}

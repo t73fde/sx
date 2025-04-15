@@ -47,7 +47,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 
 			var sb strings.Builder
 			bind := root.MakeChildBinding(tc.name, 0)
-			env := sxeval.MakeExecutionEnvironment(bind)
+			env := sxeval.MakeEnvironment()
 			for {
 				obj, err := rd.Read()
 				if err != nil {
@@ -61,7 +61,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 					t.Errorf("Error %v while reading %s", err, tc.src)
 					return
 				}
-				res, err := env.Eval(obj)
+				res, err := env.Eval(obj, bind)
 				if err != nil {
 					if tc.withErr {
 						sb.WriteString(fmt.Errorf("{[{%w}]}", err).Error())
@@ -89,13 +89,8 @@ func (tcs tTestCases) Run(t *testing.T) {
 func createBinding() *sxeval.Binding {
 	numBuiltins := len(specials) + len(builtins) + len(objects)
 	root := sxeval.MakeRootBinding(numBuiltins)
-
-	for _, syntax := range specials {
-		_ = root.BindSpecial(syntax)
-	}
-	for _, b := range builtins {
-		_ = root.BindBuiltin(b)
-	}
+	_ = sxeval.BindSpecials(root, specials...)
+	_ = sxeval.BindBuiltins(root, builtins...)
 	root.Freeze()
 	env := root.MakeChildBinding("vars", len(objects))
 	for _, obj := range objects {
@@ -154,16 +149,16 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Length, &sxbuiltins.LengthEqual, // length, length=
 	&sxbuiltins.LengthLess, &sxbuiltins.LengthGreater, // length<, length>
 	&sxbuiltins.Nth,               // nth
-	&sxbuiltins.Sequence2List,     // ->list
+	&sxbuiltins.Sequence2List,     // seq->list
 	&sxbuiltins.CallableP,         // callable?
 	&sxbuiltins.Macroexpand0,      // macroexpand-0
 	&sxbuiltins.DefinedP,          // defined?
-	&sxbuiltins.CurrentBinding,    // current-environment
-	&sxbuiltins.ParentBinding,     // parent-environment
-	&sxbuiltins.Bindings,          // environment-bindings
+	&sxbuiltins.CurrentBinding,    // current-binding
+	&sxbuiltins.ParentBinding,     // parent-binding
+	&sxbuiltins.Bindings,          // bindings
 	&sxbuiltins.BoundP,            // bound?
-	&sxbuiltins.BindingLookup,     // environment-lookup
-	&sxbuiltins.BindingResolve,    // environment-resolve
+	&sxbuiltins.BindingLookup,     // binding-lookup
+	&sxbuiltins.BindingResolve,    // binding-resolve
 	&sxbuiltins.Pretty,            // pp
 	&sxbuiltins.Error,             // error
 	&sxbuiltins.NotBoundError,     // not-bound-error

@@ -11,21 +11,18 @@
 // SPDX-FileCopyrightText: 2025-present Detlef Stern
 //-----------------------------------------------------------------------------
 
-package sxbuiltins
+package sxbuiltins_test
 
 import (
-	"t73f.de/r/sx"
+	"testing"
+
+	"t73f.de/r/sx/sxbuiltins"
 	"t73f.de/r/sx/sxeval"
 )
 
-// SymbolP returns true if the argument is a symbol.
-var SymbolP = sxeval.Builtin{
-	Name:     "symbol?",
-	MinArity: 1,
-	MaxArity: 1,
-	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		_, isSymbol := sx.GetSymbol(arg)
-		return sx.MakeBoolean(isSymbol), nil
-	},
+func TestLoadPrelude(t *testing.T) {
+	root := sxeval.MakeRootBinding(128)
+	if err := sxbuiltins.LoadPrelude(root); err != nil {
+		t.Error(err)
+	}
 }
