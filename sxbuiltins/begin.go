@@ -28,29 +28,27 @@ type ExprSeq struct {
 
 // ParseExprSeq parses a sequence of expressions.
 func ParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
-	var es ExprSeq
-	if err := doParseExprSeq(pf, args, &es); err != nil {
-		return nil, err
+	var be BeginExpr
+	if empty, err := doParseExprSeq(pf, args, &be.ExprSeq); err != nil || empty {
+		return sxeval.NilExpr, err
 	}
-	if len(es.Front) == 0 {
-		return es.Last, nil
+	if len(be.Front) == 0 {
+		return be.Last, nil
 	}
-	return &BeginExpr{ExprSeq: es}, nil
+	return &be, nil
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func doParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) error {
+func doParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) (bool, error) {
 	if args == nil {
-		es.Front = nil
-		es.Last = sxeval.NilExpr
-		return nil
+		return true, nil
 	}
 	var front []sxeval.Expr
 	var last sxeval.Expr
 	for node := args; ; {
 		ex, err := pf.Parse(node.Car())
 		if err != nil {
-			return err
+			return false, err
 		}
 		cdr := node.Cdr()
 		if sx.IsNil(cdr) {
@@ -64,13 +62,13 @@ func doParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) err
 		}
 		ex, err = pf.Parse(cdr)
 		if err != nil {
-			return err
+			return false, err
 		}
 		last = ex
 		break
 	}
 	*es = ExprSeq{Front: front, Last: last}
-	return nil
+	return false, nil
 }
 
 // IsPure signals an expression that has no side effects.
@@ -188,4 +186,71 @@ func (be *BeginExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.
 }
 
 // Print the expression on the given writer.
-func (be *BeginExpr) Print(w io.Writer) (int, error) { return be.ExprSeq.Print(w, "{BEGIN}") }
+func (be *BeginExpr) Print(w io.Writer) (int, error) { return be.ExprSeq.Print(w, "{BEGIN") }
+
+// ----- (and ...)
+
+const andName = "and"
+
+// AndS parses a sequence of expressions that are reduced via logical and.
+var AndS = sxeval.Special{
+	Name: andName,
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+		var ae AndExpr
+		if empty, err := doParseExprSeq(pe, args, &ae.ExprSeq); err != nil || empty {
+			return sxeval.ObjExpr{Obj: sx.T}, err
+		}
+		return &ae, nil
+	},
+}
+
+// AndExpr represents the and form.
+type AndExpr struct{ ExprSeq }
+
+// IsPure signals an expression that has no side effects.
+func (ae *AndExpr) IsPure() bool { return ae.ExprSeq.IsPure() }
+
+// Unparse the expression as an sx.Object
+func (ae *AndExpr) Unparse() sx.Object { return ae.ExprSeq.Unparse(sx.MakeSymbol(andName)) }
+
+// Improve the expression into a possible simpler one.
+func (ae *AndExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
+	last, err := imp.Improve(ae.Last)
+	if err != nil {
+		return ae, err
+	}
+	frontLen := len(ae.Front)
+	if frontLen == 0 {
+		return last, nil
+	}
+	if err = imp.ImproveSlice(ae.Front); err != nil {
+		return ae, err
+	}
+
+	for _, expr := range ae.Front {
+		if objectExpr, isConstObject := sxeval.GetConstExpr(expr); isConstObject {
+			if sx.IsFalse(objectExpr.ConstObject()) {
+				return expr, nil
+			}
+		}
+	}
+	ae.Last = last
+	return ae, nil
+}
+
+// Compute the expression in a frame and return the result.
+func (ae *AndExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+	for _, e := range ae.Front {
+		obj, err := env.Execute(e, bind)
+		if err != nil {
+			return nil, err
+		}
+		if sx.IsFalse(obj) {
+			return obj, nil
+		}
+	}
+	return env.ExecuteTCO(ae.Last, bind)
+}
+
+// Print the expression on the given writer.
+func (ae *AndExpr) Print(w io.Writer) (int, error) { return ae.ExprSeq.Print(w, "{AND") }

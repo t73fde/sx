@@ -35,15 +35,6 @@
                        (begin ,@(cdr clause))
                        (cond ,@(cdr clauses)))))))
 
-;; and macro
-;;
-;; (and EXPR ...)
-(defmacro and args
-    (cond ((null? args)       T)
-          ((null? (cdr args)) (car args))
-          (T                  `(if ,(car args) (and ,@(cdr args))))))
-
-
 ;; or macro
 ;;
 ;; (or EXPR ...)

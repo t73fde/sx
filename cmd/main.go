@@ -129,6 +129,7 @@ var specials = []*sxeval.Special{
 	&sxbuiltins.SetXS,     // set!
 	&sxbuiltins.IfS,       // if
 	&sxbuiltins.BeginS,    // begin
+	&sxbuiltins.AndS,      // and
 }
 
 var builtins = []*sxeval.Builtin{
