@@ -21,15 +21,6 @@
 (defmacro not== args `(not (== ,@args)))
 (defmacro not= args `(not (= ,@args)))
 
-;; let* macro
-;;
-;; (let* (BINDING ...) EXPR ...), where SYMBOL may occur in later bindings.
-(defmacro let* (bindings . body)
-    (if (null? bindings)
-        `(begin ,@body)
-        `(let ((,(caar bindings) ,(cadar bindings)))
-               (let* ,(cdr bindings) ,@body))))
-
 ;; cond macro
 ;;
 ;; (cond ((COND EXPR) ...))

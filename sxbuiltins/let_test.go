@@ -28,12 +28,6 @@ var tcsLet = tTestCases{
 		exp:     "{[{let: bindings must be a list, but is sx.Int64/1}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-let-num",
-		src:     "(let 1)",
-		exp:     "{[{let: bindings must be a list, but is sx.Int64/1}]}",
-		withErr: true,
-	},
 	{name: "err-let-improper", src: "(let () . 1)", exp: "{[{let: improper list: (() . 1)}]}", withErr: true},
 	{name: "err-let-nobinding-list", src: "(let (a) 1)", exp: "{[{let: single binding must be a list, but is *sx.Symbol/a}]}", withErr: true},
 	{name: "err-let-nobinding", src: "(let ((a)) 1)", exp: "{[{let: binding missing for symbol a}]}", withErr: true},
@@ -59,4 +53,35 @@ var tcsLet = tTestCases{
 		exp:     "{[{let: symbol a already defined}]}",
 		withErr: true,
 	},
+
+	// (let* ...)
+
+	{name: "err-let*-0", src: "(let*)", exp: "{[{let*: binding spec and body missing}]}", withErr: true},
+	{
+		name:    "err-let*-num",
+		src:     "(let* 1)",
+		exp:     "{[{let*: bindings must be a list, but is sx.Int64/1}]}",
+		withErr: true,
+	},
+	{name: "err-let*-improper", src: "(let* () . 1)", exp: "{[{let*: improper list: (() . 1)}]}", withErr: true},
+	{name: "err-let*-nobinding-list", src: "(let* (a) 1)", exp: "{[{let*: single binding must be a list, but is *sx.Symbol/a}]}", withErr: true},
+	{name: "err-let*-nobinding", src: "(let* ((a)) 1)", exp: "{[{let*: binding missing for symbol a}]}", withErr: true},
+	{
+		name:    "err-let*-improper-binding",
+		src:     "(let* ((a . 1)) a)",
+		exp:     "{[{let*: improper list: (a . 1)}]}",
+		withErr: true,
+	},
+	{
+		name:    "err-let*-improper-binding-2",
+		src:     "(let* ((a 1 . 2)) a)",
+		exp:     "{[{let*: too many bindings for symbol a: sx.Int64/2}]}",
+		withErr: true,
+	},
+	{name: "let*-nil-1", src: "(let* () 1)", exp: "1"},
+	{name: "let*-a-b", src: "(let* ((a 1) (b 2)) (lambda () a) b)", exp: "2"},
+	{name: "let*-nested-0", src: "(let* ((a 1)) (let ((a 2)) a))", exp: "2"},
+	{name: "let*-no-nested", src: "(let* ((a 1)) (let ((a 2)) a) a)", exp: "1"},
+	{name: "let*-double-sym", src: "(let* ((a 1) (a 2)) a)", exp: "2"},
+	{name: "let*-multieval", src: "(let* ((a 3) (a (+ a 5))) (+ a 7))", exp: "15"},
 }
