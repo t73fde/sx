@@ -20,25 +20,37 @@ import (
 	"t73f.de/r/sx/sxeval"
 )
 
-const beginName = "begin"
-
-// BeginS parses a sequence of expressions.
-var BeginS = sxeval.Special{
-	Name: beginName,
-	Fn:   ParseExprSeq,
+// ExprSeq is a TCO-optimized sequence of `sxeval.Expr`.
+type ExprSeq struct {
+	Front []sxeval.Expr
+	Last  sxeval.Expr
 }
 
 // ParseExprSeq parses a sequence of expressions.
 func ParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	var es ExprSeq
+	if err := doParseExprSeq(pf, args, &es); err != nil {
+		return nil, err
+	}
+	if len(es.Front) == 0 {
+		return es.Last, nil
+	}
+	return &BeginExpr{ExprSeq: es}, nil
+}
+
+// ParseExprSeq parses a sequence of expressions.
+func doParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) error {
 	if args == nil {
-		return sxeval.NilExpr, nil
+		es.Front = nil
+		es.Last = sxeval.NilExpr
+		return nil
 	}
 	var front []sxeval.Expr
 	var last sxeval.Expr
 	for node := args; ; {
 		ex, err := pf.Parse(node.Car())
 		if err != nil {
-			return nil, err
+			return err
 		}
 		cdr := node.Cdr()
 		if sx.IsNil(cdr) {
@@ -52,28 +64,72 @@ func ParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, erro
 		}
 		ex, err = pf.Parse(cdr)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		last = ex
 		break
 	}
-	return &BeginExpr{Front: front, Last: last}, nil
+	*es = ExprSeq{Front: front, Last: last}
+	return nil
+}
+
+// Unparse the expression sequence as an sx.Object
+func (es *ExprSeq) Unparse(sym *sx.Symbol) sx.Object {
+	obj := es.Last.Unparse()
+	for i := len(es.Front) - 1; i >= 0; i-- {
+		obj = sx.Cons(es.Front[i].Unparse(), obj)
+	}
+	return sx.Cons(sym, obj)
+}
+
+// Print the expression on the given writer.
+func (es *ExprSeq) Print(w io.Writer, prefix string) (int, error) {
+	length, err := io.WriteString(w, prefix)
+	if err != nil {
+		return length, err
+	}
+	var l int
+	for _, expr := range es.Front {
+		l, err = io.WriteString(w, " ")
+		length += l
+		if err != nil {
+			return length, err
+		}
+		l, err = expr.Print(w)
+		length += l
+		if err != nil {
+			return length, err
+		}
+	}
+	l, err = io.WriteString(w, " ")
+	length += l
+	if err != nil {
+		return length, err
+	}
+	l, err = es.Last.Print(w)
+	length += l
+	if err != nil {
+		return length, err
+	}
+	l, err = io.WriteString(w, "}")
+	length += l
+	return length, err
+}
+
+// ----- (begin ...)
+const beginName = "begin"
+
+// BeginS parses a sequence of expressions.
+var BeginS = sxeval.Special{
+	Name: beginName,
+	Fn:   ParseExprSeq,
 }
 
 // BeginExpr represents the begin form.
-type BeginExpr struct {
-	Front []sxeval.Expr
-	Last  sxeval.Expr
-}
+type BeginExpr struct{ ExprSeq }
 
 // Unparse the expression as an sx.Object
-func (be *BeginExpr) Unparse() sx.Object {
-	obj := be.Last.Unparse()
-	for i := len(be.Front) - 1; i >= 0; i-- {
-		obj = sx.Cons(be.Front[i].Unparse(), obj)
-	}
-	return sx.Cons(sx.MakeSymbol(beginName), obj)
-}
+func (be *BeginExpr) Unparse() sx.Object { return be.ExprSeq.Unparse(sx.MakeSymbol(beginName)) }
 
 // Improve the expression into a possible simpler one.
 func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
@@ -125,35 +181,4 @@ func (be *BeginExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.
 }
 
 // Print the expression on the given writer.
-func (be *BeginExpr) Print(w io.Writer) (int, error) {
-	length, err := io.WriteString(w, "{BEGIN")
-	if err != nil {
-		return length, err
-	}
-	var l int
-	for _, expr := range be.Front {
-		l, err = io.WriteString(w, " ")
-		length += l
-		if err != nil {
-			return length, err
-		}
-		l, err = expr.Print(w)
-		length += l
-		if err != nil {
-			return length, err
-		}
-	}
-	l, err = io.WriteString(w, " ")
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = be.Last.Print(w)
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = io.WriteString(w, "}")
-	length += l
-	return length, err
-}
+func (be *BeginExpr) Print(w io.Writer) (int, error) { return be.ExprSeq.Print(w, "{BEGIN}") }
