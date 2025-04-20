@@ -384,8 +384,6 @@ func printExpr(expr sxeval.Expr, level int) {
 		for _, arg := range e.Args {
 			printExpr(arg, level+1)
 		}
-	case sxeval.UnboundSymbolExpr:
-		fmt.Printf("UNBOUND %v\n", e.GetSymbol())
 	case sxeval.ObjExpr:
 		fmt.Printf("OBJ %T/%v\n", e.Obj, e.Obj)
 	case *sxbuiltins.LambdaExpr:

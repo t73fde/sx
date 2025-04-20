@@ -204,6 +204,9 @@ const (
 	dynLambdaName = "dyn-lambda"
 )
 
+// IsPure signals an expression that has no side effects.
+func (*LambdaExpr) IsPure() bool { return false }
+
 // Unparse the expression as an sx.Object
 func (le *LambdaExpr) Unparse() sx.Object {
 	expr := le.Expr.Unparse()

@@ -73,6 +73,16 @@ func doParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) err
 	return nil
 }
 
+// IsPure signals an expression that has no side effects.
+func (es *ExprSeq) IsPure() bool {
+	for _, expr := range es.Front {
+		if !expr.IsPure() {
+			return false
+		}
+	}
+	return es.Last.IsPure()
+}
+
 // Unparse the expression sequence as an sx.Object
 func (es *ExprSeq) Unparse(sym *sx.Symbol) sx.Object {
 	obj := es.Last.Unparse()
@@ -128,6 +138,9 @@ var BeginS = sxeval.Special{
 // BeginExpr represents the begin form.
 type BeginExpr struct{ ExprSeq }
 
+// IsPure signals an expression that has no side effects.
+func (be *BeginExpr) IsPure() bool { return be.ExprSeq.IsPure() }
+
 // Unparse the expression as an sx.Object
 func (be *BeginExpr) Unparse() sx.Object { return be.ExprSeq.Unparse(sx.MakeSymbol(beginName)) }
 
@@ -147,15 +160,9 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 
 	seq := make([]sxeval.Expr, 0, frontLen)
 	for _, expr := range be.Front {
-		if _, isConstObject := expr.(sxeval.ConstObjectExpr); isConstObject {
-			// A constant object has no side effect, it can be ignored in the sequence
-			continue
+		if !expr.IsPure() {
+			seq = append(seq, expr)
 		}
-		if _, isSymbol := expr.(sxeval.SymbolExpr); isSymbol {
-			// A symbol has no side effect, it can be ignored in the sequence
-			continue
-		}
-		seq = append(seq, expr)
 	}
 	if seqLen := len(seq); seqLen == 0 {
 		return last, nil

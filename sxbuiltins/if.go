@@ -72,6 +72,11 @@ type IfExpr struct {
 	False sxeval.Expr
 }
 
+// IsPure signals an expression that has no side effects.
+func (ife *IfExpr) IsPure() bool {
+	return ife.Test.IsPure() && ife.True.IsPure() && ife.False.IsPure()
+}
+
 // Unparse the expression as an sx.Object
 func (ife *IfExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(ifName), ife.Test.Unparse(), ife.True.Unparse(), ife.False.Unparse())

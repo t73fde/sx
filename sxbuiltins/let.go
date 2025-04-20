@@ -188,6 +188,9 @@ type LetExpr struct {
 	LetData
 }
 
+// IsPure signals an expression that has no side effects.
+func (*LetExpr) IsPure() bool { return false } // TODO: check pure-ness of binding-creation and pure-ness of body
+
 // Unparse the expression as an sx.Object
 func (le *LetExpr) Unparse() sx.Object { return le.LetData.Unparse(sx.MakeSymbol(letName)) }
 
@@ -254,6 +257,9 @@ type LetStarExpr struct {
 
 	numSymbols int // number of unique symbols, since symbols may be given multiple times in (let* ...)
 }
+
+// IsPure signals an expression that has no side effects.
+func (*LetStarExpr) IsPure() bool { return false } // TODO: check pure-ness: bindings, body
 
 // Unparse the expression as an sx.Object
 func (lse *LetStarExpr) Unparse() sx.Object { return lse.LetData.Unparse(sx.MakeSymbol(letStarName)) }
