@@ -83,5 +83,5 @@ var tcsLet = tTestCases{
 	{name: "let*-nested-0", src: "(let* ((a 1)) (let ((a 2)) a))", exp: "2"},
 	{name: "let*-no-nested", src: "(let* ((a 1)) (let ((a 2)) a) a)", exp: "1"},
 	{name: "let*-double-sym", src: "(let* ((a 1) (a 2)) a)", exp: "2"},
-	{name: "let*-multieval", src: "(let* ((a 3) (a (+ a 5))) (+ a 7))", exp: "15"},
+	{name: "let*-multieval", src: "(let* ((a 3) (b (+ a 4)) (a (+ a 5))) (+ a b))", exp: "15"},
 }

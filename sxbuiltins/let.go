@@ -252,7 +252,7 @@ var LetStarS = sxeval.Special{
 type LetStarExpr struct {
 	LetData
 
-	numSymbols int
+	numSymbols int // number of unique symbols, since symbols may be given multiple times in (let* ...)
 }
 
 // Unparse the expression as an sx.Object
@@ -260,8 +260,8 @@ func (lse *LetStarExpr) Unparse() sx.Object { return lse.LetData.Unparse(sx.Make
 
 // Improve the expression into a possible simpler one.
 func (lse *LetStarExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
-	if len(lse.Vals) == 0 {
-		return imp.Improve(lse.Body)
+	if len(lse.Vals) < 2 {
+		return (&LetExpr{LetData: lse.LetData}).Improve(imp)
 	}
 
 	letStarImp := imp
