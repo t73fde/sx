@@ -18,6 +18,31 @@ import (
 	"t73f.de/r/sx/sxeval"
 )
 
+// ----- Notes
+//
+// (map fn lst ...)
+//    works on lists;
+//    shortest list limits result;
+//    if one list is improper, all lists must have the same shape
+//
+// (seq-map fn seq ...)
+//    works on sequences;
+//    shortest sequence limits result (typically a list);
+//    improper lists are ignored
+//
+// (for-each fn seq ...)
+//    called for the side effect, returns some undefined value
+//
+// (filter pred seq)
+//    result is typically a list
+//
+// (map-filter fn-pred lst ...)
+//    fn-pred returns cons (val, bool), where bool==nil states to include val into result;
+//    cons can be re-used for building the result;
+//    no additional allocs compared to (map fn ...)
+//
+// -----
+
 // Map returns a list, where all member are the result of the given function
 // to all original list members.
 var Map = sxeval.Builtin{

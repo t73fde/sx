@@ -20,6 +20,18 @@ import (
 	"t73f.de/r/sx/sxeval"
 )
 
+// ----- Notes
+//
+// (begin1 expr1 expr2 ...)
+//    returns evaluation of expr1, but evaluates expr1, expr2 ... before that
+//    e.g. (begin1 n (set! n (+ n 1)))
+//
+// (begin2 expr1 expr2 expr3 ...)
+//    returns evaluation of expr2, but evaluates expr1, expr2, expr3 ... before that;
+//    often (begin2 (open) (process) (close))
+//
+// -----
+
 // ExprSeq is a TCO-optimized sequence of `sxeval.Expr`.
 type ExprSeq struct {
 	Front []sxeval.Expr
