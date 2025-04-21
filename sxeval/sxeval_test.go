@@ -130,6 +130,7 @@ func createBindingForTCO() *sxeval.Binding {
 		&sxbuiltins.Map, &sxbuiltins.List,
 		&sxbuiltins.NumberP, &sxbuiltins.SymbolP, &sxbuiltins.PairP,
 		&sxbuiltins.Cadr, &sxbuiltins.Caddr,
+		&sxbuiltins.Not,
 		&sxbuiltins.Error,
 	); err != nil {
 		panic(err)

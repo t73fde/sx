@@ -139,6 +139,8 @@ func (ife *IfExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		return falseExpr, nil
 	}
 
+	// TODO: optimize (if (not X) Y Z) ==> (if X Y Z) and restart (X may match (not E); may match nested if)
+
 	ife.Test = testExpr
 	ife.True = trueExpr
 	ife.False = falseExpr

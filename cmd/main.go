@@ -156,6 +156,7 @@ var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Map,                           // map
 	&sxbuiltins.Apply,                         // apply
 	&sxbuiltins.Fold, &sxbuiltins.FoldReverse, // fold, fold-reverse
+	&sxbuiltins.Not,                                   // not
 	&sxbuiltins.NumberP,                               // number?
 	&sxbuiltins.Add, &sxbuiltins.Sub, &sxbuiltins.Mul, // +, -, *
 	&sxbuiltins.Div, &sxbuiltins.Mod, // div, mod

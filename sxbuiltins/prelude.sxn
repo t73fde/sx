@@ -13,9 +13,8 @@
 
 ;; Following code assumes defined constants NIL and T
 
-;; Macros boolean and not
-(defmacro boolean (x) `(if ,x T NIL))
-(defmacro not (x) `(if ,x NIL T))
+;; Macro boolean
+(defmacro boolean (x) `(not (not ,x)))
 
 ;; Macros not== and not= to negate an equivalence
 (defmacro not== args `(not (== ,@args)))
