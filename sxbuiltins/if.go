@@ -97,6 +97,7 @@ func (ife *IfExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		return ife, err
 	}
 
+restart:
 	// Check for nested IfExpr in testExpr
 	//
 	// This might occur when macros are used, e.g.
@@ -139,7 +140,11 @@ func (ife *IfExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		return falseExpr, nil
 	}
 
-	// TODO: optimize (if (not X) Y Z) ==> (if X Y Z) and restart (X may match (not E); may match nested if)
+	// Optimize (if (not X) Y Z) ==> (if X Y Z) and restart (X may match (not E); may match nested if)
+	if bce, isBCE := testExpr.(*sxeval.BuiltinCall1Expr); isBCE && bce.Proc == &Not {
+		testExpr, trueExpr, falseExpr = bce.Arg, falseExpr, trueExpr
+		goto restart
+	}
 
 	ife.Test = testExpr
 	ife.True = trueExpr

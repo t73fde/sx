@@ -387,7 +387,7 @@ func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
 	case 0:
 		return imp.Improve(&builtinCall0Expr{bce.Proc})
 	case 1:
-		return imp.Improve(&builtinCall1Expr{bce.Proc, bce.Args[0]})
+		return imp.Improve(&BuiltinCall1Expr{bce.Proc, bce.Args[0]})
 	}
 	return bce, nil
 }
@@ -440,28 +440,28 @@ func (bce *builtinCall0Expr) Print(w io.Writer) (int, error) {
 	return ce.doPrint(w, "{BCALL-0 ")
 }
 
-// builtinCall1Expr calls a builtin with one arg and returns the resulting object.
-// It is an optimization of `CallExpr.`
-type builtinCall1Expr struct {
+// BuiltinCall1Expr calls a builtin with one arg and returns the resulting object.
+// It is an optimization of `CallExpr`. Do not create it outside this package.
+type BuiltinCall1Expr struct {
 	Proc *Builtin
 	Arg  Expr
 }
 
-func (bce *builtinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Arg) }
+func (bce *BuiltinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Arg) }
 
 // IsPure signals an expression that has no side effects.
-func (bce *builtinCall1Expr) IsPure() bool {
+func (bce *BuiltinCall1Expr) IsPure() bool {
 	return bce.Arg.IsPure() && bce.Proc.IsPure(sx.Vector{sx.Nil()})
 }
 
 // Unparse the expression back into a form object.
-func (bce *builtinCall1Expr) Unparse() sx.Object {
+func (bce *BuiltinCall1Expr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg}}
 	return ce.Unparse()
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *builtinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	val, err := env.Execute(bce.Arg, bind)
 	if err != nil {
 		return nil, err
@@ -472,7 +472,7 @@ func (bce *builtinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object
 }
 
 // Print the expression to a io.Writer.
-func (bce *builtinCall1Expr) Print(w io.Writer) (int, error) {
+func (bce *BuiltinCall1Expr) Print(w io.Writer) (int, error) {
 	ce := CallExpr{ObjExpr{bce.Proc}, []Expr{bce.Arg}}
 	return ce.doPrint(w, "{BCALL-1 ")
 }
