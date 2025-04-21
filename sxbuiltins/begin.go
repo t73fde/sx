@@ -28,9 +28,12 @@ type ExprSeq struct {
 
 // ParseExprSeq parses a sequence of expressions.
 func ParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	if args == nil {
+		return sxeval.NilExpr, nil
+	}
 	var be BeginExpr
-	if empty, err := doParseExprSeq(pf, args, &be.ExprSeq); err != nil || empty {
-		return sxeval.NilExpr, err
+	if err := doParseExprSeq(pf, args, &be.ExprSeq); err != nil {
+		return nil, err
 	}
 	if len(be.Front) == 0 {
 		return be.Last, nil
@@ -39,16 +42,13 @@ func ParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, erro
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func doParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) (bool, error) {
-	if args == nil {
-		return true, nil
-	}
+func doParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) error {
 	var front []sxeval.Expr
 	var last sxeval.Expr
 	for node := args; ; {
 		ex, err := pf.Parse(node.Car())
 		if err != nil {
-			return false, err
+			return err
 		}
 		cdr := node.Cdr()
 		if sx.IsNil(cdr) {
@@ -62,13 +62,13 @@ func doParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) (bo
 		}
 		ex, err = pf.Parse(cdr)
 		if err != nil {
-			return false, err
+			return err
 		}
 		last = ex
 		break
 	}
 	*es = ExprSeq{Front: front, Last: last}
-	return false, nil
+	return nil
 }
 
 // IsPure signals an expression that has no side effects.
@@ -196,9 +196,12 @@ const andName = "and"
 var AndS = sxeval.Special{
 	Name: andName,
 	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+		if args == nil {
+			return sxeval.ObjExpr{Obj: sx.T}, nil
+		}
 		var ae AndExpr
-		if empty, err := doParseExprSeq(pe, args, &ae.ExprSeq); err != nil || empty {
-			return sxeval.ObjExpr{Obj: sx.T}, err
+		if err := doParseExprSeq(pe, args, &ae.ExprSeq); err != nil {
+			return nil, err
 		}
 		return &ae, nil
 	},
