@@ -42,7 +42,7 @@ func LoadPrelude(root *sxeval.Binding) error {
 	if err := sxeval.BindSpecials(root, &DefMacroS, &QuasiquoteS, &IfS, &LetStarS, &BeginS); err != nil {
 		return err
 	}
-	if err := sxeval.BindBuiltins(root, &NullP, &Caar, &Cadar, &Cdr, &Car, &Equal); err != nil {
+	if err := sxeval.BindBuiltins(root, &NullP, &Cdr, &Car, &Equal); err != nil {
 		return err
 	}
 

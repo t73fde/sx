@@ -11,7 +11,7 @@
 ;;; SPDX-FileCopyrightText: 2023-present Detlef Stern
 ;;;----------------------------------------------------------------------------
 
-;; Following code assumes defined constants NIL and T
+;; Following code assumes defined constant and T
 
 ;; Macro boolean
 (defmacro boolean (x) `(not (not ,x)))
