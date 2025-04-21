@@ -90,6 +90,21 @@ func (es *ExprSeq) Unparse(sym *sx.Symbol) sx.Object {
 	return sx.Cons(sym, obj)
 }
 
+// ImproveSeq moves seq and last to the appropriate fields, if possible.
+// seq must have at least length 1.
+func (es *ExprSeq) ImproveSeq(seq []sxeval.Expr, last sxeval.Expr) (sxeval.Expr, bool) {
+	if seqLen := len(seq); seqLen == cap(es.Front) {
+		copy(es.Front, seq)
+	} else {
+		newFront := make([]sxeval.Expr, seqLen)
+		copy(newFront, seq)
+		es.Front = newFront
+	}
+	es.Last = last
+	return nil, false
+
+}
+
 // Print the expression on the given writer.
 func (es *ExprSeq) Print(w io.Writer, prefix string) (int, error) {
 	length, err := io.WriteString(w, prefix)
@@ -162,16 +177,10 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 			seq = append(seq, expr)
 		}
 	}
-	if seqLen := len(seq); seqLen == 0 {
+	if len(seq) == 0 {
 		return last, nil
-	} else if seqLen == cap(be.Front) {
-		copy(be.Front, seq)
-	} else {
-		newFront := make([]sxeval.Expr, seqLen)
-		copy(newFront, seq)
-		be.Front = newFront
 	}
-	be.Last = last
+	be.ExprSeq.ImproveSeq(seq, last)
 	return be, nil
 }
 
@@ -230,15 +239,23 @@ func (ae *AndExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		return ae, err
 	}
 
+	seq := make([]sxeval.Expr, 0, frontLen)
 	for _, expr := range ae.Front {
 		if objectExpr, isConstObject := sxeval.GetConstExpr(expr); isConstObject {
 			if sx.IsFalse(objectExpr.ConstObject()) {
-				return expr, nil
+				if len(seq) == 0 {
+					return expr, nil
+				}
+			} else {
+				continue // ignore True values
 			}
-			// TODO: ignore True values
 		}
+		seq = append(seq, expr)
 	}
-	ae.Last = last
+	if len(seq) == 0 {
+		return last, nil
+	}
+	ae.ExprSeq.ImproveSeq(seq, last)
 	return ae, nil
 }
 
@@ -301,15 +318,31 @@ func (oe *OrExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		return oe, err
 	}
 
+	oe.Front = append(oe.Front, last)
+	frontLen++
+
+	seq := make([]sxeval.Expr, 0, frontLen)
 	for _, expr := range oe.Front {
 		if objectExpr, isConstObject := sxeval.GetConstExpr(expr); isConstObject {
 			if sx.IsTrue(objectExpr.ConstObject()) {
-				return expr, nil
+				if len(seq) == 0 {
+					return expr, nil
+				}
+			} else {
+				continue // ignore False values
 			}
-			// TODO: ignore False values
 		}
+		seq = append(seq, expr)
 	}
-	oe.Last = last
+	if len(seq) == 0 {
+		return sxeval.NilExpr, nil
+	}
+	last = seq[len(seq)-1]
+	seq = seq[0 : len(seq)-1]
+	if len(seq) == 0 {
+		return last, nil
+	}
+	oe.ExprSeq.ImproveSeq(seq, last)
 	return oe, nil
 }
 
