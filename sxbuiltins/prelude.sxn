@@ -34,11 +34,3 @@
                   `(if ,the-cond
                        (begin ,@(cdr clause))
                        (cond ,@(cdr clauses)))))))
-
-;; or macro
-;;
-;; (or EXPR ...)
-(defmacro or args
-    (cond ((null? args)       NIL)
-          ((null? (cdr args)) (car args))
-          (T                  `(if ,(car args) T (or ,@(cdr args))))))

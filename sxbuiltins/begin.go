@@ -235,6 +235,7 @@ func (ae *AndExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 			if sx.IsFalse(objectExpr.ConstObject()) {
 				return expr, nil
 			}
+			// TODO: ignore True values
 		}
 	}
 	ae.Last = last
@@ -257,3 +258,74 @@ func (ae *AndExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Ob
 
 // Print the expression on the given writer.
 func (ae *AndExpr) Print(w io.Writer) (int, error) { return ae.ExprSeq.Print(w, "{AND") }
+
+// ----- (or ...)
+
+const orName = "or"
+
+// OrS parses a sequence of expressions that are reduced via logical or.
+var OrS = sxeval.Special{
+	Name: orName,
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+		if args == nil {
+			return sxeval.NilExpr, nil
+		}
+		var oe OrExpr
+		if err := doParseExprSeq(pe, args, &oe.ExprSeq); err != nil {
+			return nil, err
+		}
+		return &oe, nil
+	},
+}
+
+// OrExpr represents the or form.
+type OrExpr struct{ ExprSeq }
+
+// IsPure signals an expression that has no side effects.
+func (oe *OrExpr) IsPure() bool { return oe.ExprSeq.IsPure() }
+
+// Unparse the expression as an sx.Object
+func (oe *OrExpr) Unparse() sx.Object { return oe.ExprSeq.Unparse(sx.MakeSymbol(orName)) }
+
+// Improve the expression into a possible simpler one.
+func (oe *OrExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
+	last, err := imp.Improve(oe.Last)
+	if err != nil {
+		return oe, err
+	}
+	frontLen := len(oe.Front)
+	if frontLen == 0 {
+		return last, nil
+	}
+	if err = imp.ImproveSlice(oe.Front); err != nil {
+		return oe, err
+	}
+
+	for _, expr := range oe.Front {
+		if objectExpr, isConstObject := sxeval.GetConstExpr(expr); isConstObject {
+			if sx.IsTrue(objectExpr.ConstObject()) {
+				return expr, nil
+			}
+			// TODO: ignore False values
+		}
+	}
+	oe.Last = last
+	return oe, nil
+}
+
+// Compute the expression in a frame and return the result.
+func (oe *OrExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+	for _, e := range oe.Front {
+		obj, err := env.Execute(e, bind)
+		if err != nil {
+			return nil, err
+		}
+		if sx.IsTrue(obj) {
+			return obj, nil
+		}
+	}
+	return env.ExecuteTCO(oe.Last, bind)
+}
+
+// Print the expression on the given writer.
+func (oe *OrExpr) Print(w io.Writer) (int, error) { return oe.ExprSeq.Print(w, "{OR") }

@@ -109,10 +109,10 @@ var specials = []*sxeval.Special{
 	&sxbuiltins.DefDynS, &sxbuiltins.DynLambdaS, // defdyn, dyn-lambda
 	&sxbuiltins.DefMacroS,                  //  defmacro
 	&sxbuiltins.LetS, &sxbuiltins.LetStarS, // let, let*
-	&sxbuiltins.SetXS,  // set!
-	&sxbuiltins.IfS,    // if
-	&sxbuiltins.BeginS, // begin
-	&sxbuiltins.AndS,   // and
+	&sxbuiltins.SetXS,                 // set!
+	&sxbuiltins.IfS,                   // if
+	&sxbuiltins.BeginS,                // begin
+	&sxbuiltins.AndS, &sxbuiltins.OrS, // and, or
 }
 var builtins = []*sxeval.Builtin{
 	&sxbuiltins.Equal,                    // =
