@@ -359,7 +359,7 @@ func (bce *builtinCallExpr) IsPure() bool {
 		if !expr.IsPure() {
 			return false
 		}
-		args[i] = sx.Nil()
+		args[i] = sx.MakeUndefined()
 	}
 	return bce.Proc.IsPure(args)
 }
@@ -451,7 +451,7 @@ func (bce *BuiltinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.P
 
 // IsPure signals an expression that has no side effects.
 func (bce *BuiltinCall1Expr) IsPure() bool {
-	return bce.Arg.IsPure() && bce.Proc.IsPure(sx.Vector{sx.Nil()})
+	return bce.Arg.IsPure() && bce.Proc.IsPure(sx.Vector{sx.MakeUndefined()})
 }
 
 // Unparse the expression back into a form object.
