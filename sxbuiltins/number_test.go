@@ -21,8 +21,7 @@ func TestNumber(t *testing.T) {
 }
 
 var tcsNumber = tTestCases{
-	{
-		name:    "err-number?-0",
+	{name: "err-number?-0",
 		src:     "(number?)",
 		exp:     "{[{number?: exactly 1 arguments required, but none given}]}",
 		withErr: true,
@@ -35,15 +34,13 @@ var tcsNumber = tTestCases{
 	{name: "add-1", src: "(+ 1)", exp: "1"},
 	{name: "add-2", src: "(+ 3 4)", exp: "7"},
 	{name: "add-5", src: "(+ 3 4 5 10 21)", exp: "43"},
-	{
-		name:    "err-add-3",
+	{name: "err-add-3",
 		src:     "(+ 1 () 3)",
 		exp:     "{[{+: argument 2 is not a number, but *sx.Pair/()}]}",
 		withErr: true,
 	},
 
-	{
-		name:    "err-sub-0",
+	{name: "err-sub-0",
 		src:     "(-)",
 		exp:     "{[{-: at least 1 arguments required, but none given}]}",
 		withErr: true,
@@ -51,8 +48,12 @@ var tcsNumber = tTestCases{
 	{name: "sub-1", src: "(- 1)", exp: "-1"},
 	{name: "sub-2", src: "(- 3 4)", exp: "-1"},
 	{name: "sub-5", src: "(- 3 4 5 10 21)", exp: "-37"},
-	{
-		name:    "err-sub-3",
+	{name: "err-sub-2",
+		src:     "(- () 3)",
+		exp:     "{[{-: argument 1 is not a number, but *sx.Pair/()}]}",
+		withErr: true,
+	},
+	{name: "err-sub-3",
 		src:     "(- 1 () 3)",
 		exp:     "{[{-: argument 2 is not a number, but *sx.Pair/()}]}",
 		withErr: true,
@@ -62,27 +63,28 @@ var tcsNumber = tTestCases{
 	{name: "mul-1", src: "(* 3)", exp: "3"},
 	{name: "mul-2", src: "(* 3 4)", exp: "12"},
 	{name: "mul-5", src: "(* 3 4 5 10 21)", exp: "12600"},
-	{
-		name:    "err-mul-3",
+	{name: "err-mul-3",
 		src:     "(* 1 () 3)",
 		exp:     "{[{*: argument 2 is not a number, but *sx.Pair/()}]}",
 		withErr: true,
 	},
 
-	{
-		name:    "err-div-0",
+	{name: "err-div-0",
 		src:     "(div)",
 		exp:     "{[{div: exactly 2 arguments required, but none given}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-div-nonum",
+	{name: "err-div-nonum-1",
+		src:     "(div () 45)",
+		exp:     "{[{div: argument 1 is not a number, but *sx.Pair/()}]}",
+		withErr: true,
+	},
+	{name: "err-div-nonum-2",
 		src:     "(div 45 ())",
 		exp:     "{[{div: argument 2 is not a number, but *sx.Pair/()}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-div-zero",
+	{name: "err-div-zero",
 		src:     "(div 45 0)",
 		exp:     "{[{div: number zero not allowed}]}",
 		withErr: true,
@@ -90,20 +92,22 @@ var tcsNumber = tTestCases{
 	{name: "div-full", src: "(div 35 7)", exp: "5"},
 	{name: "div-rest", src: "(div 34 7)", exp: "4"},
 
-	{
-		name:    "err-mod-0",
+	{name: "err-mod-0",
 		src:     "(mod)",
 		exp:     "{[{mod: exactly 2 arguments required, but none given}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-mod-nonum",
+	{name: "err-mod-nonum-1",
+		src:     "(mod () 45)",
+		exp:     "{[{mod: argument 1 is not a number, but *sx.Pair/()}]}",
+		withErr: true,
+	},
+	{name: "err-mod-nonum-2",
 		src:     "(mod 45 ())",
 		exp:     "{[{mod: argument 2 is not a number, but *sx.Pair/()}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-mod-zero",
+	{name: "err-mod-zero",
 		src:     "(mod 45 0)",
 		exp:     "{[{mod: number zero not allowed}]}",
 		withErr: true,

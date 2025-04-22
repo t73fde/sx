@@ -21,8 +21,7 @@ func TestSymbol(t *testing.T) {
 }
 
 var tcsSymbol = tTestCases{
-	{
-		name:    "err-symbol?-0",
+	{name: "err-symbol?-0",
 		src:     "(symbol?)",
 		exp:     "{[{symbol?: exactly 1 arguments required, but none given}]}",
 		withErr: true,

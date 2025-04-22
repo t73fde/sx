@@ -91,6 +91,7 @@ func createBinding() *sxeval.Binding {
 	_ = sxbuiltins.BindAll(root)
 	root.Freeze()
 	env := root.MakeChildBinding("vars", len(objects))
+	_ = env.Bind(sx.MakeSymbol("ROOT"), root)
 	for _, obj := range objects {
 		if err := env.Bind(sx.MakeSymbol(obj.name), obj.obj); err != nil {
 			panic(err)
