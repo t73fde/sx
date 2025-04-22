@@ -64,6 +64,9 @@ type DefineExpr struct {
 	Val sxeval.Expr
 }
 
+// IsPure signals an expression that has no side effects.
+func (*DefineExpr) IsPure() bool { return false }
+
 // Unparse the expression as an sx.Object
 func (de *DefineExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(defvarName), de.Sym, de.Val.Unparse())
@@ -149,6 +152,9 @@ type SetXExpr struct {
 	Sym *sx.Symbol
 	Val sxeval.Expr
 }
+
+// IsPure signals an expression that has no side effects.
+func (*SetXExpr) IsPure() bool { return false }
 
 // Unparse the expression as an sx.Object
 func (se *SetXExpr) Unparse() sx.Object {

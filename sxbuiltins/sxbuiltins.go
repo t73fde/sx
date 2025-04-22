@@ -108,3 +108,81 @@ func GetExprObj(arg sx.Object, pos int) (*sxeval.ExprObj, error) {
 	}
 	return nil, fmt.Errorf("argument %d is not an expression, but %T/%v", pos+1, arg, arg)
 }
+
+// ----- BindAll
+
+// BindAll binds all builtins / spacial forms to the given binding.
+func BindAll(bind *sxeval.Binding) error {
+	err := sxeval.BindSpecials(bind,
+		&QuoteS, &QuasiquoteS, // quote, quasiquote
+		&UnquoteS, &UnquoteSplicingS, // unquote, unquote-splicing
+		&DefVarS,          // defvar
+		&DefunS, &LambdaS, // defun, lambda
+		&DefDynS, &DynLambdaS, // defdyn, dyn-lambda
+		&DefMacroS,       //  defmacro
+		&LetS, &LetStarS, // let, let*
+		&SetXS,      // set!
+		&IfS,        // if
+		&BeginS,     // begin
+		&AndS, &OrS, // and, or
+	)
+	if err != nil {
+		return err
+	}
+	err = sxeval.BindBuiltins(bind,
+		&Equal,         // =
+		&Identical,     // ==
+		&SymbolP,       // symbol?
+		&NullP,         // null?
+		&Cons,          // cons
+		&PairP, &ListP, // pair?, list?
+		&Car, &Cdr, // car, cdr
+		&Caar, &Cadr, &Cdar, &Cddr,
+		&Caaar, &Caadr, &Cadar, &Caddr,
+		&Cdaar, &Cdadr, &Cddar, &Cdddr,
+		&Caaaar, &Caaadr, &Caadar, &Caaddr,
+		&Cadaar, &Cadadr, &Caddar, &Cadddr,
+		&Cdaaar, &Cdaadr, &Cdadar, &Cdaddr,
+		&Cddaar, &Cddadr, &Cdddar, &Cddddr,
+		&Last,            // last
+		&List, &ListStar, // list, list*
+		&Append,    // append
+		&Reverse,   // reverse
+		&Assoc,     // assoc
+		&All, &Any, // all, any
+		&Map,                // map
+		&Apply,              // apply
+		&Fold, &FoldReverse, // fold, fold-reverse
+		&Not,             // not
+		&NumberP,         // number?
+		&Add, &Sub, &Mul, // +, -, *
+		&Div, &Mod, // div, mod
+		&NumLess, &NumLessEqual, // <, <=
+		&NumGreater, &NumGreaterEqual, // >, >=
+		&ToString, &Concat, // ->string, concat
+		&Vector, &VectorP, // vector, vector?
+		&VectorSetBang,        // vset!
+		&List2Vector,          // list->vector
+		&Length, &LengthEqual, // length, length=
+		&LengthLess, &LengthGreater, // length<, length>
+		&Nth,               // nth
+		&Sequence2List,     // seq->list
+		&CallableP,         // callable?
+		&Macroexpand0,      // macroexpand-0
+		&DefinedP,          // defined?
+		&CurrentBinding,    // current-binding
+		&ParentBinding,     // parent-binding
+		&Bindings,          // bindings
+		&BoundP,            // bound?
+		&BindingLookup,     // binding-lookup
+		&BindingResolve,    // binding-resolve
+		&Pretty,            // pp
+		&Error,             // error
+		&NotBoundError,     // not-bound-error
+		&ParseExpression,   // parse-expression
+		&UnparseExpression, // unparse-expression
+		&RunExpression,     // run-expression
+		&Eval,              // eval
+	)
+	return err
+}

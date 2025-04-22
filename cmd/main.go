@@ -118,72 +118,7 @@ func (me *mainEngine) AfterImprove(imp *sxeval.Improver, _, result sxeval.Expr, 
 	}
 }
 
-var specials = []*sxeval.Special{
-	&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
-	&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
-	&sxbuiltins.DefVarS,                     // defvar
-	&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
-	&sxbuiltins.DefDynS, &sxbuiltins.DynLambdaS, // defdyn, dyn-lambda
-	&sxbuiltins.DefMacroS, //  defmacro
-	&sxbuiltins.LetS,      // let
-	&sxbuiltins.SetXS,     // set!
-	&sxbuiltins.IfS,       // if
-	&sxbuiltins.BeginS,    // begin
-}
-
-var builtins = []*sxeval.Builtin{
-	&sxbuiltins.Equal,                    // =
-	&sxbuiltins.Identical,                // ==
-	&sxbuiltins.SymbolP,                  // symbol?
-	&sxbuiltins.NullP,                    // null?
-	&sxbuiltins.Cons,                     // cons
-	&sxbuiltins.PairP, &sxbuiltins.ListP, // pair?, list?
-	&sxbuiltins.Car, &sxbuiltins.Cdr, // car, cdr
-	&sxbuiltins.Caar, &sxbuiltins.Cadr, &sxbuiltins.Cdar, &sxbuiltins.Cddr,
-	&sxbuiltins.Caaar, &sxbuiltins.Caadr, &sxbuiltins.Cadar, &sxbuiltins.Caddr,
-	&sxbuiltins.Cdaar, &sxbuiltins.Cdadr, &sxbuiltins.Cddar, &sxbuiltins.Cdddr,
-	&sxbuiltins.Caaaar, &sxbuiltins.Caaadr, &sxbuiltins.Caadar, &sxbuiltins.Caaddr,
-	&sxbuiltins.Cadaar, &sxbuiltins.Cadadr, &sxbuiltins.Caddar, &sxbuiltins.Cadddr,
-	&sxbuiltins.Cdaaar, &sxbuiltins.Cdaadr, &sxbuiltins.Cdadar, &sxbuiltins.Cdaddr,
-	&sxbuiltins.Cddaar, &sxbuiltins.Cddadr, &sxbuiltins.Cdddar, &sxbuiltins.Cddddr,
-	&sxbuiltins.Last,                       // last
-	&sxbuiltins.List, &sxbuiltins.ListStar, // list, list*
-	&sxbuiltins.Append,               // append
-	&sxbuiltins.Reverse,              // reverse
-	&sxbuiltins.Assoc,                // assoc
-	&sxbuiltins.All, &sxbuiltins.Any, // all, any
-	&sxbuiltins.Map,                           // map
-	&sxbuiltins.Apply,                         // apply
-	&sxbuiltins.Fold, &sxbuiltins.FoldReverse, // fold, fold-reverse
-	&sxbuiltins.NumberP,                               // number?
-	&sxbuiltins.Add, &sxbuiltins.Sub, &sxbuiltins.Mul, // +, -, *
-	&sxbuiltins.Div, &sxbuiltins.Mod, // div, mod
-	&sxbuiltins.NumLess, &sxbuiltins.NumLessEqual, // <, <=
-	&sxbuiltins.NumGreater, &sxbuiltins.NumGreaterEqual, // >, >=
-	&sxbuiltins.ToString, &sxbuiltins.Concat, // ->string, concat
-	&sxbuiltins.Vector, &sxbuiltins.VectorP, // vector, vector?
-	&sxbuiltins.VectorSetBang,                   // vset!
-	&sxbuiltins.List2Vector,                     // list->vector
-	&sxbuiltins.Length, &sxbuiltins.LengthEqual, // length, length=
-	&sxbuiltins.LengthLess, &sxbuiltins.LengthGreater, // length<, length>
-	&sxbuiltins.Nth,               // nth
-	&sxbuiltins.Sequence2List,     // seq->list
-	&sxbuiltins.CallableP,         // callable?
-	&sxbuiltins.Macroexpand0,      // macroexpand-0
-	&sxbuiltins.DefinedP,          // defined?
-	&sxbuiltins.CurrentBinding,    // current-binding
-	&sxbuiltins.ParentBinding,     // parent-binding
-	&sxbuiltins.Bindings,          // bindings
-	&sxbuiltins.BoundP,            // bound?
-	&sxbuiltins.BindingLookup,     // binding-lookup
-	&sxbuiltins.BindingResolve,    // binding-resolve
-	&sxbuiltins.Pretty,            // pp
-	&sxbuiltins.Error,             // error
-	&sxbuiltins.NotBoundError,     // not-bound-error
-	&sxbuiltins.ParseExpression,   // parse-expression
-	&sxbuiltins.UnparseExpression, // unparse-expression
-	&sxbuiltins.RunExpression,     // run-expression
-	&sxbuiltins.Eval,              // eval
+var myBuiltins = []*sxeval.Builtin{
 	{
 		Name:     "panic",
 		MinArity: 0,
@@ -283,9 +218,9 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 func main() {
 	rd := sxreader.MakeReader(os.Stdin)
 
-	root := sxeval.MakeRootBinding(len(specials) + len(builtins) + 16)
-	_ = sxeval.BindSpecials(root, specials...)
-	_ = sxeval.BindBuiltins(root, builtins...)
+	root := sxeval.MakeRootBinding(256)
+	_ = sxbuiltins.BindAll(root)
+	_ = sxeval.BindBuiltins(root, myBuiltins...)
 	_ = root.Bind(sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined())
 	_ = root.Bind(sx.MakeSymbol("NIL"), sx.Nil())
 	_ = root.Bind(sx.MakeSymbol("T"), sx.MakeSymbol("T"))
@@ -384,8 +319,6 @@ func printExpr(expr sxeval.Expr, level int) {
 		for _, arg := range e.Args {
 			printExpr(arg, level+1)
 		}
-	case sxeval.UnboundSymbolExpr:
-		fmt.Printf("UNBOUND %v\n", e.GetSymbol())
 	case sxeval.ObjExpr:
 		fmt.Printf("OBJ %T/%v\n", e.Obj, e.Obj)
 	case *sxbuiltins.LambdaExpr:

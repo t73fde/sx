@@ -20,28 +20,26 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxeval"
+	"t73f.de/r/zero/set"
 )
 
-const letName = "let"
-
-// LetS parses the `(let (binding...) expr...)` syntax.`
-var LetS = sxeval.Special{
-	Name: letName,
-	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
-		return parseBindingsBody(pf, args)
-	},
+// LetData stores basic information about let bindings.
+type LetData struct {
+	Symbols []*sx.Symbol
+	Vals    []sxeval.Expr
+	Body    sxeval.Expr
 }
 
 var errNoBindingSpecAndBody = errors.New("binding spec and body missing")
 
-func parseBindingsBody(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+func parseBindingsBody(pf *sxeval.ParseEnvironment, args *sx.Pair, dupSyms bool, data *LetData) error {
 	if args == nil {
-		return nil, errNoBindingSpecAndBody
+		return errNoBindingSpecAndBody
 	}
 	argsCar := args.Car()
 	bindings, isBindings := sx.GetPair(argsCar)
 	if !isBindings {
-		return nil, fmt.Errorf("bindings must be a list, but is %T/%v", argsCar, argsCar)
+		return fmt.Errorf("bindings must be a list, but is %T/%v", argsCar, argsCar)
 	}
 	var symbols []*sx.Symbol
 	var objs []sx.Object
@@ -49,28 +47,34 @@ func parseBindingsBody(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr,
 		car := node.Car()
 		binding, isPair := sx.GetPair(car)
 		if !isPair || binding == nil {
-			return nil, fmt.Errorf("single binding must be a list, but is %T/%v", car, car)
+			return fmt.Errorf("single binding must be a list, but is %T/%v", car, car)
 		}
-		sym, err := GetParameterSymbol(symbols, binding.Car())
+		var sym *sx.Symbol
+		var err error
+		if dupSyms {
+			sym, err = GetParameterSymbol(nil, binding.Car())
+		} else {
+			sym, err = GetParameterSymbol(symbols, binding.Car())
+		}
 		if err != nil {
-			return nil, err
+			return err
 		}
 		pair, isPair := sx.GetPair(binding.Cdr())
 		if !isPair {
-			return nil, sx.ErrImproper{Pair: binding}
+			return sx.ErrImproper{Pair: binding}
 		}
 		if pair == nil {
-			return nil, fmt.Errorf("binding missing for symbol %v", sym)
+			return fmt.Errorf("binding missing for symbol %v", sym)
 		}
 		if cdr := pair.Cdr(); !sx.IsNil(cdr) {
-			return nil, fmt.Errorf("too many bindings for symbol %v: %T/%v", sym, cdr, cdr)
+			return fmt.Errorf("too many bindings for symbol %v: %T/%v", sym, cdr, cdr)
 		}
 		symbols = append(symbols, sym)
 		objs = append(objs, pair.Car())
 
 		next, isPair := sx.GetPair(node.Cdr())
 		if !isPair {
-			return nil, sx.ErrImproper{Pair: bindings}
+			return sx.ErrImproper{Pair: bindings}
 		}
 		node = next
 	}
@@ -80,45 +84,115 @@ func parseBindingsBody(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr,
 	for i, sym := range symbols {
 		expr, err := pf.Parse(objs[i])
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if err = letEnv.Bind(sym, sx.MakeUndefined()); err != nil {
-			return nil, err
+			return err
 		}
 		vals[i] = expr
 	}
 
 	bodyArgs, isPair := sx.GetPair(args.Cdr())
 	if !isPair {
-		return nil, sx.ErrImproper{Pair: args}
+		return sx.ErrImproper{Pair: args}
 	}
 	body, err := ParseExprSeq(letEnv, bodyArgs)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &LetExpr{
-		Symbols: symbols,
-		Vals:    vals,
-		Body:    body,
-	}, nil
+	*data = LetData{symbols, vals, body}
+	return nil
+}
+
+// Unparse the expression as an sx.Object
+func (ld *LetData) Unparse(letSym *sx.Symbol) sx.Object {
+	var bindings sx.ListBuilder
+	for i, sym := range ld.Symbols {
+		bindings.Add(sx.MakeList(sym, ld.Vals[i].Unparse()))
+	}
+	body := ld.Body.Unparse()
+	return sx.MakeList(letSym, bindings.List(), body)
+}
+
+// Print the expression on the given writer.
+func (ld *LetData) Print(w io.Writer, prefix string) (int, error) {
+	length, err := io.WriteString(w, prefix)
+	if err != nil {
+		return length, err
+	}
+	var l int
+	for i, sym := range ld.Symbols {
+		if i == 0 {
+			l, err = io.WriteString(w, "(")
+		} else {
+			l, err = io.WriteString(w, " (")
+		}
+		length += l
+		if err != nil {
+			return length, err
+		}
+		l, err = sym.Print(w)
+		length += l
+		if err != nil {
+			return length, err
+		}
+		l, err = io.WriteString(w, " ")
+		length += l
+		if err != nil {
+			return length, err
+		}
+		l, err = ld.Vals[i].Print(w)
+		length += l
+		if err != nil {
+			return length, err
+		}
+		l, err = io.WriteString(w, ")")
+		length += l
+		if err != nil {
+			return length, err
+		}
+	}
+	l, err = io.WriteString(w, ") ")
+	length += l
+	if err != nil {
+		return length, err
+	}
+	l, err = ld.Body.Print(w)
+	length += l
+	if err != nil {
+		return length, err
+	}
+	l, err = io.WriteString(w, "}")
+	length += l
+	return length, err
+}
+
+// ----- (let ...)
+
+const letName = "let"
+
+// LetS parses the `(let (binding...) expr...)` syntax.`
+var LetS = sxeval.Special{
+	Name: letName,
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+		var result LetExpr
+		if err := parseBindingsBody(pf, args, false, &result.LetData); err != nil {
+			return nil, err
+		}
+		return &result, nil
+	},
 }
 
 // LetExpr stores everything for a (let ...) expression.
 type LetExpr struct {
-	Symbols []*sx.Symbol
-	Vals    []sxeval.Expr
-	Body    sxeval.Expr
+	LetData
 }
 
+// IsPure signals an expression that has no side effects.
+func (*LetExpr) IsPure() bool { return false } // TODO: check pure-ness of binding-creation and pure-ness of body
+
 // Unparse the expression as an sx.Object
-func (le *LetExpr) Unparse() sx.Object {
-	var bindings sx.ListBuilder
-	for i, sym := range le.Symbols {
-		bindings.Add(sx.MakeList(sym, le.Vals[i].Unparse()))
-	}
-	body := le.Body.Unparse()
-	return sx.MakeList(sx.MakeSymbol(letName), bindings.List(), body)
-}
+func (le *LetExpr) Unparse() sx.Object { return le.LetData.Unparse(sx.MakeSymbol(letName)) }
 
 // Improve the expression into a possible simpler one.
 func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
@@ -158,54 +232,82 @@ func (le *LetExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Ob
 }
 
 // Print the expression on the given writer.
-func (le *LetExpr) Print(w io.Writer) (int, error) {
-	length, err := io.WriteString(w, "{LET (")
-	if err != nil {
-		return length, err
-	}
-	var l int
-	for i, sym := range le.Symbols {
-		if i == 0 {
-			l, err = io.WriteString(w, "(")
-		} else {
-			l, err = io.WriteString(w, " (")
+func (le *LetExpr) Print(w io.Writer) (int, error) { return le.LetData.Print(w, "{LET (") }
+
+// ----- (let* ...)
+
+const letStarName = "let*"
+
+// LetStarS parses the `(let* (binding...) expr...)` syntax.`
+var LetStarS = sxeval.Special{
+	Name: letStarName,
+	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+		var result LetStarExpr
+		if err := parseBindingsBody(pf, args, true, &result.LetData); err != nil {
+			return nil, err
 		}
-		length += l
-		if err != nil {
-			return length, err
-		}
-		l, err = sym.Print(w)
-		length += l
-		if err != nil {
-			return length, err
-		}
-		l, err = io.WriteString(w, " ")
-		length += l
-		if err != nil {
-			return length, err
-		}
-		l, err = le.Vals[i].Print(w)
-		length += l
-		if err != nil {
-			return length, err
-		}
-		l, err = io.WriteString(w, ")")
-		length += l
-		if err != nil {
-			return length, err
-		}
-	}
-	l, err = io.WriteString(w, ") ")
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = le.Body.Print(w)
-	length += l
-	if err != nil {
-		return length, err
-	}
-	l, err = io.WriteString(w, "}")
-	length += l
-	return length, err
+		result.numSymbols = set.New(result.Symbols...).Length()
+		return &result, nil
+	},
 }
+
+// LetStarExpr stores everything for a (let* ...) expression.
+type LetStarExpr struct {
+	LetData
+
+	numSymbols int // number of unique symbols, since symbols may be given multiple times in (let* ...)
+}
+
+// IsPure signals an expression that has no side effects.
+func (*LetStarExpr) IsPure() bool { return false } // TODO: check pure-ness: bindings, body
+
+// Unparse the expression as an sx.Object
+func (lse *LetStarExpr) Unparse() sx.Object { return lse.LetData.Unparse(sx.MakeSymbol(letStarName)) }
+
+// Improve the expression into a possible simpler one.
+func (lse *LetStarExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
+	if len(lse.Vals) < 2 {
+		return (&LetExpr{LetData: lse.LetData}).Improve(imp)
+	}
+
+	letStarImp := imp
+	for i, expr := range lse.Vals {
+		iexpr, err := letStarImp.Improve(expr)
+		if err != nil {
+			return lse, err
+		}
+		lse.Vals[i] = iexpr
+		if i == 0 {
+			letStarImp = imp.MakeChildImprover("let*-improve", lse.numSymbols)
+		}
+		_ = letStarImp.Bind(lse.Symbols[i])
+	}
+
+	expr, err := letStarImp.Improve(lse.Body)
+	if err == nil {
+		lse.Body = expr
+	}
+	return lse, err
+}
+
+// Compute the expression in a frame and return the result.
+func (lse *LetStarExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+	syms, vals := lse.Symbols, lse.Vals
+	letStarBind := bind
+	for i, sym := range syms {
+		obj, err := env.Execute(vals[i], letStarBind)
+		if err != nil {
+			return nil, err
+		}
+		if i == 0 {
+			letStarBind = bind.MakeChildBinding("let*", lse.numSymbols)
+		}
+		if err = letStarBind.Bind(sym, obj); err != nil {
+			return nil, err
+		}
+	}
+	return env.ExecuteTCO(lse.Body, letStarBind)
+}
+
+// Print the expression on the given writer.
+func (lse *LetStarExpr) Print(w io.Writer) (int, error) { return lse.LetData.Print(w, "{LET* (") }

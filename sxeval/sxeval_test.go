@@ -121,7 +121,7 @@ func createBindingForTCO() *sxeval.Binding {
 	}
 	if err := sxeval.BindSpecials(root,
 		&sxbuiltins.QuoteS, &sxbuiltins.DefVarS, &sxbuiltins.DefunS,
-		&sxbuiltins.LambdaS); err != nil {
+		&sxbuiltins.LetS, &sxbuiltins.LambdaS, &sxbuiltins.AndS); err != nil {
 		panic(err)
 	}
 	if err := sxeval.BindBuiltins(root,
@@ -130,6 +130,7 @@ func createBindingForTCO() *sxeval.Binding {
 		&sxbuiltins.Map, &sxbuiltins.List,
 		&sxbuiltins.NumberP, &sxbuiltins.SymbolP, &sxbuiltins.PairP,
 		&sxbuiltins.Cadr, &sxbuiltins.Caddr,
+		&sxbuiltins.Not,
 		&sxbuiltins.Error,
 	); err != nil {
 		panic(err)

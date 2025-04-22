@@ -24,6 +24,9 @@ import (
 
 // Expr are values that are computed for evaluation in an environment.
 type Expr interface {
+	// IsPure signals an expression with no side effects.
+	IsPure() bool
+
 	// Unparse the expression as an sx.Object
 	Unparse() sx.Object
 
@@ -72,6 +75,9 @@ var NilExpr = nilExpr{}
 
 type nilExpr struct{}
 
+// IsPure signals an expression that has no side effects.
+func (nilExpr) IsPure() bool { return true }
+
 // Unparse the expression back into a form object.
 func (nilExpr) Unparse() sx.Object { return sx.Nil() }
 
@@ -86,6 +92,9 @@ func (nilExpr) ConstObject() sx.Object         { return sx.Nil() }
 type ObjExpr struct {
 	Obj sx.Object
 }
+
+// IsPure signals an expression that has no side effects.
+func (ObjExpr) IsPure() bool { return true }
 
 // Unparse the expression back into a form object.
 func (oe ObjExpr) Unparse() sx.Object { return oe.Obj }
@@ -123,17 +132,11 @@ func (oe ObjExpr) ConstObject() sx.Object { return oe.Obj }
 
 // --- SymbolExpr -------------------------------------------------------------
 
-// SymbolExpr is the common interface of Expr that handles symbols.
-type SymbolExpr interface {
-	Expr
-	GetSymbol() *sx.Symbol
-}
-
 // UnboundSymbolExpr resolves the given symbol in an environment and returns its value.
 type UnboundSymbolExpr struct{ sym *sx.Symbol }
 
-// GetSymbol returns the symbol that is current not known to be bound to a value.
-func (use UnboundSymbolExpr) GetSymbol() *sx.Symbol { return use.sym }
+// IsPure signals an expression that has no side effects.
+func (UnboundSymbolExpr) IsPure() bool { return true }
 
 // Unparse the expression back into a form object.
 func (use UnboundSymbolExpr) Unparse() sx.Object { return use.sym }
@@ -175,8 +178,8 @@ type resolveSymbolExpr struct {
 	skip int
 }
 
-// GetSymbol returns the symbol to be resolved.
-func (rse resolveSymbolExpr) GetSymbol() *sx.Symbol { return rse.sym }
+// IsPure signals an expression that has no side effects.
+func (resolveSymbolExpr) IsPure() bool { return true }
 
 // Unparse the expression back into a form object.
 func (rse resolveSymbolExpr) Unparse() sx.Object { return rse.sym }
@@ -201,8 +204,8 @@ type lookupSymbolExpr struct {
 	lvl int
 }
 
-// GetSymbol returns the symbol to be looked up.
-func (lse *lookupSymbolExpr) GetSymbol() *sx.Symbol { return lse.sym }
+// IsPure signals an expression that has no side effects.
+func (*lookupSymbolExpr) IsPure() bool { return true }
 
 // Unparse the expression back into a form object.
 func (lse *lookupSymbolExpr) Unparse() sx.Object { return lse.sym }
@@ -229,6 +232,9 @@ type CallExpr struct {
 }
 
 func (ce *CallExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
+
+// IsPure signals an expression that has no side effects.
+func (*CallExpr) IsPure() bool { return false }
 
 // Unparse the expression back into a form object.
 func (ce *CallExpr) Unparse() sx.Object {
@@ -344,6 +350,18 @@ type builtinCallExpr struct {
 
 func (bce *builtinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
 
+// IsPure signals an expression that has no side effects.
+func (bce *builtinCallExpr) IsPure() bool {
+	args := make(sx.Vector, len(bce.Args))
+	for i, expr := range bce.Args {
+		if !expr.IsPure() {
+			return false
+		}
+		args[i] = sx.Nil()
+	}
+	return bce.Proc.IsPure(args)
+}
+
 // Unparse the expression back into a form object.
 func (bce *builtinCallExpr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: bce.Args}
@@ -367,7 +385,7 @@ func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
 	case 0:
 		return imp.Improve(&builtinCall0Expr{bce.Proc})
 	case 1:
-		return imp.Improve(&builtinCall1Expr{bce.Proc, bce.Args[0]})
+		return imp.Improve(&BuiltinCall1Expr{bce.Proc, bce.Args[0]})
 	}
 	return bce, nil
 }
@@ -398,6 +416,9 @@ type builtinCall0Expr struct {
 
 func (bce *builtinCall0Expr) String() string { return fmt.Sprintf("%v", bce.Proc) }
 
+// IsPure signals an expression that has no side effects.
+func (bce *builtinCall0Expr) IsPure() bool { return bce.Proc.IsPure(nil) }
+
 // Unparse the expression back into a form object.
 func (bce *builtinCall0Expr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: nil}
@@ -417,23 +438,28 @@ func (bce *builtinCall0Expr) Print(w io.Writer) (int, error) {
 	return ce.doPrint(w, "{BCALL-0 ")
 }
 
-// builtinCall1Expr calls a builtin with one arg and returns the resulting object.
-// It is an optimization of `CallExpr.`
-type builtinCall1Expr struct {
+// BuiltinCall1Expr calls a builtin with one arg and returns the resulting object.
+// It is an optimization of `CallExpr`. Do not create it outside this package.
+type BuiltinCall1Expr struct {
 	Proc *Builtin
 	Arg  Expr
 }
 
-func (bce *builtinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Arg) }
+func (bce *BuiltinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Arg) }
+
+// IsPure signals an expression that has no side effects.
+func (bce *BuiltinCall1Expr) IsPure() bool {
+	return bce.Arg.IsPure() && bce.Proc.IsPure(sx.Vector{sx.Nil()})
+}
 
 // Unparse the expression back into a form object.
-func (bce *builtinCall1Expr) Unparse() sx.Object {
+func (bce *BuiltinCall1Expr) Unparse() sx.Object {
 	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg}}
 	return ce.Unparse()
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *builtinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	val, err := env.Execute(bce.Arg, bind)
 	if err != nil {
 		return nil, err
@@ -444,7 +470,7 @@ func (bce *builtinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object
 }
 
 // Print the expression to a io.Writer.
-func (bce *builtinCall1Expr) Print(w io.Writer) (int, error) {
+func (bce *BuiltinCall1Expr) Print(w io.Writer) (int, error) {
 	ce := CallExpr{ObjExpr{bce.Proc}, []Expr{bce.Arg}}
 	return ce.doPrint(w, "{BCALL-1 ")
 }

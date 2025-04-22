@@ -11,24 +11,14 @@
 ;;; SPDX-FileCopyrightText: 2023-present Detlef Stern
 ;;;----------------------------------------------------------------------------
 
-;; Following code assumes defined constants NIL and T
+;; Following code assumes defined constant and T
 
-;; Macros boolean and not
-(defmacro boolean (x) `(if ,x T NIL))
-(defmacro not (x) `(if ,x NIL T))
+;; Macro boolean
+(defmacro boolean (x) `(not (not ,x)))
 
 ;; Macros not== and not= to negate an equivalence
 (defmacro not== args `(not (== ,@args)))
 (defmacro not= args `(not (= ,@args)))
-
-;; let* macro
-;;
-;; (let* (BINDING ...) EXPR ...), where SYMBOL may occur in later bindings.
-(defmacro let* (bindings . body)
-    (if (null? bindings)
-        `(begin ,@body)
-        `(let ((,(caar bindings) ,(cadar bindings)))
-               (let* ,(cdr bindings) ,@body))))
 
 ;; cond macro
 ;;
@@ -43,20 +33,3 @@
                   `(if ,the-cond
                        (begin ,@(cdr clause))
                        (cond ,@(cdr clauses)))))))
-
-;; and macro
-;;
-;; (and EXPR ...)
-(defmacro and args
-    (cond ((null? args)       T)
-          ((null? (cdr args)) (car args))
-          (T                  `(if ,(car args) (and ,@(cdr args))))))
-
-
-;; or macro
-;;
-;; (or EXPR ...)
-(defmacro or args
-    (cond ((null? args)       NIL)
-          ((null? (cdr args)) (car args))
-          (T                  `(if ,(car args) T (or ,@(cdr args))))))
