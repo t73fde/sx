@@ -50,9 +50,6 @@ var Map = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: func(args sx.Vector) bool {
-		if len(args) < 2 {
-			return false
-		}
 		// fn must be checked first, because it is an error, if argument 0 is
 		// not a callable, even if the list is empty and fn will never be called.
 		fn, err := GetCallable(args[0], 0)
