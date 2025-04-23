@@ -292,8 +292,42 @@ func (ae *AndExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compile the expression.
-func (ae *AndExpr) Compile(*sxeval.Compiler, bool) error {
-	return sxeval.MissingCompileError{Expr: ae}
+func (ae *AndExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
+	jmpPatches := make([]sxeval.Patch, len(ae.Front))
+	for i, expr := range ae.Front {
+		if err := sxc.Compile(expr, false); err != nil {
+			return err
+		}
+		jmpPatches[i] = sxc.EmitJumpTopFalse()
+		sxc.AdjustStack(-1)
+	}
+	if err := sxc.Compile(ae.Last, tailPos); err != nil {
+		return err
+	}
+	for _, patch := range jmpPatches {
+		patch()
+	}
+	return nil
+}
+
+// compileForIf is called by compilation of (if (and ...) ... ...)
+func (ae *AndExpr) compileForIf(sxc *sxeval.Compiler) (sxeval.Patch, error) {
+	jmpPatches := make([]sxeval.Patch, len(ae.Front)+1)
+	for i, expr := range ae.Front {
+		if err := sxc.Compile(expr, false); err != nil {
+			return nil, err
+		}
+		jmpPatches[i] = sxc.EmitJumpPopFalse()
+	}
+	if err := sxc.Compile(ae.Last, false); err != nil {
+		return nil, err
+	}
+	jmpPatches[len(jmpPatches)-1] = sxc.EmitJumpPopFalse()
+	return func() {
+		for _, patch := range jmpPatches {
+			patch()
+		}
+	}, nil
 }
 
 // Compute the expression in a frame and return the result.
@@ -384,8 +418,22 @@ func (oe *OrExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compile the expression.
-func (oe *OrExpr) Compile(*sxeval.Compiler, bool) error {
-	return sxeval.MissingCompileError{Expr: oe}
+func (oe *OrExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
+	jmpPatches := make([]func(), len(oe.Front))
+	for i, expr := range oe.Front {
+		if err := sxc.Compile(expr, false); err != nil {
+			return err
+		}
+		jmpPatches[i] = sxc.EmitJumpTopTrue()
+		sxc.AdjustStack(-1)
+	}
+	if err := sxc.Compile(oe.Last, tailPos); err != nil {
+		return err
+	}
+	for _, patch := range jmpPatches {
+		patch()
+	}
+	return nil
 }
 
 // Compute the expression in a frame and return the result.

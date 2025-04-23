@@ -154,10 +154,25 @@ restart:
 
 // Compile the expression.
 func (ife *IfExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
-	if err := sxc.Compile(ife.Test, false); err != nil {
-		return err
+
+	var condPatch func()
+	andExpr, isIfAnd := ife.Test.(*AndExpr)
+	if isIfAnd {
+		// If ife.Test is an (and a b ...), the "jmpPatches" of the compilation of
+		// (and) should point to ife.False. This removes execution of JumpPopFalse
+		// if one but the last element of (and) is False.
+		var err error
+		condPatch, err = andExpr.compileForIf(sxc)
+		if err != nil {
+			return err
+		}
+	} else {
+		if err := sxc.Compile(ife.Test, false); err != nil {
+			return err
+		}
+		condPatch = sxc.EmitJumpPopFalse()
 	}
-	condPatch := sxc.EmitJumpFalse()
+
 	if err := sxc.Compile(ife.True, tailPos); err != nil {
 		return err
 	}

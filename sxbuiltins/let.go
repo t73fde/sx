@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxeval"
@@ -335,8 +336,44 @@ func (lse *LetStarExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compile the expression.
-func (lse *LetStarExpr) Compile(*sxeval.Compiler, bool) error {
-	return sxeval.MissingCompileError{Expr: lse}
+func (lse *LetStarExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
+	// assert len(lse.Vals) == len(lse.Symbols) >= 2
+	// if len(lse.Vals) < 2 it would have be reduced to (let ...) by Improve
+
+	if err := sxc.Compile(lse.Vals[0], false); err != nil {
+		return err
+	}
+	syms, numSymbols := lse.Symbols, lse.numSymbols
+	sxc.AdjustStack(-1)
+	sxc.Emit(func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		letSBind := bind.MakeChildBinding("let*", numSymbols)
+		if err := letSBind.Bind(syms[0], env.Pop()); err != nil {
+			return err
+		}
+		return sxeval.SwitchBinding(env, letSBind)
+	}, "LET*", strconv.Itoa(numSymbols), syms[0].String())
+
+	for i, val := range lse.Vals[1:] {
+		if err := sxc.Compile(val, false); err != nil {
+			return nil
+		}
+		sxc.AdjustStack(-1)
+		sxc.Emit(func(env *sxeval.Environment, bind *sxeval.Binding) error {
+			return bind.Bind(syms[i+1], env.Pop())
+		}, "BIND*", syms[i+1].String())
+	}
+	if err := sxc.Compile(lse.Body, tailPos); err != nil {
+		return err
+	}
+	if !tailPos {
+		sxc.Emit(func(env *sxeval.Environment, bind *sxeval.Binding) error {
+			// For (let* ...), the binding is always the parent binding that
+			// must be restored. Reason: (let ...) bindings are always
+			// hierarchical.
+			return sxeval.SwitchBinding(env, bind.Parent())
+		}, "RESTORE-PARENT-BIND", fmt.Sprintf("%v", syms))
+	}
+	return nil
 }
 
 // Compute the expression in a frame and return the result.

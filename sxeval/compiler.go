@@ -135,6 +135,12 @@ func (sxc *Compiler) EmitPush(val sx.Object) {
 	}
 }
 
+// EmitPop emits code to remove TOS.
+func (sxc *Compiler) EmitPop() {
+	sxc.AdjustStack(-1)
+	sxc.Emit(func(env *Environment, _ *Binding) error { env.Pop(); return nil }, "POP")
+}
+
 // EmitKill emits code to remove some TOS elements.
 func (sxc *Compiler) EmitKill(num int) {
 	if num > 0 {
@@ -146,16 +152,20 @@ func (sxc *Compiler) EmitKill(num int) {
 // NopInstruction is an empty intruction. It does nothing.
 func NopInstruction(*Environment, *Binding) error { return nil }
 
-// EmitJumpFalse emits some preliminary code to jump if TOS is a false value.
+// Patch is a function that patches a previous jump instruction. Used for
+// jumping forward.
+type Patch func()
+
+// EmitJumpPopFalse emits some preliminary code to jump if popped TOS is a false value.
 // It returns a patch function to update the jump target.
-func (sxc *Compiler) EmitJumpFalse() func() {
+func (sxc *Compiler) EmitJumpPopFalse() Patch {
 	sxc.AdjustStack(-1)
 	pc := len(sxc.program)
-	sxc.Emit(NopInstruction, "JUMP-FALSE", strconv.Itoa(pc), "<- to be patched")
+	sxc.Emit(NopInstruction, "JUMP-POP-FALSE", strconv.Itoa(pc), "<- to be patched")
 	return func() {
 		pos := len(sxc.program)
 		if ob := sxc.observer; ob != nil {
-			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-FALSE", strconv.Itoa(pos))
+			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-POP-FALSE", strconv.Itoa(pos))
 		}
 		sxc.program[pc] = func(env *Environment, _ *Binding) error {
 			if val := env.Pop(); sx.IsFalse(val) {
@@ -166,9 +176,47 @@ func (sxc *Compiler) EmitJumpFalse() func() {
 	}
 }
 
+// EmitJumpTopFalse emits some preliminary code to jump if non-popped TOS is a false value.
+// It returns a patch function to update the jump target.
+func (sxc *Compiler) EmitJumpTopFalse() Patch {
+	pc := len(sxc.program)
+	sxc.Emit(NopInstruction, "JUMP-TOP-FALSE", strconv.Itoa(pc), "<- to be patched")
+	return func() {
+		pos := len(sxc.program)
+		if ob := sxc.observer; ob != nil {
+			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-TOP-FALSE", strconv.Itoa(pos))
+		}
+		sxc.program[pc] = func(env *Environment, _ *Binding) error {
+			if val := env.Top(); sx.IsFalse(val) {
+				return jumpToError{pos: pos}
+			}
+			return nil
+		}
+	}
+}
+
+// EmitJumpTopTrue emits some preliminary code to jump if non-popped TOS is a true value.
+// It returns a patch function to update the jump target.
+func (sxc *Compiler) EmitJumpTopTrue() Patch {
+	pc := len(sxc.program)
+	sxc.Emit(NopInstruction, "JUMP-TOP-TRUE", strconv.Itoa(pc), "<- to be patched")
+	return func() {
+		pos := len(sxc.program)
+		if ob := sxc.observer; ob != nil {
+			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-TOP-TRUE", strconv.Itoa(pos))
+		}
+		sxc.program[pc] = func(env *Environment, _ *Binding) error {
+			if val := env.Top(); sx.IsTrue(val) {
+				return jumpToError{pos: pos}
+			}
+			return nil
+		}
+	}
+}
+
 // EmitJump emits some preliminary code to jump unconditionally.
 // It returns a patch function to update the jump target.
-func (sxc *Compiler) EmitJump() func() {
+func (sxc *Compiler) EmitJump() Patch {
 	pc := len(sxc.program)
 	sxc.Emit(NopInstruction, "JUMP", strconv.Itoa(pc), "<- to be patched")
 	return func() {
