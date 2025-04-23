@@ -24,5 +24,26 @@ var tcsBegin = tTestCases{
 	{name: "begin-0", src: "(begin)", exp: "()"},
 	{name: "begin-1", src: "(begin 1)", exp: "1"},
 	{name: "begin-2", src: "(begin 1 2)", exp: "2"},
+	{name: "begin-10", src: "(begin (apply car '((1 2))) 1 2 3 4 5 6 7 8 9)", exp: "9"},
 	{name: "begin-cons", src: "(begin 1 2 . 3)", exp: "3"},
+
+	// (and ...)
+	{name: "and-0", src: "(and)", exp: "T"},
+	{name: "and-T", src: "(and 3)", exp: "3"},
+	{name: "and-NIL", src: "(and ())", exp: "()"},
+	{name: "and-T-T", src: "(and 3 4)", exp: "4"},
+	{name: "and-T-T-T", src: "(and (apply car '((1 2))) 3 4)", exp: "4"},
+	{name: "and-T-NIL", src: "(and 3 \"\")", exp: "\"\""},
+	{name: "and-T-NIL-T", src: "(and 3 \"\" 7)", exp: "\"\""},
+	{name: "and-NIL-T", src: "(and NIL 4)", exp: "()"},
+
+	// (or ...)
+	{name: "or-0", src: "(or)", exp: "()"},
+	{name: "or-T", src: "(or 3)", exp: "3"},
+	{name: "or-NIL", src: "(or ())", exp: "()"},
+	{name: "or-F-F", src: "(or () ())", exp: "()"},
+	{name: "or-F-T", src: "(or () (apply car '((1 2))))", exp: "1"},
+	{name: "or-NIL-T-T-T", src: "(or () (apply car '((1 2))) (or (apply car '((3 2)))) 4)", exp: "1"},
+	{name: "or-T-NIL", src: "(or 3 \"\")", exp: "3"},
+	{name: "or-NIL-T", src: "(or NIL 4 5)", exp: "4"},
 }

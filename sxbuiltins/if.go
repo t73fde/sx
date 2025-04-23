@@ -72,6 +72,11 @@ type IfExpr struct {
 	False sxeval.Expr
 }
 
+// IsPure signals an expression that has no side effects.
+func (ife *IfExpr) IsPure() bool {
+	return ife.Test.IsPure() && ife.True.IsPure() && ife.False.IsPure()
+}
+
 // Unparse the expression as an sx.Object
 func (ife *IfExpr) Unparse() sx.Object {
 	return sx.MakeList(sx.MakeSymbol(ifName), ife.Test.Unparse(), ife.True.Unparse(), ife.False.Unparse())
@@ -92,6 +97,7 @@ func (ife *IfExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		return ife, err
 	}
 
+restart:
 	// Check for nested IfExpr in testExpr
 	//
 	// This might occur when macros are used, e.g.
@@ -132,6 +138,12 @@ func (ife *IfExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 			return trueExpr, nil
 		}
 		return falseExpr, nil
+	}
+
+	// Optimize (if (not X) Y Z) ==> (if X Y Z) and restart (X may match (not E); may match nested if)
+	if bce, isBCE := testExpr.(*sxeval.BuiltinCall1Expr); isBCE && bce.Proc == &Not {
+		testExpr, trueExpr, falseExpr = bce.Arg, falseExpr, trueExpr
+		goto restart
 	}
 
 	ife.Test = testExpr

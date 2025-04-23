@@ -250,6 +250,9 @@ type ProgramExpr struct {
 	source    Expr // Source of program
 }
 
+// IsPure signals an expression that has no side effects.
+func (cpe *ProgramExpr) IsPure() bool { return cpe.source.IsPure() }
+
 // Unparse the expression as an sx.Object
 func (cpe *ProgramExpr) Unparse() sx.Object { return &ExprObj{expr: cpe} }
 

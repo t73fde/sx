@@ -35,9 +35,6 @@ func (v Vector) IsAtom() bool { return len(v) == 0 }
 
 // IsEqual compares the vector with another object to have the same content.
 func (v Vector) IsEqual(other Object) bool {
-	if Object(v) == other {
-		return true
-	}
 	if len(v) == 0 {
 		return other.IsNil()
 	}

@@ -23,8 +23,7 @@ func TestMacro(t *testing.T) {
 var tcsMacro = tTestCases{
 	{name: "err-defmacro-0", src: "(defmacro)", exp: "{[{defmacro: no arguments given}]}", withErr: true},
 	{name: "err-defmacro-a", src: "(defmacro a)", exp: "{[{defmacro: parameter spec and body missing}]}", withErr: true},
-	{
-		name:      "defmacro-inc",
+	{name: "defmacro-inc",
 		src:       "(defmacro inc (var) `(set! ,var (+ ,var 1))) (defvar a 0) (inc a) (inc a)",
 		exp:       "#<macro:inc> 0 1 2",
 		nocompare: true,
@@ -35,8 +34,7 @@ var tcsMacro = tTestCases{
 		exp:       "#<macro:inc> (set! a (+ a 1))",
 		nocompare: true,
 	},
-	{
-		name:      "defmacro-eq-same",
+	{name: "defmacro-eq-same",
 		src:       "(defmacro inc1 (var) `(set! ,var (+ ,var 1))) (== inc1 inc1) (= inc1 inc1)",
 		exp:       "#<macro:inc1> T T",
 		nocompare: true,

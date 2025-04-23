@@ -21,26 +21,22 @@ func TestDefine(t *testing.T) {
 }
 
 var tcsDefine = tTestCases{
-	{
-		name:    "err-defvar-0",
+	{name: "err-defvar-0",
 		src:     "(defvar)",
 		exp:     "{[{defvar: need at least two arguments}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-defvar-1",
+	{name: "err-defvar-1",
 		src:     "(defvar 1)",
 		exp:     "{[{defvar: argument 1 must be a symbol, but is: sx.Int64/1}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-defvar-1a",
+	{name: "err-defvar-1a",
 		src:     "(defvar a)",
 		exp:     "{[{defvar: argument 2 missing}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-defvar-a-1",
+	{name: "err-defvar-a-1",
 		src:     "(defvar a . 1)",
 		exp:     "{[{defvar: argument 2 must be a proper list}]}",
 		withErr: true,
@@ -54,27 +50,28 @@ func TestSetX(t *testing.T) {
 }
 
 var tcsSetX = tTestCases{
-	{
-		name:    "err-set!-0",
+	{name: "err-set!-0",
 		src:     "(set!)",
 		exp:     "{[{set!: need at least two arguments}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-set!-1",
+	{name: "err-set!-1",
 		src:     "(set! 1)",
 		exp:     "{[{set!: argument 1 must be a symbol, but is: sx.Int64/1}]}",
 		withErr: true,
 	},
 	{name: "err-set!-1a", src: "(set! a)", exp: "{[{set!: argument 2 missing}]}", withErr: true},
-	{
-		name:    "err-set!-a-1",
+	{name: "err-set!-a-1",
 		src:     "(set! a . 1)",
 		exp:     "{[{set!: argument 2 must be a proper list, but is: sx.Int64/1}]}",
 		withErr: true,
 	},
-	{
-		name:    "set!-unknown-1",
+	{name: "err-set!-a-set!",
+		src:     "(set! a (set!))",
+		exp:     "{[{set!: need at least two arguments}]}",
+		withErr: true,
+	},
+	{name: "set!-unknown-1",
 		src:     "(set! unknown 1)",
 		exp:     `{[{symbol "unknown" not bound in "set!-unknown-1"->"vars"->"root"}]}`,
 		withErr: true,

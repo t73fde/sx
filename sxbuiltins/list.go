@@ -236,9 +236,6 @@ var Append = sxeval.Builtin{
 		return lst, err
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		if len(args) == 0 {
-			return sx.Nil(), nil
-		}
 		lastList := len(args) - 1
 		lsts := make([]*sx.Pair, lastList)
 		for i := range lastList {

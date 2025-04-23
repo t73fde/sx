@@ -366,6 +366,9 @@ func getUnquoteObj(sym *sx.Symbol, lst *sx.Pair) (sx.Object, error) {
 // MakeListExpr is an expression to store a list with exactly one element.
 type MakeListExpr struct{ Elem sxeval.Expr }
 
+// IsPure signals an expression that has no side effects.
+func (mle MakeListExpr) IsPure() bool { return mle.Elem.IsPure() }
+
 // Unparse the expression as an sx.Object
 func (mle MakeListExpr) Unparse() sx.Object { return sx.MakeList(mle.Elem.Unparse()) }
 

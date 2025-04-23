@@ -14,6 +14,7 @@
 package sx_test
 
 import (
+	"slices"
 	"testing"
 
 	"t73f.de/r/sx"
@@ -281,5 +282,15 @@ func TestListBuilder(t *testing.T) {
 	}
 	if !lst.IsEqual(exp) {
 		t.Errorf("%v!=%v", lst, exp)
+	}
+}
+
+func TestListBuilderCollect(t *testing.T) {
+	var lb sx.ListBuilder
+	v := sx.Vector{sx.MakeSymbol("a"), sx.MakeSymbol("b")}
+	lb.Collect(slices.Values(v))
+	exp := sx.MakeList(sx.MakeSymbol("a"), sx.MakeSymbol("b"))
+	if got := lb.List(); !got.IsEqual(exp) {
+		t.Errorf("list should be %v, but got %v", exp, got)
 	}
 }

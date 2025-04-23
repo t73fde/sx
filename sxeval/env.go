@@ -219,6 +219,9 @@ type applyExpr struct {
 
 func (ce *applyExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
 
+// IsPure signals an expression that has no side effects.
+func (*applyExpr) IsPure() bool { return false }
+
 func (ce *applyExpr) Unparse() sx.Object {
 	args := sx.MakeList(ce.Args...)
 	return args.Cons(ce.Proc.(sx.Object))
