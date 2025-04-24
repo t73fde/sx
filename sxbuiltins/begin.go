@@ -104,7 +104,7 @@ func (es *ExprSeq) Unparse(sym *sx.Symbol) sx.Object {
 
 // ImproveSeq moves seq and last to the appropriate fields, if possible.
 // seq must have at least length 1.
-func (es *ExprSeq) ImproveSeq(seq []sxeval.Expr, last sxeval.Expr) (sxeval.Expr, bool) {
+func (es *ExprSeq) ImproveSeq(seq []sxeval.Expr, last sxeval.Expr) {
 	if seqLen := len(seq); seqLen == cap(es.Front) {
 		copy(es.Front, seq)
 	} else {
@@ -113,8 +113,6 @@ func (es *ExprSeq) ImproveSeq(seq []sxeval.Expr, last sxeval.Expr) (sxeval.Expr,
 		es.Front = newFront
 	}
 	es.Last = last
-	return nil, false
-
 }
 
 // Print the expression on the given writer.
