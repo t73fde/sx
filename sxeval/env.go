@@ -155,38 +155,30 @@ func (env *Environment) Run(expr Expr, bind *Binding) (sx.Object, error) {
 
 // Execute the given expression.
 func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err error) {
-	if exec := env.observer.compute; exec != nil {
-		for {
-			expr, err = exec.BeforeCompute(env, expr, bind)
-			if err == nil {
-				res, err = expr.Compute(env, bind)
-				if err == nil {
-					exec.AfterCompute(env, expr, bind, res, err)
-					return res, nil
-				}
-			}
-			exec.AfterCompute(env, expr, bind, res, err)
-			if err == errExecuteAgain {
-				expr = env.tco.expr
-				bind = env.tco.binding
-				continue
-			}
-			return res, env.addExecuteError(expr, err)
-		}
-	}
-
 	for {
-		res, err = expr.Compute(env, bind)
-		if err == nil {
+		if exec := env.observer.compute; exec != nil {
+			if expr, err = exec.BeforeCompute(env, expr, bind); err != nil {
+				break
+			}
+		}
+
+		if res, err = expr.Compute(env, bind); err == nil {
+			if exec := env.observer.compute; exec != nil {
+				exec.AfterCompute(env, expr, bind, res, nil)
+			}
 			return res, nil
 		}
-		if err == errExecuteAgain {
-			expr = env.tco.expr
-			bind = env.tco.binding
-			continue
+
+		if exec := env.observer.compute; exec != nil {
+			exec.AfterCompute(env, expr, bind, res, err)
 		}
-		return res, env.addExecuteError(expr, err)
+		if err != errExecuteAgain {
+			break
+		}
+		expr = env.tco.expr
+		bind = env.tco.binding
 	}
+	return res, env.addExecuteError(expr, err)
 }
 
 // ExecuteTCO is called when the expression should be executed at last
