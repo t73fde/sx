@@ -340,7 +340,7 @@ func (cpe *ProgramExpr) Compute(env *Environment, bind *Binding) (sx.Object, err
 
 // InterpretObserver monitors the inner workings of the interpretation of compiled code.
 type InterpretObserver interface {
-	LogInterpreter(*ProgramExpr, int, int, string, ...any)
+	LogInterpreter(*ProgramExpr, int, int, string, error)
 }
 
 // Interpret the program in an environment.
@@ -350,7 +350,7 @@ func (cpe *ProgramExpr) Interpret(env *Environment, bind *Binding) error {
 
 	for ip := 0; ip < len(program); ip++ {
 		if io := env.observer.interpret; io != nil {
-			io.LogInterpreter(cpe, cpe.level, ip, asm[ip])
+			io.LogInterpreter(cpe, cpe.level, ip, asm[ip], nil)
 		}
 		if err := program[ip](env, currBind); err != nil {
 			if err == errSwitchBinding {
@@ -366,7 +366,7 @@ func (cpe *ProgramExpr) Interpret(env *Environment, bind *Binding) error {
 		}
 	}
 	if io := env.observer.interpret; io != nil {
-		io.LogInterpreter(cpe, cpe.level, len(program), "RETURN")
+		io.LogInterpreter(cpe, cpe.level, len(program), "RETURN", nil)
 	}
 	return nil
 }

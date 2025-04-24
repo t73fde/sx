@@ -50,7 +50,7 @@ func (me *mainEngine) BeforeCompute(_ *sxeval.Environment, expr sxeval.Expr, bin
 	if me.logExecutor {
 		spaces := strings.Repeat(" ", me.execLevel)
 		me.execLevel++
-		fmt.Printf("%v;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
+		fmt.Printf("%s;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
 		_, _ = expr.Print(os.Stdout)
 		fmt.Println()
 	}
@@ -62,9 +62,9 @@ func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, _ *sxev
 		spaces := strings.Repeat(" ", me.execLevel-1)
 		me.execCount++
 		if err == nil {
-			fmt.Printf("%v;O%d %T %v\n", spaces, me.execLevel, obj, obj)
+			fmt.Printf("%s;O%d %T %v\n", spaces, me.execLevel, obj, obj)
 		} else {
-			fmt.Printf("%v;o%d %v\n", spaces, me.execLevel, err)
+			fmt.Printf("%s;o%d %v\n", spaces, me.execLevel, err)
 		}
 		me.execLevel--
 	}
@@ -77,7 +77,7 @@ func (me *mainEngine) BeforeParse(pe *sxeval.ParseEnvironment, form sx.Object) (
 		spaces := strings.Repeat(" ", me.parseLevel)
 		me.parseLevel++
 		bind := pe.Binding()
-		fmt.Printf("%v;P%v %v<-%v %T %v\n", spaces, me.parseLevel, bind, bind.Parent(), form, form)
+		fmt.Printf("%s;P%v %v<-%v %T %v\n", spaces, me.parseLevel, bind, bind.Parent(), form, form)
 	}
 	return form, nil
 }
@@ -86,7 +86,7 @@ func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, _ sx.Object, expr 
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel-1)
 		bind := pe.Binding()
-		fmt.Printf("%v;Q%v %v<-%v %v ", spaces, me.parseLevel, bind, bind.Parent(), err)
+		fmt.Printf("%s;Q%v %v<-%v %v ", spaces, me.parseLevel, bind, bind.Parent(), err)
 		if err == nil {
 			_, _ = expr.Print(os.Stdout)
 		}
@@ -102,7 +102,7 @@ func (me *mainEngine) BeforeImprove(imp *sxeval.Improver, expr sxeval.Expr) sxev
 		spaces := strings.Repeat(" ", me.improveLevel)
 		me.improveLevel++
 		bind := imp.Binding()
-		fmt.Printf("%v;R%v %v<-%v ", spaces, me.improveLevel, bind, bind.Parent())
+		fmt.Printf("%s;R%v %v<-%v ", spaces, me.improveLevel, bind, bind.Parent())
 		_, _ = expr.Print(os.Stdout)
 		fmt.Println()
 	}
@@ -113,7 +113,7 @@ func (me *mainEngine) AfterImprove(imp *sxeval.Improver, _, result sxeval.Expr, 
 	if me.logImprove {
 		spaces := strings.Repeat(" ", me.improveLevel-1)
 		bind := imp.Binding()
-		fmt.Printf("%v;S%v %v<-%v %v ", spaces, me.improveLevel, bind, bind.Parent(), err)
+		fmt.Printf("%s;S%v %v<-%v %v ", spaces, me.improveLevel, bind, bind.Parent(), err)
 		_, _ = result.Print(os.Stdout)
 		fmt.Println()
 		me.improveLevel--
@@ -125,7 +125,8 @@ func (me *mainEngine) AfterImprove(imp *sxeval.Improver, _, result sxeval.Expr, 
 func (me *mainEngine) LogCompile(sxc *sxeval.Compiler, s string, vals ...string) {
 	if me.logCompile {
 		level, pc, curPos, maxPos := sxc.Stats()
-		fmt.Printf(";C%d %d %d %d: %s", level, maxPos, curPos, pc, s)
+		spaces := strings.Repeat(" ", level)
+		fmt.Printf("%s;C%d %d %d %d: %s", spaces, level+1, maxPos, curPos, pc, s)
 		for _, val := range vals {
 			fmt.Print(" ", val)
 		}
@@ -135,14 +136,14 @@ func (me *mainEngine) LogCompile(sxc *sxeval.Compiler, s string, vals ...string)
 
 // ----- InterpretObserver methods
 
-func (me *mainEngine) LogInterpreter(_ *sxeval.ProgramExpr, level, ip int, s string, vals ...any) {
+func (me *mainEngine) LogInterpreter(_ *sxeval.ProgramExpr, level, ip int, s string, err error) {
 	if me.logInterpret {
 		spaces := strings.Repeat(" ", level)
-		fmt.Printf("%v;V%d %d %s", spaces, level, ip, s)
-		for _, val := range vals {
-			fmt.Print(" ", val)
+		if err == nil {
+			fmt.Printf("%v;I%d %d %s\n", spaces, level+1, ip, s)
+		} else {
+			fmt.Printf("%v;i%d %d %s: %v\n", spaces, level+1, ip, s, err)
 		}
-		fmt.Println()
 	}
 }
 
@@ -318,7 +319,11 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 
 	for {
 		env := sxeval.MakeEnvironment()
-		env.SetComputeObserver(me).SetParseObserver(me).SetImproveObserver(me).SetCompileObserver(me)
+		env.SetComputeObserver(me).
+			SetParseObserver(me).
+			SetImproveObserver(me).
+			SetCompileObserver(me).
+			SetInterpretObserver(me)
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {

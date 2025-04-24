@@ -87,6 +87,12 @@ func (env *Environment) SetCompileObserver(observe CompileObserver) *Environment
 	return env
 }
 
+// SetInterpretObserver sets the given compile observer.
+func (env *Environment) SetInterpretObserver(observe InterpretObserver) *Environment {
+	env.observer.interpret = observe
+	return env
+}
+
 // Eval parses the given object and runs it in the environment.
 func (env *Environment) Eval(obj sx.Object, bind *Binding) (sx.Object, error) {
 	expr, err := env.Parse(obj, bind)
