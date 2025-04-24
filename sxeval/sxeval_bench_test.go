@@ -15,6 +15,7 @@ package sxeval_test
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"t73f.de/r/sx"
@@ -72,14 +73,19 @@ func runBenchmark(b *testing.B, sexpr sx.Object) {
 	if _, err = env.Run(expr, root); err != nil {
 		b.Error(err)
 	}
-	if stack := env.Stack(); len(stack) > 0 {
-		b.Error("stack not empty, but:", stack)
+	for range env.Stack() {
+		b.Error("stack not empty, but:", slices.Collect(env.Stack()))
+		break
 	}
 	for b.Loop() {
 		_, _ = env.Run(expr, root)
 	}
-	if stack := env.Stack(); len(stack) > 0 {
-		b.Error("stack not empty, found", len(stack), "elements")
+	stackSize := 0
+	for range env.Stack() {
+		stackSize++
+	}
+	if stackSize > 0 {
+		b.Error("stack not empty, found", stackSize, "elements")
 	}
 }
 
@@ -126,8 +132,12 @@ func BenchmarkAddCompiled(b *testing.B) {
 	for b.Loop() {
 		_, _ = env.Run(cexpr, root)
 	}
-	if stack := env.Stack(); len(stack) > 0 {
-		b.Error("stack not empty", len(stack))
+	stackSize := 0
+	for range env.Stack() {
+		stackSize++
+	}
+	if stackSize > 0 {
+		b.Error("stack not empty, found", stackSize, "elements")
 	}
 }
 
@@ -168,8 +178,8 @@ func checkAddBenchmark(env *sxeval.Environment, expr sxeval.Expr, bind *sxeval.B
 	if exp := sx.Int64(561); !got.IsEqual(exp) {
 		return fmt.Errorf("expected result %v, but got %v", exp, got)
 	}
-	if stack := env.Stack(); len(stack) > 0 {
-		return fmt.Errorf("stack not empty: %v", stack)
+	for range env.Stack() {
+		return fmt.Errorf("stack not empty: %v", slices.Collect(env.Stack()))
 	}
 	return nil
 }

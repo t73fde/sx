@@ -17,7 +17,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"log/slog"
+	"slices"
 
 	"t73f.de/r/sx"
 )
@@ -286,15 +288,18 @@ func (ee ExecuteError) PrintStack(w io.Writer, prefix string, logger *slog.Logge
 
 // ----- Threaded code infrastructure, mostly stack operations
 
-// Reset the stack.
+// Reset the stacks.
 func (env *Environment) Reset() {
 	if env.stack != nil {
 		env.stack = env.stack[:0]
 	}
+	if env.bstack != nil {
+		env.bstack = env.bstack[:0]
+	}
 }
 
 // Stack returns the stack.
-func (env *Environment) Stack() []sx.Object { return env.stack }
+func (env *Environment) Stack() iter.Seq[sx.Object] { return slices.Values(env.stack) }
 
 // Push a value to the stack
 func (env *Environment) Push(val sx.Object) { env.stack = append(env.stack, val) }
