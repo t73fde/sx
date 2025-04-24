@@ -165,24 +165,25 @@ func BindAll(bind *sxeval.Binding) error {
 		&List2Vector,          // list->vector
 		&Length, &LengthEqual, // length, length=
 		&LengthLess, &LengthGreater, // length<, length>
-		&Nth,               // nth
-		&Sequence2List,     // seq->list
-		&CallableP,         // callable?
-		&Macroexpand0,      // macroexpand-0
-		&DefinedP,          // defined?
-		&CurrentBinding,    // current-binding
-		&ParentBinding,     // parent-binding
-		&Bindings,          // bindings
-		&BoundP,            // bound?
-		&BindingLookup,     // binding-lookup
-		&BindingResolve,    // binding-resolve
-		&Pretty,            // pp
-		&Error,             // error
-		&NotBoundError,     // not-bound-error
-		&ParseExpression,   // parse-expression
-		&UnparseExpression, // unparse-expression
-		&RunExpression,     // run-expression
-		&Eval,              // eval
+		&Nth,                   // nth
+		&Sequence2List,         // seq->list
+		&CallableP,             // callable?
+		&Macroexpand0,          // macroexpand-0
+		&DefinedP,              // defined?
+		&CurrentBinding,        // current-binding
+		&ParentBinding,         // parent-binding
+		&Bindings,              // bindings
+		&BoundP,                // bound?
+		&BindingLookup,         // binding-lookup
+		&BindingResolve,        // binding-resolve
+		&Pretty,                // pp
+		&Error,                 // error
+		&NotBoundError,         // not-bound-error
+		&ParseExpression,       // parse-expression
+		&UnparseExpression,     // unparse-expression
+		&RunExpression,         // run-expression
+		&Eval,                  // eval
+		&Compile, &Disassemble, // compile, disassemble
 	)
 	return err
 }

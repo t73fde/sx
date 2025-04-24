@@ -37,10 +37,11 @@ type tcodata struct {
 }
 
 type observer struct {
-	compute ComputeObserver
-	parse   ParseObserver
-	improve ImproveObserver
-	compile CompileObserver
+	compute   ComputeObserver
+	parse     ParseObserver
+	improve   ImproveObserver
+	compile   CompileObserver
+	interpret InterpretObserver
 }
 
 // ComputeObserver observes the execution of expressions.

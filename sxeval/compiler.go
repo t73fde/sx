@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"slices"
 	"strconv"
 	"strings"
@@ -30,6 +31,7 @@ type Compiler struct {
 	env      *Environment
 	observer CompileObserver
 	program  []Instruction
+	asm      []string
 	curStack int
 	maxStack int
 
@@ -56,6 +58,7 @@ func (sxc *Compiler) MakeChildCompiler() *Compiler {
 
 func (sxc *Compiler) resetState() {
 	sxc.program = nil
+	sxc.asm = nil
 	sxc.curStack = 0
 	sxc.maxStack = 0
 
@@ -88,6 +91,7 @@ func (sxc *Compiler) CompileProgram(expr Expr) (*ProgramExpr, error) {
 	}
 	return &ProgramExpr{
 		program:   slices.Clip(sxc.program),
+		asm:       slices.Clip(sxc.asm),
 		stacksize: sxc.maxStack,
 		level:     sxc.level,
 		source:    expr,
@@ -117,6 +121,13 @@ func (sxc *Compiler) Emit(instr Instruction, s string, vals ...string) {
 		ob.LogCompile(sxc, s, vals...)
 	}
 	sxc.program = append(sxc.program, instr)
+	var asm strings.Builder
+	asm.WriteString(s)
+	for _, val := range vals {
+		asm.WriteByte(' ')
+		asm.WriteString(val)
+	}
+	sxc.asm = append(sxc.asm, asm.String())
 }
 
 // EmitPush emits code to push a value on the stack.
@@ -173,6 +184,7 @@ func (sxc *Compiler) EmitJumpPopFalse() Patch {
 			}
 			return nil
 		}
+		sxc.asm[pc] = fmt.Sprintf("JUMP-POP-FALSE %d", pos)
 	}
 }
 
@@ -192,6 +204,7 @@ func (sxc *Compiler) EmitJumpTopFalse() Patch {
 			}
 			return nil
 		}
+		sxc.asm[pc] = fmt.Sprintf("JUMP-TOP-FALSE %d", pos)
 	}
 }
 
@@ -211,6 +224,7 @@ func (sxc *Compiler) EmitJumpTopTrue() Patch {
 			}
 			return nil
 		}
+		sxc.asm[pc] = fmt.Sprintf("JUMP-TOP-TRUE %d", pos)
 	}
 }
 
@@ -225,6 +239,7 @@ func (sxc *Compiler) EmitJump() Patch {
 			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP", strconv.Itoa(pos))
 		}
 		sxc.program[pc] = func(*Environment, *Binding) error { return jumpToError{pos: pos} }
+		sxc.asm[pc] = fmt.Sprintf("JUMP %d", pos)
 	}
 }
 
@@ -293,10 +308,14 @@ func (mc MissingCompileError) Error() string {
 // ProgramExpr is an expression that contains a program.
 type ProgramExpr struct {
 	program   []Instruction
+	asm       []string // string representation of program
 	stacksize int
 	level     int
 	source    Expr // Source of program
 }
+
+// Assembler returns the compiled code as an iterator of pseudo-assembler strings.
+func (cpe *ProgramExpr) Assembler() iter.Seq[string] { return slices.Values(cpe.asm) }
 
 // IsPure signals an expression that has no side effects.
 func (cpe *ProgramExpr) IsPure() bool { return cpe.source.IsPure() }
@@ -319,35 +338,35 @@ func (cpe *ProgramExpr) Compute(env *Environment, bind *Binding) (sx.Object, err
 	return env.Pop(), nil
 }
 
+// InterpretObserver monitors the inner workings of the interpretation of compiled code.
+type InterpretObserver interface {
+	LogInterpreter(*ProgramExpr, int, int, string, ...any)
+}
+
 // Interpret the program in an environment.
 func (cpe *ProgramExpr) Interpret(env *Environment, bind *Binding) error {
 	currBind := bind
-	program := cpe.program
+	program, asm := cpe.program, cpe.asm
 
 	for ip := 0; ip < len(program); ip++ {
+		if io := env.observer.interpret; io != nil {
+			io.LogInterpreter(cpe, cpe.level, ip, asm[ip])
+		}
 		if err := program[ip](env, currBind); err != nil {
 			if err == errSwitchBinding {
 				currBind = env.tco.binding
 			} else if jerr, ok := err.(jumpToError); ok {
 				ip = jerr.pos - 1
-			} else if err == errExecuteAgain {
-				currBind = env.tco.binding
-				expr := env.tco.expr
-				if newCpe, isProgram := expr.(*ProgramExpr); isProgram {
-					program = newCpe.program
-					ip = -1
-					continue
-				}
-				obj, err2 := env.Execute(expr, currBind)
-				if err2 == nil {
-					env.Push(obj)
-					continue
-				}
-				return err2
 			} else {
+				if io := env.observer.interpret; io != nil {
+					io.LogInterpreter(cpe, cpe.level, ip, "ERROR", err)
+				}
 				return err
 			}
 		}
+	}
+	if io := env.observer.interpret; io != nil {
+		io.LogInterpreter(cpe, cpe.level, len(program), "RETURN")
 	}
 	return nil
 }

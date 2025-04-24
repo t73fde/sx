@@ -122,3 +122,54 @@ func getEvalExpr(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (
 	}
 	return env.Parse(arg, bind)
 }
+
+// Compile an expression oject.
+var Compile = sxeval.Builtin{
+	Name:     "compile",
+	MinArity: 1,
+	MaxArity: 1,
+	TestPure: nil,
+	Fn1: func(env *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
+		exprObj, err := GetExprObj(arg, 0)
+		if err != nil {
+			return nil, err
+		}
+		cexpr, err := env.Compile(exprObj.GetExpr())
+		if err != nil {
+			return nil, err
+		}
+		return sxeval.MakeExprObj(cexpr), nil
+	},
+}
+
+// Disassemble returns a sequence of compiled code.
+var Disassemble = sxeval.Builtin{
+	Name:     "disassemble",
+	MinArity: 1,
+	MaxArity: 1,
+	TestPure: nil,
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
+		var expr sxeval.Expr = sxeval.NilExpr
+		if exprObj, isExpr := sxeval.GetExprObj(arg); isExpr {
+			expr = exprObj.GetExpr()
+			if lambda, isLambda := expr.(*LambdaExpr); isLambda {
+				expr = lambda.Expr
+			}
+		} else if lex, isLex := arg.(*LexLambda); isLex {
+			expr = lex.Expr
+		} else if dyn, isDyn := arg.(*DynLambda); isDyn {
+			expr = dyn.Expr
+		} else if macro, isMacro := arg.(*Macro); isMacro {
+			expr = macro.Expr
+		}
+
+		if pe, isPe := expr.(*sxeval.ProgramExpr); isPe {
+			var lb sx.ListBuilder
+			for s := range pe.Assembler() {
+				lb.Add(sx.MakeString(s))
+			}
+			return lb.List(), nil
+		}
+		return sx.Nil(), nil
+	},
+}

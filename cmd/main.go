@@ -37,6 +37,7 @@ type mainEngine struct {
 	logCompile   bool
 	logExpr      bool
 	logExecutor  bool
+	logInterpret bool
 	parseLevel   int
 	improveLevel int
 	execLevel    int
@@ -132,6 +133,19 @@ func (me *mainEngine) LogCompile(sxc *sxeval.Compiler, s string, vals ...string)
 	}
 }
 
+// ----- InterpretObserver methods
+
+func (me *mainEngine) LogInterpreter(_ *sxeval.ProgramExpr, level, ip int, s string, vals ...any) {
+	if me.logInterpret {
+		spaces := strings.Repeat(" ", level)
+		fmt.Printf("%v;V%d %d %s", spaces, level, ip, s)
+		for _, val := range vals {
+			fmt.Print(" ", val)
+		}
+		fmt.Println()
+	}
+}
+
 var myBuiltins = []*sxeval.Builtin{
 	{
 		Name:     "panic",
@@ -203,6 +217,17 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			},
 		},
 		&sxeval.Builtin{
+			Name:     "log-interpret",
+			MinArity: 0,
+			MaxArity: 0,
+			TestPure: nil,
+			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+				res := me.logInterpret
+				me.logInterpret = !res
+				return sx.MakeBoolean(res), nil
+			},
+		},
+		&sxeval.Builtin{
 			Name:     "log-expr",
 			MinArity: 0,
 			MaxArity: 0,
@@ -250,12 +275,13 @@ func main() {
 	_ = root.Bind(sx.MakeSymbol("NIL"), sx.Nil())
 	_ = root.Bind(sx.MakeSymbol("T"), sx.MakeSymbol("T"))
 	me := mainEngine{
-		logReader:   true,
-		logParse:    true,
-		logImprove:  true,
-		logCompile:  true,
-		logExpr:     false,
-		logExecutor: true,
+		logReader:    true,
+		logParse:     true,
+		logImprove:   true,
+		logCompile:   true,
+		logInterpret: true,
+		logExpr:      false,
+		logExecutor:  true,
 	}
 	me.bindOwn(root)
 	err := sxbuiltins.LoadPrelude(root)
