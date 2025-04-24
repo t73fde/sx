@@ -14,6 +14,8 @@
 package sxbuiltins
 
 import (
+	"iter"
+
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxeval"
 )
@@ -91,6 +93,11 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, er
 	}
 	return m.Env.ApplyMacro(proc.Name, &proc, macroArgs, m.Binding)
 }
+
+// -- Disassembler methods
+
+// GetAsmCode returns sequence of pseudo instructions, if possible.
+func (m *Macro) GetAsmCode() (iter.Seq[string], bool) { return sxeval.GetAsmCode(m.Expr) }
 
 // Macroexpand0 implements one level of macro expansion.
 //

@@ -344,8 +344,8 @@ type ProgramExpr struct {
 	source    Expr // Source of program
 }
 
-// Assembler returns the compiled code as an iterator of pseudo-assembler strings.
-func (cpe *ProgramExpr) Assembler() iter.Seq[string] { return slices.Values(cpe.asm) }
+// GetAsmCode returns the compiled code as an iterator of pseudo-assembler strings.
+func (cpe *ProgramExpr) GetAsmCode() (iter.Seq[string], bool) { return slices.Values(cpe.asm), true }
 
 // IsPure signals an expression that has no side effects.
 func (cpe *ProgramExpr) IsPure() bool { return cpe.source.IsPure() }
@@ -427,4 +427,21 @@ var errSwitchBinding = errors.New("switch-binding")
 func SwitchBinding(env *Environment, bind *Binding) error {
 	env.tco.binding = bind
 	return errSwitchBinding
+}
+
+// ----- Interface for retrieving compiled code
+
+// Disassembler allows to retrieve an iterator of pseudo-assembler statements.
+type Disassembler interface {
+
+	// GetAsmCode returns a sequence of pseudo-assembler instructions, if possible.
+	GetAsmCode() (iter.Seq[string], bool)
+}
+
+// GetAsmCode returns pseudo-assember statements if possible
+func GetAsmCode(expr Expr) (iter.Seq[string], bool) {
+	if exprAsm, isAsm := expr.(Disassembler); isAsm {
+		return exprAsm.GetAsmCode()
+	}
+	return nil, false
 }

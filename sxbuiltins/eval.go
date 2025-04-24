@@ -149,26 +149,14 @@ var Disassemble = sxeval.Builtin{
 	MaxArity: 1,
 	TestPure: nil,
 	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		var expr sxeval.Expr = sxeval.NilExpr
-		if exprObj, isExpr := sxeval.GetExprObj(arg); isExpr {
-			expr = exprObj.GetExpr()
-			if lambda, isLambda := expr.(*LambdaExpr); isLambda {
-				expr = lambda.Expr
+		if objAsm, isObjAsm := arg.(sxeval.Disassembler); isObjAsm {
+			if stmts, found := objAsm.GetAsmCode(); found {
+				var lb sx.ListBuilder
+				for s := range stmts {
+					lb.Add(sx.MakeString(s))
+				}
+				return lb.List(), nil
 			}
-		} else if lex, isLex := arg.(*LexLambda); isLex {
-			expr = lex.Expr
-		} else if dyn, isDyn := arg.(*DynLambda); isDyn {
-			expr = dyn.Expr
-		} else if macro, isMacro := arg.(*Macro); isMacro {
-			expr = macro.Expr
-		}
-
-		if pe, isPe := expr.(*sxeval.ProgramExpr); isPe {
-			var lb sx.ListBuilder
-			for s := range pe.Assembler() {
-				lb.Add(sx.MakeString(s))
-			}
-			return lb.List(), nil
 		}
 		return sx.Nil(), nil
 	},

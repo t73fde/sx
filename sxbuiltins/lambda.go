@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxeval"
@@ -374,6 +375,13 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 	return length, err
 }
 
+// --- Disassembler methods
+
+// GetAsmCode returns sequence of pseudo instructions, if possible.
+func (le *LambdaExpr) GetAsmCode() (iter.Seq[string], bool) { return sxeval.GetAsmCode(le.Expr) }
+
+// ----- LexLambda
+
 // LexLambda represents the lexical procedure definition form.
 type LexLambda struct {
 	Binding *sxeval.Binding
@@ -431,6 +439,13 @@ func (ll *LexLambda) Call(env *sxeval.Environment, args sx.Vector, _ *sxeval.Bin
 	}
 	return env.ExecuteTCO(ll.Expr, lexBind)
 }
+
+// --- Disassembler methods
+
+// GetAsmCode returns sequence of pseudo instructions, if possible.
+func (ll *LexLambda) GetAsmCode() (iter.Seq[string], bool) { return sxeval.GetAsmCode(ll.Expr) }
+
+// ----- DynLambda
 
 // DefDynS parses a procedure definition with dynamic binding.
 var DefDynS = sxeval.Special{
@@ -499,3 +514,8 @@ func (dl *DynLambda) Call(env *sxeval.Environment, args sx.Vector, bind *sxeval.
 		Expr:    dl.Expr,
 	}).Call(env, args, bind)
 }
+
+// --- Disassembler methods
+
+// GetAsmCode returns sequence of pseudo instructions, if possible.
+func (dl *DynLambda) GetAsmCode() (iter.Seq[string], bool) { return sxeval.GetAsmCode(dl.Expr) }

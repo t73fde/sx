@@ -16,6 +16,7 @@ package sxeval
 import (
 	"fmt"
 	"io"
+	"iter"
 	"math"
 	"strconv"
 	"strings"
@@ -648,3 +649,8 @@ func GetExprObj(obj sx.Object) (*ExprObj, bool) {
 	eo, ok := obj.(*ExprObj)
 	return eo, ok
 }
+
+// --- Disassembler methods
+
+// GetAsmCode returns sequence of pseudo instructions, if possible.
+func (eo *ExprObj) GetAsmCode() (iter.Seq[string], bool) { return GetAsmCode(eo.expr) }
