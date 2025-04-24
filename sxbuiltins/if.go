@@ -157,13 +157,22 @@ func (ife *IfExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 
 	var condPatch sxeval.Patch
 	var err error
-	if andExpr, ok := ife.Test.(*AndExpr); ok {
-		// If ife.Test is an (and a b ...), the "jmpPatches" of the compilation of
+	if andExpr, isAnd := ife.Test.(*AndExpr); isAnd {
+		// If ife.Test is a (and a b ...), the "jmpPatches" of the compilation of
 		// (and) should point to ife.False. This removes execution of JumpPopFalse
 		// if one but the last element of (and) is False.
 		if condPatch, err = andExpr.compileForIf(sxc); err != nil {
 			return err
 		}
+	} else if orExpr, isOr := ife.Test.(*OrExpr); isOr {
+		// If ife.Test is a (or a b ...), transform it conceptionally into an
+		// (not (and (not a) (not b) ...)) expression. First, the outer (not ...)
+		// is removed by swapping ife.True and ife.False. The (not a), (not b), ...
+		// are implemented by a JumpPopTrue.
+		if condPatch, err = orExpr.compileForIf(sxc); err != nil {
+			return err
+		}
+		ife.True, ife.False = ife.False, ife.True
 	} else {
 		if err = sxc.Compile(ife.Test, false); err != nil {
 			return err

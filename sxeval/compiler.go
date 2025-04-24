@@ -167,6 +167,15 @@ func NopInstruction(*Environment, *Binding) error { return nil }
 // jumping forward.
 type Patch func()
 
+// CombinePatches combines a sequence of Patches into one.
+func CombinePatches(patches ...Patch) Patch {
+	return func() {
+		for _, patch := range patches {
+			patch()
+		}
+	}
+}
+
 // EmitJumpPopFalse emits some preliminary code to jump if popped TOS is a false value.
 // It returns a patch function to update the jump target.
 func (sxc *Compiler) EmitJumpPopFalse() Patch {
@@ -185,6 +194,27 @@ func (sxc *Compiler) EmitJumpPopFalse() Patch {
 			return nil
 		}
 		sxc.asm[pc] = fmt.Sprintf("JUMP-POP-FALSE %d", pos)
+	}
+}
+
+// EmitJumpPopTrue emits some preliminary code to jump if popped TOS is a true value.
+// It returns a patch function to update the jump target.
+func (sxc *Compiler) EmitJumpPopTrue() Patch {
+	sxc.AdjustStack(-1)
+	pc := len(sxc.program)
+	sxc.Emit(NopInstruction, "JUMP-POP-TRUE", strconv.Itoa(pc), "<- to be patched")
+	return func() {
+		pos := len(sxc.program)
+		if ob := sxc.observer; ob != nil {
+			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-POP-TRUE", strconv.Itoa(pos))
+		}
+		sxc.program[pc] = func(env *Environment, _ *Binding) error {
+			if sx.IsTrue(env.Pop()) {
+				return jumpToError{pos: pos}
+			}
+			return nil
+		}
+		sxc.asm[pc] = fmt.Sprintf("JUMP-POP-TRUE %d", pos)
 	}
 }
 

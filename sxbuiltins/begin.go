@@ -321,11 +321,7 @@ func (ae *AndExpr) compileForIf(sxc *sxeval.Compiler) (sxeval.Patch, error) {
 		return nil, err
 	}
 	jmpPatches[len(jmpPatches)-1] = sxc.EmitJumpPopFalse()
-	return func() {
-		for _, patch := range jmpPatches {
-			patch()
-		}
-	}, nil
+	return sxeval.CombinePatches(jmpPatches...), nil
 }
 
 // Compute the expression in a frame and return the result.
@@ -432,6 +428,22 @@ func (oe *OrExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 		patch()
 	}
 	return nil
+}
+
+// compileForIf is called by compilation of (if (or ...) ... ...)
+func (oe *OrExpr) compileForIf(sxc *sxeval.Compiler) (sxeval.Patch, error) {
+	jmpPatches := make([]sxeval.Patch, len(oe.Front)+1)
+	for i, expr := range oe.Front {
+		if err := sxc.Compile(expr, false); err != nil {
+			return nil, err
+		}
+		jmpPatches[i] = sxc.EmitJumpPopTrue()
+	}
+	if err := sxc.Compile(oe.Last, false); err != nil {
+		return nil, err
+	}
+	jmpPatches[len(jmpPatches)-1] = sxc.EmitJumpPopTrue()
+	return sxeval.CombinePatches(jmpPatches...), nil
 }
 
 // Compute the expression in a frame and return the result.
