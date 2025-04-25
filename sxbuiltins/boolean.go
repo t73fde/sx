@@ -28,3 +28,11 @@ var Not = sxeval.Builtin{
 		return sx.MakeBoolean(sx.IsFalse(arg)), nil
 	},
 }
+
+// IsNotExpr returns true and an arg, if the given `Expr` negates something.
+func IsNotExpr(expr sxeval.Expr) (sxeval.Expr, bool) {
+	if bce, isBCE := expr.(*sxeval.BuiltinCall1Expr); isBCE && bce.Proc == &Not {
+		return bce.Arg, true
+	}
+	return nil, false
+}

@@ -141,8 +141,8 @@ restart:
 	}
 
 	// Optimize (if (not X) Y Z) ==> (if X Y Z) and restart (X may match (not E); may match nested if)
-	if bce, isBCE := testExpr.(*sxeval.BuiltinCall1Expr); isBCE && bce.Proc == &Not {
-		testExpr, trueExpr, falseExpr = bce.Arg, falseExpr, trueExpr
+	if arg, isNot := IsNotExpr(testExpr); isNot {
+		testExpr, trueExpr, falseExpr = arg, falseExpr, trueExpr
 		goto restart
 	}
 
