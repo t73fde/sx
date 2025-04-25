@@ -49,19 +49,22 @@ type Builtin struct {
 func AssertPure(sx.Vector) bool { return true }
 
 // Bind the builtin to a given environment.
-func (b *Builtin) Bind(bi *Binding) error {
-	return bi.Bind(sx.MakeSymbol(b.Name), b)
+func (b *Builtin) Bind(bind *Binding) error {
+	return bind.Bind(sx.MakeSymbol(b.Name), b)
 }
 
 // BindBuiltins will bind many builtins to an environment.
-func BindBuiltins(bi *Binding, bs ...*Builtin) error {
+func BindBuiltins(bind *Binding, bs ...*Builtin) error {
 	for _, b := range bs {
-		if err := b.Bind(bi); err != nil {
+		if err := b.Bind(bind); err != nil {
 			return err
 		}
 	}
 	return nil
 }
+
+// GetBuiltin returns the object as a builtin, if possible.
+func GetBuiltin(obj sx.Object) (*Builtin, bool) { b, ok := obj.(*Builtin); return b, ok }
 
 // --- Builtin methods to implement sx.Object
 
@@ -102,18 +105,24 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 	return false
 }
 
-// Call the builtin function with the given environment and arguments.
-func (b *Builtin) Call(env *Environment, args sx.Vector, bind *Binding) (obj sx.Object, err error) {
+// ExecuteCall the builtin function with the given environment and arguments.
+func (b *Builtin) ExecuteCall(env *Environment, args sx.Vector, bind *Binding) (obj sx.Object, err error) {
 	if err = b.checkCallArity(len(args), func() []sx.Object { return args }); err != nil {
 		return sx.Nil(), b.handleCallError(err)
 	}
 	switch len(args) {
 	case 0:
-		obj, err = b.Fn0(env, bind)
+		if obj, err = b.Fn0(env, bind); err == nil {
+			return obj, nil
+		}
 	case 1:
-		obj, err = b.Fn1(env, args[0], bind)
+		if obj, err = b.Fn1(env, args[0], bind); err == nil {
+			return obj, nil
+		}
 	default:
-		obj, err = b.Fn(env, args, bind)
+		if obj, err = b.Fn(env, args, bind); err == nil {
+			return obj, nil
+		}
 	}
 	return obj, b.handleCallError(err)
 }

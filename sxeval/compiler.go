@@ -29,7 +29,6 @@ import (
 type Compiler struct {
 	level    int
 	env      *Environment
-	observer CompileObserver
 	program  []Instruction
 	asm      []string
 	curStack int
@@ -110,14 +109,14 @@ func (sxc *Compiler) AdjustStack(offset int) {
 		panic("negative stack position")
 	}
 	sxc.maxStack = max(sxc.maxStack, sxc.curStack)
-	if ob := sxc.observer; ob != nil {
+	if ob := sxc.env.obCompile; ob != nil {
 		ob.LogCompile(sxc, "adjust", strconv.Itoa(offset))
 	}
 }
 
 // Emit a threaded code.
 func (sxc *Compiler) Emit(instr Instruction, s string, vals ...string) {
-	if ob := sxc.observer; ob != nil {
+	if ob := sxc.env.obCompile; ob != nil {
 		ob.LogCompile(sxc, s, vals...)
 	}
 	sxc.program = append(sxc.program, instr)
@@ -184,7 +183,7 @@ func (sxc *Compiler) EmitJumpPopFalse() Patch {
 	sxc.Emit(NopInstruction, "JUMP-POP-FALSE", strconv.Itoa(pc), "<- to be patched")
 	return func() {
 		pos := len(sxc.program)
-		if ob := sxc.observer; ob != nil {
+		if ob := sxc.env.obCompile; ob != nil {
 			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-POP-FALSE", strconv.Itoa(pos))
 		}
 		sxc.program[pc] = func(env *Environment, _ *Binding) error {
@@ -205,7 +204,7 @@ func (sxc *Compiler) EmitJumpPopTrue() Patch {
 	sxc.Emit(NopInstruction, "JUMP-POP-TRUE", strconv.Itoa(pc), "<- to be patched")
 	return func() {
 		pos := len(sxc.program)
-		if ob := sxc.observer; ob != nil {
+		if ob := sxc.env.obCompile; ob != nil {
 			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-POP-TRUE", strconv.Itoa(pos))
 		}
 		sxc.program[pc] = func(env *Environment, _ *Binding) error {
@@ -225,7 +224,7 @@ func (sxc *Compiler) EmitJumpTopFalse() Patch {
 	sxc.Emit(NopInstruction, "JUMP-TOP-FALSE", strconv.Itoa(pc), "<- to be patched")
 	return func() {
 		pos := len(sxc.program)
-		if ob := sxc.observer; ob != nil {
+		if ob := sxc.env.obCompile; ob != nil {
 			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-TOP-FALSE", strconv.Itoa(pos))
 		}
 		sxc.program[pc] = func(env *Environment, _ *Binding) error {
@@ -245,7 +244,7 @@ func (sxc *Compiler) EmitJumpTopTrue() Patch {
 	sxc.Emit(NopInstruction, "JUMP-TOP-TRUE", strconv.Itoa(pc), "<- to be patched")
 	return func() {
 		pos := len(sxc.program)
-		if ob := sxc.observer; ob != nil {
+		if ob := sxc.env.obCompile; ob != nil {
 			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP-TOP-TRUE", strconv.Itoa(pos))
 		}
 		sxc.program[pc] = func(env *Environment, _ *Binding) error {
@@ -265,7 +264,7 @@ func (sxc *Compiler) EmitJump() Patch {
 	sxc.Emit(NopInstruction, "JUMP", strconv.Itoa(pc), "<- to be patched")
 	return func() {
 		pos := len(sxc.program)
-		if ob := sxc.observer; ob != nil {
+		if ob := sxc.env.obCompile; ob != nil {
 			ob.LogCompile(sxc, "patch", strconv.Itoa(pc), "JUMP", strconv.Itoa(pos))
 		}
 		sxc.program[pc] = func(*Environment, *Binding) error { return jumpToError{pos: pos} }
@@ -379,23 +378,23 @@ func (cpe *ProgramExpr) Interpret(env *Environment, bind *Binding) error {
 	program, asm := cpe.program, cpe.asm
 
 	for ip := 0; ip < len(program); ip++ {
-		if io := env.observer.interpret; io != nil {
+		if io := env.obInterpret; io != nil {
 			io.LogInterpreter(cpe, cpe.level, ip, asm[ip], nil)
 		}
 		if err := program[ip](env, currBind); err != nil {
 			if err == errSwitchBinding {
-				currBind = env.tco.binding
+				currBind = env.newBind
 			} else if jerr, ok := err.(jumpToError); ok {
 				ip = jerr.pos - 1
 			} else {
-				if io := env.observer.interpret; io != nil {
+				if io := env.obInterpret; io != nil {
 					io.LogInterpreter(cpe, cpe.level, ip, "ERROR", err)
 				}
 				return err
 			}
 		}
 	}
-	if io := env.observer.interpret; io != nil {
+	if io := env.obInterpret; io != nil {
 		io.LogInterpreter(cpe, cpe.level, len(program), "RETURN", nil)
 	}
 	return nil
@@ -425,7 +424,7 @@ var errSwitchBinding = errors.New("switch-binding")
 
 // SwitchBinding make the interpreter to switch to a new binding.
 func SwitchBinding(env *Environment, bind *Binding) error {
-	env.tco.binding = bind
+	env.newBind = bind
 	return errSwitchBinding
 }
 
