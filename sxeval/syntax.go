@@ -24,7 +24,7 @@ import (
 // It is not the same as interface `Parser`, because the second parameter is a pair.
 type Syntax interface {
 	// Parse the args.
-	Parse(pf *ParseEnvironment, args *sx.Pair) (Expr, error)
+	Parse(*ParseEnvironment, *sx.Pair) (Expr, error)
 }
 
 // GetSyntax returns the object as a syntax value, if possible.
@@ -73,8 +73,8 @@ func (sp *Special) String() string { return "#<special:" + sp.Name + ">" }
 func (sp *Special) GoString() string { return sp.String() }
 
 // Parse the args by calling the syntax function.
-func (sp *Special) Parse(pf *ParseEnvironment, args *sx.Pair) (Expr, error) {
-	res, err := sp.Fn(pf, args)
+func (sp *Special) Parse(pe *ParseEnvironment, args *sx.Pair) (Expr, error) {
+	res, err := sp.Fn(pe, args)
 	if err != nil {
 		var callError CallError
 		if !errors.As(err, &callError) {

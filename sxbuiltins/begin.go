@@ -39,12 +39,12 @@ type ExprSeq struct {
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func ParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+func ParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
 	if args == nil {
 		return sxeval.NilExpr, nil
 	}
 	var be BeginExpr
-	if err := doParseExprSeq(pf, args, &be.ExprSeq); err != nil {
+	if err := doParseExprSeq(pe, args, &be.ExprSeq); err != nil {
 		return nil, err
 	}
 	if len(be.Front) == 0 {
@@ -54,11 +54,11 @@ func ParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, erro
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func doParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) error {
+func doParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) error {
 	var front []sxeval.Expr
 	var last sxeval.Expr
 	for node := args; ; {
-		ex, err := pf.Parse(node.Car())
+		ex, err := pe.Parse(node.Car())
 		if err != nil {
 			return err
 		}
@@ -72,7 +72,7 @@ func doParseExprSeq(pf *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) err
 			node = next
 			continue
 		}
-		ex, err = pf.Parse(cdr)
+		ex, err = pe.Parse(cdr)
 		if err != nil {
 			return err
 		}

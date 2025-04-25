@@ -21,8 +21,8 @@ import (
 // DefMacroS parses a macro specfication.
 var DefMacroS = sxeval.Special{
 	Name: "defmacro",
-	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
-		sym, le, err := parseDefProc(pf, args)
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+		sym, le, err := parseDefProc(pe, args)
 		if err != nil {
 			return nil, err
 		}
@@ -58,12 +58,12 @@ func (m *Macro) GoString() string { return m.String() }
 
 // Parse transforms a macro call into its expanded form. Some kind of
 // iterative expansion may happen.
-func (m *Macro) Parse(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
-	form, err := m.Expand(pf, args)
+func (m *Macro) Parse(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	form, err := m.Expand(pe, args)
 	if err != nil {
 		return nil, err
 	}
-	return sxeval.NilExpr, pf.ParseAgain(form)
+	return sxeval.NilExpr, pe.ParseAgain(form)
 }
 
 // Expand the macro in the given call.
