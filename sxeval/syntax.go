@@ -48,9 +48,9 @@ func (sp *Special) Bind(bi *Binding) error {
 }
 
 // BindSpecials will bind many builtins to an environment.
-func BindSpecials(bi *Binding, sps ...*Special) error {
+func BindSpecials(bind *Binding, sps ...*Special) error {
 	for _, sp := range sps {
-		if err := sp.Bind(bi); err != nil {
+		if err := sp.Bind(bind); err != nil {
 			return err
 		}
 	}

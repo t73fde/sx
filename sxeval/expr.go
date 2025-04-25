@@ -257,14 +257,14 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 	}
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
 		// If call can be folded into a constant value, use that value.
-		if c, isCallable := objExpr.Obj.(Callable); isCallable {
+		if c, isCallable := GetCallable(objExpr.Obj); isCallable {
 			if foldExpr, foldErr := imp.ImproveFoldCall(c, ce.Args); foldErr == nil && foldExpr != nil {
 				return foldExpr, nil
 			}
 		}
 
 		// If the ce.Proc is a builtin, improve to a BuiltinCallExpr.
-		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
+		if b, isBuiltin := GetBuiltin(objExpr.Obj); isBuiltin {
 			bce := &builtinCallExpr{
 				Proc: b,
 				Args: ce.Args,
@@ -289,7 +289,7 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) 
 	if err != nil {
 		return nil, err
 	}
-	proc, isCallable := val.(Callable)
+	proc, isCallable := GetCallable(val)
 	if !isCallable {
 		return nil, NotCallableError{Obj: val}
 	}
