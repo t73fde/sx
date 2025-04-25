@@ -59,6 +59,7 @@ func TestBuiltinSimple(t *testing.T) {
 	for i := range 10 {
 		env.PushArgs(args)
 		res, err := b.ExecuteCall(env, len(args), nil)
+		env.Kill(len(args))
 		if err != nil {
 			t.Error(err)
 			break

@@ -295,6 +295,7 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) 
 	}
 
 	obj, err := proc.ExecuteCall(env, len(args), bind)
+	env.Kill(len(args))
 	return obj, err
 }
 

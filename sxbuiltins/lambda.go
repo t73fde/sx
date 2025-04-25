@@ -383,7 +383,6 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval
 	} else if numargs > numParams {
 		return nil, fmt.Errorf("%s: excess arguments: %v", ll.Name, []sx.Object(args[numParams:]))
 	}
-	env.Kill(numargs)
 	return env.ExecuteTCO(ll.Expr, lexBind)
 }
 
