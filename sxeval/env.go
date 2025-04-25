@@ -157,7 +157,7 @@ func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bin
 
 // Apply the given Callable with the arguments.
 func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
-	res, err := fn.Call(env, args, bind)
+	res, err := fn.ExecuteCall(env, args, bind)
 	if err == nil {
 		return res, nil
 	}

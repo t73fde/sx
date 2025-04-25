@@ -105,8 +105,8 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 	return false
 }
 
-// Call the builtin function with the given environment and arguments.
-func (b *Builtin) Call(env *Environment, args sx.Vector, bind *Binding) (obj sx.Object, err error) {
+// ExecuteCall the builtin function with the given environment and arguments.
+func (b *Builtin) ExecuteCall(env *Environment, args sx.Vector, bind *Binding) (obj sx.Object, err error) {
 	if err = b.checkCallArity(len(args), func() []sx.Object { return args }); err != nil {
 		return sx.Nil(), b.handleCallError(err)
 	}
