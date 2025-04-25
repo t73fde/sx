@@ -58,17 +58,17 @@ func (m *Macro) GoString() string { return m.String() }
 
 // Parse transforms a macro call into its expanded form. Some kind of
 // iterative expansion may happen.
-func (m *Macro) Parse(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
-	form, err := m.Expand(pf, args)
+func (m *Macro) Parse(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	form, err := m.Expand(pe, args)
 	if err != nil {
 		return nil, err
 	}
-	return sxeval.NilExpr, pf.ParseAgain(form)
+	return sxeval.NilExpr, pe.ParseAgain(form)
 }
 
 // Expand the macro in the given call.
 func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, error) {
-	var macroArgs sx.Vector
+	numargs := 0
 	arg := sx.Object(args)
 	for {
 		if sx.IsNil(arg) {
@@ -78,7 +78,8 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, er
 		if !isPair {
 			return nil, sx.ErrImproper{Pair: args}
 		}
-		macroArgs = append(macroArgs, pair.Car())
+		m.Env.Push(pair.Car())
+		numargs++
 		arg = pair.Cdr()
 	}
 
@@ -89,7 +90,9 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair) (sx.Object, er
 		Rest:    m.Rest,
 		Expr:    m.Expr,
 	}
-	return m.Env.ApplyMacro(proc.Name, &proc, macroArgs, m.Binding)
+	obj, err := m.Env.ApplyMacro(proc.Name, &proc, numargs, m.Binding)
+	m.Env.Kill(numargs)
+	return obj, err
 }
 
 // Macroexpand0 implements one level of macro expansion.

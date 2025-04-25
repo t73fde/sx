@@ -94,8 +94,9 @@ var Map = sxeval.Builtin{
 			return sx.Nil(), nil
 		}
 
-		params := sx.Vector{lst.Car()}
-		val, err := env.Apply(fn, params, bind)
+		env.Push(lst.Car())
+		val, err := env.Apply(fn, 1, bind)
+		env.Kill(1)
 		if err != nil {
 			return sx.Nil(), err
 		}
@@ -108,16 +109,18 @@ var Map = sxeval.Builtin{
 			}
 			pair, isPair := sx.GetPair(cdr2)
 			if !isPair {
-				params[0] = cdr2
-				val2, err2 := env.Apply(fn, params, bind)
+				env.Push(cdr2)
+				val2, err2 := env.Apply(fn, 1, bind)
+				env.Kill(1)
 				if err2 != nil {
 					return result, err2
 				}
 				curr.SetCdr(val2)
 				break
 			}
-			params[0] = pair.Car()
-			val2, err2 := env.Apply(fn, params, bind)
+			env.Push(pair.Car())
+			val2, err2 := env.Apply(fn, 1, bind)
+			env.Kill(1)
 			if err2 != nil {
 				return result, err2
 			}
@@ -144,7 +147,7 @@ var Apply = sxeval.Builtin{
 			return nil, err
 		}
 		if lst == nil {
-			return env.Apply(fn, nil, bind)
+			return env.Apply(fn, 0, bind)
 		}
 
 		env.Push(lst.Car())
@@ -152,7 +155,7 @@ var Apply = sxeval.Builtin{
 		for node := lst; ; {
 			cdr := node.Cdr()
 			if sx.IsNil(cdr) {
-				res, err = env.Apply(fn, env.Args(argCount), bind)
+				res, err = env.Apply(fn, argCount, bind)
 				env.Kill(argCount)
 				return res, err
 			}
@@ -183,11 +186,11 @@ var Fold = sxeval.Builtin{
 			return nil, err
 		}
 		res := args[1]
-		params := sx.Vector{res, res}
 		for node := lst; node != nil; {
-			params[0] = node.Car()
-			params[1] = res
-			res, err = env.Apply(fn, params, bind)
+			env.Push(node.Car())
+			env.Push(res)
+			res, err = env.Apply(fn, 2, bind)
+			env.Kill(2)
 			if err != nil {
 				return nil, err
 			}
@@ -221,11 +224,11 @@ var FoldReverse = sxeval.Builtin{
 			return nil, err
 		}
 		res := args[1]
-		params := sx.Vector{res, res}
 		for node := rev; node != nil; {
-			params[0] = node.Car()
-			params[1] = res
-			res, err = env.Apply(fn, params, bind)
+			env.Push(node.Car())
+			env.Push(res)
+			res, err = env.Apply(fn, 2, bind)
+			env.Kill(2)
 			if err != nil {
 				return nil, err
 			}

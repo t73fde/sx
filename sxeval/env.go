@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"slices"
 
 	"t73f.de/r/sx"
 )
@@ -149,24 +150,23 @@ func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) (sx.Object, error) 
 	return nil, errExecuteAgain
 }
 
-// ApplyMacro executes the Callable in a macro environment.
-func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
+// ApplyMacro executes the Callable in a macro environment, with given number
+// of args (which are placed on the stack).
+func (env *Environment) ApplyMacro(name string, fn Callable, numargs int, bind *Binding) (sx.Object, error) {
 	macroBind := bind.MakeChildBinding(name, 0)
-	return env.Apply(fn, args, macroBind)
+	return env.Apply(fn, numargs, macroBind)
 }
 
-// Apply the given Callable with the arguments.
-func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
-	env.PushArgs(args)
-	res, err := fn.ExecuteCall(env, len(args), bind)
-	env.Kill(len(args))
+// Apply the given Callable with the given number of arguments (which are on the stack).
+func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (sx.Object, error) {
+	res, err := fn.ExecuteCall(env, numargs, bind)
 	if err == nil {
 		return res, nil
 	}
 	if err == errExecuteAgain {
 		return env.Execute(env.newExpr, env.newBind)
 	}
-	return nil, env.addExecuteError(&applyExpr{Proc: fn, Args: args}, err)
+	return nil, env.addExecuteError(&applyExpr{Proc: fn, Args: slices.Clone(env.Args(numargs))}, err)
 }
 
 type applyExpr struct {
@@ -185,7 +185,10 @@ func (ce *applyExpr) Unparse() sx.Object {
 }
 
 func (ce *applyExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	return env.Apply(ce.Proc, ce.Args, bind)
+	env.PushArgs(ce.Args)
+	obj, err := env.Apply(ce.Proc, len(ce.Args), bind)
+	env.Kill(len(ce.Args))
+	return obj, err
 }
 
 func (ce *applyExpr) Print(w io.Writer) (int, error) {
