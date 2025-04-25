@@ -91,6 +91,7 @@ func createBinding() *sxeval.Binding {
 	_ = sxbuiltins.BindAll(root)
 	root.Freeze()
 	env := root.MakeChildBinding("vars", len(objects))
+	_ = env.Bind(sx.MakeSymbol("ROOT"), root)
 	for _, obj := range objects {
 		if err := env.Bind(sx.MakeSymbol(obj.name), obj.obj); err != nil {
 			panic(err)
@@ -111,4 +112,30 @@ var objects = []struct {
 	{"d", sx.MakeList(sx.Int64(44), sx.Int64(55))},
 	{"x", sx.Int64(3)}, {"y", sx.Int64(5)},
 	{"lang0", sx.String{}}, {"lang1", sx.MakeString("de-DE")},
+}
+
+func TestIsPure(t *testing.T) {
+	args := make(sx.Vector, 128)
+	for i := range cap(args) {
+		args[i] = sx.MakeUndefined()
+	}
+	root := sxeval.MakeRootBinding(256)
+	_ = sxbuiltins.BindAll(root)
+	for p := root.Bindings(); p != nil; p = p.Tail() {
+		val := p.Head().Cdr()
+		if b, isBuiltin := val.(*sxeval.Builtin); isBuiltin {
+			for i := range cap(args) {
+				isPure := b.IsPure(args[0:i])
+				if i < int(b.MinArity) {
+					if isPure {
+						t.Errorf("%v.IsPure(%d) should be false, but is true (min)", b, i)
+					}
+				} else if b.MaxArity >= b.MinArity && i > int(b.MaxArity) {
+					if isPure {
+						t.Errorf("%v.IsPure(%d) should be false, but is true (max)", b, i)
+					}
+				}
+			}
+		}
+	}
 }

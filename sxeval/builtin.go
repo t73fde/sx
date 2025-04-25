@@ -84,7 +84,19 @@ func (b *Builtin) GoString() string { return b.String() }
 
 // IsPure returns true if builtin is a pure function.
 func (b *Builtin) IsPure(objs sx.Vector) bool {
-	if testPure := b.TestPure; testPure != nil {
+	if testPure := b.TestPure; testPure != nil && len(objs) <= math.MaxInt16 {
+		numargs, minArity, maxArity := int16(len(objs)), b.MinArity, b.MaxArity
+		if minArity == maxArity {
+			if numargs != minArity {
+				return false
+			}
+		} else if maxArity < 0 {
+			if numargs < minArity {
+				return false
+			}
+		} else if numargs < minArity || maxArity < numargs {
+			return false
+		}
 		return testPure(objs)
 	}
 	return false

@@ -21,14 +21,12 @@ func TestEquiv(t *testing.T) {
 }
 
 var tcsEquiv = tTestCases{
-	{
-		name:    "err-==-0",
+	{name: "err-==-0",
 		src:     "(==)",
 		exp:     "{[{==: at least 2 arguments required, but none given}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-==-1",
+	{name: "err-==-1",
 		src:     "(== 1)",
 		exp:     "{[{==: at least 2 arguments required, but only 1 given: [1]}]}",
 		withErr: true,
@@ -36,14 +34,12 @@ var tcsEquiv = tTestCases{
 	{name: "==-2-f", src: "(== 1 2)", exp: "()"},
 	{name: "==-2-t", src: "(== 1 1)", exp: "T"},
 
-	{
-		name:    "err-=-0",
+	{name: "err-=-0",
 		src:     "(=)",
 		exp:     "{[{=: at least 2 arguments required, but none given}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-=-1",
+	{name: "err-=-1",
 		src:     "(= 1)",
 		exp:     "{[{=: at least 2 arguments required, but only 1 given: [1]}]}",
 		withErr: true,

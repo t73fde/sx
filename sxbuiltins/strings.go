@@ -52,9 +52,6 @@ var Concat = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		if len(args) == 1 {
-			return s, nil
-		}
 		var sb strings.Builder
 		sb.WriteString(s.GetValue())
 		for i := 1; i < len(args); i++ {

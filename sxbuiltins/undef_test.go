@@ -21,14 +21,12 @@ func TestUndefined(t *testing.T) {
 }
 
 var tcsUndefined = tTestCases{
-	{
-		name:    "err-defined-0",
+	{name: "err-defined-0",
 		src:     "(defined?)",
 		exp:     "{[{defined?: exactly 1 arguments required, but none given}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-defined-2",
+	{name: "err-defined-2",
 		src:     "(defined? 1 2)",
 		exp:     "{[{defined?: exactly 1 arguments required, but 2 given: [1 2]}]}",
 		withErr: true,

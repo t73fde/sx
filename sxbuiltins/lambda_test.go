@@ -21,8 +21,7 @@ func TestLambda(t *testing.T) {
 }
 
 var tcsLambda = tTestCases{
-	{
-		name:    "err-callable?-0",
+	{name: "err-callable?-0",
 		src:     "(callable?)",
 		exp:     "{[{callable?: exactly 1 arguments required, but none given}]}",
 		withErr: true,
@@ -39,21 +38,34 @@ var tcsLambda = tTestCases{
 	{name: "defun-eval", src: "((defun a () 1))", exp: "1"},
 	{name: "defun-eval-arg", src: "((defun a (a) a) 1)", exp: "1"},
 
-	{
-		name:    "err-lambda-0",
+	{name: "err-lambda-0",
 		src:     "(lambda)",
 		exp:     "{[{lambda: parameter spec and body missing}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-lambda-x",
+	{name: "err-lambda-x",
 		src:     "(lambda x)",
 		exp:     "{[{lambda: missing body}]}",
-		withErr: true},
-	{
-		name:    "err-lambda-1",
+		withErr: true,
+	},
+	{name: "err-lambda-x-x-x",
+		src:     "(lambda (x . x) x)",
+		exp:     "{[{lambda: symbol x already defined}]}",
+		withErr: true,
+	},
+	{name: "err-lambda-x-y",
+		src:     "(lambda x . y)",
+		exp:     "{[{lambda: body must not be a dotted pair}]}",
+		withErr: true,
+	},
+	{name: "err-lambda-1",
 		src:     "(lambda 1)",
 		exp:     "{[{lambda: only symbol and list allowed in parameter spec, but got: sx.Int64/1}]}",
+		withErr: true,
+	},
+	{name: "err-lambda-x-syntax",
+		src:     "(lambda x (set!))",
+		exp:     "{[{set!: need at least two arguments}]}",
 		withErr: true,
 	},
 	{name: "lambda-1", src: "((lambda x 1))", exp: "1"},
@@ -62,14 +74,12 @@ var tcsLambda = tTestCases{
 	{name: "lambda-adder", src: "(((lambda (n) (lambda (x) (+ n x))) 3) 4)", exp: "7"},
 	{name: "lambda-add", src: "((lambda (x y) (+ x y)) 3 4)", exp: "7"},
 	{name: "lambda-add-apply", src: "((lambda x (apply + x)) 3 4 5)", exp: "12"},
-	{
-		name:    "err-lambda-add-many",
+	{name: "err-lambda-add-many",
 		src:     "((lambda (x y) (+ x y)) 3 4 5)",
 		exp:     "{[{(x y): excess arguments: [5]}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-lambda-add-less",
+	{name: "err-lambda-add-less",
 		src:     "((lambda (x y) (+ x y)) 3)",
 		exp:     "{[{(x y): missing arguments: [y]}]}",
 		withErr: true,
@@ -79,35 +89,30 @@ var tcsLambda = tTestCases{
 	{name: "lambda-car-2", src: "((lambda (x . y) x) 1 2)", exp: "1"},
 	{name: "lambda-cdr-1", src: "((lambda (x . y) y) 1)", exp: "()"},
 	{name: "lambda-cdr-2", src: "((lambda (x . y) y) 1 2)", exp: "(2)"},
-	{
-		name:    "err-lambda-arg-nosym",
+	{name: "err-lambda-arg-nosym",
 		src:     "(lambda (1) 1)",
 		exp:     "{[{lambda: symbol in list expected, but got sx.Int64/1}]}",
 		withErr: true,
 	},
 
 	{name: "lambda-name", src: "(lambda \"adbmal\" x x)", exp: "#<lambda:adbmal>"},
-	{
-		name:    "err-lambda-name-body",
+	{name: "err-lambda-name-body",
 		src:     "(lambda \"adbmal\" x)",
 		exp:     "{[{lambda: missing body}]}",
 		withErr: true,
 	},
-	{
-		name:    "err-lambda-name-param",
+	{name: "err-lambda-name-param",
 		src:     "(lambda \"adbmal\")",
 		exp:     "{[{lambda: parameter spec and body missing}]}",
 		withErr: true,
 	},
 
-	{
-		name: "lambda-lex-resolve",
-		src:  "(defvar y 3) (defun fn (x) (+ x y)) (let ((y 17)) (fn 4))",
-		exp:  "3 #<lambda:fn> 7",
+	{name: "lambda-lex-resolve",
+		src: "(defvar y 3) (defun fn (x) (+ x y)) (let ((y 17)) (fn 4))",
+		exp: "3 #<lambda:fn> 7",
 	},
-	{
-		name: "lambda-dyn-resolve",
-		src:  "(defvar y 3) (defdyn fn (x) (+ x y)) (let ((y 17)) (fn 4))",
-		exp:  "3 #<dyn-lambda:fn> 21",
+	{name: "lambda-dyn-resolve",
+		src: "(defvar y 3) (defdyn fn (x) (+ x y)) (let ((y 17)) (fn 4))",
+		exp: "3 #<dyn-lambda:fn> 21",
 	},
 }
