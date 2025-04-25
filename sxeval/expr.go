@@ -130,7 +130,7 @@ func (oe ObjExpr) Print(w io.Writer) (int, error) {
 // as a constant value.
 func (oe ObjExpr) ConstObject() sx.Object { return oe.Obj }
 
-// --- SymbolExpr -------------------------------------------------------------
+// ----- SymbolExpr -----------------------------------------------------------
 
 // UnboundSymbolExpr resolves the given symbol in an environment and returns its value.
 type UnboundSymbolExpr struct{ sym *sx.Symbol }
@@ -223,7 +223,7 @@ func (lse lookupSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{LOOKUP/%d %v}", lse.lvl, lse.sym)
 }
 
-// --- CallExpr ---------------------------------------------------------------
+// ----- CallExpr -------------------------------------------------------------
 
 // CallExpr calls a procedure and returns the resulting objects.
 type CallExpr struct {
@@ -279,22 +279,24 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 
 // Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+	args := ce.Args
+	err := computeArgs(env, args, bind)
+	if err != nil {
+		return nil, err
+	}
+
 	val, err := env.Execute(ce.Proc, bind)
 	if err != nil {
 		return nil, err
 	}
-	if !sx.IsNil(val) {
-		if proc, isCallable := val.(Callable); isCallable {
-			args := ce.Args
-			if err = computeArgs(env, args, bind); err != nil {
-				return nil, err
-			}
-			obj, err2 := proc.Call(env, env.Args(len(args)), bind)
-			env.Kill(len(args))
-			return obj, err2
-		}
+	proc, isCallable := val.(Callable)
+	if !isCallable {
+		return nil, NotCallableError{Obj: val}
 	}
-	return nil, NotCallableError{Obj: val}
+
+	obj, err := proc.Call(env, env.Args(len(args)), bind)
+	env.Kill(len(args))
+	return obj, err
 }
 
 func computeArgs(env *Environment, args []Expr, bind *Binding) error {
