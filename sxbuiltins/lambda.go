@@ -357,8 +357,8 @@ func (ll *LexLambda) GoString() string { return ll.String() }
 // produce any other side effects.
 func (ll *LexLambda) IsPure(sx.Vector) bool { return false }
 
-// Call the Procedure with any number of arguments.
-func (ll *LexLambda) Call(env *sxeval.Environment, numargs int, _ *sxeval.Binding) (sx.Object, error) {
+// ExecuteCall the Procedure with any number of arguments.
+func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval.Binding) (sx.Object, error) {
 	numParams := len(ll.Params)
 	if numargs < numParams {
 		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[numargs:])
@@ -443,8 +443,8 @@ func (dl *DynLambda) GoString() string { return dl.String() }
 // produce any other side effects.
 func (dl *DynLambda) IsPure(sx.Vector) bool { return false }
 
-// Call the Procedure with any number of arguments.
-func (dl *DynLambda) Call(env *sxeval.Environment, numargs int, bind *sxeval.Binding) (sx.Object, error) {
+// ExecuteCall the Procedure with any number of arguments.
+func (dl *DynLambda) ExecuteCall(env *sxeval.Environment, numargs int, bind *sxeval.Binding) (sx.Object, error) {
 	// A DynLambda is just a LexLambda with a different Binding.
 	return (&LexLambda{
 		Binding: bind,
@@ -452,5 +452,5 @@ func (dl *DynLambda) Call(env *sxeval.Environment, numargs int, bind *sxeval.Bin
 		Params:  dl.Params,
 		Rest:    dl.Rest,
 		Expr:    dl.Expr,
-	}).Call(env, numargs, bind)
+	}).ExecuteCall(env, numargs, bind)
 }

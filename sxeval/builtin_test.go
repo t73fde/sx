@@ -58,7 +58,7 @@ func TestBuiltinSimple(t *testing.T) {
 	args := sx.Vector{}
 	for i := range 10 {
 		env.PushArgs(args)
-		res, err := b.Call(env, len(args), nil)
+		res, err := b.ExecuteCall(env, len(args), nil)
 		if err != nil {
 			t.Error(err)
 			break

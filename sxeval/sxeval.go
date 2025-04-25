@@ -22,17 +22,16 @@ import (
 	"t73f.de/r/sx"
 )
 
-// Callable is an sx.Object which can be called for evaluation.
+// Callable is something that can be called for evaluation.
 type Callable interface {
-	sx.Object
-
 	// IsPure checks if the callable is independent of a full environment and
 	// does not produce any side effects.
 	IsPure(sx.Vector) bool
 
-	// Call the value with the given number of args in the given environment.
+	// ExecuteCall calls the value with the given args in the given environment
+	// in context of the AST evaluator.
 	// Args are transported via env.Args(numargs).
-	Call(*Environment, int, *Binding) (sx.Object, error)
+	ExecuteCall(*Environment, int, *Binding) (sx.Object, error)
 }
 
 // GetCallable returns the object as a Callable, if possible.

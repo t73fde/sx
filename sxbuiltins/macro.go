@@ -63,7 +63,7 @@ func (m *Macro) Parse(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, 
 	if err != nil {
 		return nil, err
 	}
-	return nil, pf.ParseAgain(form)
+	return sxeval.NilExpr, pf.ParseAgain(form)
 }
 
 // Expand the macro in the given call.

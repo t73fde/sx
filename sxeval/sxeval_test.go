@@ -78,7 +78,9 @@ func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 			env := sxeval.MakeEnvironment()
 			res, err := env.Eval(obj, bind)
 			if err != nil {
-				t.Error(err) // TODO: temp
+				if got := "{[{" + err.Error() + "}]}"; got != tc.exp {
+					t.Errorf("%s should result in %q, but got %q", tc.src, tc.exp, got)
+				}
 				return
 			}
 			if got := res.String(); got != tc.exp {
@@ -100,6 +102,7 @@ func TestEval(t *testing.T) {
 		{name: "cat-hello-sx", src: `(cat hello ": sx")`, exp: `"Hello, World: sx"`},
 		// {name: "err-binding", src: "moin", mustErr: true},
 		// {name: "err-callable", src: "(hello)", mustErr: true},
+		{name: "nil-call", src: "(() 1 2)", exp: "{[{not callable: *sx.Pair/()}]}"},
 	}
 	root := createTestBinding()
 	_ = sxeval.BindSpecials(root, &sxeval.Special{

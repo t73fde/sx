@@ -24,21 +24,14 @@ import (
 
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
-	stack    []sx.Object
-	tco      tcodata
-	observer observer
-}
+	stack []sx.Object
 
-// tcodata contains everything to implement Tail Call Optimization (tco)
-type tcodata struct {
-	expr    Expr
-	binding *Binding
-}
+	newExpr Expr
+	newBind *Binding
 
-type observer struct {
-	compute ComputeObserver
-	parse   ParseObserver
-	improve ImproveObserver
+	obCompute ComputeObserver
+	obParse   ParseObserver
+	obImprove ImproveObserver
 }
 
 // ComputeObserver observes the execution of expressions.
@@ -62,19 +55,19 @@ func MakeEnvironment() *Environment {
 
 // SetComputeObserver sets the given compute observer.
 func (env *Environment) SetComputeObserver(observe ComputeObserver) *Environment {
-	env.observer.compute = observe
+	env.obCompute = observe
 	return env
 }
 
 // SetParseObserver sets the given parsing observer.
 func (env *Environment) SetParseObserver(observe ParseObserver) *Environment {
-	env.observer.parse = observe
+	env.obParse = observe
 	return env
 }
 
 // SetImproveObserver sets the given improve observer.
 func (env *Environment) SetImproveObserver(observe ImproveObserver) *Environment {
-	env.observer.improve = observe
+	env.obImprove = observe
 	return env
 }
 
@@ -97,7 +90,7 @@ func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
 	imp := &Improver{
 		binding:  bind,
 		height:   0,
-		observer: env.observer.improve,
+		observer: env.obImprove,
 	}
 	imp.base = imp
 	return imp.Improve(expr)
@@ -107,7 +100,7 @@ func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
 func (env *Environment) MakeParseEnvironment(bind *Binding) *ParseEnvironment {
 	return &ParseEnvironment{
 		binding:  bind,
-		observer: env.observer.parse,
+		observer: env.obParse,
 	}
 }
 
@@ -119,27 +112,27 @@ func (env *Environment) Run(expr Expr, bind *Binding) (sx.Object, error) {
 // Execute the given expression.
 func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err error) {
 	for {
-		if exec := env.observer.compute; exec != nil {
+		if exec := env.obCompute; exec != nil {
 			if expr, err = exec.BeforeCompute(env, expr, bind); err != nil {
 				break
 			}
 		}
 
 		if res, err = expr.Compute(env, bind); err == nil {
-			if exec := env.observer.compute; exec != nil {
+			if exec := env.obCompute; exec != nil {
 				exec.AfterCompute(env, expr, bind, res, nil)
 			}
 			return res, nil
 		}
 
-		if exec := env.observer.compute; exec != nil {
+		if exec := env.obCompute; exec != nil {
 			exec.AfterCompute(env, expr, bind, res, err)
 		}
 		if err != errExecuteAgain {
 			break
 		}
-		expr = env.tco.expr
-		bind = env.tco.binding
+		expr = env.newExpr
+		bind = env.newBind
 	}
 	return res, env.addExecuteError(expr, err)
 }
@@ -151,8 +144,8 @@ func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) (sx.Object, error) 
 	// return env.Execute(expr, bind)
 
 	// Just return relevant data for real TCO
-	env.tco.expr = expr
-	env.tco.binding = bind
+	env.newExpr = expr
+	env.newBind = bind
 	return nil, errExecuteAgain
 }
 
@@ -165,12 +158,12 @@ func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bin
 // Apply the given Callable with the arguments.
 func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
 	env.PushArgs(args)
-	res, err := fn.Call(env, len(args), bind)
+	res, err := fn.ExecuteCall(env, len(args), bind)
 	if err == nil {
 		return res, nil
 	}
 	if err == errExecuteAgain {
-		return env.Execute(env.tco.expr, env.tco.binding)
+		return env.Execute(env.newExpr, env.newBind)
 	}
 	return nil, env.addExecuteError(&applyExpr{Proc: fn, Args: args}, err)
 }

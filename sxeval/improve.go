@@ -57,17 +57,17 @@ func (imp *Improver) MakeChildImprover(name string, baseSize int) *Improver {
 // Improve the given expression. Do not call `expr.Improve()` directly.
 func (imp *Improver) Improve(expr Expr) (Expr, error) {
 	if observer := imp.observer; observer != nil {
-		expr2 := observer.BeforeImprove(imp, expr)
-		if iexpr2, ok := expr2.(Improvable); ok {
-			result, err := iexpr2.Improve(imp)
-			observer.AfterImprove(imp, expr2, result, err)
-			return result, err
-		}
-		observer.AfterImprove(imp, expr2, expr2, nil)
-		return expr2, nil
+		expr = observer.BeforeImprove(imp, expr)
 	}
 	if iexpr, ok := expr.(Improvable); ok {
-		return iexpr.Improve(imp)
+		result, err := iexpr.Improve(imp)
+		if observer := imp.observer; observer != nil {
+			observer.AfterImprove(imp, expr, result, err)
+		}
+		return result, err
+	}
+	if observer := imp.observer; observer != nil {
+		observer.AfterImprove(imp, expr, expr, nil)
 	}
 	return expr, nil
 }
@@ -90,14 +90,16 @@ func (imp *Improver) ImproveSlice(exprs []Expr) error {
 func (imp *Improver) ImproveFoldCall(proc Callable, args []Expr) (Expr, error) {
 	vals := make(sx.Vector, len(args))
 	for i, arg := range args {
-		if objExpr, isConstObject := arg.(ConstObjectExpr); isConstObject {
+		if objExpr, isConstObject := GetConstExpr(arg); isConstObject {
 			vals[i] = objExpr.ConstObject()
 		} else {
 			return nil, nil
 		}
 	}
 	if proc.IsPure(vals) {
-		if result, err := imp.Call(proc, vals); err == nil {
+		env := MakeEnvironment()
+		env.PushArgs(vals)
+		if result, err := proc.ExecuteCall(env, len(vals), imp.binding); err == nil {
 			return imp.Improve(ObjExpr{Obj: result})
 		}
 	}
@@ -129,13 +131,4 @@ func (imp *Improver) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
 // Bind the undefined value to the symbol in the current environment.
 func (imp *Improver) Bind(sym *sx.Symbol) error {
 	return imp.binding.Bind(sym, sx.MakeUndefined())
-}
-
-// Call a function for constant folding.
-//
-// It is only called, if no full execution environment is needed, only a binding.
-func (imp *Improver) Call(fn Callable, args sx.Vector) (sx.Object, error) {
-	env := MakeEnvironment()
-	env.PushArgs(args)
-	return fn.Call(env, len(args), imp.binding)
 }

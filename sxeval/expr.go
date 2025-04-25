@@ -130,7 +130,7 @@ func (oe ObjExpr) Print(w io.Writer) (int, error) {
 // as a constant value.
 func (oe ObjExpr) ConstObject() sx.Object { return oe.Obj }
 
-// --- SymbolExpr -------------------------------------------------------------
+// ----- SymbolExpr -----------------------------------------------------------
 
 // UnboundSymbolExpr resolves the given symbol in an environment and returns its value.
 type UnboundSymbolExpr struct{ sym *sx.Symbol }
@@ -223,7 +223,7 @@ func (lse lookupSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{LOOKUP/%d %v}", lse.lvl, lse.sym)
 }
 
-// --- CallExpr ---------------------------------------------------------------
+// ----- CallExpr -------------------------------------------------------------
 
 // CallExpr calls a procedure and returns the resulting objects.
 type CallExpr struct {
@@ -257,14 +257,14 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 	}
 	if objExpr, isObjExpr := proc.(ObjExpr); isObjExpr {
 		// If call can be folded into a constant value, use that value.
-		if c, isCallable := objExpr.Obj.(Callable); isCallable {
+		if c, isCallable := GetCallable(objExpr.Obj); isCallable {
 			if foldExpr, foldErr := imp.ImproveFoldCall(c, ce.Args); foldErr == nil && foldExpr != nil {
 				return foldExpr, nil
 			}
 		}
 
 		// If the ce.Proc is a builtin, improve to a BuiltinCallExpr.
-		if b, isBuiltin := objExpr.Obj.(*Builtin); isBuiltin {
+		if b, isBuiltin := GetBuiltin(objExpr.Obj); isBuiltin {
 			bce := &builtinCallExpr{
 				Proc: b,
 				Args: ce.Args,
@@ -279,20 +279,23 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 
 // Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+	args := ce.Args
+	err := computeArgs(env, args, bind)
+	if err != nil {
+		return nil, err
+	}
+
 	val, err := env.Execute(ce.Proc, bind)
 	if err != nil {
 		return nil, err
 	}
-	if !sx.IsNil(val) {
-		if proc, isCallable := val.(Callable); isCallable {
-			args := ce.Args
-			if err = computeArgs(env, args, bind); err != nil {
-				return nil, err
-			}
-			return proc.Call(env, len(args), bind)
-		}
+	proc, isCallable := GetCallable(val)
+	if !isCallable {
+		return nil, NotCallableError{Obj: val}
 	}
-	return nil, NotCallableError{Obj: val}
+
+	obj, err := proc.ExecuteCall(env, len(args), bind)
+	return obj, err
 }
 
 func computeArgs(env *Environment, args []Expr, bind *Binding) error {

@@ -38,15 +38,15 @@ type ParseObserver interface {
 // Parse the form into an expression.
 func (pe *ParseEnvironment) Parse(form sx.Object) (expr Expr, err error) {
 	if observer := pe.observer; observer != nil {
-		var obj sx.Object
-		obj, err = observer.BeforeParse(pe, form)
-		if err == nil {
-			expr, err = pe.parseForm(obj)
-		}
-		observer.AfterParse(pe, obj, expr, err)
-		return expr, err
+		form, err = observer.BeforeParse(pe, form)
 	}
-	return pe.parseForm(form)
+	if err == nil {
+		expr, err = pe.parseForm(form)
+	}
+	if observer := pe.observer; observer != nil {
+		observer.AfterParse(pe, form, expr, err)
+	}
+	return expr, err
 }
 
 func (pe *ParseEnvironment) parseForm(form sx.Object) (Expr, error) {
