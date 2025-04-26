@@ -72,20 +72,18 @@ func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, _ *sxev
 
 // ----- ParseObserver methods
 
-func (me *mainEngine) BeforeParse(pe *sxeval.ParseEnvironment, form sx.Object) (sx.Object, error) {
+func (me *mainEngine) BeforeParse(_ *sxeval.ParseEnvironment, form sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel)
 		me.parseLevel++
-		bind := pe.Binding()
 		fmt.Printf("%s;P%v %v<-%v %T %v\n", spaces, me.parseLevel, bind, bind.Parent(), form, form)
 	}
 	return form, nil
 }
 
-func (me *mainEngine) AfterParse(pe *sxeval.ParseEnvironment, _ sx.Object, expr sxeval.Expr, err error) {
+func (me *mainEngine) AfterParse(_ *sxeval.ParseEnvironment, _ sx.Object, expr sxeval.Expr, bind *sxeval.Binding, err error) {
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel-1)
-		bind := pe.Binding()
 		fmt.Printf("%s;Q%v %v<-%v %v ", spaces, me.parseLevel, bind, bind.Parent(), err)
 		if err == nil {
 			_, _ = expr.Print(os.Stdout)

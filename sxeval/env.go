@@ -103,8 +103,8 @@ func (env *Environment) Eval(obj sx.Object, bind *Binding) (sx.Object, error) {
 
 // Parse the given object.
 func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
-	pe := env.MakeParseEnvironment(bind)
-	expr, err := pe.Parse(obj)
+	pe := env.MakeParseEnvironment()
+	expr, err := pe.Parse(obj, bind)
 	if err != nil {
 		return expr, err
 	}
@@ -124,11 +124,8 @@ func (env *Environment) Compile(expr Expr) (*ProgramExpr, error) {
 }
 
 // MakeParseEnvironment builds a parsing environment to parse a form.
-func (env *Environment) MakeParseEnvironment(bind *Binding) *ParseEnvironment {
-	return &ParseEnvironment{
-		binding:  bind,
-		observer: env.obParse,
-	}
+func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
+	return &ParseEnvironment{env: env}
 }
 
 // MakeCompiler builds a new compiler for the given environment.
@@ -202,31 +199,33 @@ func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Ob
 	if err == errExecuteAgain {
 		return env.Execute(env.newExpr, env.newBind)
 	}
-	return nil, env.addExecuteError(&applyExpr{Proc: fn, Args: args}, err)
+	return nil, env.addExecuteError(&applyErrExpr{Proc: fn, Args: args}, err)
 }
 
-type applyExpr struct {
+// applyErrExpr is needed, when an error occurs during `env.Apply`, to give a better
+// error message.
+type applyErrExpr struct {
 	Proc Callable
 	Args sx.Vector
 }
 
-func (ce *applyExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
+func (ce *applyErrExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
 
 // IsPure signals an expression that has no side effects.
-func (*applyExpr) IsPure() bool { return false }
+func (*applyErrExpr) IsPure() bool { return false }
 
-func (ce *applyExpr) Unparse() sx.Object {
+func (ce *applyErrExpr) Unparse() sx.Object {
 	args := sx.MakeList(ce.Args...)
 	return args.Cons(ce.Proc.(sx.Object))
 }
 
-func (ce *applyExpr) Compile(*Compiler, bool) error { return MissingCompileError{Expr: ce} }
+func (ce *applyErrExpr) Compile(*Compiler, bool) error { return MissingCompileError{Expr: ce} }
 
-func (ce *applyExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+func (ce *applyErrExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	return env.Apply(ce.Proc, ce.Args, bind)
 }
 
-func (ce *applyExpr) Print(w io.Writer) (int, error) {
+func (ce *applyErrExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{call %v %v}", ce.Proc, ce.Args)
 }
 

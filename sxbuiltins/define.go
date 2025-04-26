@@ -28,8 +28,8 @@ const defvarName = "defvar"
 // DefVarS parses a (defvar name value) form.
 var DefVarS = sxeval.Special{
 	Name: defvarName,
-	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
-		sym, val, err := parseSymValue(pf, args)
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+		sym, val, err := parseSymValue(pe, args, bind)
 		if err != nil {
 			return nil, err
 		}
@@ -37,7 +37,7 @@ var DefVarS = sxeval.Special{
 	},
 }
 
-func parseSymValue(pf *sxeval.ParseEnvironment, args *sx.Pair) (*sx.Symbol, sxeval.Expr, error) {
+func parseSymValue(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (*sx.Symbol, sxeval.Expr, error) {
 	if args == nil {
 		return nil, nil, fmt.Errorf("need at least two arguments")
 	}
@@ -54,7 +54,7 @@ func parseSymValue(pf *sxeval.ParseEnvironment, args *sx.Pair) (*sx.Symbol, sxev
 	if !isPair {
 		return nil, nil, fmt.Errorf("argument 2 must be a proper list")
 	}
-	val, err := pf.Parse(pair.Car())
+	val, err := pe.Parse(pair.Car(), bind)
 	return sym, val, err
 }
 
@@ -134,7 +134,7 @@ const setXName = "set!"
 // SetXS parses a (set! name value) form.
 var SetXS = sxeval.Special{
 	Name: setXName,
-	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, fmt.Errorf("need at least two arguments")
 		}
@@ -151,7 +151,7 @@ var SetXS = sxeval.Special{
 		if !isPair {
 			return nil, fmt.Errorf("argument 2 must be a proper list, but is: %T/%v", cdr, cdr)
 		}
-		val, err := pf.Parse(pair.Car())
+		val, err := pe.Parse(pair.Car(), bind)
 		if err != nil {
 			return val, err
 		}
