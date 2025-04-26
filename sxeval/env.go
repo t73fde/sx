@@ -83,8 +83,8 @@ func (env *Environment) Eval(obj sx.Object, bind *Binding) (sx.Object, error) {
 
 // Parse the given object.
 func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
-	pe := env.MakeParseEnvironment(bind)
-	expr, err := pe.Parse(obj)
+	pe := env.MakeParseEnvironment()
+	expr, err := pe.Parse(obj, bind)
 	if err != nil {
 		return expr, err
 	}
@@ -98,11 +98,8 @@ func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
 }
 
 // MakeParseEnvironment builds a parsing environment to parse a form.
-func (env *Environment) MakeParseEnvironment(bind *Binding) *ParseEnvironment {
-	return &ParseEnvironment{
-		binding:  bind,
-		observer: env.obParse,
-	}
+func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
+	return &ParseEnvironment{env: env}
 }
 
 // Run the given expression.
@@ -166,32 +163,34 @@ func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (sx.Objec
 	if err == errExecuteAgain {
 		return env.Execute(env.newExpr, env.newBind)
 	}
-	return nil, env.addExecuteError(&applyExpr{Proc: fn, Args: slices.Clone(env.Args(numargs))}, err)
+	return nil, env.addExecuteError(&applyErrExpr{Proc: fn, Args: env.CopyArgs(numargs)}, err)
 }
 
-type applyExpr struct {
+// applyErrExpr is needed, when an error occurs during `env.Apply`, to give a better
+// error message.
+type applyErrExpr struct {
 	Proc Callable
 	Args sx.Vector
 }
 
-func (ce *applyExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
+func (ce *applyErrExpr) String() string { return fmt.Sprintf("%v %v", ce.Proc, ce.Args) }
 
 // IsPure signals an expression that has no side effects.
-func (*applyExpr) IsPure() bool { return false }
+func (*applyErrExpr) IsPure() bool { return false }
 
-func (ce *applyExpr) Unparse() sx.Object {
+func (ce *applyErrExpr) Unparse() sx.Object {
 	args := sx.MakeList(ce.Args...)
 	return args.Cons(ce.Proc.(sx.Object))
 }
 
-func (ce *applyExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+func (ce *applyErrExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	env.PushArgs(ce.Args)
 	obj, err := env.Apply(ce.Proc, len(ce.Args), bind)
 	env.Kill(len(ce.Args))
 	return obj, err
 }
 
-func (ce *applyExpr) Print(w io.Writer) (int, error) {
+func (ce *applyErrExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{call %v %v}", ce.Proc, ce.Args)
 }
 
@@ -261,7 +260,11 @@ func (env *Environment) Top() sx.Object { return env.stack[len(env.stack)-1] }
 func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-num] }
 
 // Args returns a given number of values on top of the stack as a slice.
+// Use the slice only if you are sure that the stack is not changed.
 func (env *Environment) Args(numargs int) []sx.Object {
 	sp := len(env.stack)
 	return env.stack[sp-numargs : sp]
 }
+
+// CopyArgs copies the number of values on top of the stack into a separate slice.
+func (env *Environment) CopyArgs(numargs int) []sx.Object { return slices.Clone(env.Args(numargs)) }

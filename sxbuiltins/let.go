@@ -32,7 +32,7 @@ type LetData struct {
 
 var errNoBindingSpecAndBody = errors.New("binding spec and body missing")
 
-func parseBindingsBody(pf *sxeval.ParseEnvironment, args *sx.Pair, dupSyms bool, data *LetData) error {
+func parseBindingsBody(pe *sxeval.ParseEnvironment, args *sx.Pair, forLetStar bool, bind *sxeval.Binding, data *LetData) error {
 	if args == nil {
 		return errNoBindingSpecAndBody
 	}
@@ -51,7 +51,7 @@ func parseBindingsBody(pf *sxeval.ParseEnvironment, args *sx.Pair, dupSyms bool,
 		}
 		var sym *sx.Symbol
 		var err error
-		if dupSyms {
+		if forLetStar {
 			sym, err = GetParameterSymbol(nil, binding.Car())
 		} else {
 			sym, err = GetParameterSymbol(symbols, binding.Car())
@@ -80,13 +80,17 @@ func parseBindingsBody(pf *sxeval.ParseEnvironment, args *sx.Pair, dupSyms bool,
 	}
 
 	vals := make([]sxeval.Expr, len(objs))
-	letEnv := pf.MakeChildEnvironment("let-def", len(symbols))
-	for i, sym := range symbols {
-		expr, err := pf.Parse(objs[i])
+	letBind := bind.MakeChildBinding("let-def", len(symbols))
+	parseBind := bind
+	if forLetStar {
+		parseBind = letBind
+	}
+	for i, obj := range objs {
+		expr, err := pe.Parse(obj, parseBind)
 		if err != nil {
 			return err
 		}
-		if err = letEnv.Bind(sym, sx.MakeUndefined()); err != nil {
+		if err = letBind.Bind(symbols[i], sx.MakeUndefined()); err != nil {
 			return err
 		}
 		vals[i] = expr
@@ -96,7 +100,7 @@ func parseBindingsBody(pf *sxeval.ParseEnvironment, args *sx.Pair, dupSyms bool,
 	if !isPair {
 		return sx.ErrImproper{Pair: args}
 	}
-	body, err := ParseExprSeq(letEnv, bodyArgs)
+	body, err := ParseExprSeq(pe, bodyArgs, letBind)
 	if err != nil {
 		return err
 	}
@@ -174,9 +178,9 @@ const letName = "let"
 // LetS parses the `(let (binding...) expr...)` syntax.`
 var LetS = sxeval.Special{
 	Name: letName,
-	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
 		var result LetExpr
-		if err := parseBindingsBody(pf, args, false, &result.LetData); err != nil {
+		if err := parseBindingsBody(pe, args, false, bind, &result.LetData); err != nil {
 			return nil, err
 		}
 		return &result, nil
@@ -241,9 +245,9 @@ const letStarName = "let*"
 // LetStarS parses the `(let* (binding...) expr...)` syntax.`
 var LetStarS = sxeval.Special{
 	Name: letStarName,
-	Fn: func(pf *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
 		var result LetStarExpr
-		if err := parseBindingsBody(pf, args, true, &result.LetData); err != nil {
+		if err := parseBindingsBody(pe, args, true, bind, &result.LetData); err != nil {
 			return nil, err
 		}
 		result.numSymbols = set.New(result.Symbols...).Length()
