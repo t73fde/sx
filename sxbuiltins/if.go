@@ -26,11 +26,11 @@ const ifName = "if"
 // IfS parses an if-statement: (if cond then else). If else is missing, a nil is assumed.
 var IfS = sxeval.Special{
 	Name: ifName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, fmt.Errorf("requires 2 or 3 arguments, got none")
 		}
-		testExpr, err := pe.Parse(args.Car())
+		testExpr, err := pe.Parse(args.Car(), bind)
 		if err != nil {
 			return nil, err
 		}
@@ -38,7 +38,7 @@ var IfS = sxeval.Special{
 		if argTrue == nil {
 			return nil, fmt.Errorf("requires 2 or 3 arguments, got one")
 		}
-		trueExpr, err := pe.Parse(argTrue.Car())
+		trueExpr, err := pe.Parse(argTrue.Car(), bind)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +53,7 @@ var IfS = sxeval.Special{
 		if argFalse.Tail() != nil {
 			return nil, fmt.Errorf("requires 2 or 3 arguments, got more")
 		}
-		falseExpr, err := pe.Parse(argFalse.Car())
+		falseExpr, err := pe.Parse(argFalse.Car(), bind)
 		if err != nil {
 			return nil, err
 		}

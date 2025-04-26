@@ -82,8 +82,8 @@ func (env *Environment) Eval(obj sx.Object, bind *Binding) (sx.Object, error) {
 
 // Parse the given object.
 func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
-	pe := env.MakeParseEnvironment(bind)
-	expr, err := pe.Parse(obj)
+	pe := env.MakeParseEnvironment()
+	expr, err := pe.Parse(obj, bind)
 	if err != nil {
 		return expr, err
 	}
@@ -97,11 +97,8 @@ func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
 }
 
 // MakeParseEnvironment builds a parsing environment to parse a form.
-func (env *Environment) MakeParseEnvironment(bind *Binding) *ParseEnvironment {
-	return &ParseEnvironment{
-		binding:  bind,
-		observer: env.obParse,
-	}
+func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
+	return &ParseEnvironment{env: env}
 }
 
 // Run the given expression.

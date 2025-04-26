@@ -37,8 +37,8 @@ var CallableP = sxeval.Builtin{
 // DefunS parses a procedure/function specfication.
 var DefunS = sxeval.Special{
 	Name: "defun",
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
-		sym, le, err := parseDefProc(pe, args)
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+		sym, le, err := parseDefProc(pe, args, bind)
 		if err != nil {
 			return nil, err
 		}
@@ -48,7 +48,7 @@ var DefunS = sxeval.Special{
 
 var errNoParameterSpecAndBody = errors.New("parameter spec and body missing")
 
-func parseDefProc(pe *sxeval.ParseEnvironment, args *sx.Pair) (*sx.Symbol, *LambdaExpr, error) {
+func parseDefProc(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (*sx.Symbol, *LambdaExpr, error) {
 	if args == nil {
 		return nil, nil, sxeval.ErrNoArgs
 	}
@@ -60,14 +60,14 @@ func parseDefProc(pe *sxeval.ParseEnvironment, args *sx.Pair) (*sx.Symbol, *Lamb
 	if args == nil {
 		return nil, nil, errNoParameterSpecAndBody
 	}
-	le, err := ParseProcedure(pe, sym.String(), args.Car(), args.Cdr())
+	le, err := ParseProcedure(pe, sym.String(), args.Car(), args.Cdr(), bind)
 	return sym, le, err
 }
 
 // LambdaS parses a procedure specification.
 var LambdaS = sxeval.Special{
 	Name: lambdaName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, errNoParameterSpecAndBody
 		}
@@ -83,12 +83,12 @@ var LambdaS = sxeval.Special{
 		} else {
 			name = car.String()
 		}
-		return ParseProcedure(pe, name, car, args.Cdr())
+		return ParseProcedure(pe, name, car, args.Cdr(), bind)
 	},
 }
 
 // ParseProcedure parses a procedure definition, where some parsing is already done.
-func ParseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpec sx.Object) (*LambdaExpr, error) {
+func ParseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpec sx.Object, bind *sxeval.Binding) (*LambdaExpr, error) {
 	var params []*sx.Symbol
 	var rest *sx.Symbol
 	if !sx.IsNil(paramSpec) {
@@ -116,20 +116,20 @@ func ParseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpe
 	if rest != nil {
 		bindSize++
 	}
-	childPe := pe.MakeChildEnvironment(name+"-def", bindSize)
+	lambdaBind := bind.MakeChildBinding(name+"-def", bindSize)
 	for _, p := range params {
-		err := childPe.Bind(p, sx.MakeUndefined())
+		err := lambdaBind.Bind(p, sx.MakeUndefined())
 		if err != nil {
 			return nil, err
 		}
 	}
 	if rest != nil {
-		err := childPe.Bind(rest, sx.MakeUndefined())
+		err := lambdaBind.Bind(rest, sx.MakeUndefined())
 		if err != nil {
 			return nil, err
 		}
 	}
-	expr, err := ParseExprSeq(childPe, body)
+	expr, err := ParseExprSeq(pe, body, lambdaBind)
 	if err != nil {
 		return nil, err
 	}
@@ -388,8 +388,8 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, args sx.Vector, _ *sxe
 // DefDynS parses a procedure definition with dynamic binding.
 var DefDynS = sxeval.Special{
 	Name: "defdyn",
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
-		sym, le, err := parseDefProc(pe, args)
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+		sym, le, err := parseDefProc(pe, args, bind)
 		if err != nil {
 			return nil, err
 		}
@@ -401,8 +401,8 @@ var DefDynS = sxeval.Special{
 // DynLambdaS parses a dynamically scoped procedure specification.
 var DynLambdaS = sxeval.Special{
 	Name: dynLambdaName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
-		expr, err := LambdaS.Fn(pe, args)
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+		expr, err := LambdaS.Fn(pe, args, bind)
 		if err == nil {
 			le := expr.(*LambdaExpr)
 			le.Type = dynLambdaType

@@ -39,12 +39,12 @@ type ExprSeq struct {
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func ParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+func ParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
 	if args == nil {
 		return sxeval.NilExpr, nil
 	}
 	var be BeginExpr
-	if err := doParseExprSeq(pe, args, &be.ExprSeq); err != nil {
+	if err := doParseExprSeq(pe, args, bind, &be.ExprSeq); err != nil {
 		return nil, err
 	}
 	if len(be.Front) == 0 {
@@ -54,11 +54,11 @@ func ParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, erro
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func doParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) error {
+func doParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding, es *ExprSeq) error {
 	var front []sxeval.Expr
 	var last sxeval.Expr
 	for node := args; ; {
-		ex, err := pe.Parse(node.Car())
+		ex, err := pe.Parse(node.Car(), bind)
 		if err != nil {
 			return err
 		}
@@ -72,7 +72,7 @@ func doParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, es *ExprSeq) err
 			node = next
 			continue
 		}
-		ex, err = pe.Parse(cdr)
+		ex, err = pe.Parse(cdr, bind)
 		if err != nil {
 			return err
 		}
@@ -214,12 +214,12 @@ const andName = "and"
 // AndS parses a sequence of expressions that are reduced via logical and.
 var AndS = sxeval.Special{
 	Name: andName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
 		if args == nil {
 			return sxeval.ObjExpr{Obj: sx.T}, nil
 		}
 		var ae AndExpr
-		if err := doParseExprSeq(pe, args, &ae.ExprSeq); err != nil {
+		if err := doParseExprSeq(pe, args, bind, &ae.ExprSeq); err != nil {
 			return nil, err
 		}
 		return &ae, nil
@@ -293,12 +293,12 @@ const orName = "or"
 // OrS parses a sequence of expressions that are reduced via logical or.
 var OrS = sxeval.Special{
 	Name: orName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
 		if args == nil {
 			return sxeval.NilExpr, nil
 		}
 		var oe OrExpr
-		if err := doParseExprSeq(pe, args, &oe.ExprSeq); err != nil {
+		if err := doParseExprSeq(pe, args, bind, &oe.ExprSeq); err != nil {
 			return nil, err
 		}
 		return &oe, nil
