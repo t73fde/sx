@@ -131,7 +131,7 @@ var myBuiltins = []*sxeval.Builtin{
 		MaxArity: 0,
 		TestPure: nil,
 		Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
-			env.Push(sx.Vector(slices.Clone(env.Stack())))
+			env.Push(sx.Vector(slices.Collect(env.Stack())))
 			return nil
 		},
 	},
