@@ -15,6 +15,7 @@ package sxeval_test
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"t73f.de/r/sx"
@@ -72,13 +73,18 @@ func runBenchmark(b *testing.B, sexpr sx.Object) {
 	if _, err = env.Run(expr, root); err != nil {
 		b.Error(err)
 	}
-	if stack := env.Stack(); len(stack) > 0 {
-		b.Error("stack not empty, but:", stack)
+	for range env.Stack() {
+		b.Error("stack not empty, but:", slices.Collect(env.Stack()))
+		break
 	}
 	for b.Loop() {
 		_, _ = env.Run(expr, root)
 	}
-	if stack := env.Stack(); len(stack) > 0 {
-		b.Error("stack not empty, found", len(stack), "elements")
+	stackSize := 0
+	for range env.Stack() {
+		stackSize++
+	}
+	if stackSize > 0 {
+		b.Error("stack not empty, found", stackSize, "elements")
 	}
 }
