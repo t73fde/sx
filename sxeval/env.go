@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"log/slog"
 	"slices"
 
@@ -244,7 +245,7 @@ func (ee ExecuteError) PrintStack(w io.Writer, prefix string, logger *slog.Logge
 // ----- Stack operations
 
 // Stack returns the stack.
-func (env *Environment) Stack() []sx.Object { return env.stack }
+func (env *Environment) Stack() iter.Seq[sx.Object] { return slices.Values(env.stack) }
 
 // Push a value to the stack
 func (env *Environment) Push(val sx.Object) { env.stack = append(env.stack, val) }
