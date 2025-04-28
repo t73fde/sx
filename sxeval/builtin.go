@@ -33,13 +33,13 @@ type Builtin struct {
 	TestPure func(sx.Vector) bool
 
 	// The actual builtin function, with no argument
-	Fn0 func(*Environment, *Binding) (sx.Object, error)
+	Fn0 func(*Environment, *Binding) error
 
 	// The actual builtin function, with one argument
-	Fn1 func(*Environment, sx.Object, *Binding) (sx.Object, error)
+	Fn1 func(*Environment, *Binding) error
 
 	// The actual builtin function, with any number of arguments
-	Fn func(*Environment, sx.Vector, *Binding) (sx.Object, error)
+	Fn func(*Environment, int, *Binding) error
 
 	// Do not add a CallError
 	NoCallError bool
@@ -112,19 +112,15 @@ func (b *Builtin) ExecuteCall(env *Environment, numargs int, bind *Binding) (obj
 	}
 	switch numargs {
 	case 0:
-		if obj, err = b.Fn0(env, bind); err == nil {
-			return obj, nil
-		}
+		err = b.Fn0(env, bind)
 	case 1:
-		if obj, err = b.Fn1(env, env.Pop(), bind); err == nil {
-			return obj, nil
-		}
+		err = b.Fn1(env, bind)
 	default:
-		obj, err = b.Fn(env, env.Args(numargs), bind)
-		env.Kill(numargs)
-		if err == nil {
-			return obj, nil
-		}
+		err = b.Fn(env, numargs, bind)
+	}
+	obj = env.Pop()
+	if err == nil {
+		return obj, nil
 	}
 	return obj, b.handleCallError(err)
 }

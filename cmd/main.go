@@ -122,20 +122,17 @@ var myBuiltins = []*sxeval.Builtin{
 		MinArity: 0,
 		MaxArity: 1,
 		TestPure: nil,
-		Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
-			panic("common panic")
-		},
-		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-			panic(arg)
-		},
+		Fn0:      func(*sxeval.Environment, *sxeval.Binding) error { panic("common panic") },
+		Fn1:      func(env *sxeval.Environment, _ *sxeval.Binding) error { panic(env.Top()) },
 	},
 	{
 		Name:     "stack",
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
-			return sx.Vector(slices.Clone(env.Stack())), nil
+		Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+			env.Push(sx.Vector(slices.Clone(env.Stack())))
+			return nil
 		},
 	},
 }
@@ -147,10 +144,11 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 				res := me.logReader
 				me.logReader = !res
-				return sx.MakeBoolean(res), nil
+				env.Push(sx.MakeBoolean(res))
+				return nil
 			},
 		},
 		&sxeval.Builtin{
@@ -158,10 +156,11 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 				res := me.logParse
 				me.logParse = !res
-				return sx.MakeBoolean(res), nil
+				env.Push(sx.MakeBoolean(res))
+				return nil
 			},
 		},
 		&sxeval.Builtin{
@@ -169,10 +168,11 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 				res := me.logImprove
 				me.logImprove = !res
-				return sx.MakeBoolean(res), nil
+				env.Push(sx.MakeBoolean(res))
+				return nil
 			},
 		},
 		&sxeval.Builtin{
@@ -180,10 +180,11 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 				res := me.logExpr
 				me.logExpr = !res
-				return sx.MakeBoolean(res), nil
+				env.Push(sx.MakeBoolean(res))
+				return nil
 			},
 		},
 		&sxeval.Builtin{
@@ -191,10 +192,11 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 				res := me.logExecutor
 				me.logExecutor = !res
-				return sx.MakeBoolean(res), nil
+				env.Push(sx.MakeBoolean(res))
+				return nil
 			},
 		},
 		&sxeval.Builtin{
@@ -202,12 +204,13 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 				me.logReader = false
 				me.logParse = false
 				me.logImprove = false
 				me.logExecutor = false
-				return sx.Nil(), nil
+				env.Push(sx.Nil())
+				return nil
 			},
 		},
 	)

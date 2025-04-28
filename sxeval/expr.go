@@ -399,8 +399,9 @@ func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) (sx.Object,
 		return nil, err
 	}
 	proc := bce.Proc
-	obj, err := proc.Fn(env, env.Args(len(args)), bind)
-	env.Kill(len(args)) // proc.Fn does not work with the stack
+	err := proc.Fn(env, len(args), bind)
+	obj := env.Pop()
+	// env.Kill(len(args)) // proc.Fn does not work with the stack
 	return obj, proc.handleCallError(err)
 }
 
@@ -430,8 +431,12 @@ func (bce *builtinCall0Expr) Unparse() sx.Object {
 // Compute the value of this expression in the given environment.
 func (bce *builtinCall0Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	proc := bce.Proc
-	obj, err := proc.Fn0(env, bind)
-	return obj, proc.handleCallError(err)
+	err := proc.Fn0(env, bind)
+	obj := env.Pop()
+	if err == nil {
+		return obj, nil
+	}
+	return nil, proc.handleCallError(err)
 }
 
 // Print the expression to a io.Writer.
@@ -466,8 +471,10 @@ func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object
 	if err != nil {
 		return nil, err
 	}
+	env.Push(val)
 	proc := bce.Proc
-	obj, err := proc.Fn1(env, val, bind)
+	err = proc.Fn1(env, bind)
+	obj := env.Pop()
 	return obj, proc.handleCallError(err)
 }
 

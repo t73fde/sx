@@ -29,9 +29,10 @@ var Pretty = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		_, err := Print(os.Stdout, arg)
-		return sx.Nil(), err
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		_, err := Print(os.Stdout, env.Top())
+		env.Set(sx.Nil())
+		return err
 	},
 }
 

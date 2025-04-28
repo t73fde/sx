@@ -255,6 +255,11 @@ func (env *Environment) PushArgs(args []sx.Object) { env.stack = append(env.stac
 // Top returns the TOS
 func (env *Environment) Top() sx.Object { return env.stack[len(env.stack)-1] }
 
+// Set the value on top of the stack
+func (env *Environment) Set(val sx.Object) {
+	env.stack[len(env.stack)-1] = val
+}
+
 // Pop a value from the stack
 func (env *Environment) Pop() sx.Object {
 	stack := env.stack

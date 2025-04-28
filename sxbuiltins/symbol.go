@@ -24,8 +24,9 @@ var SymbolP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		_, isSymbol := sx.GetSymbol(arg)
-		return sx.MakeBoolean(isSymbol), nil
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		_, isSymbol := sx.GetSymbol(env.Top())
+		env.Set(sx.MakeBoolean(isSymbol))
+		return nil
 	},
 }

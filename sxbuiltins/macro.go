@@ -102,17 +102,19 @@ var Macroexpand0 = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		lst, err := GetList(arg, 0)
+	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		lst, err := GetList(env.Top(), 0)
 		if err == nil && lst != nil {
 			if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
 				if obj, found := bind.Resolve(sym); found {
 					if macro, isMacro := obj.(*Macro); isMacro {
-						return macro.Expand(env.MakeParseEnvironment(), lst.Tail(), bind)
+						obj, err2 := macro.Expand(env.MakeParseEnvironment(), lst.Tail(), bind)
+						env.Set(obj)
+						return err2
 					}
 				}
 			}
 		}
-		return lst, err
+		return err
 	},
 }

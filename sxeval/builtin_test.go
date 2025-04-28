@@ -27,12 +27,14 @@ func TestBuiltinSimple(t *testing.T) {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn0:      func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) { return nil, nil },
-		Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-			return sx.MakeList(), nil
+		Fn0:      func(env *sxeval.Environment, _ *sxeval.Binding) error { env.Push(nil); return nil },
+		Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+			env.Set(sx.MakeList())
+			return nil
 		},
-		Fn: func(_ *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
-			return sx.MakeList(args[1:]...), nil
+		Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+			env.Set(sx.MakeList(env.Args(numargs)[1:]...))
+			return nil
 		},
 	}
 

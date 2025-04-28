@@ -24,15 +24,17 @@ var Length = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		seq, err := GetSequence(arg, 0)
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if sx.IsNil(seq) {
-			return sx.Int64(0), nil
+			env.Set(sx.Int64(0))
+			return nil
 		}
-		return sx.Int64(int64(seq.Length())), nil
+		env.Set(sx.Int64(int64(seq.Length())))
+		return nil
 	},
 }
 
@@ -42,16 +44,18 @@ var LengthLess = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		seq, err := GetSequence(args[0], 0)
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		arg1 := env.Pop()
+		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		n, err := GetNumber(args[1], 1)
+		n, err := GetNumber(arg1, 1)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return sx.MakeBoolean(seq.LengthLess(int(n.(sx.Int64)))), nil
+		env.Set(sx.MakeBoolean(seq.LengthLess(int(n.(sx.Int64)))))
+		return nil
 	},
 }
 
@@ -61,16 +65,18 @@ var LengthGreater = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		seq, err := GetSequence(args[0], 0)
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		arg1 := env.Pop()
+		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		n, err := GetNumber(args[1], 1)
+		n, err := GetNumber(arg1, 1)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return sx.MakeBoolean(seq.LengthGreater(int(n.(sx.Int64)))), nil
+		env.Set(sx.MakeBoolean(seq.LengthGreater(int(n.(sx.Int64)))))
+		return nil
 	},
 }
 
@@ -80,16 +86,18 @@ var LengthEqual = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		seq, err := GetSequence(args[0], 0)
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		arg1 := env.Pop()
+		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		n, err := GetNumber(args[1], 1)
+		n, err := GetNumber(arg1, 1)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return sx.MakeBoolean(seq.LengthEqual(int(n.(sx.Int64)))), nil
+		env.Set(sx.MakeBoolean(seq.LengthEqual(int(n.(sx.Int64)))))
+		return nil
 	},
 }
 
@@ -99,16 +107,19 @@ var Nth = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		seq, err := GetSequence(args[0], 0)
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		arg1 := env.Pop()
+		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		n, err := GetNumber(args[1], 1)
+		n, err := GetNumber(arg1, 1)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return seq.Nth(int(n.(sx.Int64)))
+		obj, err := seq.Nth(int(n.(sx.Int64)))
+		env.Set(obj)
+		return err
 	},
 }
 
@@ -118,11 +129,12 @@ var Sequence2List = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		seq, err := GetSequence(arg, 0)
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return seq.MakeList(), nil
+		env.Set(seq.MakeList())
+		return nil
 	},
 }

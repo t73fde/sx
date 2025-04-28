@@ -26,9 +26,10 @@ var NumberP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		_, ok := sx.GetNumber(arg)
-		return sx.MakeBoolean(ok), nil
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		_, ok := sx.GetNumber(env.Top())
+		env.Set(sx.MakeBoolean(ok))
+		return nil
 	},
 }
 
@@ -38,23 +39,28 @@ var Add = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
-		return sx.Int64(0), nil
+	Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		env.Push(sx.Int64(0))
+		return nil
 	},
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		num, err := GetNumber(arg, 0)
-		return num, err
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		_, err := GetNumber(env.Top(), 0)
+		return err
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		args := env.Args(numargs)
 		acc := sx.Number(sx.Int64(0))
 		for i := range len(args) {
 			num, err := GetNumber(args[i], i)
 			if err != nil {
-				return nil, err
+				env.Kill(numargs - 1)
+				return err
 			}
 			acc = sx.NumAdd(acc, num)
 		}
-		return acc, nil
+		env.Kill(numargs - 1)
+		env.Set(acc)
+		return nil
 	},
 }
 
@@ -64,23 +70,29 @@ var Sub = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		num, err := GetNumber(arg, 0)
-		return sx.NumNeg(num), err
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		num, err := GetNumber(env.Top(), 0)
+		env.Set(sx.NumNeg(num))
+		return err
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		args := env.Args(numargs)
 		acc, err := GetNumber(args[0], 0)
 		if err != nil {
-			return nil, err
+			env.Kill(numargs - 1)
+			return err
 		}
 		for i := 1; i < len(args); i++ {
 			num, err2 := GetNumber(args[i], i)
 			if err2 != nil {
-				return nil, err2
+				env.Kill(numargs - 1)
+				return err2
 			}
 			acc = sx.NumSub(acc, num)
 		}
-		return acc, nil
+		env.Kill(numargs - 1)
+		env.Set(acc)
+		return nil
 	},
 }
 
@@ -90,23 +102,28 @@ var Mul = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
-		return sx.Int64(1), nil
+	Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		env.Push(sx.Int64(1))
+		return nil
 	},
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		num, err := GetNumber(arg, 0)
-		return num, err
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		_, err := GetNumber(env.Top(), 0)
+		return err
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		args := env.Args(numargs)
 		acc := sx.Number(sx.Int64(1))
 		for i := range len(args) {
 			num, err := GetNumber(args[i], i)
 			if err != nil {
-				return nil, err
+				env.Kill(numargs - 1)
+				return err
 			}
 			acc = sx.NumMul(acc, num)
 		}
-		return acc, nil
+		env.Kill(numargs - 1)
+		env.Set(acc)
+		return nil
 	},
 }
 
@@ -116,16 +133,19 @@ var Div = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		num0, err := GetNumber(args[0], 0)
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		arg1 := env.Pop()
+		num0, err := GetNumber(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		num1, err := GetNumber(args[1], 1)
+		num1, err := GetNumber(arg1, 1)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return sx.NumDiv(num0, num1)
+		obj, err := sx.NumDiv(num0, num1)
+		env.Set(obj)
+		return err
 	},
 }
 
@@ -135,15 +155,18 @@ var Mod = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		num0, err := GetNumber(args[0], 0)
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		arg1 := env.Pop()
+		num0, err := GetNumber(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		num1, err := GetNumber(args[1], 1)
+		num1, err := GetNumber(arg1, 1)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return sx.NumMod(num0, num1)
+		obj, err := sx.NumMod(num0, num1)
+		env.Set(obj)
+		return err
 	},
 }
