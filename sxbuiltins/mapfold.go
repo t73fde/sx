@@ -96,7 +96,6 @@ var Map = sxeval.Builtin{
 
 		env.Push(lst.Car())
 		val, err := env.Apply(fn, 1, bind)
-		env.Kill(1)
 		if err != nil {
 			return sx.Nil(), err
 		}
@@ -111,7 +110,6 @@ var Map = sxeval.Builtin{
 			if !isPair {
 				env.Push(cdr2)
 				val2, err2 := env.Apply(fn, 1, bind)
-				env.Kill(1)
 				if err2 != nil {
 					return result, err2
 				}
@@ -120,7 +118,6 @@ var Map = sxeval.Builtin{
 			}
 			env.Push(pair.Car())
 			val2, err2 := env.Apply(fn, 1, bind)
-			env.Kill(1)
 			if err2 != nil {
 				return result, err2
 			}
@@ -155,9 +152,7 @@ var Apply = sxeval.Builtin{
 		for node := lst; ; {
 			cdr := node.Cdr()
 			if sx.IsNil(cdr) {
-				res, err = env.Apply(fn, argCount, bind)
-				env.Kill(argCount)
-				return res, err
+				return env.Apply(fn, argCount, bind)
 			}
 			if next, isPair := sx.GetPair(cdr); isPair {
 				node = next
@@ -189,9 +184,7 @@ var Fold = sxeval.Builtin{
 		for node := lst; node != nil; {
 			env.Push(node.Car())
 			env.Push(res)
-			res, err = env.Apply(fn, 2, bind)
-			env.Kill(2)
-			if err != nil {
+			if res, err = env.Apply(fn, 2, bind); err != nil {
 				return nil, err
 			}
 			next, ok := sx.GetPair(node.Cdr())
@@ -227,9 +220,7 @@ var FoldReverse = sxeval.Builtin{
 		for node := rev; node != nil; {
 			env.Push(node.Car())
 			env.Push(res)
-			res, err = env.Apply(fn, 2, bind)
-			env.Kill(2)
-			if err != nil {
+			if res, err = env.Apply(fn, 2, bind); err != nil {
 				return nil, err
 			}
 			node, _ = sx.GetPair(node.Cdr())

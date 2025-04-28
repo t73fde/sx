@@ -116,11 +116,13 @@ func (b *Builtin) ExecuteCall(env *Environment, numargs int, bind *Binding) (obj
 			return obj, nil
 		}
 	case 1:
-		if obj, err = b.Fn1(env, env.Top(), bind); err == nil {
+		if obj, err = b.Fn1(env, env.Pop(), bind); err == nil {
 			return obj, nil
 		}
 	default:
-		if obj, err = b.Fn(env, env.Args(numargs), bind); err == nil {
+		obj, err = b.Fn(env, env.Args(numargs), bind)
+		env.Kill(numargs)
+		if err == nil {
 			return obj, nil
 		}
 	}

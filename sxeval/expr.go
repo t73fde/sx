@@ -294,9 +294,7 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) 
 		return nil, NotCallableError{Obj: val}
 	}
 
-	obj, err := proc.ExecuteCall(env, len(args), bind)
-	env.Kill(len(args))
-	return obj, err
+	return proc.ExecuteCall(env, len(args), bind)
 }
 
 func computeArgs(env *Environment, args []Expr, bind *Binding) error {
@@ -402,7 +400,7 @@ func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) (sx.Object,
 	}
 	proc := bce.Proc
 	obj, err := proc.Fn(env, env.Args(len(args)), bind)
-	env.Kill(len(args))
+	env.Kill(len(args)) // proc.Fn does not work with the stack
 	return obj, proc.handleCallError(err)
 }
 

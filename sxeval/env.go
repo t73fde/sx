@@ -186,7 +186,6 @@ func (ce *applyErrExpr) Unparse() sx.Object {
 func (ce *applyErrExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	env.PushArgs(ce.Args)
 	obj, err := env.Apply(ce.Proc, len(ce.Args), bind)
-	env.Kill(len(ce.Args))
 	return obj, err
 }
 
@@ -255,6 +254,15 @@ func (env *Environment) PushArgs(args []sx.Object) { env.stack = append(env.stac
 
 // Top returns the TOS
 func (env *Environment) Top() sx.Object { return env.stack[len(env.stack)-1] }
+
+// Pop a value from the stack
+func (env *Environment) Pop() sx.Object {
+	stack := env.stack
+	sp := len(stack) - 1
+	val := stack[sp]
+	env.stack = stack[0:sp]
+	return val
+}
 
 // Kill some elements on the stack
 func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-num] }

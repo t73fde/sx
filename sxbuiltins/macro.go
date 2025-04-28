@@ -91,7 +91,6 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair, _ *sxeval.Bind
 		Expr:    m.Expr,
 	}
 	obj, err := m.Env.ApplyMacro(proc.Name, &proc, numargs, m.Binding)
-	m.Env.Kill(numargs)
 	return obj, err
 }
 
