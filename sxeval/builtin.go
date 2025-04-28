@@ -106,9 +106,10 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 }
 
 // ExecuteCall the builtin function with the given environment and number of arguments.
-func (b *Builtin) ExecuteCall(env *Environment, numargs int, bind *Binding) (obj sx.Object, err error) {
+func (b *Builtin) ExecuteCall(env *Environment, numargs int, bind *Binding) (err error) {
 	if err = b.checkCallArity(numargs, func() []sx.Object { return env.Args(numargs) }); err != nil {
-		return sx.Nil(), b.handleCallError(err)
+		env.Push(nil)
+		return b.handleCallError(err)
 	}
 	switch numargs {
 	case 0:
@@ -118,11 +119,10 @@ func (b *Builtin) ExecuteCall(env *Environment, numargs int, bind *Binding) (obj
 	default:
 		err = b.Fn(env, numargs, bind)
 	}
-	obj = env.Pop()
 	if err == nil {
-		return obj, nil
+		return nil
 	}
-	return obj, b.handleCallError(err)
+	return b.handleCallError(err)
 }
 
 // checkCallArity check the builtin function to match allowed number of args.

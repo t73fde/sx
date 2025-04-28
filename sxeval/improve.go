@@ -99,9 +99,10 @@ func (imp *Improver) ImproveFoldCall(proc Callable, args []Expr) (Expr, error) {
 	if proc.IsPure(vals) {
 		env := MakeEnvironment()
 		env.PushArgs(vals)
-		if result, err := proc.ExecuteCall(env, len(vals), imp.binding); err == nil {
-			return imp.Improve(ObjExpr{Obj: result})
+		if err := proc.ExecuteCall(env, len(vals), imp.binding); err == nil {
+			return imp.Improve(ObjExpr{Obj: env.Pop()})
 		}
+		env.Kill(1)
 	}
 	return nil, nil
 }

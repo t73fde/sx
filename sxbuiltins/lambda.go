@@ -359,10 +359,12 @@ func (ll *LexLambda) GoString() string { return ll.String() }
 func (ll *LexLambda) IsPure(sx.Vector) bool { return false }
 
 // ExecuteCall the Procedure with any number of arguments.
-func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval.Binding) (sx.Object, error) {
+func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
 	numParams := len(ll.Params)
 	if numargs < numParams {
-		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[numargs:])
+		env.Kill(numargs)
+		env.Push(nil)
+		return fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[numargs:])
 	}
 	bindSize := numParams
 	if ll.Rest != nil {
@@ -373,19 +375,27 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval
 	for i, p := range ll.Params {
 		err := lexBind.Bind(p, args[i])
 		if err != nil {
-			return nil, err
+			env.Kill(numargs)
+			env.Push(nil)
+			return err
 		}
 	}
 	if ll.Rest != nil {
 		err := lexBind.Bind(ll.Rest, sx.MakeList(args[numParams:]...))
 		if err != nil {
-			return nil, err
+			env.Kill(numargs)
+			env.Push(nil)
+			return err
 		}
 	} else if numargs > numParams {
-		return nil, fmt.Errorf("%s: excess arguments: %v", ll.Name, []sx.Object(args[numParams:]))
+		env.Kill(numargs)
+		env.Push(nil)
+		return fmt.Errorf("%s: excess arguments: %v", ll.Name, []sx.Object(args[numParams:]))
 	}
 	env.Kill(numargs)
-	return env.ExecuteTCO(ll.Expr, lexBind)
+	obj, err := env.ExecuteTCO(ll.Expr, lexBind)
+	env.Push(obj)
+	return err
 }
 
 // DefDynS parses a procedure definition with dynamic binding.
@@ -445,7 +455,7 @@ func (dl *DynLambda) GoString() string { return dl.String() }
 func (dl *DynLambda) IsPure(sx.Vector) bool { return false }
 
 // ExecuteCall the Procedure with any number of arguments.
-func (dl *DynLambda) ExecuteCall(env *sxeval.Environment, numargs int, bind *sxeval.Binding) (sx.Object, error) {
+func (dl *DynLambda) ExecuteCall(env *sxeval.Environment, numargs int, bind *sxeval.Binding) error {
 	// A DynLambda is just a LexLambda with a different Binding.
 	return (&LexLambda{
 		Binding: bind,

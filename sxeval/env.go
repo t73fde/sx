@@ -156,10 +156,11 @@ func (env *Environment) ApplyMacro(name string, fn Callable, numargs int, bind *
 
 // Apply the given Callable with the given number of arguments (which are on the stack).
 func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (sx.Object, error) {
-	res, err := fn.ExecuteCall(env, numargs, bind)
+	err := fn.ExecuteCall(env, numargs, bind)
 	if err == nil {
-		return res, nil
+		return env.Pop(), nil
 	}
+	env.Kill(1)
 	if err == errExecuteAgain {
 		return env.Execute(env.newExpr, env.newBind)
 	}

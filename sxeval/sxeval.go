@@ -30,8 +30,8 @@ type Callable interface {
 
 	// ExecuteCall calls the value with the given args in the given environment
 	// in context of the AST evaluator.
-	// Args are transported via env.Args(numargs).
-	ExecuteCall(*Environment, int, *Binding) (sx.Object, error)
+	// Args are transported via env.Args(numargs), the result is env.Top()
+	ExecuteCall(*Environment, int, *Binding) error
 }
 
 // GetCallable returns the object as a Callable, if possible.
