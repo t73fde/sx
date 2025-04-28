@@ -33,7 +33,7 @@ var ParseExpression = sxeval.Builtin{
 		env.Set(sxeval.MakeExprObj(expr))
 		return nil
 	},
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		bind, err := GetBinding(env.Pop(), 1)
 		if err != nil {
 			return err
@@ -80,7 +80,7 @@ var RunExpression = sxeval.Builtin{
 		return err
 
 	},
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
 		expr, err := GetExprObj(env.Top(), 0)
 		if err != nil {
@@ -111,7 +111,7 @@ var Eval = sxeval.Builtin{
 		env.Set(obj)
 		return err
 	},
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		bind, err := GetBinding(env.Pop(), 1)
 		if err != nil {
 			return err

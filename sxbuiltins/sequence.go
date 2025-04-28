@@ -44,7 +44,7 @@ var LengthLess = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
 		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
@@ -65,7 +65,7 @@ var LengthGreater = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
 		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
@@ -86,7 +86,7 @@ var LengthEqual = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
 		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
@@ -107,7 +107,7 @@ var Nth = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
 		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {

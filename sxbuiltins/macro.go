@@ -108,9 +108,9 @@ var Macroexpand0 = sxeval.Builtin{
 			if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
 				if obj, found := bind.Resolve(sym); found {
 					if macro, isMacro := obj.(*Macro); isMacro {
-						obj, err2 := macro.Expand(env.MakeParseEnvironment(), lst.Tail(), bind)
+						obj, err = macro.Expand(env.MakeParseEnvironment(), lst.Tail(), bind)
 						env.Set(obj)
-						return err2
+						return err
 					}
 				}
 			}

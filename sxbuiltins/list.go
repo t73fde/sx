@@ -28,7 +28,7 @@ var Cons = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
 		env.Set(sx.Cons(env.Top(), arg1))
 		return nil
@@ -225,7 +225,7 @@ var ListStar = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn1:      func(env *sxeval.Environment, _ *sxeval.Binding) error { return nil },
+	Fn1:      func(_ *sxeval.Environment, _ *sxeval.Binding) error { return nil },
 	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
 		args := env.Args(numargs)
 		argPos := len(args) - 2
@@ -311,7 +311,7 @@ var Assoc = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
 		lst, err := GetList(env.Top(), 0)
 		if err != nil {

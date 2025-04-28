@@ -133,7 +133,7 @@ var Div = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
 		num0, err := GetNumber(env.Top(), 0)
 		if err != nil {
@@ -155,7 +155,7 @@ var Mod = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: sxeval.AssertPure,
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
 		num0, err := GetNumber(env.Top(), 0)
 		if err != nil {

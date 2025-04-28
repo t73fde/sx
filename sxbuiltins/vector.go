@@ -58,7 +58,7 @@ var VectorSetBang = sxeval.Builtin{
 	MinArity: 3,
 	MaxArity: 3,
 	TestPure: sxeval.AssertPure,
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg2 := env.Pop()
 		arg1 := env.Pop()
 		v, err := GetVector(env.Top(), 0)

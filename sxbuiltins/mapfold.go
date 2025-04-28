@@ -79,7 +79,7 @@ var Map = sxeval.Builtin{
 			lst = pair
 		}
 	},
-	Fn: func(env *sxeval.Environment, numargs int, bind *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, bind *sxeval.Binding) error {
 		// fn must be checked first, because it is an error, if argument 0 is
 		// not a callable, even if the list is empty and fn will never be called.
 		arg1 := env.Pop()
@@ -137,7 +137,7 @@ var Apply = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: 2,
 	TestPure: nil, // Might be changed in the future
-	Fn: func(env *sxeval.Environment, numargs int, bind *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, bind *sxeval.Binding) error {
 		arg1 := env.Pop()
 		fn, err := GetCallable(env.Top(), 0)
 		if err != nil {
@@ -179,7 +179,7 @@ var Fold = sxeval.Builtin{
 	MinArity: 3,
 	MaxArity: 3,
 	TestPure: nil, // Might be changed in the future
-	Fn: func(env *sxeval.Environment, numargs int, bind *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, bind *sxeval.Binding) error {
 		arg2 := env.Pop()
 		res := env.Pop()
 		fn, err := GetCallable(env.Top(), 0)
@@ -213,7 +213,7 @@ var FoldReverse = sxeval.Builtin{
 	MinArity: 3,
 	MaxArity: 3,
 	TestPure: nil, // Might be changed in the future
-	Fn: func(env *sxeval.Environment, numargs int, bind *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, bind *sxeval.Binding) error {
 		arg2 := env.Pop()
 		res := env.Pop()
 		fn, err := GetCallable(env.Top(), 0)

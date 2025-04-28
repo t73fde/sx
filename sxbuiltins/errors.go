@@ -62,7 +62,7 @@ var NotBoundError = sxeval.Builtin{
 		}
 		return bind.MakeNotBoundError(sym)
 	},
-	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
 		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
