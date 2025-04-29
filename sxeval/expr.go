@@ -280,20 +280,19 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 // Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	args := ce.Args
-	okArgs, err := computeArgs(env, args, bind)
+	err := computeArgs(env, args, bind)
 	if err != nil {
-		env.Kill(okArgs)
 		return nil, err
 	}
 
 	val, err := env.Execute(ce.Proc, bind)
 	if err != nil {
-		env.Kill(okArgs)
+		env.Kill(len(args))
 		return nil, err
 	}
 	proc, isCallable := GetCallable(val)
 	if !isCallable {
-		env.Kill(okArgs)
+		env.Kill(len(args))
 		return nil, NotCallableError{Obj: val}
 	}
 
@@ -302,15 +301,16 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) 
 	return obj, err
 }
 
-func computeArgs(env *Environment, args []Expr, bind *Binding) (int, error) {
+func computeArgs(env *Environment, args []Expr, bind *Binding) error {
 	for i, exprArg := range args {
 		val, err := env.Execute(exprArg, bind)
 		if err != nil {
-			return i, err
+			env.Kill(i)
+			return err
 		}
 		env.Push(val)
 	}
-	return len(args), nil
+	return nil
 }
 
 // Print the expression on the given writer.
@@ -400,8 +400,7 @@ func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
 // Compute the value of this expression in the given environment.
 func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	args := bce.Args
-	if okArgs, err := computeArgs(env, args, bind); err != nil {
-		env.Kill(okArgs)
+	if err := computeArgs(env, args, bind); err != nil {
 		return nil, err
 	}
 	err := bce.Proc.Fn(env, len(args), bind)
