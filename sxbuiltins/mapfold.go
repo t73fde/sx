@@ -168,6 +168,7 @@ var Apply = sxeval.Builtin{
 				argCount++
 				continue
 			}
+			env.Kill(argCount)
 			return sx.ErrImproper{Pair: lst}
 		}
 	},
