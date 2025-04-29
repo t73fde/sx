@@ -85,10 +85,12 @@ var Map = sxeval.Builtin{
 		arg1 := env.Pop()
 		fn, err := GetCallable(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		lst, err := GetList(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		if sx.IsNil(lst) {
@@ -99,6 +101,7 @@ var Map = sxeval.Builtin{
 		env.Push(lst.Car())
 		val, err := env.Apply(fn, 1, bind)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		result := sx.Cons(val, sx.Nil())
@@ -113,6 +116,7 @@ var Map = sxeval.Builtin{
 				env.Push(cdr2)
 				val2, err2 := env.Apply(fn, 1, bind)
 				if err2 != nil {
+					env.Kill(1)
 					return err2
 				}
 				curr.SetCdr(val2)
@@ -121,6 +125,7 @@ var Map = sxeval.Builtin{
 			env.Push(pair.Car())
 			val2, err2 := env.Apply(fn, 1, bind)
 			if err2 != nil {
+				env.Kill(1)
 				return err2
 			}
 			curr = curr.AppendBang(val2)
@@ -141,16 +146,22 @@ var Apply = sxeval.Builtin{
 		arg1 := env.Pop()
 		fn, err := GetCallable(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		lst, err := GetList(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		if lst == nil {
 			obj, err2 := env.Apply(fn, 0, bind)
+			if err2 != nil {
+				env.Kill(1)
+				return err2
+			}
 			env.Set(obj)
-			return err2
+			return nil
 		}
 
 		env.Push(lst.Car())
@@ -159,8 +170,12 @@ var Apply = sxeval.Builtin{
 			cdr := node.Cdr()
 			if sx.IsNil(cdr) {
 				obj, err2 := env.Apply(fn, argCount, bind)
+				if err2 != nil {
+					env.Kill(1) // b/c above env.Top()
+					return err2
+				}
 				env.Set(obj)
-				return err2
+				return nil
 			}
 			if next, isPair := sx.GetPair(cdr); isPair {
 				node = next
@@ -168,7 +183,7 @@ var Apply = sxeval.Builtin{
 				argCount++
 				continue
 			}
-			env.Kill(argCount)
+			env.Kill(argCount + 1)
 			return sx.ErrImproper{Pair: lst}
 		}
 	},
@@ -185,10 +200,12 @@ var Fold = sxeval.Builtin{
 		res := env.Pop()
 		fn, err := GetCallable(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		lst, err := GetList(arg2, 2)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		for node := lst; node != nil; {
@@ -199,6 +216,7 @@ var Fold = sxeval.Builtin{
 			}
 			next, ok := sx.GetPair(node.Cdr())
 			if !ok {
+				env.Kill(1)
 				return sx.ErrImproper{Pair: lst}
 			}
 			node = next
@@ -219,20 +237,24 @@ var FoldReverse = sxeval.Builtin{
 		res := env.Pop()
 		fn, err := GetCallable(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		lst, err := GetList(arg2, 2)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		rev, err := lst.Reverse()
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		for node := rev; node != nil; {
 			env.Push(node.Car())
 			env.Push(res)
 			if res, err = env.Apply(fn, 2, bind); err != nil {
+				env.Kill(1)
 				return err
 			}
 			node, _ = sx.GetPair(node.Cdr())

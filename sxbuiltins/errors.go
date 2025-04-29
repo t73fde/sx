@@ -29,11 +29,10 @@ var Error = sxeval.Builtin{
 	MaxArity: -1,
 	TestPure: nil, // is not pure, because error must occur at runtime.
 	Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
-		env.Push(nil)
 		return fmt.Errorf("unspecified user error")
 	},
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
-		return fmt.Errorf("%s", env.Top().GoString())
+		return fmt.Errorf("%s", env.Pop().GoString())
 	},
 	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
 		var sb strings.Builder
@@ -43,7 +42,7 @@ var Error = sxeval.Builtin{
 			}
 			sb.WriteString(arg.GoString())
 		}
-		env.Kill(numargs - 1)
+		env.Kill(numargs)
 		return fmt.Errorf("%s", sb.String())
 	},
 	NoCallError: true,
@@ -56,7 +55,7 @@ var NotBoundError = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil,
 	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
-		sym, err := GetSymbol(env.Top(), 0)
+		sym, err := GetSymbol(env.Pop(), 0)
 		if err != nil {
 			return err
 		}
@@ -64,7 +63,7 @@ var NotBoundError = sxeval.Builtin{
 	},
 	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
-		sym, err := GetSymbol(env.Top(), 0)
+		sym, err := GetSymbol(env.Pop(), 0)
 		if err != nil {
 			return err
 		}

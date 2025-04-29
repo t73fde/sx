@@ -42,13 +42,13 @@ func cmpMakeBuiltin(name string, cmpFn func(int) bool) sxeval.Builtin {
 			args := env.Args(numargs)
 			acc, err := GetNumber(args[0], 0)
 			if err != nil {
-				env.Kill(numargs - 1)
+				env.Kill(numargs)
 				return err
 			}
 			for i := 1; i < len(args); i++ {
 				num, err2 := GetNumber(args[i], i)
 				if err2 != nil {
-					env.Kill(numargs - 1)
+					env.Kill(numargs)
 					return err2
 				}
 				cmpRes := sx.NumCmp(acc, num)

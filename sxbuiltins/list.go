@@ -85,6 +85,7 @@ var Car = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		pair, err := GetPair(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(pair.Car())
@@ -101,6 +102,7 @@ var Cdr = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		pair, err := GetPair(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(pair.Cdr())
@@ -117,6 +119,7 @@ func makeCxr(spec string) sxeval.Builtin {
 		Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 			pair, err := GetPair(env.Top(), 0)
 			if err != nil {
+				env.Kill(1)
 				return err
 			}
 			var result sx.Object
@@ -137,6 +140,7 @@ func makeCxr(spec string) sxeval.Builtin {
 				var isPair bool
 				pair, isPair = sx.GetPair(result)
 				if !isPair {
+					env.Kill(1)
 					return fmt.Errorf("pair expected, but got %T/%v", result, result)
 				}
 			}
@@ -189,11 +193,16 @@ var Last = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		lst, err := GetList(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		obj, err := lst.Last()
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
+		return nil
 	},
 }
 
@@ -252,8 +261,12 @@ var Append = sxeval.Builtin{
 	},
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		lst, err := GetList(env.Top(), 0)
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(lst)
-		return err
+		return nil
 	},
 	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
 		args := env.Args(numargs)
@@ -262,7 +275,7 @@ var Append = sxeval.Builtin{
 		for i := range lastList {
 			lst, err := GetList(args[i], i)
 			if err != nil {
-				env.Kill(numargs - 1)
+				env.Kill(numargs)
 				return err
 			}
 			lsts[i] = lst
@@ -274,7 +287,7 @@ var Append = sxeval.Builtin{
 				curr = curr.AppendBang(node.Car())
 				next, isPair := sx.GetPair(node.Cdr())
 				if !isPair {
-					env.Kill(numargs - 1)
+					env.Kill(numargs)
 					return sx.ErrImproper{Pair: lst}
 				}
 				node = next
@@ -296,11 +309,16 @@ var Reverse = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		lst, err := GetList(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		obj, err := lst.Reverse()
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
+		return nil
 	},
 }
 
@@ -315,6 +333,7 @@ var Assoc = sxeval.Builtin{
 		arg1 := env.Pop()
 		lst, err := GetList(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(lst.Assoc(arg1))
@@ -331,8 +350,12 @@ var All = sxeval.Builtin{
 	TestPure: sxeval.AssertPure,
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		obj, err := anyAll(env.Top(), sx.IsFalse, false)
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
+		return nil
 	},
 }
 
@@ -345,8 +368,12 @@ var Any = sxeval.Builtin{
 	TestPure: sxeval.AssertPure,
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		obj, err := anyAll(env.Top(), sx.IsTrue, true)
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
+		return nil
 	},
 }
 
@@ -379,6 +406,7 @@ var List2Vector = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		lst, err := GetList(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(sx.Collect(lst.Values()))

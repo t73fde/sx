@@ -44,8 +44,11 @@ var Add = sxeval.Builtin{
 		return nil
 	},
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
-		_, err := GetNumber(env.Top(), 0)
-		return err
+		if _, err := GetNumber(env.Top(), 0); err != nil {
+			env.Kill(1)
+			return err
+		}
+		return nil
 	},
 	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
 		args := env.Args(numargs)
@@ -53,7 +56,7 @@ var Add = sxeval.Builtin{
 		for i := range len(args) {
 			num, err := GetNumber(args[i], i)
 			if err != nil {
-				env.Kill(numargs - 1)
+				env.Kill(numargs)
 				return err
 			}
 			acc = sx.NumAdd(acc, num)
@@ -72,20 +75,24 @@ var Sub = sxeval.Builtin{
 	TestPure: sxeval.AssertPure,
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		num, err := GetNumber(env.Top(), 0)
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(sx.NumNeg(num))
-		return err
+		return nil
 	},
 	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
 		args := env.Args(numargs)
 		acc, err := GetNumber(args[0], 0)
 		if err != nil {
-			env.Kill(numargs - 1)
+			env.Kill(numargs)
 			return err
 		}
 		for i := 1; i < len(args); i++ {
 			num, err2 := GetNumber(args[i], i)
 			if err2 != nil {
-				env.Kill(numargs - 1)
+				env.Kill(numargs)
 				return err2
 			}
 			acc = sx.NumSub(acc, num)
@@ -107,8 +114,11 @@ var Mul = sxeval.Builtin{
 		return nil
 	},
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
-		_, err := GetNumber(env.Top(), 0)
-		return err
+		if _, err := GetNumber(env.Top(), 0); err != nil {
+			env.Kill(1)
+			return err
+		}
+		return nil
 	},
 	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
 		args := env.Args(numargs)
@@ -116,7 +126,7 @@ var Mul = sxeval.Builtin{
 		for i := range len(args) {
 			num, err := GetNumber(args[i], i)
 			if err != nil {
-				env.Kill(numargs - 1)
+				env.Kill(numargs)
 				return err
 			}
 			acc = sx.NumMul(acc, num)
@@ -137,15 +147,21 @@ var Div = sxeval.Builtin{
 		arg1 := env.Pop()
 		num0, err := GetNumber(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		num1, err := GetNumber(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		obj, err := sx.NumDiv(num0, num1)
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
+		return nil
 	},
 }
 
@@ -159,14 +175,20 @@ var Mod = sxeval.Builtin{
 		arg1 := env.Pop()
 		num0, err := GetNumber(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		num1, err := GetNumber(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		obj, err := sx.NumMod(num0, num1)
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
+		return nil
 	},
 }

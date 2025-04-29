@@ -42,6 +42,7 @@ var ParentBinding = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		bind, err := GetBinding(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		if parent := bind.Parent(); parent != nil {
@@ -62,6 +63,7 @@ var Bindings = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		bind, err := GetBinding(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(bind.Bindings())
@@ -78,6 +80,7 @@ var BoundP = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
 		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		_, found := bind.Resolve(sym)
@@ -96,6 +99,7 @@ var BindingLookup = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
 		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		if obj, found := bind.Lookup(sym); found {
@@ -109,10 +113,12 @@ var BindingLookup = sxeval.Builtin{
 		arg1 := env.Pop()
 		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		bind, err := GetBinding(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		if obj, found := bind.Lookup(sym); found {
@@ -134,6 +140,7 @@ var BindingResolve = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
 		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		if obj, found := bind.Resolve(sym); found {
@@ -147,10 +154,12 @@ var BindingResolve = sxeval.Builtin{
 		arg1 := env.Pop()
 		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		bind, err := GetBinding(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		if obj, found := bind.Resolve(sym); found {

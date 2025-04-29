@@ -119,10 +119,10 @@ func (b *Builtin) ExecuteCall(env *Environment, numargs int, bind *Binding) (err
 	default:
 		err = b.Fn(env, numargs, bind)
 	}
-	if err == nil {
-		return nil
+	if err != nil {
+		return b.handleCallError(err)
 	}
-	return b.handleCallError(err)
+	return nil
 }
 
 // checkCallArity check the builtin function to match allowed number of args.

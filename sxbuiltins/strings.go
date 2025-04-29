@@ -47,14 +47,17 @@ var Concat = sxeval.Builtin{
 		return nil
 	},
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
-		_, err := GetString(env.Top(), 0)
-		return err
+		if _, err := GetString(env.Top(), 0); err != nil {
+			env.Kill(1)
+			return err
+		}
+		return nil
 	},
 	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
 		args := env.Args(numargs)
 		s, err := GetString(args[0], 0)
 		if err != nil {
-			env.Kill(numargs - 1)
+			env.Kill(numargs)
 			return err
 		}
 		var sb strings.Builder
@@ -62,7 +65,7 @@ var Concat = sxeval.Builtin{
 		for i := 1; i < len(args); i++ {
 			s, err = GetString(args[i], i)
 			if err != nil {
-				env.Kill(numargs - 1)
+				env.Kill(numargs)
 				return err
 			}
 			sb.WriteString(s.GetValue())

@@ -63,17 +63,21 @@ var VectorSetBang = sxeval.Builtin{
 		arg1 := env.Pop()
 		v, err := GetVector(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		num, err := GetNumber(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		pos := num.(sx.Int64)
 		if pos < 0 {
+			env.Kill(1)
 			return fmt.Errorf("negative vector index not allowed: %v", pos)
 		}
 		if sx.Int64(len(v)) <= pos {
+			env.Kill(1)
 			return fmt.Errorf("vector index out of range: %v", pos)
 		}
 

@@ -28,6 +28,7 @@ var ParseExpression = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
 		expr, err := env.Parse(env.Top(), bind)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(sxeval.MakeExprObj(expr))
@@ -36,10 +37,12 @@ var ParseExpression = sxeval.Builtin{
 	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		bind, err := GetBinding(env.Pop(), 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		expr, err := env.Parse(env.Top(), bind)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(sxeval.MakeExprObj(expr))
@@ -56,6 +59,7 @@ var UnparseExpression = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		expr, err := GetExprObj(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(expr.GetExpr().Unparse())
@@ -73,6 +77,7 @@ var RunExpression = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
 		expr, err := GetExprObj(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		obj, err := env.Run(expr.GetExpr(), bind)
@@ -84,10 +89,12 @@ var RunExpression = sxeval.Builtin{
 		arg1 := env.Pop()
 		expr, err := GetExprObj(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		bind, err := GetBinding(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		obj, err := env.Run(expr.GetExpr(), bind)
@@ -105,6 +112,7 @@ var Eval = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
 		expr, err := getEvalExpr(env, env.Top(), bind)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		obj, err := env.Run(expr, bind)
@@ -114,10 +122,12 @@ var Eval = sxeval.Builtin{
 	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		bind, err := GetBinding(env.Pop(), 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		expr, err := getEvalExpr(env, env.Top(), bind)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		obj, err := env.Run(expr, bind)

@@ -27,6 +27,7 @@ var Length = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		if sx.IsNil(seq) {
@@ -48,10 +49,12 @@ var LengthLess = sxeval.Builtin{
 		arg1 := env.Pop()
 		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		n, err := GetNumber(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(sx.MakeBoolean(seq.LengthLess(int(n.(sx.Int64)))))
@@ -69,10 +72,12 @@ var LengthGreater = sxeval.Builtin{
 		arg1 := env.Pop()
 		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		n, err := GetNumber(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(sx.MakeBoolean(seq.LengthGreater(int(n.(sx.Int64)))))
@@ -90,10 +95,12 @@ var LengthEqual = sxeval.Builtin{
 		arg1 := env.Pop()
 		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		n, err := GetNumber(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(sx.MakeBoolean(seq.LengthEqual(int(n.(sx.Int64)))))
@@ -111,15 +118,21 @@ var Nth = sxeval.Builtin{
 		arg1 := env.Pop()
 		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		n, err := GetNumber(arg1, 1)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		obj, err := seq.Nth(int(n.(sx.Int64)))
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
+		return nil
 	},
 }
 
@@ -132,6 +145,7 @@ var Sequence2List = sxeval.Builtin{
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
 		seq, err := GetSequence(env.Top(), 0)
 		if err != nil {
+			env.Kill(1)
 			return err
 		}
 		env.Set(seq.MakeList())
