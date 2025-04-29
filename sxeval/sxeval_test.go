@@ -61,7 +61,6 @@ type testcase struct {
 	name string
 	src  string
 	exp  string
-	// mustErr bool
 }
 type testCases []testcase
 
@@ -83,6 +82,9 @@ func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 				}
 				return
 			}
+			if size := env.Size(); size > 0 {
+				t.Error("stack not empty, size:", size)
+			}
 			if got := res.String(); got != tc.exp {
 				t.Errorf("%s should result in %q, but got %q", tc.src, tc.exp, got)
 			}
@@ -100,8 +102,8 @@ func TestEval(t *testing.T) {
 		{name: "cat-empty", src: `(cat)`, exp: `""`},
 		{name: "cat-123", src: "(cat 1 2 3)", exp: `"123"`},
 		{name: "cat-hello-sx", src: `(cat hello ": sx")`, exp: `"Hello, World: sx"`},
-		// {name: "err-binding", src: "moin", mustErr: true},
-		// {name: "err-callable", src: "(hello)", mustErr: true},
+		{name: "err-binding", src: "moin", exp: `{[{symbol "moin" not bound in "err-binding"->"root"}]}`},
+		{name: "err-callable", src: "(hello)", exp: `{[{not callable: sx.String/"Hello, World"}]}`},
 		{name: "nil-call", src: "(() 1 2)", exp: "{[{not callable: *sx.Pair/()}]}"},
 	}
 	root := createTestBinding()
