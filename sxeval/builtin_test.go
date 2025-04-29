@@ -33,7 +33,9 @@ func TestBuiltinSimple(t *testing.T) {
 			return nil
 		},
 		Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
-			env.Set(sx.MakeList(env.Args(numargs)[1:]...))
+			obj := sx.MakeList(env.Args(numargs)[1:]...)
+			env.Kill(numargs - 1)
+			env.Set(obj)
 			return nil
 		},
 	}
@@ -60,11 +62,16 @@ func TestBuiltinSimple(t *testing.T) {
 	args := sx.Vector{}
 	for i := range 10 {
 		env.PushArgs(args)
-		err := b.ExecuteCall(env, len(args), nil)
-		res := env.Pop()
-		if err != nil {
+		if err := b.ExecuteCall(env, len(args), nil); err != nil {
+			if size := env.Size(); size > 0 {
+				t.Error("stack not empty, size:", size, i, err)
+			}
 			t.Error(err)
 			break
+		}
+		res := env.Pop()
+		if size := env.Size(); size > 0 {
+			t.Error("stack not empty, size:", size, i)
 		}
 		if res != nil {
 			if !sx.IsList(res) {

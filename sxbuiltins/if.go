@@ -159,9 +159,9 @@ func (ife *IfExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Ob
 		return nil, err
 	}
 	if sx.IsTrue(test) {
-		return env.ExecuteTCO(ife.True, bind)
+		return nil, env.ExecuteTCO(ife.True, bind)
 	}
-	return env.ExecuteTCO(ife.False, bind)
+	return nil, env.ExecuteTCO(ife.False, bind)
 }
 
 // Print the expression on the given writer.

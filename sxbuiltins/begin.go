@@ -201,7 +201,7 @@ func (be *BeginExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.
 			return nil, err
 		}
 	}
-	return env.ExecuteTCO(be.Last, bind)
+	return nil, env.ExecuteTCO(be.Last, bind)
 }
 
 // Print the expression on the given writer.
@@ -280,7 +280,7 @@ func (ae *AndExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Ob
 			return obj, nil
 		}
 	}
-	return env.ExecuteTCO(ae.Last, bind)
+	return nil, env.ExecuteTCO(ae.Last, bind)
 }
 
 // Print the expression on the given writer.
@@ -367,7 +367,7 @@ func (oe *OrExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Obj
 			return obj, nil
 		}
 	}
-	return env.ExecuteTCO(oe.Last, bind)
+	return nil, env.ExecuteTCO(oe.Last, bind)
 }
 
 // Print the expression on the given writer.

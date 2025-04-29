@@ -108,7 +108,7 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 // ExecuteCall the builtin function with the given environment and number of arguments.
 func (b *Builtin) ExecuteCall(env *Environment, numargs int, bind *Binding) (err error) {
 	if err = b.checkCallArity(numargs, func() []sx.Object { return env.Args(numargs) }); err != nil {
-		env.Push(nil)
+		env.Kill(numargs)
 		return b.handleCallError(err)
 	}
 	switch numargs {

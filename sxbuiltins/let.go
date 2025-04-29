@@ -232,7 +232,7 @@ func (le *LetExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Ob
 			return nil, err
 		}
 	}
-	return env.ExecuteTCO(le.Body, letBind)
+	return nil, env.ExecuteTCO(le.Body, letBind)
 }
 
 // Print the expression on the given writer.
@@ -310,7 +310,7 @@ func (lse *LetStarExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (
 			return nil, err
 		}
 	}
-	return env.ExecuteTCO(lse.Body, letStarBind)
+	return nil, env.ExecuteTCO(lse.Body, letStarBind)
 }
 
 // Print the expression on the given writer.

@@ -363,7 +363,6 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval
 	numParams := len(ll.Params)
 	if numargs < numParams {
 		env.Kill(numargs)
-		env.Push(nil)
 		return fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[numargs:])
 	}
 	bindSize := numParams
@@ -376,7 +375,6 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval
 		err := lexBind.Bind(p, args[i])
 		if err != nil {
 			env.Kill(numargs)
-			env.Push(nil)
 			return err
 		}
 	}
@@ -384,18 +382,14 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval
 		err := lexBind.Bind(ll.Rest, sx.MakeList(args[numParams:]...))
 		if err != nil {
 			env.Kill(numargs)
-			env.Push(nil)
 			return err
 		}
 	} else if numargs > numParams {
 		env.Kill(numargs)
-		env.Push(nil)
 		return fmt.Errorf("%s: excess arguments: %v", ll.Name, []sx.Object(args[numParams:]))
 	}
 	env.Kill(numargs)
-	obj, err := env.ExecuteTCO(ll.Expr, lexBind)
-	env.Push(obj)
-	return err
+	return env.ExecuteTCO(ll.Expr, lexBind)
 }
 
 // DefDynS parses a procedure definition with dynamic binding.

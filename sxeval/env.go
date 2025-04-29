@@ -138,14 +138,11 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 
 // ExecuteTCO is called when the expression should be executed at last
 // position, aka as tail call order.
-func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) (sx.Object, error) {
-	// Uncomment this line to test for non-TCO
-	// return env.Execute(expr, bind)
-
+func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) error {
 	// Just return relevant data for real TCO
 	env.newExpr = expr
 	env.newBind = bind
-	return nil, errExecuteAgain
+	return errExecuteAgain
 }
 
 // ApplyMacro executes the Callable in a macro environment, with given number
@@ -161,7 +158,6 @@ func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (sx.Objec
 	if err == nil {
 		return env.Pop(), nil
 	}
-	env.Kill(1)
 	if err == errExecuteAgain {
 		return env.Execute(env.newExpr, env.newBind)
 	}
