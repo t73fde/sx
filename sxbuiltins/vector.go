@@ -15,6 +15,7 @@ package sxbuiltins
 
 import (
 	"fmt"
+	"slices"
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxeval"
@@ -31,7 +32,7 @@ var Vector = sxeval.Builtin{
 		return sx.Vector{arg}, nil
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		return args, nil
+		return slices.Clone(args), nil
 	},
 }
 
