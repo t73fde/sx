@@ -30,7 +30,7 @@ type Expr interface {
 	// Unparse the expression as an sx.Object
 	Unparse() sx.Object
 
-	// Compute the expression in a frame and return the result.
+	// Compute the expression in a frame and return the result on the stack.
 	// It may have side-effects, on the given environment, or on the
 	// general environment of the system.
 	Compute(*Environment, *Binding) error
@@ -283,8 +283,7 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 // Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment, bind *Binding) error {
 	args := ce.Args
-	err := computeArgs(env, args, bind)
-	if err != nil {
+	if err := computeArgs(env, args, bind); err != nil {
 		return err
 	}
 
@@ -299,10 +298,7 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) error {
 		return NotCallableError{Obj: val}
 	}
 
-	if err = proc.ExecuteCall(env, len(args), bind); err == nil {
-		return nil
-	}
-	return err
+	return proc.ExecuteCall(env, len(args), bind)
 }
 
 func computeArgs(env *Environment, args []Expr, bind *Binding) error {
@@ -401,11 +397,10 @@ func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
 
 // Compute the value of this expression in the given environment.
 func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) error {
-	args := bce.Args
-	if err := computeArgs(env, args, bind); err != nil {
+	if err := computeArgs(env, bce.Args, bind); err != nil {
 		return err
 	}
-	if err := bce.Proc.Fn(env, len(args), bind); err != nil {
+	if err := bce.Proc.Fn(env, len(bce.Args), bind); err != nil {
 		return bce.Proc.handleCallError(err)
 	}
 	return nil

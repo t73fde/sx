@@ -156,14 +156,14 @@ func (env *Environment) ApplyMacro(name string, fn Callable, numargs int, bind *
 }
 
 // Apply the given Callable with the given number of arguments (which are on the stack).
-func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (err error) {
-	if err = fn.ExecuteCall(env, numargs, bind); err == nil {
-		return nil
+func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) error {
+	if err := fn.ExecuteCall(env, numargs, bind); err != nil {
+		if err == errExecuteAgain {
+			return env.Execute(env.newExpr, env.newBind)
+		}
+		return env.addExecuteError(&applyErrExpr{Proc: fn, Args: env.CopyArgs(numargs)}, err)
 	}
-	if err == errExecuteAgain {
-		return env.Execute(env.newExpr, env.newBind)
-	}
-	return env.addExecuteError(&applyErrExpr{Proc: fn, Args: env.CopyArgs(numargs)}, err)
+	return nil
 }
 
 // applyErrExpr is needed, when an error occurs during `env.Apply`, to give a better

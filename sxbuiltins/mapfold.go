@@ -190,6 +190,7 @@ var Fold = sxeval.Builtin{
 			env.Push(node.Car())
 			env.Push(res)
 			if err = env.Apply(fn, 2, bind); err != nil {
+				env.Kill(1)
 				return err
 			}
 			res = env.Pop()
