@@ -150,24 +150,20 @@ func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) error {
 
 // ApplyMacro executes the Callable in a macro environment, with given number
 // of args (which are placed on the stack).
-func (env *Environment) ApplyMacro(name string, fn Callable, numargs int, bind *Binding) (sx.Object, error) {
+func (env *Environment) ApplyMacro(name string, fn Callable, numargs int, bind *Binding) error {
 	macroBind := bind.MakeChildBinding(name, 0)
 	return env.Apply(fn, numargs, macroBind)
 }
 
 // Apply the given Callable with the given number of arguments (which are on the stack).
-func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (obj sx.Object, err error) {
-	err = fn.ExecuteCall(env, numargs, bind)
-	if err == nil {
-		return env.Pop(), nil
+func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (err error) {
+	if err = fn.ExecuteCall(env, numargs, bind); err == nil {
+		return nil
 	}
 	if err == errExecuteAgain {
-		if err = env.Execute(env.newExpr, env.newBind); err == nil {
-			obj = env.Pop()
-		}
-		return obj, err
+		return env.Execute(env.newExpr, env.newBind)
 	}
-	return nil, env.addExecuteError(&applyErrExpr{Proc: fn, Args: env.CopyArgs(numargs)}, err)
+	return env.addExecuteError(&applyErrExpr{Proc: fn, Args: env.CopyArgs(numargs)}, err)
 }
 
 // applyErrExpr is needed, when an error occurs during `env.Apply`, to give a better
@@ -189,11 +185,7 @@ func (ce *applyErrExpr) Unparse() sx.Object {
 
 func (ce *applyErrExpr) Compute(env *Environment, bind *Binding) error {
 	env.PushArgs(ce.Args)
-	obj, err := env.Apply(ce.Proc, len(ce.Args), bind)
-	if err == nil {
-		env.Push(obj)
-	}
-	return err
+	return env.Apply(ce.Proc, len(ce.Args), bind)
 }
 
 func (ce *applyErrExpr) Print(w io.Writer) (int, error) {

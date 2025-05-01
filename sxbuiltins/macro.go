@@ -90,8 +90,11 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair, _ *sxeval.Bind
 		Rest:    m.Rest,
 		Expr:    m.Expr,
 	}
-	obj, err := m.Env.ApplyMacro(proc.Name, &proc, numargs, m.Binding)
-	return obj, err
+	err := m.Env.ApplyMacro(proc.Name, &proc, numargs, m.Binding)
+	if err == nil {
+		return m.Env.Pop(), nil
+	}
+	return nil, err
 }
 
 // Macroexpand0 implements one level of macro expansion.

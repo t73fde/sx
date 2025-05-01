@@ -83,28 +83,24 @@ var Map = sxeval.Builtin{
 		// fn must be checked first, because it is an error, if argument 0 is
 		// not a callable, even if the list is empty and fn will never be called.
 		arg1 := env.Pop()
-		fn, err := GetCallable(env.Top(), 0)
+		fn, err := GetCallable(env.Pop(), 0)
 		if err != nil {
-			env.Kill(1)
 			return err
 		}
 		lst, err := GetList(arg1, 1)
 		if err != nil {
-			env.Kill(1)
 			return err
 		}
 		if sx.IsNil(lst) {
-			env.Set(sx.Nil())
+			env.Push(sx.Nil())
 			return nil
 		}
 
 		env.Push(lst.Car())
-		val, err := env.Apply(fn, 1, bind)
-		if err != nil {
-			env.Kill(1)
+		if err := env.Apply(fn, 1, bind); err != nil {
 			return err
 		}
-		result := sx.Cons(val, sx.Nil())
+		result := sx.Cons(env.Pop(), sx.Nil())
 		curr := result
 		for {
 			cdr2 := lst.Cdr()
@@ -114,24 +110,20 @@ var Map = sxeval.Builtin{
 			pair, isPair := sx.GetPair(cdr2)
 			if !isPair {
 				env.Push(cdr2)
-				val2, err2 := env.Apply(fn, 1, bind)
-				if err2 != nil {
-					env.Kill(1)
+				if err2 := env.Apply(fn, 1, bind); err2 != nil {
 					return err2
 				}
-				curr.SetCdr(val2)
+				curr.SetCdr(env.Pop())
 				break
 			}
 			env.Push(pair.Car())
-			val2, err2 := env.Apply(fn, 1, bind)
-			if err2 != nil {
-				env.Kill(1)
+			if err2 := env.Apply(fn, 1, bind); err2 != nil {
 				return err2
 			}
-			curr = curr.AppendBang(val2)
+			curr = curr.AppendBang(env.Pop())
 			lst = pair
 		}
-		env.Set(result)
+		env.Push(result)
 		return nil
 	},
 }
@@ -144,24 +136,16 @@ var Apply = sxeval.Builtin{
 	TestPure: nil, // Might be changed in the future
 	Fn: func(env *sxeval.Environment, _ int, bind *sxeval.Binding) error {
 		arg1 := env.Pop()
-		fn, err := GetCallable(env.Top(), 0)
+		fn, err := GetCallable(env.Pop(), 0)
 		if err != nil {
-			env.Kill(1)
 			return err
 		}
 		lst, err := GetList(arg1, 1)
 		if err != nil {
-			env.Kill(1)
 			return err
 		}
 		if lst == nil {
-			obj, err2 := env.Apply(fn, 0, bind)
-			if err2 != nil {
-				env.Kill(1)
-				return err2
-			}
-			env.Set(obj)
-			return nil
+			return env.Apply(fn, 0, bind)
 		}
 
 		env.Push(lst.Car())
@@ -169,13 +153,7 @@ var Apply = sxeval.Builtin{
 		for node := lst; ; {
 			cdr := node.Cdr()
 			if sx.IsNil(cdr) {
-				obj, err2 := env.Apply(fn, argCount, bind)
-				if err2 != nil {
-					env.Kill(1) // b/c above env.Top()
-					return err2
-				}
-				env.Set(obj)
-				return nil
+				return env.Apply(fn, argCount, bind)
 			}
 			if next, isPair := sx.GetPair(cdr); isPair {
 				node = next
@@ -183,7 +161,7 @@ var Apply = sxeval.Builtin{
 				argCount++
 				continue
 			}
-			env.Kill(argCount + 1)
+			env.Kill(argCount)
 			return sx.ErrImproper{Pair: lst}
 		}
 	},
@@ -211,9 +189,10 @@ var Fold = sxeval.Builtin{
 		for node := lst; node != nil; {
 			env.Push(node.Car())
 			env.Push(res)
-			if res, err = env.Apply(fn, 2, bind); err != nil {
+			if err = env.Apply(fn, 2, bind); err != nil {
 				return err
 			}
+			res = env.Pop()
 			next, ok := sx.GetPair(node.Cdr())
 			if !ok {
 				env.Kill(1)
@@ -253,10 +232,11 @@ var FoldReverse = sxeval.Builtin{
 		for node := rev; node != nil; {
 			env.Push(node.Car())
 			env.Push(res)
-			if res, err = env.Apply(fn, 2, bind); err != nil {
+			if err = env.Apply(fn, 2, bind); err != nil {
 				env.Kill(1)
 				return err
 			}
+			res = env.Pop()
 			node, _ = sx.GetPair(node.Cdr())
 		}
 		env.Set(res)
