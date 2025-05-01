@@ -75,6 +75,9 @@ func (tcs tTestCases) Run(t *testing.T) {
 					t.Errorf("should fail, but got: %v", res)
 					return
 				}
+				if size := env.Size(); size > 0 {
+					t.Error("stack not empty, size:", size)
+				}
 				if sb.Len() > 0 {
 					sb.WriteByte(' ')
 				}

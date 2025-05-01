@@ -292,6 +292,9 @@ func (env *Environment) Reset() {
 // Stack returns the stack.
 func (env *Environment) Stack() iter.Seq[sx.Object] { return slices.Values(env.stack) }
 
+// Size returns the stack size.
+func (env *Environment) Size() int { return len(env.stack) }
+
 // Push a value to the stack
 func (env *Environment) Push(val sx.Object) { env.stack = append(env.stack, val) }
 

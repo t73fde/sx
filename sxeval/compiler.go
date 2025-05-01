@@ -217,7 +217,8 @@ func (sxc *Compiler) EmitJumpPopTrue() Patch {
 	}
 }
 
-// EmitJumpTopFalse emits some preliminary code to jump if non-popped TOS is a false value.
+// EmitJumpTopFalse emits code to jump if non-popped TOS is a false value.
+// TOS is removed if it is a non-false value.
 // It returns a patch function to update the jump target.
 func (sxc *Compiler) EmitJumpTopFalse() Patch {
 	pc := len(sxc.program)
@@ -231,13 +232,15 @@ func (sxc *Compiler) EmitJumpTopFalse() Patch {
 			if val := env.Top(); sx.IsFalse(val) {
 				return jumpToError{pos: pos}
 			}
+			env.Kill(1)
 			return nil
 		}
 		sxc.asm[pc] = fmt.Sprintf("JUMP-TOP-FALSE %d", pos)
 	}
 }
 
-// EmitJumpTopTrue emits some preliminary code to jump if non-popped TOS is a true value.
+// EmitJumpTopTrue emits code to jump if non-popped TOS is a true value.
+// TOS is removed if it is a non-true value.
 // It returns a patch function to update the jump target.
 func (sxc *Compiler) EmitJumpTopTrue() Patch {
 	pc := len(sxc.program)
@@ -251,6 +254,7 @@ func (sxc *Compiler) EmitJumpTopTrue() Patch {
 			if val := env.Top(); sx.IsTrue(val) {
 				return jumpToError{pos: pos}
 			}
+			env.Kill(1)
 			return nil
 		}
 		sxc.asm[pc] = fmt.Sprintf("JUMP-TOP-TRUE %d", pos)
