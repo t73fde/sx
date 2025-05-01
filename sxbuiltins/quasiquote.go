@@ -384,11 +384,12 @@ func (mle MakeListExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (mle MakeListExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (mle MakeListExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	if err := env.Execute(mle.Elem, bind); err != nil {
-		return nil, err
+		return err
 	}
-	return sx.Cons(env.Pop(), nil), nil
+	env.Set(sx.Cons(env.Top(), nil))
+	return nil
 }
 
 // Print the expression on the given writer.

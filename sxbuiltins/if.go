@@ -153,14 +153,14 @@ restart:
 }
 
 // Compute the expression in a frame and return the result.
-func (ife *IfExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (ife *IfExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	if err := env.Execute(ife.Test, bind); err != nil {
-		return nil, err
+		return err
 	}
 	if test := env.Pop(); sx.IsTrue(test) {
-		return nil, env.ExecuteTCO(ife.True, bind)
+		return env.ExecuteTCO(ife.True, bind)
 	}
-	return nil, env.ExecuteTCO(ife.False, bind)
+	return env.ExecuteTCO(ife.False, bind)
 }
 
 // Print the expression on the given writer.

@@ -195,14 +195,14 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (be *BeginExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (be *BeginExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	for _, e := range be.Front {
 		if err := env.Execute(e, bind); err != nil {
-			return nil, err
+			return err
 		}
 		env.Kill(1)
 	}
-	return nil, env.ExecuteTCO(be.Last, bind)
+	return env.ExecuteTCO(be.Last, bind)
 }
 
 // Print the expression on the given writer.
@@ -271,17 +271,18 @@ func (ae *AndExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (ae *AndExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (ae *AndExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	for _, e := range ae.Front {
 		err := env.Execute(e, bind)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if obj := env.Pop(); sx.IsFalse(obj) {
-			return obj, nil
+		if obj := env.Top(); sx.IsFalse(obj) {
+			return nil
 		}
+		env.Kill(1)
 	}
-	return nil, env.ExecuteTCO(ae.Last, bind)
+	return env.ExecuteTCO(ae.Last, bind)
 }
 
 // Print the expression on the given writer.
@@ -358,17 +359,18 @@ func (oe *OrExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (oe *OrExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (oe *OrExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	for _, e := range oe.Front {
 		err := env.Execute(e, bind)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if obj := env.Pop(); sx.IsTrue(obj) {
-			return obj, nil
+		if obj := env.Top(); sx.IsTrue(obj) {
+			return nil
 		}
+		env.Kill(1)
 	}
-	return nil, env.ExecuteTCO(oe.Last, bind)
+	return env.ExecuteTCO(oe.Last, bind)
 }
 
 // Print the expression on the given writer.

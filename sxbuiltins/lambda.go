@@ -246,33 +246,36 @@ func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (le *LambdaExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (le *LambdaExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	leType := le.Type
 	if leType == 0 {
-		return &LexLambda{
+		env.Push(&LexLambda{
 			Binding: bind,
 			Name:    le.Name,
 			Params:  le.Params,
 			Rest:    le.Rest,
 			Expr:    le.Expr,
-		}, nil
+		})
+		return nil
 	}
 	if leType > 0 {
-		return &DynLambda{
+		env.Push(&DynLambda{
 			Name:   le.Name,
 			Params: le.Params,
 			Rest:   le.Rest,
 			Expr:   le.Expr,
-		}, nil
+		})
+		return nil
 	}
-	return &Macro{
+	env.Push(&Macro{
 		Env:     env,
 		Binding: bind,
 		Name:    le.Name,
 		Params:  le.Params,
 		Rest:    le.Rest,
 		Expr:    le.Expr,
-	}, nil
+	})
+	return nil
 }
 
 // Print the expression on the given writer.

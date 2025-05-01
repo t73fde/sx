@@ -113,7 +113,6 @@ func (env *Environment) Run(expr Expr, bind *Binding) (obj sx.Object, err error)
 
 // Execute the given expression.
 func (env *Environment) Execute(expr Expr, bind *Binding) (err error) {
-	var res sx.Object
 	for {
 		if exec := env.obCompute; exec != nil {
 			if expr, err = exec.BeforeCompute(env, expr, bind); err != nil {
@@ -121,16 +120,15 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (err error) {
 			}
 		}
 
-		if res, err = expr.Compute(env, bind); err == nil {
+		if err = expr.Compute(env, bind); err == nil {
 			if exec := env.obCompute; exec != nil {
-				exec.AfterCompute(env, expr, bind, res, nil)
+				exec.AfterCompute(env, expr, bind, env.Top(), nil)
 			}
-			env.Push(res)
 			return nil
 		}
 
 		if exec := env.obCompute; exec != nil {
-			exec.AfterCompute(env, expr, bind, res, err)
+			exec.AfterCompute(env, expr, bind, nil, err)
 		}
 		if err != errExecuteAgain {
 			break
@@ -189,10 +187,13 @@ func (ce *applyErrExpr) Unparse() sx.Object {
 	return args.Cons(ce.Proc.(sx.Object))
 }
 
-func (ce *applyErrExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+func (ce *applyErrExpr) Compute(env *Environment, bind *Binding) error {
 	env.PushArgs(ce.Args)
 	obj, err := env.Apply(ce.Proc, len(ce.Args), bind)
-	return obj, err
+	if err == nil {
+		env.Push(obj)
+	}
+	return err
 }
 
 func (ce *applyErrExpr) Print(w io.Writer) (int, error) {
