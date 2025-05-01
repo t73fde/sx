@@ -108,7 +108,7 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 // ExecuteCall the builtin function with the given environment and arguments.
 func (b *Builtin) ExecuteCall(env *Environment, args sx.Vector, bind *Binding) (obj sx.Object, err error) {
 	if err = b.checkCallArity(len(args), func() []sx.Object { return args }); err != nil {
-		return sx.Nil(), b.handleCallError(err)
+		return nil, b.handleCallError(err)
 	}
 	switch len(args) {
 	case 0:
@@ -124,7 +124,7 @@ func (b *Builtin) ExecuteCall(env *Environment, args sx.Vector, bind *Binding) (
 			return obj, nil
 		}
 	}
-	return obj, b.handleCallError(err)
+	return nil, b.handleCallError(err)
 }
 
 // checkCallArity check the builtin function to match allowed number of args.
@@ -157,7 +157,7 @@ func (b *Builtin) checkCallArity(nargs int, argsFn func() []sx.Object) error {
 }
 
 func (b *Builtin) handleCallError(err error) error {
-	if err != nil && !b.NoCallError {
+	if !b.NoCallError {
 		var callError CallError
 		if !errors.As(err, &callError) {
 			err = CallError{Name: b.Name, Err: err}
