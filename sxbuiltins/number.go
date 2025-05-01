@@ -66,7 +66,10 @@ var Sub = sxeval.Builtin{
 	TestPure: sxeval.AssertPure,
 	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
 		num, err := GetNumber(arg, 0)
-		return sx.NumNeg(num), err
+		if err != nil {
+			return nil, err
+		}
+		return sx.NumNeg(num), nil
 	},
 	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		acc, err := GetNumber(args[0], 0)
