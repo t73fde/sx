@@ -224,11 +224,10 @@ func (le *LetExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Ob
 	syms, vals := le.Symbols, le.Vals
 	letBind := bind.MakeChildBinding("let", len(syms))
 	for i, sym := range syms {
-		obj, err := env.Execute(vals[i], bind)
-		if err != nil {
+		if err := env.Execute(vals[i], bind); err != nil {
 			return nil, err
 		}
-		if err = letBind.Bind(sym, obj); err != nil {
+		if err := letBind.Bind(sym, env.Pop()); err != nil {
 			return nil, err
 		}
 	}
@@ -299,14 +298,13 @@ func (lse *LetStarExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (
 	syms, vals := lse.Symbols, lse.Vals
 	letStarBind := bind
 	for i, sym := range syms {
-		obj, err := env.Execute(vals[i], letStarBind)
-		if err != nil {
+		if err := env.Execute(vals[i], letStarBind); err != nil {
 			return nil, err
 		}
 		if i == 0 {
 			letStarBind = bind.MakeChildBinding("let*", lse.numSymbols)
 		}
-		if err = letStarBind.Bind(sym, obj); err != nil {
+		if err := letStarBind.Bind(sym, env.Pop()); err != nil {
 			return nil, err
 		}
 	}

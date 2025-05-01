@@ -104,12 +104,16 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 }
 
 // Run the given expression.
-func (env *Environment) Run(expr Expr, bind *Binding) (sx.Object, error) {
-	return env.Execute(expr, bind)
+func (env *Environment) Run(expr Expr, bind *Binding) (obj sx.Object, err error) {
+	if err = env.Execute(expr, bind); err == nil {
+		obj = env.Pop()
+	}
+	return obj, err
 }
 
 // Execute the given expression.
-func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err error) {
+func (env *Environment) Execute(expr Expr, bind *Binding) (err error) {
+	var res sx.Object
 	for {
 		if exec := env.obCompute; exec != nil {
 			if expr, err = exec.BeforeCompute(env, expr, bind); err != nil {
@@ -121,7 +125,8 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 			if exec := env.obCompute; exec != nil {
 				exec.AfterCompute(env, expr, bind, res, nil)
 			}
-			return res, nil
+			env.Push(res)
+			return nil
 		}
 
 		if exec := env.obCompute; exec != nil {
@@ -133,7 +138,7 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 		expr = env.newExpr
 		bind = env.newBind
 	}
-	return res, env.addExecuteError(expr, err)
+	return env.addExecuteError(expr, err)
 }
 
 // ExecuteTCO is called when the expression should be executed at last
@@ -153,13 +158,16 @@ func (env *Environment) ApplyMacro(name string, fn Callable, numargs int, bind *
 }
 
 // Apply the given Callable with the given number of arguments (which are on the stack).
-func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (sx.Object, error) {
-	err := fn.ExecuteCall(env, numargs, bind)
+func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (obj sx.Object, err error) {
+	err = fn.ExecuteCall(env, numargs, bind)
 	if err == nil {
 		return env.Pop(), nil
 	}
 	if err == errExecuteAgain {
-		return env.Execute(env.newExpr, env.newBind)
+		if err = env.Execute(env.newExpr, env.newBind); err == nil {
+			obj = env.Pop()
+		}
+		return obj, err
 	}
 	return nil, env.addExecuteError(&applyErrExpr{Proc: fn, Args: env.CopyArgs(numargs)}, err)
 }

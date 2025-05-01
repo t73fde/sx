@@ -83,9 +83,9 @@ func (de *DefineExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (de *DefineExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-	val, err := env.Execute(de.Val, bind)
-	if err == nil {
+func (de *DefineExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (val sx.Object, err error) {
+	if err = env.Execute(de.Val, bind); err == nil {
+		val = env.Pop()
 		err = bind.Bind(de.Sym, val)
 	}
 	return val, err
@@ -171,14 +171,14 @@ func (se *SetXExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (se *SetXExpr) Compute(env *sxeval.Environment, bi *sxeval.Binding) (sx.Object, error) {
+func (se *SetXExpr) Compute(env *sxeval.Environment, bi *sxeval.Binding) (val sx.Object, err error) {
 	sym := se.Sym
 	bind := bi.FindBinding(sym)
 	if bind == nil {
 		return nil, bi.MakeNotBoundError(sym)
 	}
-	val, err := env.Execute(se.Val, bi)
-	if err == nil {
+	if err = env.Execute(se.Val, bi); err == nil {
+		val = env.Pop()
 		err = bind.Bind(sym, val)
 	}
 	return val, err

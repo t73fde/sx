@@ -154,11 +154,10 @@ restart:
 
 // Compute the expression in a frame and return the result.
 func (ife *IfExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-	test, err := env.Execute(ife.Test, bind)
-	if err != nil {
+	if err := env.Execute(ife.Test, bind); err != nil {
 		return nil, err
 	}
-	if sx.IsTrue(test) {
+	if test := env.Pop(); sx.IsTrue(test) {
 		return nil, env.ExecuteTCO(ife.True, bind)
 	}
 	return nil, env.ExecuteTCO(ife.False, bind)

@@ -197,9 +197,10 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 // Compute the expression in a frame and return the result.
 func (be *BeginExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
 	for _, e := range be.Front {
-		if _, err := env.Execute(e, bind); err != nil {
+		if err := env.Execute(e, bind); err != nil {
 			return nil, err
 		}
+		env.Kill(1)
 	}
 	return nil, env.ExecuteTCO(be.Last, bind)
 }
@@ -272,11 +273,11 @@ func (ae *AndExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 // Compute the expression in a frame and return the result.
 func (ae *AndExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
 	for _, e := range ae.Front {
-		obj, err := env.Execute(e, bind)
+		err := env.Execute(e, bind)
 		if err != nil {
 			return nil, err
 		}
-		if sx.IsFalse(obj) {
+		if obj := env.Pop(); sx.IsFalse(obj) {
 			return obj, nil
 		}
 	}
@@ -359,11 +360,11 @@ func (oe *OrExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 // Compute the expression in a frame and return the result.
 func (oe *OrExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
 	for _, e := range oe.Front {
-		obj, err := env.Execute(e, bind)
+		err := env.Execute(e, bind)
 		if err != nil {
 			return nil, err
 		}
-		if sx.IsTrue(obj) {
+		if obj := env.Pop(); sx.IsTrue(obj) {
 			return obj, nil
 		}
 	}

@@ -285,11 +285,11 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) 
 		return nil, err
 	}
 
-	val, err := env.Execute(ce.Proc, bind)
-	if err != nil {
+	if err := env.Execute(ce.Proc, bind); err != nil {
 		env.Kill(len(args))
 		return nil, err
 	}
+	val := env.Pop()
 	proc, isCallable := GetCallable(val)
 	if !isCallable {
 		env.Kill(len(args))
@@ -304,12 +304,10 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) 
 
 func computeArgs(env *Environment, args []Expr, bind *Binding) error {
 	for i, exprArg := range args {
-		val, err := env.Execute(exprArg, bind)
-		if err != nil {
+		if err := env.Execute(exprArg, bind); err != nil {
 			env.Kill(i)
 			return err
 		}
-		env.Push(val)
 	}
 	return nil
 }
@@ -469,12 +467,10 @@ func (bce *BuiltinCall1Expr) Unparse() sx.Object {
 
 // Compute the value of this expression in the given environment.
 func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	val, err := env.Execute(bce.Arg, bind)
-	if err != nil {
+	if err := env.Execute(bce.Arg, bind); err != nil {
 		return nil, err
 	}
-	env.Push(val)
-	if err = bce.Proc.Fn1(env, bind); err != nil {
+	if err := bce.Proc.Fn1(env, bind); err != nil {
 		return nil, bce.Proc.handleCallError(err)
 	}
 	return env.Pop(), nil
