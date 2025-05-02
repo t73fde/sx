@@ -54,7 +54,8 @@ type ComputeObserver interface {
 // computation of expressions.
 func MakeEnvironment() *Environment {
 	return &Environment{
-		stack: make([]sx.Object, 0, 1024),
+		stack:  make([]sx.Object, 0, 1024),
+		bstack: make([]*Binding, 0, 256),
 	}
 }
 
@@ -329,8 +330,8 @@ func (env *Environment) Args(numargs int) sx.Vector {
 // SaveBinding stores a binding for later restore.
 func (env *Environment) SaveBinding(bind *Binding) { env.bstack = append(env.bstack, bind) }
 
-// RestoreBindung retrieves the last saved binding.
-func (env *Environment) RestoreBindung() *Binding {
+// RestoreBinding retrieves the last saved binding.
+func (env *Environment) RestoreBinding() *Binding {
 	bstack := env.bstack
 	sp := len(bstack) - 1
 	bind := bstack[sp]
