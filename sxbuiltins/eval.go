@@ -25,23 +25,28 @@ var ParseExpression = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		expr, err := env.Parse(arg, bind)
+	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		expr, err := env.Parse(env.Top(), bind)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		return sxeval.MakeExprObj(expr), nil
+		env.Set(sxeval.MakeExprObj(expr))
+		return nil
 	},
-	Fn: func(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		bind, err := GetBinding(args[1], 1)
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
+		bind, err := GetBinding(env.Pop(), 1)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		expr, err := env.Parse(args[0], bind)
+		expr, err := env.Parse(env.Top(), bind)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		return sxeval.MakeExprObj(expr), nil
+		env.Set(sxeval.MakeExprObj(expr))
+		return nil
 	},
 }
 
@@ -51,12 +56,14 @@ var UnparseExpression = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		expr, err := GetExprObj(arg, 0)
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		expr, err := GetExprObj(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		return expr.GetExpr().Unparse(), nil
+		env.Set(expr.GetExpr().Unparse())
+		return nil
 	},
 }
 
@@ -67,26 +74,32 @@ var RunExpression = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		expr, err := GetExprObj(arg, 0)
+	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		expr, err := GetExprObj(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
 		obj, err := env.Run(expr.GetExpr(), bind)
-		return obj, err
+		env.Set(obj)
+		return err
 
 	},
-	Fn: func(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		expr, err := GetExprObj(args[0], 0)
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
+		arg1 := env.Pop()
+		expr, err := GetExprObj(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		bind, err := GetBinding(args[1], 1)
+		bind, err := GetBinding(arg1, 1)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
 		obj, err := env.Run(expr.GetExpr(), bind)
-		return obj, err
+		env.Set(obj)
+		return err
 	},
 }
 
@@ -96,23 +109,30 @@ var Eval = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		expr, err := getEvalExpr(env, arg, bind)
+	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		expr, err := getEvalExpr(env, env.Top(), bind)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		return env.Run(expr, bind)
+		obj, err := env.Run(expr, bind)
+		env.Set(obj)
+		return err
 	},
-	Fn: func(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		bind, err := GetBinding(args[1], 1)
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
+		bind, err := GetBinding(env.Pop(), 1)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		expr, err := getEvalExpr(env, args[0], bind)
+		expr, err := getEvalExpr(env, env.Top(), bind)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		return env.Run(expr, bind)
+		obj, err := env.Run(expr, bind)
+		env.Set(obj)
+		return err
 	},
 }
 
@@ -129,16 +149,19 @@ var Compile = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		exprObj, err := GetExprObj(arg, 0)
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		exprObj, err := GetExprObj(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
 		cexpr, err := env.Compile(exprObj.GetExpr())
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		return sxeval.MakeExprObj(cexpr), nil
+		env.Set(sxeval.MakeExprObj(cexpr))
+		return nil
 	},
 }
 
@@ -148,16 +171,18 @@ var Disassemble = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		if objAsm, isObjAsm := arg.(sxeval.Disassembler); isObjAsm {
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		if objAsm, isObjAsm := env.Top().(sxeval.Disassembler); isObjAsm {
 			if stmts, found := objAsm.GetAsmCode(); found {
 				var lb sx.ListBuilder
 				for s := range stmts {
 					lb.Add(sx.MakeString(s))
 				}
-				return lb.List(), nil
+				env.Set(lb.List())
+				return nil
 			}
 		}
-		return sx.Nil(), nil
+		env.Set(sx.Nil())
+		return nil
 	},
 }

@@ -27,12 +27,16 @@ func TestBuiltinSimple(t *testing.T) {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn0:      func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) { return nil, nil },
-		Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-			return sx.MakeList(), nil
+		Fn0:      func(env *sxeval.Environment, _ *sxeval.Binding) error { env.Push(nil); return nil },
+		Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+			env.Set(sx.MakeList())
+			return nil
 		},
-		Fn: func(_ *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
-			return sx.MakeList(args[1:]...), nil
+		Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+			obj := sx.MakeList(env.Args(numargs)[1:]...)
+			env.Kill(numargs - 1)
+			env.Set(obj)
+			return nil
 		},
 	}
 
@@ -54,12 +58,20 @@ func TestBuiltinSimple(t *testing.T) {
 		}
 	}
 
+	env := sxeval.MakeEnvironment()
 	args := sx.Vector{}
 	for i := range 10 {
-		res, err := b.ExecuteCall(nil, args, nil)
-		if err != nil {
+		env.PushArgs(args)
+		if err := b.ExecuteCall(env, len(args), nil); err != nil {
+			if size := env.Size(); size > 0 {
+				t.Error("stack not empty, size:", size, i, err)
+			}
 			t.Error(err)
 			break
+		}
+		res := env.Pop()
+		if size := env.Size(); size > 0 {
+			t.Error("stack not empty, size:", size, i)
 		}
 		if res != nil {
 			if !sx.IsList(res) {

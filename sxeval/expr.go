@@ -37,10 +37,10 @@ type Expr interface {
 	// compilation is not possible / currently not implemented.
 	Compile(*Compiler, bool) error
 
-	// Compute the expression in a frame and return the result.
+	// Compute the expression in a frame and return the result on the stack.
 	// It may have side-effects, on the given environment, or on the
 	// general environment of the system.
-	Compute(*Environment, *Binding) (sx.Object, error)
+	Compute(*Environment, *Binding) error
 
 	// Print the expression on the given writer.
 	Print(io.Writer) (int, error)
@@ -89,7 +89,7 @@ func (nilExpr) IsPure() bool { return true }
 func (nilExpr) Unparse() sx.Object { return sx.Nil() }
 
 // Compute the expression in a frame and return the result.
-func (nilExpr) Compute(*Environment, *Binding) (sx.Object, error) { return sx.Nil(), nil }
+func (nilExpr) Compute(env *Environment, _ *Binding) error { env.Push(sx.Nil()); return nil }
 
 // Compile the expression
 func (nilExpr) Compile(sxc *Compiler, _ bool) error {
@@ -128,7 +128,7 @@ func (oe ObjExpr) Compile(sxc *Compiler, _ bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (oe ObjExpr) Compute(*Environment, *Binding) (sx.Object, error) { return oe.Obj, nil }
+func (oe ObjExpr) Compute(env *Environment, _ *Binding) error { env.Push(oe.Obj); return nil }
 
 // Print the expression on the given writer.
 func (oe ObjExpr) Print(w io.Writer) (int, error) {
@@ -191,11 +191,12 @@ func (use UnboundSymbolExpr) Compile(sxc *Compiler, _ bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (use UnboundSymbolExpr) Compute(_ *Environment, bind *Binding) (sx.Object, error) {
+func (use UnboundSymbolExpr) Compute(env *Environment, bind *Binding) error {
 	if obj, found := bind.Resolve(use.sym); found {
-		return obj, nil
+		env.Push(obj)
+		return nil
 	}
-	return nil, bind.MakeNotBoundError(use.sym)
+	return bind.MakeNotBoundError(use.sym)
 
 }
 
@@ -233,11 +234,12 @@ func (rse resolveSymbolExpr) Compile(sxc *Compiler, _ bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (rse resolveSymbolExpr) Compute(_ *Environment, bind *Binding) (sx.Object, error) {
+func (rse resolveSymbolExpr) Compute(env *Environment, bind *Binding) error {
 	if obj, found := bind.ResolveN(rse.sym, rse.skip); found {
-		return obj, nil
+		env.Push(obj)
+		return nil
 	}
-	return nil, bind.MakeNotBoundError(rse.sym)
+	return bind.MakeNotBoundError(rse.sym)
 }
 
 // Print the expression on the given writer.
@@ -273,11 +275,12 @@ func (lse lookupSymbolExpr) Compile(sxc *Compiler, _ bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (lse *lookupSymbolExpr) Compute(_ *Environment, bind *Binding) (sx.Object, error) {
+func (lse *lookupSymbolExpr) Compute(env *Environment, bind *Binding) error {
 	if obj, found := bind.LookupN(lse.sym, lse.lvl); found {
-		return obj, nil
+		env.Push(obj)
+		return nil
 	}
-	return nil, bind.MakeNotBoundError(lse.sym)
+	return bind.MakeNotBoundError(lse.sym)
 }
 
 // Print the expression on the given writer.
@@ -360,34 +363,32 @@ func compileArgs(sxc *Compiler, args []Expr) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+func (ce *CallExpr) Compute(env *Environment, bind *Binding) error {
 	args := ce.Args
-	err := computeArgs(env, args, bind)
-	if err != nil {
-		return nil, err
+	if err := computeArgs(env, args, bind); err != nil {
+		return err
 	}
 
-	val, err := env.Execute(ce.Proc, bind)
-	if err != nil {
-		return nil, err
+	if err := env.Execute(ce.Proc, bind); err != nil {
+		env.Kill(len(args))
+		return err
 	}
+	val := env.Pop()
 	proc, isCallable := GetCallable(val)
 	if !isCallable {
-		return nil, NotCallableError{Obj: val}
+		env.Kill(len(args))
+		return NotCallableError{Obj: val}
 	}
 
-	obj, err := proc.ExecuteCall(env, env.Args(len(args)), bind)
-	env.Kill(len(args))
-	return obj, err
+	return proc.ExecuteCall(env, len(args), bind)
 }
 
 func computeArgs(env *Environment, args []Expr, bind *Binding) error {
-	for _, exprArg := range args {
-		val, err := env.Execute(exprArg, bind)
-		if err != nil {
+	for i, exprArg := range args {
+		if err := env.Execute(exprArg, bind); err != nil {
+			env.Kill(i)
 			return err
 		}
-		env.Push(val)
 	}
 	return nil
 }
@@ -486,18 +487,14 @@ func (bce *builtinCallExpr) Compile(sxc *Compiler, _ bool) error {
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	args := bce.Args
-	if err := computeArgs(env, args, bind); err != nil {
-		return nil, err
+func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) error {
+	if err := computeArgs(env, bce.Args, bind); err != nil {
+		return err
 	}
-	proc := bce.Proc
-	obj, err := proc.Fn(env, env.Args(len(args)), bind)
-	env.Kill(len(args))
-	if err != nil {
-		return nil, proc.handleCallError(err)
+	if err := bce.Proc.Fn(env, len(bce.Args), bind); err != nil {
+		return bce.Proc.handleCallError(err)
 	}
-	return obj, nil
+	return nil
 }
 
 // Print the expression to a io.Writer.
@@ -530,13 +527,11 @@ func (bce *builtinCall0Expr) Compile(sxc *Compiler, _ bool) error {
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *builtinCall0Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	proc := bce.Proc
-	obj, err := proc.Fn0(env, bind)
-	if err != nil {
-		return nil, proc.handleCallError(err)
+func (bce *builtinCall0Expr) Compute(env *Environment, bind *Binding) error {
+	if err := bce.Proc.Fn0(env, bind); err != nil {
+		return bce.Proc.handleCallError(err)
 	}
-	return obj, nil
+	return nil
 }
 
 // Print the expression to a io.Writer.
@@ -575,17 +570,14 @@ func (bce *BuiltinCall1Expr) Compile(sxc *Compiler, _ bool) error {
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	val, err := env.Execute(bce.Arg, bind)
-	if err != nil {
-		return nil, err
+func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) error {
+	if err := env.Execute(bce.Arg, bind); err != nil {
+		return err
 	}
-	proc := bce.Proc
-	obj, err := proc.Fn1(env, val, bind)
-	if err != nil {
-		return nil, proc.handleCallError(err)
+	if err := bce.Proc.Fn1(env, bind); err != nil {
+		return bce.Proc.handleCallError(err)
 	}
-	return obj, nil
+	return nil
 }
 
 // Print the expression to a io.Writer.

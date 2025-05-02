@@ -215,11 +215,12 @@ func (be *BeginExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (be *BeginExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (be *BeginExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	for _, e := range be.Front {
-		if _, err := env.Execute(e, bind); err != nil {
-			return nil, err
+		if err := env.Execute(e, bind); err != nil {
+			return err
 		}
+		env.Kill(1)
 	}
 	return env.ExecuteTCO(be.Last, bind)
 }
@@ -325,15 +326,16 @@ func (ae *AndExpr) compileForIf(sxc *sxeval.Compiler) (sxeval.Patch, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (ae *AndExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (ae *AndExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	for _, e := range ae.Front {
-		obj, err := env.Execute(e, bind)
+		err := env.Execute(e, bind)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if sx.IsFalse(obj) {
-			return obj, nil
+		if obj := env.Top(); sx.IsFalse(obj) {
+			return nil
 		}
+		env.Kill(1)
 	}
 	return env.ExecuteTCO(ae.Last, bind)
 }
@@ -447,15 +449,16 @@ func (oe *OrExpr) compileForIf(sxc *sxeval.Compiler) (sxeval.Patch, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (oe *OrExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (oe *OrExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	for _, e := range oe.Front {
-		obj, err := env.Execute(e, bind)
+		err := env.Execute(e, bind)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if sx.IsTrue(obj) {
-			return obj, nil
+		if obj := env.Top(); sx.IsTrue(obj) {
+			return nil
 		}
+		env.Kill(1)
 	}
 	return env.ExecuteTCO(oe.Last, bind)
 }

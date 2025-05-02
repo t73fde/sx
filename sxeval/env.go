@@ -140,12 +140,15 @@ func (env *Environment) MakeCompiler() *Compiler {
 }
 
 // Run the given expression.
-func (env *Environment) Run(expr Expr, bind *Binding) (sx.Object, error) {
-	return env.Execute(expr, bind)
+func (env *Environment) Run(expr Expr, bind *Binding) (obj sx.Object, err error) {
+	if err = env.Execute(expr, bind); err == nil {
+		obj = env.Pop()
+	}
+	return obj, err
 }
 
 // Execute the given expression.
-func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err error) {
+func (env *Environment) Execute(expr Expr, bind *Binding) (err error) {
 	for {
 		if exec := env.obCompute; exec != nil {
 			if expr, err = exec.BeforeCompute(env, expr, bind); err != nil {
@@ -153,15 +156,15 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 			}
 		}
 
-		if res, err = expr.Compute(env, bind); err == nil {
+		if err = expr.Compute(env, bind); err == nil {
 			if exec := env.obCompute; exec != nil {
-				exec.AfterCompute(env, expr, bind, res, nil)
+				exec.AfterCompute(env, expr, bind, env.Top(), nil)
 			}
-			return res, nil
+			return nil
 		}
 
 		if exec := env.obCompute; exec != nil {
-			exec.AfterCompute(env, expr, bind, res, err)
+			exec.AfterCompute(env, expr, bind, nil, err)
 		}
 		if err != errExecuteAgain {
 			break
@@ -169,37 +172,37 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 		expr = env.newExpr
 		bind = env.newBind
 	}
-	return res, env.addExecuteError(expr, err)
+	return env.addExecuteError(expr, err)
 }
 
 // ExecuteTCO is called when the expression should be executed at last
 // position, aka as tail call order.
-func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) (sx.Object, error) {
-	// Uncomment this line to test for non-TCO
-	// return env.Execute(expr, bind)
-
+func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) error {
 	// Just return relevant data for real TCO
 	env.newExpr = expr
 	env.newBind = bind
-	return nil, errExecuteAgain
+	return errExecuteAgain
 }
 
-// ApplyMacro executes the Callable in a macro environment.
-func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
+// ApplyMacro executes the Callable in a macro environment, with given number
+// of args (which are placed on the stack).
+func (env *Environment) ApplyMacro(name string, fn Callable, numargs int, bind *Binding) error {
 	macroBind := bind.MakeChildBinding(name, 0)
-	return env.Apply(fn, args, macroBind)
+	return env.Apply(fn, numargs, macroBind)
 }
 
-// Apply the given Callable with the arguments.
-func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
-	res, err := fn.ExecuteCall(env, args, bind)
-	if err == nil {
-		return res, nil
+// Apply the given Callable with the given number of arguments (which are on the stack).
+func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) error {
+	stack := env.stack
+	if err := fn.ExecuteCall(env, numargs, bind); err != nil {
+		if err == errExecuteAgain {
+			return env.Execute(env.newExpr, env.newBind)
+		}
+		sp := len(stack)
+		args := slices.Clone(stack[sp-numargs : sp])
+		return env.addExecuteError(&applyErrExpr{Proc: fn, Args: args}, err)
 	}
-	if err == errExecuteAgain {
-		return env.Execute(env.newExpr, env.newBind)
-	}
-	return nil, env.addExecuteError(&applyErrExpr{Proc: fn, Args: args}, err)
+	return nil
 }
 
 // applyErrExpr is needed, when an error occurs during `env.Apply`, to give a better
@@ -221,8 +224,9 @@ func (ce *applyErrExpr) Unparse() sx.Object {
 
 func (ce *applyErrExpr) Compile(*Compiler, bool) error { return MissingCompileError{Expr: ce} }
 
-func (ce *applyErrExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	return env.Apply(ce.Proc, ce.Args, bind)
+func (ce *applyErrExpr) Compute(env *Environment, bind *Binding) error {
+	env.PushArgs(ce.Args)
+	return env.Apply(ce.Proc, len(ce.Args), bind)
 }
 
 func (ce *applyErrExpr) Print(w io.Writer) (int, error) {
@@ -298,6 +302,17 @@ func (env *Environment) Size() int { return len(env.stack) }
 // Push a value to the stack
 func (env *Environment) Push(val sx.Object) { env.stack = append(env.stack, val) }
 
+// PushArgs pushes a whole slice to the stack.
+func (env *Environment) PushArgs(args []sx.Object) { env.stack = append(env.stack, args...) }
+
+// Top returns the TOS
+func (env *Environment) Top() sx.Object { return env.stack[len(env.stack)-1] }
+
+// Set the value on top of the stack
+func (env *Environment) Set(val sx.Object) {
+	env.stack[len(env.stack)-1] = val
+}
+
 // Pop a value from the stack
 func (env *Environment) Pop() sx.Object {
 	stack := env.stack
@@ -307,24 +322,18 @@ func (env *Environment) Pop() sx.Object {
 	return val
 }
 
-// Top returns the value on top of the stack
-func (env *Environment) Top() sx.Object {
-	return env.stack[len(env.stack)-1]
-}
-
-// Set the value on top of the stack
-func (env *Environment) Set(val sx.Object) {
-	env.stack[len(env.stack)-1] = val
-}
-
 // Kill some elements on the stack
 func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-num] }
 
 // Args returns a given number of values on top of the stack as a slice.
+// Use the slice only if you are sure that the stack is not changed.
 func (env *Environment) Args(numargs int) sx.Vector {
 	sp := len(env.stack)
 	return env.stack[sp-numargs : sp]
 }
+
+// CopyArgs copies the number of values on top of the stack into a separate slice.
+func (env *Environment) CopyArgs(numargs int) []sx.Object { return slices.Clone(env.Args(numargs)) }
 
 // SaveBinding stores a binding for later restore.
 func (env *Environment) SaveBinding(bind *Binding) { env.bstack = append(env.bstack, bind) }

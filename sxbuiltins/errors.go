@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"strings"
 
-	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxeval"
 )
 
@@ -29,21 +28,22 @@ var Error = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: nil, // is not pure, because error must occur at runtime.
-	Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
-		return nil, fmt.Errorf("unspecified user error")
+	Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		return fmt.Errorf("unspecified user error")
 	},
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		return nil, fmt.Errorf("%s", arg.GoString())
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		return fmt.Errorf("%s", env.Pop().GoString())
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
 		var sb strings.Builder
-		for i, arg := range args {
+		for i, arg := range env.Args(numargs) {
 			if i > 0 {
 				sb.WriteByte(' ')
 			}
 			sb.WriteString(arg.GoString())
 		}
-		return nil, fmt.Errorf("%s", sb.String())
+		env.Kill(numargs)
+		return fmt.Errorf("%s", sb.String())
 	},
 	NoCallError: true,
 }
@@ -54,23 +54,24 @@ var NotBoundError = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		sym, err := GetSymbol(arg, 0)
+	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		sym, err := GetSymbol(env.Pop(), 0)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return nil, bind.MakeNotBoundError(sym)
+		return bind.MakeNotBoundError(sym)
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		sym, err := GetSymbol(args[0], 0)
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
+		arg1 := env.Pop()
+		sym, err := GetSymbol(env.Pop(), 0)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		bind, err := GetBinding(args[1], 1)
+		bind, err := GetBinding(arg1, 1)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return nil, bind.MakeNotBoundError(sym)
+		return bind.MakeNotBoundError(sym)
 	},
 	NoCallError: true,
 }

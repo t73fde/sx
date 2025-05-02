@@ -24,7 +24,8 @@ var DefinedP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		return sx.MakeBoolean(!sx.IsUndefined(arg)), nil
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		env.Set(sx.MakeBoolean(!sx.IsUndefined(env.Top())))
+		return nil
 	},
 }

@@ -26,13 +26,18 @@ var Identical = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		args := env.Args(numargs)
 		for i := 1; i < len(args); i++ {
 			if args[0] != args[i] {
-				return sx.Nil(), nil
+				env.Kill(numargs - 1)
+				env.Set(sx.Nil())
+				return nil
 			}
 		}
-		return sx.T, nil
+		env.Kill(numargs - 1)
+		env.Set(sx.T)
+		return nil
 	},
 }
 
@@ -42,12 +47,17 @@ var Equal = sxeval.Builtin{
 	MinArity: 2,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		args := env.Args(numargs)
 		for i := 1; i < len(args); i++ {
 			if !args[0].IsEqual(args[i]) {
-				return sx.Nil(), nil
+				env.Kill(numargs - 1)
+				env.Set(sx.Nil())
+				return nil
 			}
 		}
-		return sx.T, nil
+		env.Kill(numargs - 1)
+		env.Set(sx.T)
+		return nil
 	},
 }

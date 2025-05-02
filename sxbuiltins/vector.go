@@ -26,12 +26,16 @@ var Vector = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: sxeval.AssertPure,
-	Fn0:      func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) { return sx.Nil(), nil },
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		return sx.Vector{arg}, nil
+	Fn0:      func(env *sxeval.Environment, _ *sxeval.Binding) error { env.Push(sx.Nil()); return nil },
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		env.Set(sx.Vector{env.Top()})
+		return nil
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		return args, nil
+	Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+		res := sx.Vector(env.CopyArgs(numargs))
+		env.Kill(numargs - 1)
+		env.Set(res)
+		return nil
 	},
 }
 
@@ -41,9 +45,10 @@ var VectorP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		_, isVector := sx.GetVector(arg)
-		return sx.MakeBoolean(isVector), nil
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		_, isVector := sx.GetVector(env.Top())
+		env.Set(sx.MakeBoolean(isVector))
+		return nil
 	},
 }
 
@@ -53,24 +58,30 @@ var VectorSetBang = sxeval.Builtin{
 	MinArity: 3,
 	MaxArity: 3,
 	TestPure: sxeval.AssertPure,
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		v, err := GetVector(args[0], 0)
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
+		arg2 := env.Pop()
+		arg1 := env.Pop()
+		v, err := GetVector(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		num, err := GetNumber(args[1], 1)
+		num, err := GetNumber(arg1, 1)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
 		pos := num.(sx.Int64)
 		if pos < 0 {
-			return nil, fmt.Errorf("negative vector index not allowed: %v", pos)
+			env.Kill(1)
+			return fmt.Errorf("negative vector index not allowed: %v", pos)
 		}
 		if sx.Int64(len(v)) <= pos {
-			return nil, fmt.Errorf("vector index out of range: %v", pos)
+			env.Kill(1)
+			return fmt.Errorf("vector index out of range: %v", pos)
 		}
 
-		v[pos] = args[2]
-		return v, nil
+		v[pos] = arg2
+		return nil
 	},
 }

@@ -61,16 +61,15 @@ func (m *Macro) GoString() string { return m.String() }
 // Parse transforms a macro call into its expanded form. Some kind of
 // iterative expansion may happen.
 func (m *Macro) Parse(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
-	form, err := m.Expand(pe, args, bind)
-	if err != nil {
+	if err := m.Expand(pe, args, bind); err != nil {
 		return nil, err
 	}
-	return sxeval.NilExpr, pe.ParseAgain(form)
+	return sxeval.NilExpr, pe.ParseAgain(m.Env.Pop())
 }
 
 // Expand the macro in the given call.
-func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair, _ *sxeval.Binding) (sx.Object, error) {
-	var macroArgs sx.Vector
+func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair, _ *sxeval.Binding) error {
+	numargs := 0
 	arg := sx.Object(args)
 	for {
 		if sx.IsNil(arg) {
@@ -78,9 +77,10 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair, _ *sxeval.Bind
 		}
 		pair, isPair := sx.GetPair(arg)
 		if !isPair {
-			return nil, sx.ErrImproper{Pair: args}
+			return sx.ErrImproper{Pair: args}
 		}
-		macroArgs = append(macroArgs, pair.Car())
+		m.Env.Push(pair.Car())
+		numargs++
 		arg = pair.Cdr()
 	}
 
@@ -91,7 +91,7 @@ func (m *Macro) Expand(_ *sxeval.ParseEnvironment, args *sx.Pair, _ *sxeval.Bind
 		Rest:    m.Rest,
 		Expr:    m.Expr,
 	}
-	return m.Env.ApplyMacro(proc.Name, &proc, macroArgs, m.Binding)
+	return m.Env.ApplyMacro(proc.Name, &proc, numargs, m.Binding)
 }
 
 // -- Disassembler methods
@@ -107,8 +107,8 @@ var Macroexpand0 = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(env *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		lst, err := GetList(arg, 0)
+	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		lst, err := GetList(env.Pop(), 0)
 		if err == nil && lst != nil {
 			if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
 				if obj, found := bind.Resolve(sym); found {
@@ -118,6 +118,6 @@ var Macroexpand0 = sxeval.Builtin{
 				}
 			}
 		}
-		return lst, err
+		return err
 	},
 }

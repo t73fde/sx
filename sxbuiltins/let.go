@@ -265,16 +265,15 @@ func (le *LetExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (le *LetExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (le *LetExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	syms, vals := le.Symbols, le.Vals
 	letBind := bind.MakeChildBinding("let", len(syms))
 	for i, sym := range syms {
-		obj, err := env.Execute(vals[i], bind)
-		if err != nil {
-			return nil, err
+		if err := env.Execute(vals[i], bind); err != nil {
+			return err
 		}
-		if err = letBind.Bind(sym, obj); err != nil {
-			return nil, err
+		if err := letBind.Bind(sym, env.Pop()); err != nil {
+			return err
 		}
 	}
 	return env.ExecuteTCO(le.Body, letBind)
@@ -381,19 +380,18 @@ func (lse *LetStarExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (lse *LetStarExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (lse *LetStarExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
 	syms, vals := lse.Symbols, lse.Vals
 	letStarBind := bind
 	for i, sym := range syms {
-		obj, err := env.Execute(vals[i], letStarBind)
-		if err != nil {
-			return nil, err
+		if err := env.Execute(vals[i], letStarBind); err != nil {
+			return err
 		}
 		if i == 0 {
 			letStarBind = bind.MakeChildBinding("let*", lse.numSymbols)
 		}
-		if err = letStarBind.Bind(sym, obj); err != nil {
-			return nil, err
+		if err := letStarBind.Bind(sym, env.Pop()); err != nil {
+			return err
 		}
 	}
 	return env.ExecuteTCO(lse.Body, letStarBind)

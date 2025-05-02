@@ -396,12 +396,12 @@ func (mle MakeListExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (mle MakeListExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-	elem, err := env.Execute(mle.Elem, bind)
-	if err != nil {
-		return nil, err
+func (mle MakeListExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
+	if err := env.Execute(mle.Elem, bind); err != nil {
+		return err
 	}
-	return sx.Cons(elem, nil), nil
+	env.Set(sx.Cons(env.Top(), nil))
+	return nil
 }
 
 // Print the expression on the given writer.

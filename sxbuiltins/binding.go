@@ -26,8 +26,9 @@ var CurrentBinding = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: 0,
 	TestPure: nil,
-	Fn0: func(_ *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-		return bind, nil
+	Fn0: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		env.Push(bind)
+		return nil
 	},
 }
 
@@ -38,15 +39,18 @@ var ParentBinding = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		bind, err := GetBinding(arg, 0)
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		bind, err := GetBinding(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
 		if parent := bind.Parent(); parent != nil {
-			return parent, nil
+			env.Set(parent)
+			return nil
 		}
-		return sx.MakeUndefined(), nil
+		env.Set(sx.MakeUndefined())
+		return nil
 	},
 }
 
@@ -56,12 +60,14 @@ var Bindings = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-		bind, err := GetBinding(arg, 0)
+	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+		bind, err := GetBinding(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		return bind.Bindings(), nil
+		env.Set(bind.Bindings())
+		return nil
 	},
 }
 
@@ -71,13 +77,15 @@ var BoundP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: nil,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		sym, err := GetSymbol(arg, 0)
+	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
 		_, found := bind.Resolve(sym)
-		return sx.MakeBoolean(found), nil
+		env.Set(sx.MakeBoolean(found))
+		return nil
 	},
 }
 
@@ -88,29 +96,37 @@ var BindingLookup = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		sym, err := GetSymbol(arg, 0)
+	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
 		if obj, found := bind.Lookup(sym); found {
-			return obj, nil
+			env.Set(obj)
+			return nil
 		}
-		return sx.MakeUndefined(), nil
+		env.Set(sx.MakeUndefined())
+		return nil
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		sym, err := GetSymbol(args[0], 0)
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
+		arg1 := env.Pop()
+		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		bind, err := GetBinding(args[1], 1)
+		bind, err := GetBinding(arg1, 1)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
 		if obj, found := bind.Lookup(sym); found {
-			return obj, nil
+			env.Set(obj)
+			return nil
 		}
-		return sx.MakeUndefined(), nil
+		env.Set(sx.MakeUndefined())
+		return nil
 	},
 }
 
@@ -121,28 +137,36 @@ var BindingResolve = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
-		sym, err := GetSymbol(arg, 0)
+	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
 		if obj, found := bind.Resolve(sym); found {
-			return obj, nil
+			env.Set(obj)
+			return nil
 		}
-		return sx.MakeUndefined(), nil
+		env.Set(sx.MakeUndefined())
+		return nil
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
-		sym, err := GetSymbol(args[0], 0)
+	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
+		arg1 := env.Pop()
+		sym, err := GetSymbol(env.Top(), 0)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
-		bind, err := GetBinding(args[1], 1)
+		bind, err := GetBinding(arg1, 1)
 		if err != nil {
-			return nil, err
+			env.Kill(1)
+			return err
 		}
 		if obj, found := bind.Resolve(sym); found {
-			return obj, nil
+			env.Set(obj)
+			return nil
 		}
-		return sx.MakeUndefined(), nil
+		env.Set(sx.MakeUndefined())
+		return nil
 	},
 }

@@ -283,10 +283,7 @@ func (sxc *Compiler) EmitBCall(b *Builtin, numargs int) {
 	if !found {
 		fn, handleCallError := b.Fn, b.handleCallError
 		instr = func(env *Environment, bind *Binding) error {
-			obj, err := fn(env, env.Args(numargs), bind)
-			env.Kill(numargs - 1)
-			env.Set(obj)
-			if err != nil {
+			if err := fn(env, numargs, bind); err != nil {
 				return handleCallError(err)
 			}
 			return nil
@@ -303,9 +300,7 @@ func (sxc *Compiler) EmitBCall0(b *Builtin) {
 	if !found {
 		fn0, handleCallError := b.Fn0, b.handleCallError
 		instr = func(env *Environment, bind *Binding) error {
-			obj, err := fn0(env, bind)
-			env.Push(obj)
-			if err != nil {
+			if err := fn0(env, bind); err != nil {
 				return handleCallError(err)
 			}
 			return nil
@@ -321,9 +316,7 @@ func (sxc *Compiler) EmitBCall1(b *Builtin) {
 	if !found {
 		fn1, handleCallError := b.Fn1, b.handleCallError
 		instr = func(env *Environment, bind *Binding) error {
-			obj, err := fn1(env, env.Top(), bind)
-			env.Set(obj)
-			if err != nil {
+			if err := fn1(env, bind); err != nil {
 				return handleCallError(err)
 			}
 			return nil
@@ -371,13 +364,12 @@ func (cpe *ProgramExpr) Compile(*Compiler, bool) error { return nil }
 // Compute the expression in an environment and return the result.
 // It may have side-effects, on the given environment, or on the
 // general environment of the system.
-func (cpe *ProgramExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	err := cpe.Interpret(env, bind)
-	if err != nil {
+func (cpe *ProgramExpr) Compute(env *Environment, bind *Binding) error {
+	if err := cpe.Interpret(env, bind); err != nil {
 		env.Reset()
-		return sx.Nil(), err
+		return err
 	}
-	return env.Pop(), nil
+	return nil
 }
 
 // InterpretObserver monitors the inner workings of the interpretation of compiled code.

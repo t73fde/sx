@@ -34,21 +34,27 @@ func createTestBinding() *sxeval.Binding {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
-			return sx.String{}, nil
+		Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+			env.Push(sx.String{})
+			return nil
 		},
-		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
-			return sx.MakeString(arg.GoString()), nil
+		Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+			env.Set(sx.MakeString(env.Top().GoString()))
+			return nil
 		},
-		Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+		Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+			args := env.Args(numargs)
 			var sb strings.Builder
 			for _, val := range args {
 				_, err := sb.WriteString(val.GoString())
 				if err != nil {
-					return nil, err
+					env.Kill(numargs - 1)
+					return err
 				}
 			}
-			return sx.MakeString(sb.String()), nil
+			env.Kill(numargs - 1)
+			env.Set(sx.MakeString(sb.String()))
+			return nil
 		},
 	})
 
@@ -76,14 +82,14 @@ func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 			bind := root.MakeChildBinding(tc.name, 0)
 			env := sxeval.MakeEnvironment()
 			res, err := env.Eval(obj, bind)
+			if size := env.Size(); size > 0 {
+				t.Error("stack not empty, size:", size)
+			}
 			if err != nil {
 				if got := "{[{" + err.Error() + "}]}"; got != tc.exp {
 					t.Errorf("%s should result in %q, but got %q", tc.src, tc.exp, got)
 				}
 				return
-			}
-			if size := env.Size(); size > 0 {
-				t.Error("stack not empty, size:", size)
 			}
 			if got := res.String(); got != tc.exp {
 				t.Errorf("%s should result in %q, but got %q", tc.src, tc.exp, got)

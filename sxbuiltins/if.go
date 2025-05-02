@@ -194,12 +194,11 @@ func (ife *IfExpr) Compile(sxc *sxeval.Compiler, tailPos bool) error {
 }
 
 // Compute the expression in a frame and return the result.
-func (ife *IfExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-	test, err := env.Execute(ife.Test, bind)
-	if err != nil {
-		return nil, err
+func (ife *IfExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) error {
+	if err := env.Execute(ife.Test, bind); err != nil {
+		return err
 	}
-	if sx.IsTrue(test) {
+	if test := env.Pop(); sx.IsTrue(test) {
 		return env.ExecuteTCO(ife.True, bind)
 	}
 	return env.ExecuteTCO(ife.False, bind)

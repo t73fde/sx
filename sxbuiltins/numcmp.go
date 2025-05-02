@@ -38,23 +38,30 @@ func cmpMakeBuiltin(name string, cmpFn func(int) bool) sxeval.Builtin {
 		MinArity: 2,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+		Fn: func(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+			args := env.Args(numargs)
 			acc, err := GetNumber(args[0], 0)
 			if err != nil {
-				return nil, err
+				env.Kill(numargs)
+				return err
 			}
 			for i := 1; i < len(args); i++ {
 				num, err2 := GetNumber(args[i], i)
 				if err2 != nil {
-					return nil, err2
+					env.Kill(numargs)
+					return err2
 				}
 				cmpRes := sx.NumCmp(acc, num)
 				if !cmpFn(cmpRes) {
-					return sx.Nil(), nil
+					env.Kill(numargs - 1)
+					env.Set(sx.Nil())
+					return nil
 				}
 				acc = num
 			}
-			return sx.T, nil
+			env.Kill(numargs - 1)
+			env.Set(sx.T)
+			return nil
 		},
 	}
 }
