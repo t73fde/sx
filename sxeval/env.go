@@ -157,11 +157,14 @@ func (env *Environment) ApplyMacro(name string, fn Callable, numargs int, bind *
 
 // Apply the given Callable with the given number of arguments (which are on the stack).
 func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) error {
+	stack := env.stack
 	if err := fn.ExecuteCall(env, numargs, bind); err != nil {
 		if err == errExecuteAgain {
 			return env.Execute(env.newExpr, env.newBind)
 		}
-		return env.addExecuteError(&applyErrExpr{Proc: fn, Args: env.CopyArgs(numargs)}, err)
+		sp := len(stack)
+		args := slices.Clone(stack[sp-numargs : sp])
+		return env.addExecuteError(&applyErrExpr{Proc: fn, Args: args}, err)
 	}
 	return nil
 }

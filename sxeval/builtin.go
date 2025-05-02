@@ -155,7 +155,7 @@ func (b *Builtin) checkCallArity(nargs int, argsFn func() []sx.Object) error {
 }
 
 func (b *Builtin) handleCallError(err error) error {
-	if err != nil && !b.NoCallError {
+	if !b.NoCallError {
 		var callError CallError
 		if !errors.As(err, &callError) {
 			err = CallError{Name: b.Name, Err: err}
