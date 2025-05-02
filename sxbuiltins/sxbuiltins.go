@@ -181,7 +181,7 @@ func BindAll(bind *sxeval.Binding) error {
 		&NotBoundError,     // not-bound-error
 		&ParseExpression,   // parse-expression
 		&UnparseExpression, // unparse-expression
-		&RunExpression,     // run-expression
+		&ExecuteExpression, // execute-expression
 		&Eval,              // eval
 	)
 	return err
