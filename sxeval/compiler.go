@@ -80,7 +80,7 @@ func (sxc *Compiler) Stats() (int, int, int, int) {
 
 // CompileProgram builds a ProgramExpr by compiling the Expr.
 func (sxc *Compiler) CompileProgram(expr Expr) (*ProgramExpr, error) {
-	sxc.resetState()
+	//  sxc.resetState()
 
 	if err := sxc.Compile(expr, true); err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func (sxc *Compiler) Compile(expr Expr, tailPos bool) error {
 func (sxc *Compiler) AdjustStack(offset int) {
 	sxc.curStack += offset
 	if sxc.curStack < 0 {
-		panic("negative stack position")
+		panic(fmt.Sprintf("negative stack position: %d", sxc.curStack))
 	}
 	sxc.maxStack = max(sxc.maxStack, sxc.curStack)
 	if ob := sxc.env.obCompile; ob != nil {
@@ -391,6 +391,12 @@ func (cpe *ProgramExpr) Interpret(env *Environment, bind *Binding) error {
 				currBind = env.newBind
 			} else if jerr, ok := err.(jumpToError); ok {
 				ip = jerr.pos - 1
+			} else if err == errSwitchProg {
+				program, asm = env.newProg.program, env.newProg.asm
+				if io := env.obInterpret; io != nil {
+					io.LogInterpreter(cpe, cpe.level, ip, "TCO", nil)
+				}
+				ip = -1
 			} else {
 				if io := env.obInterpret; io != nil {
 					io.LogInterpreter(cpe, cpe.level, ip, "ERROR", err)
@@ -416,6 +422,7 @@ func (cpe *ProgramExpr) Print(w io.Writer) (int, error) {
 	if err != nil {
 		return length, err
 	}
+	// fmt.Fprintf(w, ": %s", strings.Join(cpe.asm, " | "))
 	l, err = io.WriteString(w, "}")
 	length += l
 	return length, err
@@ -431,6 +438,13 @@ var errSwitchBinding = errors.New("switch-binding")
 func SwitchBinding(env *Environment, bind *Binding) error {
 	env.newBind = bind
 	return errSwitchBinding
+}
+
+var errSwitchProg = errors.New("switch-prog")
+
+func SwitchProg(env *Environment, pe *ProgramExpr) error {
+	env.newProg = pe
+	return errSwitchProg
 }
 
 // ----- Interface for retrieving compiled code

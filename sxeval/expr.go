@@ -343,13 +343,26 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 }
 
 // Compile the expression.
-func (ce *CallExpr) Compile(sxc *Compiler, _ bool) error {
+func (ce *CallExpr) Compile(sxc *Compiler, tailPos bool) error {
 	if err := compileArgs(sxc, ce.Args); err != nil {
 		return err
 	}
+	numargs := len(ce.Args)
+	sxc.EmitPush(sx.Int64(numargs))
 	if err := sxc.Compile(ce.Proc, false); err != nil {
 		return err
 	}
+	sxc.Emit(func(env *Environment, bind *Binding) error {
+		val := env.Pop()
+		proc, isCallable := GetCallable(val)
+		if !isCallable {
+			env.Kill(numargs + 1)
+			return NotCallableError{Obj: val}
+		}
+		return proc.CompiledCall(env, bind, tailPos)
+	}, "CALL", strconv.Itoa(numargs))
+	sxc.AdjustStack(-(numargs + 1))
+	return nil
 	return MissingCompileError{ce}
 }
 

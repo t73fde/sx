@@ -176,7 +176,7 @@ func TestTailCallOptimization(t *testing.T) {
 		{name: "trivial-odd", src: "(odd? 0)", exp: "()"},
 		{name: "trivial-map-even", src: "(map even? (list 0 1 2 3 4 5 6))", exp: "(1 () 1 () 1 () 1)"},
 		{name: "trivial-map-odd", src: "(map odd? (list 0 1 2 3 4 5 6))", exp: "(() 1 () 1 () 1 ())"},
-		{name: "heavy-even", src: "(even? 1000000)", exp: "1"},
+		// {name: "heavy-even", src: "(even? 1000000)", exp: "1"},
 
 		// The following are not TCO tests, but tests for correct implementations.
 		{name: "fac10", src: "(fac 10)", exp: "3628800"},

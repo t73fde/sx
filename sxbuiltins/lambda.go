@@ -249,10 +249,65 @@ func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 // Compile the expression.
 func (le *LambdaExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 	subSxc := sxc.MakeChildCompiler()
+
+	var bindVars []string
+	for _, sym := range le.Params {
+		bindVars = append(bindVars, sym.String())
+	}
+	if rest := le.Rest; rest != nil {
+		bindVars = append(bindVars, rest.String())
+	}
+
+	name, params, rest := le.Name, le.Params, le.Rest
+	subSxc.Emit(func(env *sxeval.Environment, bind *sxeval.Binding) error {
+		numargsObj := env.Pop()
+		i64, isInt64 := sx.GetInt64(numargsObj)
+		if !isInt64 {
+			return fmt.Errorf("expected int, but got %T/%v", numargsObj, numargsObj)
+		}
+		numargs := int(i64)
+
+		numParams := len(params)
+		if numargs < numParams {
+			env.Kill(numargs)
+			return fmt.Errorf("%s: missing arguments: %v", name, params[numargs:])
+		}
+		bindSize := numParams
+		if rest != nil {
+			bindSize++
+		}
+		lexBind := bind.MakeChildBinding(name, bindSize)
+		args := env.Args(numargs)
+		for i, p := range params {
+			err := lexBind.Bind(p, args[i])
+			if err != nil {
+				env.Kill(numargs)
+				return err
+			}
+		}
+		if rest != nil {
+			err := lexBind.Bind(rest, sx.MakeList(args[numParams:]...))
+			if err != nil {
+				env.Kill(numargs)
+				return err
+			}
+		} else if numargs > numParams {
+			env.Kill(numargs)
+			return fmt.Errorf("%s: excess arguments: %v", name, []sx.Object(args[numParams:]))
+		}
+		env.Kill(numargs)
+		env.SaveBinding(bind)
+		return sxeval.SwitchBinding(env, lexBind)
+	}, "BIND", name, fmt.Sprintf("%v", bindVars))
+
 	pe, err := subSxc.CompileProgram(le.Expr)
 	if err != nil {
 		return err
 	}
+	subSxc.Emit(func(e *sxeval.Environment, _ *sxeval.Binding) error {
+		bind := e.RestoreBindung()
+		return sxeval.SwitchBinding(e, bind)
+	}, "RESTORE")
 	le.Expr = pe
 
 	name, params, rest, expr := le.Name, le.Params, le.Rest, le.Expr
@@ -416,12 +471,44 @@ func (ll *LexLambda) GoString() string { return ll.String() }
 // produce any other side effects.
 func (ll *LexLambda) IsPure(sx.Vector) bool { return false }
 
+func (ll *LexLambda) CompiledCall(env *sxeval.Environment, bind *sxeval.Binding, tailPos bool) error {
+	if pe, isCompiled := ll.Expr.(*sxeval.ProgramExpr); isCompiled {
+		if tailPos {
+			return sxeval.SwitchProg(env, pe)
+		}
+		return env.Execute(pe, bind)
+	}
+	numargsObj := env.Pop()
+	i64, isInt64 := sx.GetInt64(numargsObj)
+	if !isInt64 {
+		return fmt.Errorf("expected int, but got %T/%v", numargsObj, numargsObj)
+	}
+
+	lexBind, err := ll.bindArgs(env, int(i64))
+	if err != nil {
+		return err
+	}
+	return env.Execute(ll.Expr, lexBind)
+}
+
 // ExecuteCall the Procedure with any number of arguments.
-func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval.Binding) error {
+func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, bind *sxeval.Binding) error {
+	if pe, isCompiled := ll.Expr.(*sxeval.ProgramExpr); isCompiled {
+		env.Push(sx.Int64(numargs))
+		return env.Execute(pe, bind)
+	}
+	lexBind, err := ll.bindArgs(env, numargs)
+	if err != nil {
+		return err
+	}
+	return env.ExecuteTCO(ll.Expr, lexBind)
+}
+
+func (ll *LexLambda) bindArgs(env *sxeval.Environment, numargs int) (*sxeval.Binding, error) {
 	numParams := len(ll.Params)
 	if numargs < numParams {
 		env.Kill(numargs)
-		return fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[numargs:])
+		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[numargs:])
 	}
 	bindSize := numParams
 	if ll.Rest != nil {
@@ -433,21 +520,21 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval
 		err := lexBind.Bind(p, args[i])
 		if err != nil {
 			env.Kill(numargs)
-			return err
+			return nil, err
 		}
 	}
 	if ll.Rest != nil {
 		err := lexBind.Bind(ll.Rest, sx.MakeList(args[numParams:]...))
 		if err != nil {
 			env.Kill(numargs)
-			return err
+			return nil, err
 		}
 	} else if numargs > numParams {
 		env.Kill(numargs)
-		return fmt.Errorf("%s: excess arguments: %v", ll.Name, []sx.Object(args[numParams:]))
+		return nil, fmt.Errorf("%s: excess arguments: %v", ll.Name, []sx.Object(args[numParams:]))
 	}
 	env.Kill(numargs)
-	return env.ExecuteTCO(ll.Expr, lexBind)
+	return lexBind, nil
 }
 
 // --- Disassembler methods
@@ -512,6 +599,18 @@ func (dl *DynLambda) GoString() string { return dl.String() }
 // IsPure tests if the Procedure needs an environment value and does not
 // produce any other side effects.
 func (dl *DynLambda) IsPure(sx.Vector) bool { return false }
+
+// CompiledCall the Procedure with any number of arguments.
+func (dl *DynLambda) CompiledCall(env *sxeval.Environment, bind *sxeval.Binding, tailPos bool) error {
+	// A DynLambda is just a LexLambda with a different Binding.
+	return (&LexLambda{
+		Binding: bind,
+		Name:    dl.Name,
+		Params:  dl.Params,
+		Rest:    dl.Rest,
+		Expr:    dl.Expr,
+	}).CompiledCall(env, bind, tailPos)
+}
 
 // ExecuteCall the Procedure with any number of arguments.
 func (dl *DynLambda) ExecuteCall(env *sxeval.Environment, numargs int, bind *sxeval.Binding) error {

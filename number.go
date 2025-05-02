@@ -61,6 +61,17 @@ func (i Int64) String() string { return strconv.FormatInt(int64(i), 10) }
 // GoString returns the Go string representation.
 func (i Int64) GoString() string { return i.String() }
 
+// GetInt64 returns the object as a int64, if possible.
+func GetInt64(obj Object) (int64, bool) {
+	if IsNil(obj) {
+		return 0, false
+	}
+	if val, ok := obj.(Int64); ok {
+		return int64(val), true
+	}
+	return 0, false
+}
+
 // GetNumber returns the object as a number, if possible.
 func GetNumber(obj Object) (Number, bool) {
 	if IsNil(obj) {

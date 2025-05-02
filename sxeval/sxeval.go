@@ -32,6 +32,8 @@ type Callable interface {
 	// in context of the AST evaluator.
 	// Args are transported via env.Args(numargs), the result is env.Top()
 	ExecuteCall(*Environment, int, *Binding) error
+
+	CompiledCall(*Environment, *Binding, bool) error
 }
 
 // GetCallable returns the object as a Callable, if possible.

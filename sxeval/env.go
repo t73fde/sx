@@ -31,6 +31,7 @@ type Environment struct {
 
 	newExpr Expr
 	newBind *Binding
+	newProg *ProgramExpr
 
 	obCompute   ComputeObserver
 	obParse     ParseObserver
@@ -130,13 +131,15 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 
 // MakeCompiler builds a new compiler for the given environment.
 func (env *Environment) MakeCompiler() *Compiler {
-	return &Compiler{
+	sxc := &Compiler{
 		level:    0,
 		env:      env,
 		program:  nil,
 		curStack: 0,
 		maxStack: 0,
 	}
+	sxc.resetState()
+	return sxc
 }
 
 // Run the given expression.

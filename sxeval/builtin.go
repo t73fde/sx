@@ -105,6 +105,15 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 	return false
 }
 
+func (b *Builtin) CompiledCall(env *Environment, bind *Binding, _ bool) error {
+	numargsObj := env.Pop()
+	i64, isInt64 := sx.GetInt64(numargsObj)
+	if !isInt64 {
+		return fmt.Errorf("expected int, but got %T/%v", numargsObj, numargsObj)
+	}
+	return b.ExecuteCall(env, int(i64), bind)
+}
+
 // ExecuteCall the builtin function with the given environment and number of arguments.
 func (b *Builtin) ExecuteCall(env *Environment, numargs int, bind *Binding) (err error) {
 	if err = b.checkCallArity(numargs, func() []sx.Object { return env.Args(numargs) }); err != nil {
