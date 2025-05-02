@@ -494,7 +494,10 @@ func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) (sx.Object,
 	proc := bce.Proc
 	obj, err := proc.Fn(env, env.Args(len(args)), bind)
 	env.Kill(len(args))
-	return obj, proc.handleCallError(err)
+	if err != nil {
+		return nil, proc.handleCallError(err)
+	}
+	return obj, nil
 }
 
 // Print the expression to a io.Writer.
@@ -530,7 +533,10 @@ func (bce *builtinCall0Expr) Compile(sxc *Compiler, _ bool) error {
 func (bce *builtinCall0Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	proc := bce.Proc
 	obj, err := proc.Fn0(env, bind)
-	return obj, proc.handleCallError(err)
+	if err != nil {
+		return nil, proc.handleCallError(err)
+	}
+	return obj, nil
 }
 
 // Print the expression to a io.Writer.
@@ -576,7 +582,10 @@ func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object
 	}
 	proc := bce.Proc
 	obj, err := proc.Fn1(env, val, bind)
-	return obj, proc.handleCallError(err)
+	if err != nil {
+		return nil, proc.handleCallError(err)
+	}
+	return obj, nil
 }
 
 // Print the expression to a io.Writer.
