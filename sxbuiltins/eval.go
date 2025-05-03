@@ -67,39 +67,31 @@ var UnparseExpression = sxeval.Builtin{
 	},
 }
 
-// RunExpression executes the given compiled expression, optionally within
+// ExecuteExpression executes the given compiled expression, optionally within
 // an environment.
-var RunExpression = sxeval.Builtin{
-	Name:     "run-expression",
+var ExecuteExpression = sxeval.Builtin{
+	Name:     "execute-expression",
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
 	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
-		expr, err := GetExprObj(env.Top(), 0)
+		expr, err := GetExprObj(env.Pop(), 0)
 		if err != nil {
-			env.Kill(1)
 			return err
 		}
-		obj, err := env.Run(expr.GetExpr(), bind)
-		env.Set(obj)
-		return err
-
+		return env.Execute(expr.GetExpr(), bind)
 	},
 	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
-		expr, err := GetExprObj(env.Top(), 0)
+		expr, err := GetExprObj(env.Pop(), 0)
 		if err != nil {
-			env.Kill(1)
 			return err
 		}
 		bind, err := GetBinding(arg1, 1)
 		if err != nil {
-			env.Kill(1)
 			return err
 		}
-		obj, err := env.Run(expr.GetExpr(), bind)
-		env.Set(obj)
-		return err
+		return env.Execute(expr.GetExpr(), bind)
 	},
 }
 
@@ -110,14 +102,11 @@ var Eval = sxeval.Builtin{
 	MaxArity: 2,
 	TestPure: nil,
 	Fn1: func(env *sxeval.Environment, bind *sxeval.Binding) error {
-		expr, err := getEvalExpr(env, env.Top(), bind)
+		expr, err := getEvalExpr(env, env.Pop(), bind)
 		if err != nil {
-			env.Kill(1)
 			return err
 		}
-		obj, err := env.Run(expr, bind)
-		env.Set(obj)
-		return err
+		return env.Execute(expr, bind)
 	},
 	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		bind, err := GetBinding(env.Pop(), 1)
@@ -125,14 +114,11 @@ var Eval = sxeval.Builtin{
 			env.Kill(1)
 			return err
 		}
-		expr, err := getEvalExpr(env, env.Top(), bind)
+		expr, err := getEvalExpr(env, env.Pop(), bind)
 		if err != nil {
-			env.Kill(1)
 			return err
 		}
-		obj, err := env.Run(expr, bind)
-		env.Set(obj)
-		return err
+		return env.Execute(expr, bind)
 	},
 }
 
