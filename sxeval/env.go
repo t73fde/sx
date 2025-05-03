@@ -55,7 +55,8 @@ type ComputeObserver interface {
 // computation of expressions.
 func MakeEnvironment() *Environment {
 	return &Environment{
-		stack: make([]sx.Object, 0, 1024),
+		stack:  make([]sx.Object, 0, 1024),
+		bstack: make([]*Binding, 0, 256),
 	}
 }
 
@@ -132,11 +133,8 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 // MakeCompiler builds a new compiler for the given environment.
 func (env *Environment) MakeCompiler() *Compiler {
 	sxc := &Compiler{
-		level:    0,
-		env:      env,
-		program:  nil,
-		curStack: 0,
-		maxStack: 0,
+		level: 0,
+		env:   env,
 	}
 	sxc.resetState()
 	return sxc
@@ -341,8 +339,8 @@ func (env *Environment) CopyArgs(numargs int) []sx.Object { return slices.Clone(
 // SaveBinding stores a binding for later restore.
 func (env *Environment) SaveBinding(bind *Binding) { env.bstack = append(env.bstack, bind) }
 
-// RestoreBindung retrieves the last saved binding.
-func (env *Environment) RestoreBindung() *Binding {
+// RestoreBinding retrieves the last saved binding.
+func (env *Environment) RestoreBinding() *Binding {
 	bstack := env.bstack
 	sp := len(bstack) - 1
 	bind := bstack[sp]

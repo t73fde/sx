@@ -305,7 +305,7 @@ func (le *LambdaExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 		return err
 	}
 	subSxc.Emit(func(e *sxeval.Environment, _ *sxeval.Binding) error {
-		bind := e.RestoreBindung()
+		bind := e.RestoreBinding()
 		return sxeval.SwitchBinding(e, bind)
 	}, "RESTORE")
 	le.Expr = pe
