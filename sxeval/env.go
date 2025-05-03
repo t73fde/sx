@@ -131,13 +131,12 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 
 // MakeCompiler builds a new compiler for the given environment.
 func (env *Environment) MakeCompiler() *Compiler {
-	return &Compiler{
-		level:    0,
-		env:      env,
-		program:  nil,
-		curStack: 0,
-		maxStack: 0,
+	sxc := &Compiler{
+		level: 0,
+		env:   env,
 	}
+	sxc.resetState()
+	return sxc
 }
 
 // Run the given expression.

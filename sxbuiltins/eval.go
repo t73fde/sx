@@ -60,10 +60,10 @@ var UnparseExpression = sxeval.Builtin{
 	},
 }
 
-// RunExpression executes the given compiled expression, optionally within
+// ExecuteExpression executes the given compiled expression, optionally within
 // an environment.
-var RunExpression = sxeval.Builtin{
-	Name:     "run-expression",
+var ExecuteExpression = sxeval.Builtin{
+	Name:     "execute-expression",
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
@@ -72,9 +72,7 @@ var RunExpression = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		obj, err := env.Run(expr.GetExpr(), bind)
-		return obj, err
-
+		return env.Execute(expr.GetExpr(), bind)
 	},
 	Fn: func(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		expr, err := GetExprObj(args[0], 0)
@@ -85,8 +83,7 @@ var RunExpression = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		obj, err := env.Run(expr.GetExpr(), bind)
-		return obj, err
+		return env.Execute(expr.GetExpr(), bind)
 	},
 }
 

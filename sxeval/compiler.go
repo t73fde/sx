@@ -80,21 +80,21 @@ func (sxc *Compiler) Stats() (int, int, int, int) {
 
 // CompileProgram builds a ProgramExpr by compiling the Expr.
 func (sxc *Compiler) CompileProgram(expr Expr) (*ProgramExpr, error) {
-	sxc.resetState()
-
 	if err := sxc.Compile(expr, true); err != nil {
 		return nil, err
 	}
 	if sxc.curStack != 1 {
 		return nil, fmt.Errorf("wrong stack position: %d", sxc.curStack)
 	}
-	return &ProgramExpr{
+	pe := &ProgramExpr{
 		program:   slices.Clip(sxc.program),
 		asm:       slices.Clip(sxc.asm),
 		stacksize: sxc.maxStack,
 		level:     sxc.level,
 		source:    expr,
-	}, nil
+	}
+	sxc.resetState()
+	return pe, nil
 }
 
 // Compile the given expression. Do not call `expr.Compile()` directly.
