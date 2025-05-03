@@ -296,7 +296,6 @@ func (le *LambdaExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 			return fmt.Errorf("%s: excess arguments: %v", name, []sx.Object(args[numParams:]))
 		}
 		env.Kill(numargs)
-		env.SaveBinding(bind)
 		return sxeval.SwitchBinding(env, lexBind)
 	}, "BIND", name, fmt.Sprintf("%v", bindVars))
 
@@ -304,10 +303,6 @@ func (le *LambdaExpr) Compile(sxc *sxeval.Compiler, _ bool) error {
 	if err != nil {
 		return err
 	}
-	subSxc.Emit(func(e *sxeval.Environment, _ *sxeval.Binding) error {
-		bind := e.RestoreBinding()
-		return sxeval.SwitchBinding(e, bind)
-	}, "RESTORE")
 	le.Expr = pe
 
 	name, params, rest, expr := le.Name, le.Params, le.Rest, le.Expr
@@ -476,7 +471,13 @@ func (ll *LexLambda) CompiledCall(env *sxeval.Environment, bind *sxeval.Binding,
 		if tailPos {
 			return sxeval.SwitchProg(env, pe)
 		}
-		return env.Execute(pe, bind)
+		env.SaveBinding(bind)
+		err := env.Execute(pe, bind)
+		bind = env.RestoreBinding()
+		if err != nil {
+			return err
+		}
+		return sxeval.SwitchBinding(env, bind)
 	}
 	numargsObj := env.Pop()
 	i64, isInt64 := sx.GetInt64(numargsObj)
