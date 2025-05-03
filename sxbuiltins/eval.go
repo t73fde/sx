@@ -98,7 +98,7 @@ var Eval = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		return env.Run(expr, bind)
+		return env.Execute(expr, bind)
 	},
 	Fn: func(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 		bind, err := GetBinding(args[1], 1)
@@ -109,7 +109,7 @@ var Eval = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		return env.Run(expr, bind)
+		return env.Execute(expr, bind)
 	},
 }
 
