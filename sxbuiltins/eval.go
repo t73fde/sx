@@ -81,9 +81,12 @@ var RunExpression = sxeval.Builtin{
 			return err
 		}
 		obj, err := env.Run(expr.GetExpr(), bind)
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
-
+		return nil
 	},
 	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		arg1 := env.Pop()
@@ -98,8 +101,12 @@ var RunExpression = sxeval.Builtin{
 			return err
 		}
 		obj, err := env.Run(expr.GetExpr(), bind)
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
+		return nil
 	},
 }
 
@@ -116,8 +123,12 @@ var Eval = sxeval.Builtin{
 			return err
 		}
 		obj, err := env.Run(expr, bind)
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
+		return nil
 	},
 	Fn: func(env *sxeval.Environment, _ int, _ *sxeval.Binding) error {
 		bind, err := GetBinding(env.Pop(), 1)
@@ -131,8 +142,12 @@ var Eval = sxeval.Builtin{
 			return err
 		}
 		obj, err := env.Run(expr, bind)
+		if err != nil {
+			env.Kill(1)
+			return err
+		}
 		env.Set(obj)
-		return err
+		return nil
 	},
 }
 

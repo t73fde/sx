@@ -97,7 +97,7 @@ var Map = sxeval.Builtin{
 		}
 
 		env.Push(lst.Car())
-		if err := env.Apply(fn, 1, bind); err != nil {
+		if err = env.Apply(fn, 1, bind); err != nil {
 			return err
 		}
 		result := sx.Cons(env.Pop(), sx.Nil())

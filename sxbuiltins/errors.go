@@ -28,7 +28,7 @@ var Error = sxeval.Builtin{
 	MinArity: 0,
 	MaxArity: -1,
 	TestPure: nil, // is not pure, because error must occur at runtime.
-	Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) error {
+	Fn0: func(*sxeval.Environment, *sxeval.Binding) error {
 		return fmt.Errorf("unspecified user error")
 	},
 	Fn1: func(env *sxeval.Environment, _ *sxeval.Binding) error {
