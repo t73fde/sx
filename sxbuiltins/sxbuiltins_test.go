@@ -62,6 +62,9 @@ func (tcs tTestCases) Run(t *testing.T) {
 					return
 				}
 				res, err := env.Eval(obj, bind)
+				if size := env.Size(); size > 0 {
+					t.Error("stack not empty, size:", size)
+				}
 				if err != nil {
 					if tc.withErr {
 						sb.WriteString(fmt.Errorf("{[{%w}]}", err).Error())
@@ -72,9 +75,6 @@ func (tcs tTestCases) Run(t *testing.T) {
 				} else if tc.withErr {
 					t.Errorf("should fail, but got: %v", res)
 					return
-				}
-				if size := env.Size(); size > 0 {
-					t.Error("stack not empty, size:", size)
 				}
 				if sb.Len() > 0 {
 					sb.WriteByte(' ')

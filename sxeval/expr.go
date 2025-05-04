@@ -280,17 +280,18 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 // Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	args := ce.Args
-	err := computeArgs(env, args, bind)
-	if err != nil {
+	if err := computeArgs(env, args, bind); err != nil {
 		return nil, err
 	}
 
 	val, err := env.Execute(ce.Proc, bind)
 	if err != nil {
+		env.Kill(len(args))
 		return nil, err
 	}
 	proc, isCallable := GetCallable(val)
 	if !isCallable {
+		env.Kill(len(args))
 		return nil, NotCallableError{Obj: val}
 	}
 
@@ -298,9 +299,10 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) 
 }
 
 func computeArgs(env *Environment, args []Expr, bind *Binding) error {
-	for _, exprArg := range args {
+	for i, exprArg := range args {
 		val, err := env.Execute(exprArg, bind)
 		if err != nil {
+			env.Kill(i)
 			return err
 		}
 		env.Push(val)
@@ -398,11 +400,10 @@ func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) (sx.Object,
 	if err := computeArgs(env, args, bind); err != nil {
 		return nil, err
 	}
-	proc := bce.Proc
-	obj, err := proc.Fn(env, env.Args(len(args)), bind)
+	obj, err := bce.Proc.Fn(env, env.Args(len(args)), bind)
 	env.Kill(len(args)) // proc.Fn does not work with the stack
 	if err != nil {
-		return nil, proc.handleCallError(err)
+		return nil, bce.Proc.handleCallError(err)
 	}
 	return obj, nil
 }
@@ -432,10 +433,9 @@ func (bce *builtinCall0Expr) Unparse() sx.Object {
 
 // Compute the value of this expression in the given environment.
 func (bce *builtinCall0Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	proc := bce.Proc
-	obj, err := proc.Fn0(env, bind)
+	obj, err := bce.Proc.Fn0(env, bind)
 	if err != nil {
-		return nil, proc.handleCallError(err)
+		return nil, bce.Proc.handleCallError(err)
 	}
 	return obj, nil
 }
@@ -472,10 +472,9 @@ func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object
 	if err != nil {
 		return nil, err
 	}
-	proc := bce.Proc
-	obj, err := proc.Fn1(env, val, bind)
+	obj, err := bce.Proc.Fn1(env, val, bind)
 	if err != nil {
-		return nil, proc.handleCallError(err)
+		return nil, bce.Proc.handleCallError(err)
 	}
 	return obj, nil
 }

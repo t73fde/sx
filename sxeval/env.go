@@ -156,9 +156,8 @@ func (env *Environment) ApplyMacro(name string, fn Callable, numargs int, bind *
 }
 
 // Apply the given Callable with the given number of arguments (which are on the stack).
-func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (sx.Object, error) {
-	res, err := fn.ExecuteCall(env, numargs, bind)
-	if err == nil {
+func (env *Environment) Apply(fn Callable, numargs int, bind *Binding) (res sx.Object, err error) {
+	if res, err = fn.ExecuteCall(env, numargs, bind); err == nil {
 		return res, nil
 	}
 	if err == errExecuteAgain {
@@ -275,7 +274,7 @@ func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-nu
 // Use the slice only if you are sure that the stack is not changed.
 func (env *Environment) Args(numargs int) []sx.Object {
 	sp := len(env.stack)
-	return env.stack[sp-numargs : sp]
+	return env.stack[sp-numargs : sp : sp]
 }
 
 // CopyArgs copies the number of values on top of the stack into a separate slice.

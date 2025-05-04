@@ -24,7 +24,9 @@ var tcsVector = tTestCases{
 	{name: "vector-0", src: "(vector)", exp: "()"},
 	{name: "vector-1", src: "(vector 4)", exp: "(vector 4)"},
 	{name: "vector-2", src: "(vector 4 7)", exp: "(vector 4 7)"},
-	{name: "err-vector-alias-args", src: "(let ((a (vector b 7 9)) (b (vector 7 7 b))) (+ (apply length `(,b)) 4) a)", exp: "(vector 11 7 9)"},
+	{name: "vector-alias-args",
+		src: "(let ((a (vector b 7 9)) (b (vector 7 7 b))) (+ (apply length `(,b)) 4) a)",
+		exp: "(vector 11 7 9)"},
 
 	{name: "err-vector?-0",
 		src:     "(vector?)",

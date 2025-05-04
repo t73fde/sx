@@ -361,6 +361,7 @@ func (ll *LexLambda) IsPure(sx.Vector) bool { return false }
 func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval.Binding) (sx.Object, error) {
 	numParams := len(ll.Params)
 	if numargs < numParams {
+		env.Kill(numargs)
 		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[numargs:])
 	}
 	bindSize := numParams
@@ -372,15 +373,18 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, numargs int, _ *sxeval
 	for i, p := range ll.Params {
 		err := lexBind.Bind(p, args[i])
 		if err != nil {
+			env.Kill(numargs)
 			return nil, err
 		}
 	}
 	if ll.Rest != nil {
 		err := lexBind.Bind(ll.Rest, sx.MakeList(args[numParams:]...))
 		if err != nil {
+			env.Kill(numargs)
 			return nil, err
 		}
 	} else if numargs > numParams {
+		env.Kill(numargs)
 		return nil, fmt.Errorf("%s: excess arguments: %v", ll.Name, []sx.Object(args[numParams:]))
 	}
 	env.Kill(numargs)

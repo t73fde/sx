@@ -291,6 +291,9 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 		if me.logExecutor {
 			fmt.Println(";#", me.execCount)
 		}
+		if size := env.Size(); size > 0 {
+			fmt.Println(";W stack not empty, size:", size)
+		}
 		if err != nil {
 			fmt.Println(";e", err)
 			var execErr sxeval.ExecuteError

@@ -16,29 +16,33 @@ package sxeval
 import (
 	"errors"
 	"fmt"
-	"math"
 
 	"t73f.de/r/sx"
 )
 
-// Builtin is the type for normal predefined functions.
+// Builtin is the type of normal predefined functions.
 type Builtin struct {
-	// The canonical Name of the builtin
+	// The canonical Name of the builtin.
 	Name string
 
-	// Minimum and maximum arity. If MaxArity < 0, maximum arity is unlimited
-	MinArity, MaxArity int16
+	// Minimum and maximum arity. If MaxArity < 0, maximum arity is unlimited.
+	MinArity, MaxArity int
 
-	// Test builtin to be independent of the environment and does not produce some side effect
+	// Test builtin to be independent of the environment and does not produce some side effect.
 	TestPure func(sx.Vector) bool
 
-	// The actual builtin function, with no argument
+	// The actual builtin function, with no argument.
 	Fn0 func(*Environment, *Binding) (sx.Object, error)
 
-	// The actual builtin function, with one argument
+	// The actual builtin function, with one argument.
 	Fn1 func(*Environment, sx.Object, *Binding) (sx.Object, error)
 
-	// The actual builtin function, with any number of arguments
+	// The actual builtin function, with any number of arguments.
+	//
+	// The function is alowed to read each single element of the vector, but it
+	// is not allowed to store and process the vector itself. The vector is
+	// essentially only a slice on top of the evaluation stack, which may
+	// change its elements.
 	Fn func(*Environment, sx.Vector, *Binding) (sx.Object, error)
 
 	// Do not add a CallError
@@ -87,8 +91,8 @@ func (b *Builtin) GoString() string { return b.String() }
 
 // IsPure returns true if builtin is a pure function.
 func (b *Builtin) IsPure(objs sx.Vector) bool {
-	if testPure := b.TestPure; testPure != nil && len(objs) <= math.MaxInt16 {
-		numargs, minArity, maxArity := int16(len(objs)), b.MinArity, b.MaxArity
+	if testPure := b.TestPure; testPure != nil {
+		numargs, minArity, maxArity := len(objs), b.MinArity, b.MaxArity
 		if minArity == maxArity {
 			if numargs != minArity {
 				return false
@@ -112,48 +116,40 @@ func (b *Builtin) ExecuteCall(env *Environment, numargs int, bind *Binding) (obj
 	}
 	switch numargs {
 	case 0:
-		if obj, err = b.Fn0(env, bind); err == nil {
-			return obj, nil
-		}
+		obj, err = b.Fn0(env, bind)
 	case 1:
-		if obj, err = b.Fn1(env, env.Pop(), bind); err == nil {
-			return obj, nil
-		}
+		obj, err = b.Fn1(env, env.Pop(), bind)
 	default:
 		obj, err = b.Fn(env, env.Args(numargs), bind)
 		env.Kill(numargs)
-		if err == nil {
-			return obj, nil
-		}
+	}
+	if err == nil {
+		return obj, nil
 	}
 	return nil, b.handleCallError(err)
 }
 
 // checkCallArity check the builtin function to match allowed number of args.
 func (b *Builtin) checkCallArity(nargs int, argsFn func() []sx.Object) error {
-	if nargs > math.MaxInt16 {
-		return fmt.Errorf("more than %d arguments are not supported, but %d given", math.MaxInt16, nargs)
-	}
-	numArgs, minArity, maxArity := int16(nargs), b.MinArity, b.MaxArity
-	if minArity == maxArity {
-		if numArgs != minArity {
+	if minArity, maxArity := b.MinArity, b.MaxArity; minArity == maxArity {
+		if nargs != minArity {
 			if nargs == 0 {
 				return fmt.Errorf("exactly %d arguments required, but none given", minArity)
 			}
-			return fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, numArgs, argsFn())
+			return fmt.Errorf("exactly %d arguments required, but %d given: %v", minArity, nargs, argsFn())
 		}
 	} else if maxArity < 0 {
-		if numArgs < minArity {
+		if nargs < minArity {
 			if nargs == 0 {
 				return fmt.Errorf("at least %d arguments required, but none given", minArity)
 			}
-			return fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, numArgs, argsFn())
+			return fmt.Errorf("at least %d arguments required, but only %d given: %v", minArity, nargs, argsFn())
 		}
-	} else if numArgs < minArity || maxArity < numArgs {
+	} else if nargs < minArity || maxArity < nargs {
 		if nargs == 0 {
 			return fmt.Errorf("between %d and %d arguments required, but none given", minArity, maxArity)
 		}
-		return fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, numArgs, argsFn())
+		return fmt.Errorf("between %d and %d arguments required, but %d given: %v", minArity, maxArity, nargs, argsFn())
 	}
 	return nil
 }

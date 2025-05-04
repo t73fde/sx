@@ -160,6 +160,7 @@ var Apply = sxeval.Builtin{
 				argCount++
 				continue
 			}
+			env.Kill(argCount)
 			return nil, sx.ErrImproper{Pair: lst}
 		}
 	},
