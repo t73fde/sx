@@ -286,10 +286,12 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) 
 
 	val, err := env.Execute(ce.Proc, bind)
 	if err != nil {
+		env.Kill(len(args))
 		return nil, err
 	}
 	proc, isCallable := GetCallable(val)
 	if !isCallable {
+		env.Kill(len(args))
 		return nil, NotCallableError{Obj: val}
 	}
 
@@ -299,9 +301,10 @@ func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) 
 }
 
 func computeArgs(env *Environment, args []Expr, bind *Binding) error {
-	for _, exprArg := range args {
+	for i, exprArg := range args {
 		val, err := env.Execute(exprArg, bind)
 		if err != nil {
+			env.Kill(i)
 			return err
 		}
 		env.Push(val)

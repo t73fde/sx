@@ -76,14 +76,14 @@ func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 			bind := root.MakeChildBinding(tc.name, 0)
 			env := sxeval.MakeEnvironment()
 			res, err := env.Eval(obj, bind)
+			if size := env.Size(); size > 0 {
+				t.Error("stack not empty, size:", size)
+			}
 			if err != nil {
 				if got := "{[{" + err.Error() + "}]}"; got != tc.exp {
 					t.Errorf("%s should result in %q, but got %q", tc.src, tc.exp, got)
 				}
 				return
-			}
-			if size := env.Size(); size > 0 {
-				t.Error("stack not empty, size:", size)
 			}
 			if got := res.String(); got != tc.exp {
 				t.Errorf("%s should result in %q, but got %q", tc.src, tc.exp, got)
