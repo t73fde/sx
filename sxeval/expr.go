@@ -280,8 +280,7 @@ func (ce *CallExpr) Improve(imp *Improver) (Expr, error) {
 // Compute the expression in a frame and return the result.
 func (ce *CallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
 	args := ce.Args
-	err := computeArgs(env, args, bind)
-	if err != nil {
+	if err := computeArgs(env, args, bind); err != nil {
 		return nil, err
 	}
 

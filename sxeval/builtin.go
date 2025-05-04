@@ -112,17 +112,14 @@ func (b *Builtin) ExecuteCall(env *Environment, args sx.Vector, bind *Binding) (
 	}
 	switch len(args) {
 	case 0:
-		if obj, err = b.Fn0(env, bind); err == nil {
-			return obj, nil
-		}
+		obj, err = b.Fn0(env, bind)
 	case 1:
-		if obj, err = b.Fn1(env, args[0], bind); err == nil {
-			return obj, nil
-		}
+		obj, err = b.Fn1(env, args[0], bind)
 	default:
-		if obj, err = b.Fn(env, args, bind); err == nil {
-			return obj, nil
-		}
+		obj, err = b.Fn(env, args, bind)
+	}
+	if err == nil {
+		return obj, nil
 	}
 	return nil, b.handleCallError(err)
 }

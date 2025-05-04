@@ -155,9 +155,8 @@ func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bin
 }
 
 // Apply the given Callable with the arguments.
-func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
-	res, err := fn.ExecuteCall(env, args, bind)
-	if err == nil {
+func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (res sx.Object, err error) {
+	if res, err = fn.ExecuteCall(env, args, bind); err == nil {
 		return res, nil
 	}
 	if err == errExecuteAgain {
@@ -256,5 +255,5 @@ func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-nu
 // Args returns a given number of values on top of the stack as a slice.
 func (env *Environment) Args(numargs int) []sx.Object {
 	sp := len(env.stack)
-	return env.stack[sp-numargs : sp]
+	return env.stack[sp-numargs : sp : sp]
 }
