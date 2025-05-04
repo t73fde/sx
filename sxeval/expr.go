@@ -399,11 +399,10 @@ func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) (sx.Object,
 	if err := computeArgs(env, args, bind); err != nil {
 		return nil, err
 	}
-	proc := bce.Proc
-	obj, err := proc.Fn(env, env.Args(len(args)), bind)
+	obj, err := bce.Proc.Fn(env, env.Args(len(args)), bind)
 	env.Kill(len(args))
 	if err != nil {
-		return nil, proc.handleCallError(err)
+		return nil, bce.Proc.handleCallError(err)
 	}
 	return obj, nil
 }
@@ -433,10 +432,9 @@ func (bce *builtinCall0Expr) Unparse() sx.Object {
 
 // Compute the value of this expression in the given environment.
 func (bce *builtinCall0Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	proc := bce.Proc
-	obj, err := proc.Fn0(env, bind)
+	obj, err := bce.Proc.Fn0(env, bind)
 	if err != nil {
-		return nil, proc.handleCallError(err)
+		return nil, bce.Proc.handleCallError(err)
 	}
 	return obj, nil
 }
@@ -473,10 +471,9 @@ func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object
 	if err != nil {
 		return nil, err
 	}
-	proc := bce.Proc
-	obj, err := proc.Fn1(env, val, bind)
+	obj, err := bce.Proc.Fn1(env, val, bind)
 	if err != nil {
-		return nil, proc.handleCallError(err)
+		return nil, bce.Proc.handleCallError(err)
 	}
 	return obj, nil
 }
