@@ -23,6 +23,13 @@ import (
 	"t73f.de/r/zero/set"
 )
 
+// ----- Notes
+//
+// (letrec BINDINGS BODY)
+//    Evaluates BINDINGS in a binding that consists of BINDINGS (and parent) binding.
+//
+// -----
+
 // LetData stores basic information about let bindings.
 type LetData struct {
 	Symbols []*sx.Symbol

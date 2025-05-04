@@ -173,15 +173,14 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	if err != nil {
 		return be, err
 	}
-	frontLen := len(be.Front)
-	if frontLen == 0 {
+	if len(be.Front) == 0 {
 		return last, nil
 	}
 	if err = imp.ImproveSlice(be.Front); err != nil {
 		return be, err
 	}
 
-	seq := make([]sxeval.Expr, 0, frontLen)
+	seq := make([]sxeval.Expr, 0, len(be.Front))
 	for _, expr := range be.Front {
 		if !expr.IsPure() {
 			seq = append(seq, expr)
@@ -241,15 +240,14 @@ func (ae *AndExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	if err != nil {
 		return ae, err
 	}
-	frontLen := len(ae.Front)
-	if frontLen == 0 {
+	if len(ae.Front) == 0 {
 		return last, nil
 	}
 	if err = imp.ImproveSlice(ae.Front); err != nil {
 		return ae, err
 	}
 
-	seq := make([]sxeval.Expr, 0, frontLen)
+	seq := make([]sxeval.Expr, 0, len(ae.Front))
 	for _, expr := range ae.Front {
 		if objectExpr, isConstObject := sxeval.GetConstExpr(expr); isConstObject {
 			if sx.IsFalse(objectExpr.ConstObject()) {
@@ -320,8 +318,7 @@ func (oe *OrExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	if err != nil {
 		return oe, err
 	}
-	frontLen := len(oe.Front)
-	if frontLen == 0 {
+	if len(oe.Front) == 0 {
 		return last, nil
 	}
 	if err = imp.ImproveSlice(oe.Front); err != nil {
@@ -329,9 +326,8 @@ func (oe *OrExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	}
 
 	oe.Front = append(oe.Front, last)
-	frontLen++
 
-	seq := make([]sxeval.Expr, 0, frontLen)
+	seq := make([]sxeval.Expr, 0, len(oe.Front))
 	for _, expr := range oe.Front {
 		if objectExpr, isConstObject := sxeval.GetConstExpr(expr); isConstObject {
 			if sx.IsTrue(objectExpr.ConstObject()) {

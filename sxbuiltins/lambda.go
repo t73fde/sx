@@ -369,14 +369,12 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, args sx.Vector, _ *sxe
 	}
 	lexBind := ll.Binding.MakeChildBinding(ll.Name, bindSize)
 	for i, p := range ll.Params {
-		err := lexBind.Bind(p, args[i])
-		if err != nil {
+		if err := lexBind.Bind(p, args[i]); err != nil {
 			return nil, err
 		}
 	}
 	if ll.Rest != nil {
-		err := lexBind.Bind(ll.Rest, sx.MakeList(args[numParams:]...))
-		if err != nil {
+		if err := lexBind.Bind(ll.Rest, sx.MakeList(args[numParams:]...)); err != nil {
 			return nil, err
 		}
 	} else if len(args) > numParams {
