@@ -16,6 +16,7 @@ package sxeval
 import (
 	"errors"
 	"fmt"
+	"io"
 
 	"t73f.de/r/sx"
 )
@@ -161,4 +162,148 @@ func (b *Builtin) handleCallError(err error) error {
 		}
 	}
 	return err
+}
+
+// ----- builtinCallExpr, builtinCall0Expr, BuiltinCall1Expr
+
+// builtinCallExpr calls a builtin and returns the resulting object.
+// It is an optimization of `CallExpr.`
+type builtinCallExpr struct {
+	Proc *Builtin
+	Args []Expr
+}
+
+func (bce *builtinCallExpr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Args) }
+
+// IsPure signals an expression that has no side effects.
+func (bce *builtinCallExpr) IsPure() bool {
+	args := make(sx.Vector, len(bce.Args))
+	for i, expr := range bce.Args {
+		if !expr.IsPure() {
+			return false
+		}
+		args[i] = sx.MakeUndefined()
+	}
+	return bce.Proc.IsPure(args)
+}
+
+// Unparse the expression back into a form object.
+func (bce *builtinCallExpr) Unparse() sx.Object {
+	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: bce.Args}
+	return ce.Unparse()
+}
+
+// Improve the expression into a possible simpler one.
+func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
+	argsFn := func() []sx.Object {
+		result := make([]sx.Object, len(bce.Args))
+		for i, arg := range bce.Args {
+			result[i] = arg.Unparse()
+		}
+		return result
+	}
+	if err := bce.Proc.checkCallArity(len(bce.Args), argsFn); err != nil {
+		return nil, CallError{Name: bce.Proc.Name, Err: err}
+	}
+
+	switch len(bce.Args) {
+	case 0:
+		return imp.Improve(&builtinCall0Expr{bce.Proc})
+	case 1:
+		return imp.Improve(&BuiltinCall1Expr{bce.Proc, bce.Args[0]})
+	}
+	return bce, nil
+}
+
+// Compute the value of this expression in the given environment.
+func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+	args := bce.Args
+	if err := computeArgs(env, args, bind); err != nil {
+		return nil, err
+	}
+	obj, err := bce.Proc.Fn(env, env.Args(len(args)), bind)
+	env.Kill(len(args))
+	if err != nil {
+		return nil, bce.Proc.handleCallError(err)
+	}
+	return obj, nil
+}
+
+// Print the expression to a io.Writer.
+func (bce *builtinCallExpr) Print(w io.Writer) (int, error) {
+	ce := CallExpr{ObjExpr{bce.Proc}, bce.Args}
+	return ce.doPrint(w, "{BCALL ")
+}
+
+// builtinCall0Expr calls a builtin with no arg and returns the resulting object.
+// It is an optimization of `CallExpr.`
+type builtinCall0Expr struct {
+	Proc *Builtin
+}
+
+func (bce *builtinCall0Expr) String() string { return fmt.Sprintf("%v", bce.Proc) }
+
+// IsPure signals an expression that has no side effects.
+func (bce *builtinCall0Expr) IsPure() bool { return bce.Proc.IsPure(nil) }
+
+// Unparse the expression back into a form object.
+func (bce *builtinCall0Expr) Unparse() sx.Object {
+	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: nil}
+	return ce.Unparse()
+}
+
+// Compute the value of this expression in the given environment.
+func (bce *builtinCall0Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+	obj, err := bce.Proc.Fn0(env, bind)
+	if err != nil {
+		return nil, bce.Proc.handleCallError(err)
+	}
+	return obj, nil
+}
+
+// Print the expression to a io.Writer.
+func (bce *builtinCall0Expr) Print(w io.Writer) (int, error) {
+	ce := CallExpr{ObjExpr{bce.Proc}, nil}
+	return ce.doPrint(w, "{BCALL-0 ")
+}
+
+// BuiltinCall1Expr calls a builtin with one arg and returns the resulting object.
+// It is an optimization of `CallExpr`. Do not create it outside this package.
+// It is public, because it is used for conditional expressions, especially to
+// detect a (not ...) expression.
+type BuiltinCall1Expr struct {
+	Proc *Builtin
+	Arg  Expr
+}
+
+func (bce *BuiltinCall1Expr) String() string { return fmt.Sprintf("%v %v", bce.Proc, bce.Arg) }
+
+// IsPure signals an expression that has no side effects.
+func (bce *BuiltinCall1Expr) IsPure() bool {
+	return bce.Arg.IsPure() && bce.Proc.IsPure(sx.Vector{sx.MakeUndefined()})
+}
+
+// Unparse the expression back into a form object.
+func (bce *BuiltinCall1Expr) Unparse() sx.Object {
+	ce := CallExpr{Proc: ObjExpr{bce.Proc}, Args: []Expr{bce.Arg}}
+	return ce.Unparse()
+}
+
+// Compute the value of this expression in the given environment.
+func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+	val, err := env.Execute(bce.Arg, bind)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := bce.Proc.Fn1(env, val, bind)
+	if err != nil {
+		return nil, bce.Proc.handleCallError(err)
+	}
+	return obj, nil
+}
+
+// Print the expression to a io.Writer.
+func (bce *BuiltinCall1Expr) Print(w io.Writer) (int, error) {
+	ce := CallExpr{ObjExpr{bce.Proc}, []Expr{bce.Arg}}
+	return ce.doPrint(w, "{BCALL-1 ")
 }
