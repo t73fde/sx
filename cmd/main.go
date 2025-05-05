@@ -298,7 +298,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			fmt.Println(";e", err)
 			var execErr sxeval.ExecuteError
 			if errors.As(err, &execErr) {
-				execErr.PrintStack(os.Stdout, ";", nil, "")
+				execErr.PrintCallStack(os.Stdout, ";", nil, "")
 			}
 			continue
 		}
