@@ -20,6 +20,7 @@ import (
 	"iter"
 	"log/slog"
 	"slices"
+	"strings"
 
 	"t73f.de/r/sx"
 )
@@ -34,6 +35,25 @@ type Environment struct {
 	obCompute ComputeObserver
 	obParse   ParseObserver
 	obImprove ImproveObserver
+}
+
+func (env *Environment) String() string {
+	const stackElems = 5
+
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "%d: (", len(env.stack))
+	sp := len(env.stack) - 1
+	for i := 0; i < stackElems && sp-i >= 0; i++ {
+		if i > 0 {
+			sb.WriteByte(' ')
+		}
+		_, _ = sx.Print(&sb, env.stack[sp-i])
+	}
+	if sp-stackElems >= 0 {
+		sb.WriteString(" ...")
+	}
+	sb.WriteByte(')')
+	return sb.String()
 }
 
 // ComputeObserver observes the execution of expressions.
