@@ -259,11 +259,11 @@ func (ee ExecuteError) PrintCallStack(w io.Writer, prefix string, logger *slog.L
 		_, _ = fmt.Fprintf(w, "%v%2d: expr = %T/%v\n", prefix, i, val, val)
 		_, _ = fmt.Fprintf(w, "%v    bind = %v\n", prefix, elem.Bind)
 		_, _ = fmt.Fprintf(w, "%v    stack= %d:(", prefix, len(stack))
-		for i := 0; i < lengthDataStackOnError && len(stack)-i > 0; i++ {
-			if i > 0 {
+		for j := 0; j < lengthDataStackOnError && len(stack)-j > 0; j++ {
+			if j > 0 {
 				_, _ = io.WriteString(w, " ")
 			}
-			_, _ = sx.Print(w, stack[len(stack)-1-i])
+			_, _ = sx.Print(w, stack[len(stack)-1-j])
 		}
 		if len(stack)-lengthDataStackOnError > 0 {
 			_, _ = io.WriteString(w, " ...")
