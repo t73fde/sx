@@ -20,6 +20,7 @@ import (
 	"iter"
 	"log/slog"
 	"slices"
+	"strings"
 
 	"t73f.de/r/sx"
 )
@@ -37,6 +38,25 @@ type Environment struct {
 	obImprove   ImproveObserver
 	obCompile   CompileObserver
 	obInterpret InterpretObserver
+}
+
+func (env *Environment) String() string {
+	const stackElems = 5
+
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "%d: (", len(env.stack))
+	sp := len(env.stack) - 1
+	for i := 0; i < stackElems && sp-i >= 0; i++ {
+		if i > 0 {
+			sb.WriteByte(' ')
+		}
+		_, _ = sx.Print(&sb, env.stack[sp-i])
+	}
+	if sp-stackElems >= 0 {
+		sb.WriteString(" ...")
+	}
+	sb.WriteByte(')')
+	return sb.String()
 }
 
 // ComputeObserver observes the execution of expressions.
@@ -169,7 +189,7 @@ func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err er
 		expr = env.newExpr
 		bind = env.newBind
 	}
-	return res, env.addExecuteError(expr, err)
+	return res, env.addExecuteError(expr, bind, err)
 }
 
 // ExecuteTCO is called when the expression should be executed at last
@@ -191,15 +211,14 @@ func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bin
 }
 
 // Apply the given Callable with the arguments.
-func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
-	res, err := fn.ExecuteCall(env, args, bind)
-	if err == nil {
+func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (res sx.Object, err error) {
+	if res, err = fn.ExecuteCall(env, args, bind); err == nil {
 		return res, nil
 	}
 	if err == errExecuteAgain {
 		return env.Execute(env.newExpr, env.newBind)
 	}
-	return nil, env.addExecuteError(&applyErrExpr{Proc: fn, Args: args}, err)
+	return nil, env.addExecuteError(&applyErrExpr{Proc: fn, Args: args}, bind, err)
 }
 
 // applyErrExpr is needed, when an error occurs during `env.Apply`, to give a better
@@ -233,44 +252,63 @@ func (ce *applyErrExpr) Print(w io.Writer) (int, error) {
 // executed again in the given binding.
 var errExecuteAgain = errors.New("TCO trampoline")
 
-func (env *Environment) addExecuteError(expr Expr, err error) error {
+func (env *Environment) addExecuteError(expr Expr, bind *Binding, err error) error {
 	var execError ExecuteError
 	if errors.As(err, &execError) {
-		execError.Stack = append(execError.Stack, CallInfo{env, expr})
+		execError.CallStack = append(
+			execError.CallStack, ExecuteState{env, slices.Clone(env.stack), bind, expr})
 		return execError
 	}
 	return ExecuteError{
-		Stack: []CallInfo{{env, expr}},
-		err:   err,
+		CallStack: []ExecuteState{{env, slices.Clone(env.stack), bind, expr}},
+		err:       err,
 	}
 }
 
 // ExecuteError is the error that may occur if an expression is computed.
 // It contains the call stack.
 type ExecuteError struct {
-	Stack []CallInfo
-	err   error
+	CallStack []ExecuteState
+	err       error
 }
 
-// CallInfo stores the curent environment and the expression to be
-// computed, for better error messages.
-type CallInfo struct {
-	Env  *Environment
-	Expr Expr
+// ExecuteState stores the curent environment, the current stack content,
+// the current binding, and the expression to be computed, for better error messages.
+type ExecuteState struct {
+	Env   *Environment
+	Stack []sx.Object
+	Bind  *Binding
+	Expr  Expr
 }
 
 func (ee ExecuteError) Error() string { return ee.err.Error() }
 func (ee ExecuteError) Unwrap() error { return ee.err }
 
-// PrintStack prints the calling stack to an io.Writer.
-func (ee ExecuteError) PrintStack(w io.Writer, prefix string, logger *slog.Logger, logmsg string) {
-	for i, elem := range ee.Stack {
+const lengthDataStackOnError = 7
+
+// PrintCallStack prints the calling stack to an io.Writer.
+func (ee ExecuteError) PrintCallStack(w io.Writer, prefix string, logger *slog.Logger, logmsg string) {
+	for i, elem := range ee.CallStack {
 		val := elem.Expr.Unparse()
+		stack := elem.Stack
 		if logger != nil {
-			logger.Debug(logmsg, "env", elem.Env, "expr", val)
+			logger.Debug(logmsg, "env", elem.Env, "stack", stack, "binding", elem.Bind, "expr", val)
 		}
-		_, _ = fmt.Fprintf(w, "%v%d: env: %v, expr: %T/%v\n", prefix, i, elem.Env, val, val)
-		_, _ = io.WriteString(w, "   exp: ")
+		_, _ = fmt.Fprintf(w, "%v%2d: expr = %T/%v\n", prefix, i, val, val)
+		_, _ = fmt.Fprintf(w, "%v    bind = %v\n", prefix, elem.Bind)
+		_, _ = fmt.Fprintf(w, "%v    stack= %d:(", prefix, len(stack))
+		for j := 0; j < lengthDataStackOnError && len(stack)-j > 0; j++ {
+			if j > 0 {
+				_, _ = io.WriteString(w, " ")
+			}
+			_, _ = sx.Print(w, stack[len(stack)-1-j])
+		}
+		if len(stack)-lengthDataStackOnError > 0 {
+			_, _ = io.WriteString(w, " ...")
+		}
+		_, _ = io.WriteString(w, ")\n")
+		_, _ = io.WriteString(w, prefix)
+		_, _ = io.WriteString(w, "    code = ")
 		_, _ = elem.Expr.Print(w)
 		_, _ = io.WriteString(w, "\n")
 	}
@@ -323,7 +361,7 @@ func (env *Environment) Kill(num int) { env.stack = env.stack[:len(env.stack)-nu
 // Args returns a given number of values on top of the stack as a slice.
 func (env *Environment) Args(numargs int) sx.Vector {
 	sp := len(env.stack)
-	return env.stack[sp-numargs : sp]
+	return env.stack[sp-numargs : sp : sp]
 }
 
 // SaveBinding stores a binding for later restore.

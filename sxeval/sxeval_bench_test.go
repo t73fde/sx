@@ -62,6 +62,10 @@ func BenchmarkDeriv(b *testing.B) {
 	runBenchmark(b, sx.MakeList(sx.MakeSymbol("test-deriv"), sx.MakeSymbol("deriv-test-cases")))
 }
 
+func BenchmarkCollatz(b *testing.B) {
+	runBenchmark(b, sx.MakeList(sx.MakeSymbol("collatz"), sx.Int64(63728127), sx.Int64(0)))
+}
+
 func runBenchmark(b *testing.B, sexpr sx.Object) {
 	root := createBindingForTCO()
 	env := sxeval.MakeEnvironment()
