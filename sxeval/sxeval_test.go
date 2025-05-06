@@ -132,6 +132,7 @@ func createBindingForTCO() *sxeval.Binding {
 	if err := sxeval.BindBuiltins(root,
 		&sxbuiltins.Equal, &sxbuiltins.NumLess, &sxbuiltins.NumLessEqual,
 		&sxbuiltins.Add, &sxbuiltins.Sub, &sxbuiltins.Mul,
+		&sxbuiltins.Div, &sxbuiltins.Mod,
 		&sxbuiltins.Map, &sxbuiltins.List,
 		&sxbuiltins.NumberP, &sxbuiltins.SymbolP, &sxbuiltins.PairP,
 		&sxbuiltins.Cadr, &sxbuiltins.Caddr,
@@ -180,6 +181,8 @@ func TestTailCallOptimization(t *testing.T) {
 		//{name: "deriv-x2", src: "(deriv '(expr x 3) 'x)", exp: "1"},
 		{name: "deriv-x2", src: "(deriv '(expt x 3) 'x)", exp: "(* 3 (* (expt x 2) 1))"},
 		//{name: "test-deriv", src: "(test-deriv deriv-test-cases)", exp: ""},
+		{name: "collatz-27", src: "(collatz 27 0)", exp: "111"},
+		{name: "collatz-63728127", src: "(collatz 63728127 0)", exp: "949"},
 	}
 	root := createBindingForTCO()
 	testcases.Run(t, root)

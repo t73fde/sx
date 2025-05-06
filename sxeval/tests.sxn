@@ -86,3 +86,11 @@
    '(* (+ x 1) (* x (+ x 2)))
    '(+ (expt x 2) (expt x 3))
    '(+ (expt (+ x 1) 3) (* x x))))
+
+;;; Collatz-Function
+(defun collatz (n acc)
+    (cond
+        ((= n 1) acc)
+        ((= (mod n 2) 0)
+            (collatz (div n 2) (+ acc 1)))
+        (T (collatz (+ (* n 3) 1) (+ acc 1)))))
