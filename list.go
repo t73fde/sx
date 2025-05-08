@@ -56,8 +56,8 @@ func (pair *Pair) IsEqual(other Object) bool {
 	if pair == other {
 		return true
 	}
-	if pair == nil {
-		return other.IsNil()
+	if pair.IsNil() {
+		return IsNil(other)
 	}
 	if otherPair, ok := other.(*Pair); ok {
 		node, otherNode := pair, otherPair

@@ -41,7 +41,7 @@ func (*Symbol) IsAtom() bool { return true }
 
 // IsEqual compare the symbol with an object.
 func (sym *Symbol) IsEqual(other Object) bool {
-	if sym == nil {
+	if sym.IsNil() {
 		return IsNil(other)
 	}
 	if IsNil(other) {
