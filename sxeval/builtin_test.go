@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxbuiltins"
 	"t73f.de/r/sx/sxeval"
 )
 
@@ -27,7 +28,7 @@ func TestBuiltinSimple(t *testing.T) {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn0:      func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) { return nil, nil },
+		Fn0:      func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) { return sx.Nil(), nil },
 		Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
 			return sx.MakeList(), nil
 		},
@@ -54,22 +55,42 @@ func TestBuiltinSimple(t *testing.T) {
 		}
 	}
 
+	root := sxeval.MakeRootBinding(8)
+	sxeval.BindBuiltins(root, b, &sxbuiltins.Apply, &sxbuiltins.List)
+	env := sxeval.MakeEnvironment()
+
 	args := sx.Vector{}
 	for i := range 10 {
+		form := sx.MakeList(
+			sx.MakeSymbol(sxbuiltins.Apply.Name),
+			sx.MakeSymbol(b.Name),
+			sx.MakeList(args...).Cons(sx.MakeSymbol(sxbuiltins.List.Name)))
+		res0, err := env.Eval(form, root)
+		if err != nil {
+			t.Error(err)
+			break
+		}
+
 		res, err := b.ExecuteCall(nil, args, nil)
 		if err != nil {
 			t.Error(err)
 			break
 		}
-		if res != nil {
-			if !sx.IsList(res) {
-				t.Errorf("%d: result should be a list, but is not: %v", i, res)
-			}
+
+		if !sx.IsList(res) {
+			t.Errorf("%d: result should be a list, but is not: %v", i, res)
+		}
+		if i > 0 {
 			exp := len(args) - 1
 			if got := res.(*sx.Pair).Length(); got != exp {
 				t.Errorf("Result list %v/%d must be one element shorter than arg %v/%d", res, got, args, exp)
 			}
 		}
+
+		if !res0.IsEqual(res) {
+			t.Error("execution and eval differ. execution:", res, ", eval:", res0)
+		}
+
 		args = append(args, sx.Nil())
 	}
 }
