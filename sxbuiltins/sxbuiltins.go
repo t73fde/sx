@@ -130,9 +130,8 @@ func BindAll(bind *sxeval.Binding) error {
 		return err
 	}
 	err = sxeval.BindBuiltins(bind,
-		&Equal,         // =
-		&Identical,     // ==
-		&SymbolP,       // symbol?
+		&Equal, &Identical, // =, ==
+		&SymbolP, &SymbolPackage, // symbol?, symbol-package
 		&NullP,         // null?
 		&Cons,          // cons
 		&PairP, &ListP, // pair?, list?

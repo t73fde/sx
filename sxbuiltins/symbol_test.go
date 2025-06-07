@@ -30,4 +30,14 @@ var tcsSymbol = tTestCases{
 	{name: "symbol?-1", src: "(symbol? 1)", exp: "()"},
 	{name: "symbol?-cons", src: "(symbol? (cons 1 2))", exp: "()"},
 	{name: "symbol?-list", src: "(symbol? 'sym)", exp: "T"},
+
+	{name: "err-symbol-package-0",
+		src:     "(symbol-package)",
+		exp:     "{[{symbol-package: exactly 1 arguments required, but none given}]}",
+		withErr: true},
+	{name: "err-symbol-package-int",
+		src:     "(symbol-package 3)",
+		exp:     "{[{symbol-package: argument 1 is not a symbol, but sx.Int64/3}]}",
+		withErr: true},
+	{name: "meta-symbol-package", src: "(symbol-package 'symbol-package)", exp: "#<package:init>"},
 }

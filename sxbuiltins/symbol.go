@@ -29,3 +29,18 @@ var SymbolP = sxeval.Builtin{
 		return sx.MakeBoolean(isSymbol), nil
 	},
 }
+
+// SymbolPackage returns the package that defined the symbol.
+var SymbolPackage = sxeval.Builtin{
+	Name:     "symbol-package",
+	MinArity: 1,
+	MaxArity: 1,
+	TestPure: sxeval.AssertPure,
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
+		sym, err := GetSymbol(arg, 0)
+		if err != nil {
+			return nil, err
+		}
+		return sym.Package(), nil
+	},
+}

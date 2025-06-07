@@ -26,6 +26,44 @@ type Package struct {
 	symbols map[string]*Symbol
 }
 
+// IsNil may return true if a symbol pointer is nil.
+func (pkg *Package) IsNil() bool { return pkg == nil }
+
+// IsAtom always returns true because a symbol is an atomic value.
+func (pkg *Package) IsAtom() bool { return pkg == nil }
+
+// IsEqual compare the symbol with an object.
+func (pkg *Package) IsEqual(other Object) bool {
+	if pkg.IsNil() {
+		return IsNil(other)
+	}
+	if IsNil(other) {
+		return false
+	}
+	otherPkg, isPackage := other.(*Package)
+	return isPackage && pkg.IsEqualPackage(otherPkg)
+}
+
+// IsEqualPackage compare two packages.
+func (pkg *Package) IsEqualPackage(other *Package) bool { return pkg == other }
+
+// String returns the string representation.
+func (pkg *Package) String() string {
+	return fmt.Sprintf("#<package:%s>", pkg.name)
+}
+
+// GoString returns the go string representation.
+func (pkg *Package) GoString() string { return pkg.name }
+
+// GetPackage returns the object as a package if possible.
+func GetPackage(obj Object) (*Package, bool) {
+	if IsNil(obj) {
+		return nil, false
+	}
+	pkg, ok := obj.(*Package)
+	return pkg, ok
+}
+
 var packageRegistry = map[string]*Package{}
 
 // FindPackage returns the Package with the given name.
