@@ -16,18 +16,17 @@ package sx
 import (
 	"io"
 	"strings"
-	"sync"
 )
 
 // Symbol represent a symbol value.
 type Symbol struct {
-	fac *SymbolFactory
+	pkg *Package // home package
 	val string
 }
 
 // MakeSymbol creates a symbol from a string.
 func MakeSymbol(val string) *Symbol {
-	return defaultSymbolFactory.MakeSymbol(val)
+	return CurrentPackage().MakeSymbol(val)
 }
 
 // GetValue return the string value of the symbol.
@@ -81,100 +80,5 @@ func GetSymbol(obj Object) (*Symbol, bool) {
 	return sym, ok
 }
 
-// Factory returns the SymbolFactory that created the symbol.
-func (sym *Symbol) Factory() *SymbolFactory { return sym.fac }
-
-// SymbolFactory creates an interned symbol.
-type SymbolFactory struct {
-	parent  *SymbolFactory
-	mx      sync.RWMutex
-	symbols map[string]*Symbol
-}
-
-var defaultSymbolFactory = SymbolFactory{}
-
-// DefaultSymbolFactory returns the symbol factory used by MakeSymbol.
-func DefaultSymbolFactory() *SymbolFactory { return &defaultSymbolFactory }
-
-// MakeSymbol builds a symbol with the given string value. It tries to re-use
-// symbols, so that symbols can be compared by their reference, not by their
-// content.
-func (sf *SymbolFactory) MakeSymbol(val string) (sym *Symbol) {
-	if val == "" {
-		return nil
-	}
-
-	var found bool
-	for factory := sf; factory != nil; factory = factory.parent {
-		factory.mx.RLock()
-		if len(factory.symbols) > 0 {
-			sym, found = factory.symbols[val]
-		}
-		factory.mx.RUnlock()
-		if found {
-			return sym
-		}
-	}
-
-	sf.mx.Lock()
-	if len(sf.symbols) > 0 {
-		sym, found = sf.symbols[val]
-	}
-	if !found {
-		sym = &Symbol{fac: sf, val: val}
-		if len(sf.symbols) == 0 {
-			sf.symbols = map[string]*Symbol{val: sym}
-		} else {
-			sf.symbols[val] = sym
-		}
-	}
-	sf.mx.Unlock()
-	return sym
-}
-
-// Size returns the number of symbols created by the factory.
-func (sf *SymbolFactory) Size() int {
-	sf.mx.RLock()
-	result := len(sf.symbols)
-	sf.mx.RUnlock()
-	return result
-}
-
-// NewChild makes a new child factory.
-func (sf *SymbolFactory) NewChild() *SymbolFactory {
-	return &SymbolFactory{
-		parent: sf,
-	}
-}
-
-// MoveSymbols transfers all symbols of this factory to its parent factory.
-func (sf *SymbolFactory) MoveSymbols() {
-	parent := sf.parent
-	if parent == nil {
-		panic("no parent symbol factory")
-	}
-	sf.mx.Lock()
-	parent.mx.Lock()
-	var errVal string
-	if len(sf.symbols) > 0 {
-		if len(parent.symbols) == 0 {
-			parent.symbols = make(map[string]*Symbol, len(sf.symbols))
-		}
-		for val, sym := range sf.symbols {
-			if parentSym, found := parent.symbols[val]; found {
-				if parentSym != sym {
-					errVal = val
-					break
-				}
-				continue
-			}
-			parent.symbols[val] = sym
-		}
-		sf.symbols = nil
-	}
-	parent.mx.Unlock()
-	sf.mx.Unlock()
-	if errVal != "" {
-		panic(errVal + " already in parent")
-	}
-}
+// Package returns the Package that created the symbol.
+func (sym *Symbol) Package() *Package { return sym.pkg }

@@ -287,7 +287,7 @@ func (mb mappedBinding) symbols() []*sx.Symbol {
 		result = append(result, sym)
 	}
 	slices.SortFunc(result, func(symA, symB *sx.Symbol) int {
-		facA, facB := symA.Factory(), symB.Factory()
+		facA, facB := symA.Package(), symB.Package()
 		if facA == facB {
 			return strings.Compare(symA.GetValue(), symB.GetValue())
 		}
