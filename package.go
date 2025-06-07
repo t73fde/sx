@@ -120,7 +120,7 @@ func (pkg *Package) MakeSymbol(name string) *Symbol {
 	pkg.mx.Lock()
 	sym, found := pkg.symbols[name]
 	if !found {
-		sym = &Symbol{pkg: pkg, val: name}
+		sym = &Symbol{pkg: pkg, name: name}
 		pkg.symbols[name] = sym
 	}
 	pkg.mx.Unlock()

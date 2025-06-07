@@ -20,17 +20,17 @@ import (
 
 // Symbol represent a symbol value.
 type Symbol struct {
-	pkg *Package // home package
-	val string
+	name string   // symbol name
+	pkg  *Package // home package
 }
 
 // MakeSymbol creates a symbol from a string.
-func MakeSymbol(val string) *Symbol {
-	return CurrentPackage().MakeSymbol(val)
+func MakeSymbol(name string) *Symbol {
+	return CurrentPackage().MakeSymbol(name)
 }
 
 // GetValue return the string value of the symbol.
-func (sym *Symbol) GetValue() string { return sym.val }
+func (sym *Symbol) GetValue() string { return sym.name }
 
 // IsNil may return true if a symbol pointer is nil.
 func (sym *Symbol) IsNil() bool { return sym == nil }
@@ -63,12 +63,12 @@ func (sym *Symbol) String() string {
 }
 
 // GoString returns the go string representation.
-func (sym *Symbol) GoString() string { return sym.val }
+func (sym *Symbol) GoString() string { return sym.name }
 
 // Print write the string representation to the given Writer.
 func (sym *Symbol) Print(w io.Writer) (int, error) {
 	// TODO: provide escape of symbol contains non-printable chars.
-	return io.WriteString(w, sym.val)
+	return io.WriteString(w, sym.name)
 }
 
 // GetSymbol returns the object as a symbol if possible.
