@@ -71,15 +71,14 @@ func CurrentPackage() *Package { return currentPackage }
 // symbols, so that symbols can be compared by their reference, not by their
 // content.
 func (pkg *Package) MakeSymbol(name string) *Symbol {
-	if name == "" {
-		return nil
-	}
-
 	sym := pkg.FindSymbol(name)
 	if sym != nil {
 		return sym
 	}
 
+	if name == "" {
+		return nil
+	}
 	pkg.mx.Lock()
 	sym, found := pkg.symbols[name]
 	if !found {
@@ -90,6 +89,7 @@ func (pkg *Package) MakeSymbol(name string) *Symbol {
 	return sym
 }
 
+// FindSymbol returns the symbol with the given name.
 func (pkg *Package) FindSymbol(name string) *Symbol {
 	if name == "" {
 		return nil

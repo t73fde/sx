@@ -29,10 +29,10 @@ func TestBuiltinSimple(t *testing.T) {
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
 		Fn0:      func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) { return sx.Nil(), nil },
-		Fn1: func(_ *sxeval.Environment, arg sx.Object, bind *sxeval.Binding) (sx.Object, error) {
+		Fn1: func(*sxeval.Environment, sx.Object, *sxeval.Binding) (sx.Object, error) {
 			return sx.MakeList(), nil
 		},
-		Fn: func(_ *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
+		Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
 			return sx.MakeList(args[1:]...), nil
 		},
 	}
