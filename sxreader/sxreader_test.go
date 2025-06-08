@@ -68,16 +68,31 @@ func TestReaderInteger(t *testing.T) {
 }
 
 func TestReaderSymbol(t *testing.T) {
+	_ = sx.MustMakePackage("html")
 	performReaderTestCases(t, []readerTestCase{
 		{name: "bang zero", src: "!0", exp: "!0"},
 		{name: "Ascii", src: "moin", exp: "moin"},
 		{name: "Unicode", src: "µ☺", exp: "µ☺"},
-		{name: "Single char", src: "+", exp: "+"},
-		{name: "ColonSymbol", src: "+:", exp: "+:"},
-		{name: "Single char", src: "-", exp: "-"},
-		{name: "ColonSymbol", src: "-:", exp: "-:"},
+		{name: "Single char +", src: "+", exp: "+"},
+		{name: "Single char -", src: "-", exp: "-"},
 		{name: "NamespaceSymbol", src: "html:body", exp: "html:body"},
+		{name: "NamespaceOnly", src: "html:", exp: "ReaderError 1-5: unexpected EOF", mustErr: true},
+		{name: "NamespaceOnlyColon", src: "html::", exp: "ReaderError 1-6: no begin of symbol found", mustErr: true},
+		{name: "UnknownNamespace", src: "jml:js", exp: "ReaderError 1-4: package \"jml\" not found", mustErr: true},
 	})
+}
+
+func TestReadKeyword(t *testing.T) {
+	performReaderTestCases(t, []readerTestCase{
+		{name: "bang zero", src: ":!0", exp: ":!0"},
+		{name: "Ascii", src: ":moin", exp: ":moin"},
+		{name: "Unicode", src: ":µ☺", exp: ":µ☺"},
+		{name: "Single char +", src: ":+", exp: ":+"},
+		{name: "Single char -", src: ":-", exp: ":-"},
+		{name: "Colon", src: ":", exp: "ReaderError 1-1: unexpected EOF", mustErr: true},
+		{name: "ColonColon", src: "::", exp: "ReaderError 1-2: no begin of symbol found", mustErr: true},
+	})
+
 }
 
 func TestReaderString(t *testing.T) {
@@ -162,6 +177,15 @@ func TestReadHash(t *testing.T) {
 	})
 }
 
+func TestReadReserved(t *testing.T) {
+	performReaderTestCases(t, []readerTestCase{
+		{name: "open bracket", src: "[]", exp: "ReaderError 1-1: '[' is reserved", mustErr: true},
+		{name: "close bracket", src: " ]", exp: "ReaderError 1-2: ']' is reserved", mustErr: true},
+		{name: "open curly", src: "{[]", exp: "ReaderError 1-1: '{' is reserved", mustErr: true},
+		{name: "close curly", src: "}", exp: "ReaderError 1-1: '}' is reserved", mustErr: true},
+	})
+}
+
 func performReaderTestCases(t *testing.T, testcases []readerTestCase) {
 	t.Parallel()
 	for _, tc := range testcases {
@@ -180,7 +204,7 @@ func performReaderTestCases(t *testing.T, testcases []readerTestCase) {
 			} else {
 				got := val.String()
 				if tc.mustErr {
-					t.Errorf("Input: %q should result in error %q, but got value %q", tc.src, tc.exp, got)
+					t.Errorf("Input: %q should result in error %q, but got value %T/%q", tc.src, tc.exp, val, got)
 				} else if got != tc.exp {
 					t.Errorf("Input: %q, expected %q, but got %q", tc.src, tc.exp, got)
 				}

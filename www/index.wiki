@@ -22,7 +22,7 @@ a simple trick: the first element of a list is interpreted as a function, all
 other elements are treated as arguments to this function. For example <tt>3
 + 4</tt> can be encoded as a s-expression as <tt>(+ 3 4)</tt>. This trick can
 easily transformed into a full calculus. There are several programming language
-based on s-epressions, notable LISP and Scheme.
+based on s-expressions, notable LISP and Scheme.
 
 Since s-expressions encode both data and source code, i.e. software, it is easy
 to write a software that works not just on ordinary data, but on software. To

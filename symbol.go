@@ -66,9 +66,23 @@ func (sym *Symbol) String() string {
 func (sym *Symbol) GoString() string { return sym.name }
 
 // Print write the string representation to the given Writer.
-func (sym *Symbol) Print(w io.Writer) (int, error) {
+func (sym *Symbol) Print(w io.Writer) (length int, err error) {
+	if pkg := sym.pkg; pkg != CurrentPackage() {
+		if sym.pkg != keywordPackage {
+			length, err = io.WriteString(w, pkg.name)
+			if err != nil {
+				return length, err
+			}
+		}
+		l, err := io.WriteString(w, ":")
+		length += l
+		if err != nil {
+			return length, err
+		}
+	}
 	// TODO: provide escape of symbol contains non-printable chars.
-	return io.WriteString(w, sym.name)
+	l, err := io.WriteString(w, sym.name)
+	return length + l, err
 }
 
 // GetSymbol returns the object as a symbol if possible.

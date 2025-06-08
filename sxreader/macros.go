@@ -28,6 +28,16 @@ func unmatchedDelimiter(rd *Reader, firstCh rune) (sx.Object, error) {
 	return nil, rd.annotateError(delimiterError(firstCh), rd.Position())
 }
 
+func notAllowedHere(rd *Reader, firstCh rune) (sx.Object, error) {
+	beginPos := rd.Position()
+	return nil, rd.annotateError(fmt.Errorf("'%c' not allowed here", firstCh), beginPos)
+}
+
+func reserved(rd *Reader, firstCh rune) (sx.Object, error) {
+	beginPos := rd.Position()
+	return nil, rd.annotateError(fmt.Errorf("'%c' is reserved", firstCh), beginPos)
+}
+
 // readComment is a reader macro that ignores everything until EOL.
 func readComment(rd *Reader, _ rune) (sx.Object, error) {
 	beginPos := rd.Position()
@@ -56,25 +66,55 @@ func readNumber(rd *Reader, firstCh rune) (sx.Object, error) {
 	return sym, nil
 }
 
-func readHash(rd *Reader, _ rune) (sx.Object, error) {
-	beginPos := rd.Position()
-	return nil, rd.annotateError(fmt.Errorf("'#' not allowed here"), beginPos)
-}
-
-func readDot(rd *Reader, _ rune) (sx.Object, error) {
-	beginPos := rd.Position()
-	return nil, rd.annotateError(fmt.Errorf("'.' not allowed here"), beginPos)
-}
-
 func readSymbol(rd *Reader, firstCh rune) (sx.Object, error) {
 	beginPos := rd.Position()
 	tok, err := rd.readToken(firstCh, rd.isTerminal)
 	if err != nil {
 		return nil, rd.annotateError(err, beginPos)
 	}
-	sym := sx.MakeSymbol(tok)
+	ch, err := rd.nextRune()
+	if err != nil || ch != ':' {
+		rd.unreadRunes(ch)
+		sym := sx.MakeSymbol(tok)
+		return sym, nil
+	}
+	pkg := sx.FindPackage(tok)
+	if pkg == nil {
+		return nil, rd.annotateError(fmt.Errorf("package %q not found", tok), beginPos)
+	}
+	tok, err = rd.readSymbolAfterColon()
+	if err != nil {
+		return nil, rd.annotateError(err, beginPos)
+	}
+	sym := pkg.MakeSymbol(tok)
 	return sym, nil
 }
+
+func readKeyword(rd *Reader, firstCh rune) (sx.Object, error) {
+	beginPos := rd.Position()
+	tok, err := rd.readSymbolAfterColon()
+	if err != nil {
+		return nil, rd.annotateError(err, beginPos)
+	}
+	keyword := sx.KeywordPackage().MakeSymbol(tok)
+	return keyword, nil
+}
+
+func (rd *Reader) readSymbolAfterColon() (string, error) {
+	ch, err := rd.nextRune()
+	if err != nil {
+		if err == io.EOF {
+			err = ErrEOF
+		}
+		return "", err
+	}
+	if rd.isTerminal(ch) {
+		return "", errNoSymbolStart
+	}
+	return rd.readToken(ch, rd.isTerminal)
+}
+
+var errNoSymbolStart = errors.New("no begin of symbol found")
 
 func readString(rd *Reader, _ rune) (sx.Object, error) {
 	beginPos := rd.Position()
