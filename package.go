@@ -14,8 +14,8 @@
 package sx
 
 import (
-	"errors"
 	"fmt"
+	"regexp"
 	"sync"
 )
 
@@ -66,7 +66,7 @@ func GetPackage(obj Object) (*Package, bool) {
 
 var packageRegistry = map[string]*Package{}
 
-// FindPackage returns the Package with the given name.
+// FindPackage returns the package with the given name.
 func FindPackage(name string) *Package {
 	if pkg, found := packageRegistry[name]; found {
 		return pkg
@@ -74,10 +74,12 @@ func FindPackage(name string) *Package {
 	return nil
 }
 
+var validPackageName = regexp.MustCompile("^[A-Za-z][0-9A-Za-z-]*$")
+
 // MakePackage builds a new package.
 func MakePackage(name string) (*Package, error) {
-	if name == "" {
-		return nil, errors.New("no name given for new package")
+	if !validPackageName.MatchString(name) {
+		return nil, fmt.Errorf("invalid package name: %q", name)
 	}
 	if pkg := FindPackage(name); pkg != nil {
 		return nil, fmt.Errorf("package %q already made", name)
@@ -99,7 +101,18 @@ func MustMakePackage(name string) *Package {
 	panic(err)
 }
 
-var initPackage = MustMakePackage("init")
+// Predefined package names.
+const (
+	InitName    = "INIT"
+	KeywordName = "KEYWORD"
+)
+
+var keywordPackage = MustMakePackage(KeywordName)
+
+// KeywordPackage return the package that manages keyword symbols.
+func KeywordPackage() *Package { return keywordPackage }
+
+var initPackage = MustMakePackage(InitName)
 var currentPackage = initPackage
 
 // CurrentPackage returns the currently selected package.

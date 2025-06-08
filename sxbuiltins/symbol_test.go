@@ -13,7 +13,11 @@
 
 package sxbuiltins_test
 
-import "testing"
+import (
+	"testing"
+
+	"t73f.de/r/sx"
+)
 
 func TestSymbol(t *testing.T) {
 	t.Parallel()
@@ -39,5 +43,7 @@ var tcsSymbol = tTestCases{
 		src:     "(symbol-package 3)",
 		exp:     "{[{symbol-package: argument 1 is not a symbol, but sx.Int64/3}]}",
 		withErr: true},
-	{name: "meta-symbol-package", src: "(symbol-package 'symbol-package)", exp: "#<package:init>"},
+	{name: "meta-symbol-package",
+		src: "(symbol-package 'symbol-package)",
+		exp: sx.CurrentPackage().String()},
 }
