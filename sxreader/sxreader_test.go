@@ -68,7 +68,8 @@ func TestReaderInteger(t *testing.T) {
 }
 
 func TestReaderSymbol(t *testing.T) {
-	_ = sx.MustMakePackage("html")
+	pkgHTML := sx.MustMakePackage("html")
+	_ = pkgHTML.MakeSymbol("body")
 	performReaderTestCases(t, []readerTestCase{
 		{name: "bang zero", src: "!0", exp: "!0"},
 		{name: "Ascii", src: "moin", exp: "moin"},
@@ -76,9 +77,22 @@ func TestReaderSymbol(t *testing.T) {
 		{name: "Single char +", src: "+", exp: "+"},
 		{name: "Single char -", src: "-", exp: "-"},
 		{name: "NamespaceSymbol", src: "html:body", exp: "html:body"},
-		{name: "NamespaceOnly", src: "html:", exp: "ReaderError 1-5: unexpected EOF", mustErr: true},
-		{name: "NamespaceOnlyColon", src: "html::", exp: "ReaderError 1-6: no begin of symbol found", mustErr: true},
-		{name: "UnknownNamespace", src: "jml:js", exp: "ReaderError 1-4: package \"jml\" not found", mustErr: true},
+		{name: "NamespaceNoSymbol",
+			src:     "html:nobody",
+			exp:     "ReaderError 1-11: symbol nobody not found in #<package:html>",
+			mustErr: true},
+		{name: "NamespaceOnly",
+			src:     "html:",
+			exp:     "ReaderError 1-5: unexpected EOF",
+			mustErr: true},
+		{name: "NamespaceOnlyColon",
+			src:     "html::",
+			exp:     "ReaderError 1-6: no begin of symbol found",
+			mustErr: true},
+		{name: "UnknownNamespace",
+			src:     "jml:js",
+			exp:     "ReaderError 1-4: package jml not found",
+			mustErr: true},
 	})
 }
 

@@ -80,14 +80,16 @@ func readSymbol(rd *Reader, firstCh rune) (sx.Object, error) {
 	}
 	pkg := sx.FindPackage(tok)
 	if pkg == nil {
-		return nil, rd.annotateError(fmt.Errorf("package %q not found", tok), beginPos)
+		return nil, rd.annotateError(fmt.Errorf("package %s not found", tok), beginPos)
 	}
 	tok, err = rd.readSymbolAfterColon()
 	if err != nil {
 		return nil, rd.annotateError(err, beginPos)
 	}
-	sym := pkg.MakeSymbol(tok)
-	return sym, nil
+	if sym := pkg.FindSymbol(tok); sym != nil {
+		return sym, nil
+	}
+	return nil, rd.annotateError(fmt.Errorf("symbol %s not found in %s", tok, pkg.String()), beginPos)
 }
 
 func readKeyword(rd *Reader, firstCh rune) (sx.Object, error) {
