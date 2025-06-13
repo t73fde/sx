@@ -28,7 +28,7 @@ func BenchmarkEvenTCO(b *testing.B) {
 	evenSym := sx.MakeSymbol("even?")
 	for _, tc := range testcases {
 		b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
-			env := sxeval.MakeEnvironment()
+			env := sxeval.MakeEnvironment(root)
 			obj := sx.MakeList(evenSym, sx.Int64(tc))
 			expr, err := env.Parse(obj, root)
 			if err != nil {
@@ -68,7 +68,7 @@ func BenchmarkCollatz(b *testing.B) {
 
 func runBenchmark(b *testing.B, sexpr sx.Object) {
 	root := createBindingForTCO()
-	env := sxeval.MakeEnvironment()
+	env := sxeval.MakeEnvironment(root)
 	expr, err := env.Parse(sexpr, root)
 	if err != nil {
 		b.Error(err)

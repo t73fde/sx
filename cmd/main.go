@@ -263,7 +263,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 	}()
 
 	for {
-		env := sxeval.MakeEnvironment()
+		env := sxeval.MakeEnvironment(bind)
 		env.SetComputeObserver(me).
 			SetParseObserver(me).
 			SetImproveObserver(me)

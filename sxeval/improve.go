@@ -31,6 +31,7 @@ type Improver struct {
 	base     *Improver
 	binding  *Binding // Current binding
 	height   int      // Height of current binding
+	globals  *Binding // Global bindings
 	observer ImproveObserver
 }
 
@@ -50,6 +51,7 @@ func (imp *Improver) MakeChildImprover(name string, baseSize int) *Improver {
 		base:     imp.base,
 		binding:  imp.binding.MakeChildBinding(name, baseSize),
 		height:   imp.height + 1,
+		globals:  imp.globals,
 		observer: imp.observer,
 	}
 }
@@ -97,7 +99,7 @@ func (imp *Improver) ImproveFoldCall(proc Callable, args []Expr) (Expr, error) {
 		}
 	}
 	if proc.IsPure(vals) {
-		env := MakeEnvironment()
+		env := MakeEnvironment(imp.globals)
 		if result, err := proc.ExecuteCall(env, vals, imp.binding); err == nil {
 			return imp.Improve(ObjExpr{Obj: result})
 		}

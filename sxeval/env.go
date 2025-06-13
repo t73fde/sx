@@ -29,6 +29,8 @@ import (
 type Environment struct {
 	stack []sx.Object
 
+	globals *Binding
+
 	newExpr Expr
 	newBind *Binding
 
@@ -69,9 +71,10 @@ type ComputeObserver interface {
 
 // MakeEnvironment creates an environment for later parsing, improving, and
 // computation of expressions.
-func MakeEnvironment() *Environment {
+func MakeEnvironment(globals *Binding) *Environment {
 	return &Environment{
-		stack: make([]sx.Object, 0, 1024),
+		stack:   make([]sx.Object, 0, 1024),
+		globals: globals,
 	}
 }
 
@@ -112,6 +115,7 @@ func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
 	imp := &Improver{
 		binding:  bind,
 		height:   0,
+		globals:  env.globals,
 		observer: env.obImprove,
 	}
 	imp.base = imp

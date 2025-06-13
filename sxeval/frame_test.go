@@ -30,7 +30,7 @@ func TestFrameLookupUnbind(t *testing.T) {
 		t.Errorf("nil symbol should not be found, but got: %v", val)
 	}
 
-	_ = root.Bind(sym1, sym2)
+	root.Bind(sym1, sym2)
 
 	if val, found := root.Lookup(sym2); found {
 		t.Errorf("Symbol %v should not be found, but resolves to %v", sym2, val)
@@ -38,14 +38,14 @@ func TestFrameLookupUnbind(t *testing.T) {
 
 	t.Run("child", func(t *testing.T) {
 		newRoot := sxeval.MakeRootFrame(1)
-		_ = newRoot.Bind(sym1, sym2)
+		newRoot.Bind(sym1, sym2)
 		child := newRoot.MakeChildFrame("assoc", 30)
 		frameLookup(t, newRoot, child, sym1, sym2)
 	})
 }
 
 func frameLookup(t *testing.T, root, child *sxeval.Frame, sym1, sym2 *sx.Symbol) {
-	_ = child.Bind(sym2, sym1)
+	child.Bind(sym2, sym1)
 
 	if _, found := child.Lookup(sym1); found {
 		t.Error("Symbol", sym1, "was found in child")
@@ -68,13 +68,13 @@ func frameLookup(t *testing.T, root, child *sxeval.Frame, sym1, sym2 *sx.Symbol)
 func TestFrameAlist(t *testing.T) {
 	t.Parallel()
 	bind := sxeval.MakeRootFrame(7)
-	_ = bind.Bind(sx.MakeSymbol("sym1"), sx.MakeString("sym1"))
-	_ = bind.Bind(sx.MakeSymbol("sym2"), sx.MakeString("sym2"))
-	_ = bind.Bind(sx.MakeSymbol("sym3"), sx.MakeString("sym3"))
-	_ = bind.Bind(sx.MakeSymbol("sym4"), sx.MakeString("sym4"))
-	_ = bind.Bind(sx.MakeSymbol("sym5"), sx.MakeString("sym5"))
-	_ = bind.Bind(sx.MakeSymbol("sym6"), sx.MakeString("sym6"))
-	_ = bind.Bind(sx.MakeSymbol("sym7"), sx.MakeString("sym7"))
+	bind.Bind(sx.MakeSymbol("sym1"), sx.MakeString("sym1"))
+	bind.Bind(sx.MakeSymbol("sym2"), sx.MakeString("sym2"))
+	bind.Bind(sx.MakeSymbol("sym3"), sx.MakeString("sym3"))
+	bind.Bind(sx.MakeSymbol("sym4"), sx.MakeString("sym4"))
+	bind.Bind(sx.MakeSymbol("sym5"), sx.MakeString("sym5"))
+	bind.Bind(sx.MakeSymbol("sym6"), sx.MakeString("sym6"))
+	bind.Bind(sx.MakeSymbol("sym7"), sx.MakeString("sym7"))
 	alist := bind.Bindings()
 	if alist.Length() != 7 {
 		t.Error("Not 7 elements:", alist)
@@ -114,25 +114,25 @@ func checkFrameEqual(t *testing.T, frame1, frame2 *sxeval.Frame) {
 		return
 	}
 	sym1 := sx.MakeSymbol("sym1")
-	_ = frame1.Bind(sym1, sym1)
+	frame1.Bind(sym1, sym1)
 	if frame1.IsEqual(frame2) {
 		t.Error("after adding sym1 just to", frame1, "both frames are equal")
 		return
 	}
 	sym2 := sx.MakeSymbol("sym2")
-	_ = frame2.Bind(sym2, sym2)
+	frame2.Bind(sym2, sym2)
 	if frame1.IsEqual(frame2) {
 		t.Error("after adding sym2 just to", frame2, "both frames are equal")
 		return
 	}
-	_ = frame1.Bind(sym2, sym1)
-	_ = frame2.Bind(sym1, sym2)
+	frame1.Bind(sym2, sym1)
+	frame2.Bind(sym1, sym2)
 	if frame1.IsEqual(frame2) {
 		t.Error("bindings are equal, but frames differ")
 		return
 	}
-	_ = frame1.Bind(sym2, sym2)
-	_ = frame2.Bind(sym1, sym1)
+	frame1.Bind(sym2, sym2)
+	frame2.Bind(sym1, sym1)
 	if !frame1.IsEqual(frame2) {
 		t.Error("equal bindings differ")
 	}

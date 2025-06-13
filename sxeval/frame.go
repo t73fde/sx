@@ -131,21 +131,20 @@ func (f *Frame) length() int {
 // Bind creates a local mapping with a given symbol and object.
 //
 // A previous mapping will be overwritten.
-func (b *Frame) Bind(sym *sx.Symbol, obj sx.Object) error {
-	if m := b.mso; m != nil {
+func (f *Frame) Bind(sym *sx.Symbol, obj sx.Object) {
+	if m := f.mso; m != nil {
 		m[sym] = obj
-	} else if b.sym == nil {
-		b.sym = sym
-		b.obj = obj
-	} else if b.sym == sym {
-		b.obj = obj
+	} else if f.sym == nil {
+		f.sym = sym
+		f.obj = obj
+	} else if f.sym == sym {
+		f.obj = obj
 	} else {
-		b.mso = make(mapSymObj, 2)
-		b.mso[b.sym] = b.obj
-		b.sym = nil
-		b.mso[sym] = obj
+		f.mso = make(mapSymObj, 2)
+		f.mso[f.sym] = f.obj
+		f.sym = nil
+		f.mso[sym] = obj
 	}
-	return nil
 }
 
 // Lookup will search for a local binding of the given symbol. If not

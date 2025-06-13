@@ -74,7 +74,7 @@ func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 				return
 			}
 			bind := root.MakeChildBinding(tc.name, 0)
-			env := sxeval.MakeEnvironment()
+			env := sxeval.MakeEnvironment(bind)
 			res, err := env.Eval(obj, bind)
 			if size := env.Size(); size > 0 {
 				t.Error("stack not empty, size:", size)
@@ -144,7 +144,7 @@ func createBindingForTCO() *sxeval.Binding {
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxevalTests))
 	bind := root.MakeChildBinding("TCO", 128)
-	env := sxeval.MakeEnvironment()
+	env := sxeval.MakeEnvironment(bind)
 	for {
 		obj, err := rd.Read()
 		if err != nil {

@@ -57,7 +57,7 @@ func TestBuiltinSimple(t *testing.T) {
 
 	root := sxeval.MakeRootBinding(8)
 	_ = sxeval.BindBuiltins(root, b, &sxbuiltins.Apply, &sxbuiltins.List)
-	env := sxeval.MakeEnvironment()
+	env := sxeval.MakeEnvironment(root)
 
 	args := sx.Vector{}
 	for i := range 10 {
