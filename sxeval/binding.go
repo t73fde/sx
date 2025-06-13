@@ -30,9 +30,7 @@ func (err ErrBindingFrozen) Error() string { return fmt.Sprintf("binding is froz
 
 // Binding is a binding based on maps.
 type Binding struct {
-	mso    mapSymObj  // used if more than one symbol is bound
-	sym    *sx.Symbol // used if zero or one symbol is bound
-	obj    sx.Object  // object bound to sym
+	mso    mapSymObj
 	name   string
 	parent *Binding
 	frozen bool
@@ -41,14 +39,11 @@ type Binding struct {
 type mapSymObj = map[*sx.Symbol]sx.Object
 
 func makeBinding(name string, parent *Binding, sizeHint int) *Binding {
-	b := Binding{
+	return &Binding{
+		mso:    make(mapSymObj, sizeHint),
 		parent: parent,
 		name:   name,
 	}
-	if sizeHint > 1 {
-		b.mso = make(mapSymObj, sizeHint)
-	}
-	return &b
 }
 
 // MakeRootBinding creates a new root binding.
@@ -74,42 +69,13 @@ func (b *Binding) IsEqual(other sx.Object) bool {
 		return sx.IsNil(other)
 	}
 	if ob, isBinding := other.(*Binding); isBinding {
-		bmso, obmso := b.mso, ob.mso
-		if bmso != nil && obmso != nil {
-			return maps.EqualFunc(bmso, obmso, func(o1, o2 sx.Object) bool { return o1.IsEqual(o2) })
-		}
-		bsym, obsym := b.sym, ob.sym
-		if bmso == nil && obmso == nil {
-			if bsym == nil {
-				return obsym == nil
-			}
-			if obsym == nil {
-				return false
-			}
-			return b.obj.IsEqual(ob.obj)
-		}
-
-		if bsym != nil {
-			if len(obmso) != 1 {
-				return false
-			}
-			obj, found := obmso[bsym]
-			return found && obj.IsEqual(b.obj)
-		}
-		if obsym != nil {
-			if len(bmso) != 1 {
-				return false
-			}
-			obj, found := bmso[obsym]
-			return found && obj.IsEqual(ob.obj)
-		}
-		return len(bmso) == 0 && len(obmso) == 0
+		return maps.EqualFunc(b.mso, ob.mso, func(o1, o2 sx.Object) bool { return o1.IsEqual(o2) })
 	}
 	return false
 }
 
 func (b *Binding) String() string {
-	return fmt.Sprintf("#<binding:%s/%d>", b.name, b.length())
+	return fmt.Sprintf("#<binding:%s/%d>", b.name, len(b.mso))
 }
 
 // GoString returns the binding as a string suitable to be used in Go code.
@@ -126,16 +92,6 @@ func (b *Binding) Parent() *Binding {
 	return b.parent
 }
 
-func (b *Binding) length() int {
-	if m := b.mso; m != nil {
-		return len(m)
-	}
-	if b.sym == nil {
-		return 0
-	}
-	return 1
-}
-
 // Bind creates a local mapping with a given symbol and object.
 //
 // A previous mapping will be overwritten.
@@ -143,19 +99,7 @@ func (b *Binding) Bind(sym *sx.Symbol, obj sx.Object) error {
 	if b.frozen {
 		return ErrBindingFrozen{Binding: b}
 	}
-	if m := b.mso; m != nil {
-		m[sym] = obj
-	} else if b.sym == nil {
-		b.sym = sym
-		b.obj = obj
-	} else if b.sym == sym {
-		b.obj = obj
-	} else {
-		b.mso = make(mapSymObj, 2)
-		b.mso[b.sym] = b.obj
-		b.sym = nil
-		b.mso[sym] = obj
-	}
+	b.mso[sym] = obj
 	return nil
 }
 
@@ -166,14 +110,8 @@ func (b *Binding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	if sym == nil {
 		return sx.Nil(), false
 	}
-	if m := b.mso; m != nil {
-		obj, found := b.mso[sym]
-		return obj, found
-	}
-	if b.sym == sym {
-		return b.obj, true
-	}
-	return sx.Nil(), false
+	obj, found := b.mso[sym]
+	return obj, found
 }
 
 // LookupN will lookup the symbol in the N-th parent.
@@ -197,44 +135,32 @@ func (b *Binding) FindBinding(sym *sx.Symbol) *Binding {
 
 // Symbols returns all bound symbols, sorted by its GoString.
 func (b *Binding) Symbols() []*sx.Symbol {
-	if m := b.mso; m != nil {
-		result := make([]*sx.Symbol, 0, len(m))
-		for sym := range m {
-			result = append(result, sym)
+	result := make([]*sx.Symbol, 0, len(b.mso))
+	for sym := range b.mso {
+		result = append(result, sym)
+	}
+	slices.SortFunc(result, func(symA, symB *sx.Symbol) int {
+		facA, facB := symA.Package(), symB.Package()
+		if facA == facB {
+			return strings.Compare(symA.GetValue(), symB.GetValue())
 		}
-		slices.SortFunc(result, func(symA, symB *sx.Symbol) int {
-			facA, facB := symA.Package(), symB.Package()
-			if facA == facB {
-				return strings.Compare(symA.GetValue(), symB.GetValue())
-			}
 
-			// Make a stable descision, if symbols were created from different factories.
-			if uintptr(unsafe.Pointer(facA)) < uintptr(unsafe.Pointer(facB)) {
-				return -1
-			}
-			return 1
-		})
-		return result
-	}
-	if bsym := b.sym; bsym != nil {
-		return []*sx.Symbol{bsym}
-	}
-	return nil
+		// Make a stable descision, if symbols were created from different factories.
+		if uintptr(unsafe.Pointer(facA)) < uintptr(unsafe.Pointer(facB)) {
+			return -1
+		}
+		return 1
+	})
+	return result
 }
 
 // Bindings returns all bindings as an a-list in some random order.
 func (b *Binding) Bindings() *sx.Pair {
-	if m := b.mso; m != nil {
-		var result sx.ListBuilder
-		for sym, obj := range m {
-			result.Add(sx.Cons(sym, obj))
-		}
-		return result.List()
+	var result sx.ListBuilder
+	for sym, obj := range b.mso {
+		result.Add(sx.Cons(sym, obj))
 	}
-	if bsym := b.sym; bsym != nil {
-		return sx.Cons(sx.Cons(bsym, b.obj), sx.Nil())
-	}
-	return nil
+	return result.List()
 }
 
 // Freeze sets the binding in a read-only state.
