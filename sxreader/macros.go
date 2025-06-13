@@ -92,7 +92,7 @@ func readSymbol(rd *Reader, firstCh rune) (sx.Object, error) {
 	return nil, rd.annotateError(fmt.Errorf("symbol %s not found in %s", tok, pkg.String()), beginPos)
 }
 
-func readKeyword(rd *Reader, firstCh rune) (sx.Object, error) {
+func readKeyword(rd *Reader, _ rune) (sx.Object, error) {
 	beginPos := rd.Position()
 	tok, err := rd.readSymbolAfterColon()
 	if err != nil {

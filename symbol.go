@@ -74,7 +74,8 @@ func (sym *Symbol) Print(w io.Writer) (length int, err error) {
 				return length, err
 			}
 		}
-		l, err := io.WriteString(w, ":")
+		var l int
+		l, err = io.WriteString(w, ":")
 		length += l
 		if err != nil {
 			return length, err
