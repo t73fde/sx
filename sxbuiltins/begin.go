@@ -39,12 +39,12 @@ type ExprSeq struct {
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func ParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+func ParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
 	if args == nil {
 		return sxeval.NilExpr, nil
 	}
 	var be BeginExpr
-	if err := doParseExprSeq(pe, args, bind, &be.ExprSeq); err != nil {
+	if err := doParseExprSeq(pe, args, frame, &be.ExprSeq); err != nil {
 		return nil, err
 	}
 	if len(be.Front) == 0 {
@@ -54,11 +54,11 @@ func ParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Bindi
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func doParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding, es *ExprSeq) error {
+func doParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame, es *ExprSeq) error {
 	var front []sxeval.Expr
 	var last sxeval.Expr
 	for node := args; ; {
-		ex, err := pe.Parse(node.Car(), bind)
+		ex, err := pe.Parse(node.Car(), frame)
 		if err != nil {
 			return err
 		}
@@ -72,7 +72,7 @@ func doParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Bin
 			node = next
 			continue
 		}
-		ex, err = pe.Parse(cdr, bind)
+		ex, err = pe.Parse(cdr, frame)
 		if err != nil {
 			return err
 		}
@@ -194,13 +194,13 @@ func (be *BeginExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (be *BeginExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (be *BeginExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
 	for _, e := range be.Front {
-		if _, err := env.Execute(e, bind); err != nil {
+		if _, err := env.Execute(e, frame); err != nil {
 			return nil, err
 		}
 	}
-	return env.ExecuteTCO(be.Last, bind)
+	return env.ExecuteTCO(be.Last, frame)
 }
 
 // Print the expression on the given writer.
@@ -213,12 +213,12 @@ const andName = "and"
 // AndS parses a sequence of expressions that are reduced via logical and.
 var AndS = sxeval.Special{
 	Name: andName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
 		if args == nil {
 			return sxeval.ObjExpr{Obj: sx.T}, nil
 		}
 		var ae AndExpr
-		if err := doParseExprSeq(pe, args, bind, &ae.ExprSeq); err != nil {
+		if err := doParseExprSeq(pe, args, frame, &ae.ExprSeq); err != nil {
 			return nil, err
 		}
 		return &ae, nil
@@ -268,9 +268,9 @@ func (ae *AndExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (ae *AndExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (ae *AndExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
 	for _, e := range ae.Front {
-		obj, err := env.Execute(e, bind)
+		obj, err := env.Execute(e, frame)
 		if err != nil {
 			return nil, err
 		}
@@ -278,7 +278,7 @@ func (ae *AndExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Ob
 			return obj, nil
 		}
 	}
-	return env.ExecuteTCO(ae.Last, bind)
+	return env.ExecuteTCO(ae.Last, frame)
 }
 
 // Print the expression on the given writer.
@@ -291,12 +291,12 @@ const orName = "or"
 // OrS parses a sequence of expressions that are reduced via logical or.
 var OrS = sxeval.Special{
 	Name: orName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
 		if args == nil {
 			return sxeval.NilExpr, nil
 		}
 		var oe OrExpr
-		if err := doParseExprSeq(pe, args, bind, &oe.ExprSeq); err != nil {
+		if err := doParseExprSeq(pe, args, frame, &oe.ExprSeq); err != nil {
 			return nil, err
 		}
 		return &oe, nil
@@ -353,9 +353,9 @@ func (oe *OrExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (oe *OrExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (oe *OrExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
 	for _, e := range oe.Front {
-		obj, err := env.Execute(e, bind)
+		obj, err := env.Execute(e, frame)
 		if err != nil {
 			return nil, err
 		}
@@ -363,7 +363,7 @@ func (oe *OrExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Obj
 			return obj, nil
 		}
 	}
-	return env.ExecuteTCO(oe.Last, bind)
+	return env.ExecuteTCO(oe.Last, frame)
 }
 
 // Print the expression on the given writer.

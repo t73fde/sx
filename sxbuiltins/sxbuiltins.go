@@ -93,6 +93,14 @@ func GetBinding(arg sx.Object, pos int) (*sxeval.Binding, error) {
 	return nil, fmt.Errorf("argument %d is not a binding, but %T/%v", pos+1, arg, arg)
 }
 
+// GetFrame returns the given argument as a frame, and checks for errors.
+func GetFrame(arg sx.Object, pos int) (*sxeval.Frame, error) {
+	if bind, ok := sxeval.GetFrame(arg); ok {
+		return bind, nil
+	}
+	return nil, fmt.Errorf("argument %d is not a frame, but %T/%v", pos+1, arg, arg)
+}
+
 // GetCallable returns the given argument as a callable, and checks for errors.
 func GetCallable(arg sx.Object, pos int) (sxeval.Callable, error) {
 	if fn, ok := sxeval.GetCallable(arg); ok {

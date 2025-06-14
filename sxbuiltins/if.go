@@ -26,11 +26,11 @@ const ifName = "if"
 // IfS parses an if-statement: (if cond then else). If else is missing, a nil is assumed.
 var IfS = sxeval.Special{
 	Name: ifName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, fmt.Errorf("requires 2 or 3 arguments, got none")
 		}
-		testExpr, err := pe.Parse(args.Car(), bind)
+		testExpr, err := pe.Parse(args.Car(), frame)
 		if err != nil {
 			return nil, err
 		}
@@ -38,7 +38,7 @@ var IfS = sxeval.Special{
 		if argTrue == nil {
 			return nil, fmt.Errorf("requires 2 or 3 arguments, got one")
 		}
-		trueExpr, err := pe.Parse(argTrue.Car(), bind)
+		trueExpr, err := pe.Parse(argTrue.Car(), frame)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +53,7 @@ var IfS = sxeval.Special{
 		if argFalse.Tail() != nil {
 			return nil, fmt.Errorf("requires 2 or 3 arguments, got more")
 		}
-		falseExpr, err := pe.Parse(argFalse.Car(), bind)
+		falseExpr, err := pe.Parse(argFalse.Car(), frame)
 		if err != nil {
 			return nil, err
 		}
@@ -153,15 +153,15 @@ restart:
 }
 
 // Compute the expression in a frame and return the result.
-func (ife *IfExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-	test, err := env.Execute(ife.Test, bind)
+func (ife *IfExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
+	test, err := env.Execute(ife.Test, frame)
 	if err != nil {
 		return nil, err
 	}
 	if sx.IsTrue(test) {
-		return env.ExecuteTCO(ife.True, bind)
+		return env.ExecuteTCO(ife.True, frame)
 	}
-	return env.ExecuteTCO(ife.False, bind)
+	return env.ExecuteTCO(ife.False, frame)
 }
 
 // Print the expression on the given writer.

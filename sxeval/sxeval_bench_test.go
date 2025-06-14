@@ -30,13 +30,13 @@ func BenchmarkEvenTCO(b *testing.B) {
 		b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
 			env := sxeval.MakeEnvironment(root)
 			obj := sx.MakeList(evenSym, sx.Int64(tc))
-			expr, err := env.Parse(obj, root)
+			expr, err := env.Parse(obj, nil)
 			if err != nil {
 				b.Error(err)
 			}
 			b.ResetTimer()
 			for b.Loop() {
-				_, _ = env.Run(expr, root)
+				_, _ = env.Run(expr, nil)
 			}
 		})
 	}
@@ -69,12 +69,12 @@ func BenchmarkCollatz(b *testing.B) {
 func runBenchmark(b *testing.B, sexpr sx.Object) {
 	root := createBindingForTCO()
 	env := sxeval.MakeEnvironment(root)
-	expr, err := env.Parse(sexpr, root)
+	expr, err := env.Parse(sexpr, nil)
 	if err != nil {
 		b.Error(err)
 	}
 
-	if _, err = env.Run(expr, root); err != nil {
+	if _, err = env.Run(expr, nil); err != nil {
 		b.Error(err)
 	}
 	for range env.Stack() {
@@ -82,7 +82,7 @@ func runBenchmark(b *testing.B, sexpr sx.Object) {
 		break
 	}
 	for b.Loop() {
-		_, _ = env.Run(expr, root)
+		_, _ = env.Run(expr, nil)
 	}
 	stackSize := 0
 	for range env.Stack() {

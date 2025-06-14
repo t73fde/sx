@@ -28,11 +28,11 @@ func TestBuiltinSimple(t *testing.T) {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn0:      func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) { return sx.Nil(), nil },
-		Fn1: func(*sxeval.Environment, sx.Object, *sxeval.Binding) (sx.Object, error) {
+		Fn0:      func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) { return sx.Nil(), nil },
+		Fn1: func(*sxeval.Environment, sx.Object, *sxeval.Frame) (sx.Object, error) {
 			return sx.MakeList(), nil
 		},
-		Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+		Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Frame) (sx.Object, error) {
 			return sx.MakeList(args[1:]...), nil
 		},
 	}
@@ -65,7 +65,7 @@ func TestBuiltinSimple(t *testing.T) {
 			sx.MakeSymbol(sxbuiltins.Apply.Name),
 			sx.MakeSymbol(b.Name),
 			sx.MakeList(args...).Cons(sx.MakeSymbol(sxbuiltins.List.Name)))
-		res0, err := env.Eval(form, root)
+		res0, err := env.Eval(form, nil)
 		if err != nil {
 			t.Error(err)
 			break

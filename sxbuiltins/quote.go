@@ -26,7 +26,7 @@ import (
 // QuoteS parses the quote syntax.
 var QuoteS = sxeval.Special{
 	Name: sx.SymbolQuote.String(),
-	Fn: func(_ *sxeval.ParseEnvironment, args *sx.Pair, _ *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(_ *sxeval.ParseEnvironment, args *sx.Pair, _ *sxeval.Frame) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs
 		}

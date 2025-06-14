@@ -28,7 +28,7 @@ var CallableP = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 1,
 	TestPure: sxeval.AssertPure,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Frame) (sx.Object, error) {
 		_, ok := sxeval.GetCallable(arg)
 		return sx.MakeBoolean(ok), nil
 	},
@@ -37,7 +37,7 @@ var CallableP = sxeval.Builtin{
 // DefunS parses a procedure/function specfication.
 var DefunS = sxeval.Special{
 	Name: "defun",
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Frame) (sxeval.Expr, error) {
 		sym, le, err := parseDefProc(pe, args, bind)
 		if err != nil {
 			return nil, err
@@ -48,7 +48,7 @@ var DefunS = sxeval.Special{
 
 var errNoParameterSpecAndBody = errors.New("parameter spec and body missing")
 
-func parseDefProc(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (*sx.Symbol, *LambdaExpr, error) {
+func parseDefProc(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (*sx.Symbol, *LambdaExpr, error) {
 	if args == nil {
 		return nil, nil, sxeval.ErrNoArgs
 	}
@@ -60,14 +60,14 @@ func parseDefProc(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Bindi
 	if args == nil {
 		return nil, nil, errNoParameterSpecAndBody
 	}
-	le, err := ParseProcedure(pe, sym.String(), args.Car(), args.Cdr(), bind)
+	le, err := ParseProcedure(pe, sym.String(), args.Car(), args.Cdr(), frame)
 	return sym, le, err
 }
 
 // LambdaS parses a procedure specification.
 var LambdaS = sxeval.Special{
 	Name: lambdaName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, errNoParameterSpecAndBody
 		}
@@ -83,12 +83,12 @@ var LambdaS = sxeval.Special{
 		} else {
 			name = car.String()
 		}
-		return ParseProcedure(pe, name, car, args.Cdr(), bind)
+		return ParseProcedure(pe, name, car, args.Cdr(), frame)
 	},
 }
 
 // ParseProcedure parses a procedure definition, where some parsing is already done.
-func ParseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpec sx.Object, bind *sxeval.Binding) (*LambdaExpr, error) {
+func ParseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpec sx.Object, frame *sxeval.Frame) (*LambdaExpr, error) {
 	var params []*sx.Symbol
 	var rest *sx.Symbol
 	if !sx.IsNil(paramSpec) {
@@ -116,18 +116,12 @@ func ParseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpe
 	if rest != nil {
 		bindSize++
 	}
-	lambdaBind := bind.MakeChildBinding(name+"-def", bindSize)
+	lambdaBind := frame.MakeChildFrame(name+"-def", bindSize)
 	for _, p := range params {
-		err := lambdaBind.Bind(p, sx.MakeUndefined())
-		if err != nil {
-			return nil, err
-		}
+		lambdaBind.Bind(p, sx.MakeUndefined())
 	}
 	if rest != nil {
-		err := lambdaBind.Bind(rest, sx.MakeUndefined())
-		if err != nil {
-			return nil, err
-		}
+		lambdaBind.Bind(rest, sx.MakeUndefined())
 	}
 	expr, err := ParseExprSeq(pe, body, lambdaBind)
 	if err != nil {
@@ -231,10 +225,10 @@ func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	}
 	lambdaImp := imp.MakeChildImprover(le.Name+"-improve", bindSize)
 	for _, sym := range le.Params {
-		_ = lambdaImp.Bind(sym)
+		lambdaImp.Bind(sym)
 	}
 	if rest := le.Rest; rest != nil {
-		_ = lambdaImp.Bind(rest)
+		lambdaImp.Bind(rest)
 	}
 
 	expr, err := lambdaImp.Improve(le.Expr)
@@ -245,15 +239,15 @@ func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (le *LambdaExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (le *LambdaExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
 	leType := le.Type
 	if leType == 0 {
 		return &LexLambda{
-			Binding: bind,
-			Name:    le.Name,
-			Params:  le.Params,
-			Rest:    le.Rest,
-			Expr:    le.Expr,
+			Frame:  frame,
+			Name:   le.Name,
+			Params: le.Params,
+			Rest:   le.Rest,
+			Expr:   le.Expr,
 		}, nil
 	}
 	if leType > 0 {
@@ -265,12 +259,12 @@ func (le *LambdaExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx
 		}, nil
 	}
 	return &Macro{
-		Env:     env,
-		Binding: bind,
-		Name:    le.Name,
-		Params:  le.Params,
-		Rest:    le.Rest,
-		Expr:    le.Expr,
+		Env:    env,
+		Frame:  frame,
+		Name:   le.Name,
+		Params: le.Params,
+		Rest:   le.Rest,
+		Expr:   le.Expr,
 	}, nil
 }
 
@@ -329,11 +323,11 @@ func (le *LambdaExpr) Print(w io.Writer) (int, error) {
 
 // LexLambda represents the lexical procedure definition form.
 type LexLambda struct {
-	Binding *sxeval.Binding
-	Name    string
-	Params  []*sx.Symbol
-	Rest    *sx.Symbol
-	Expr    sxeval.Expr
+	Frame  *sxeval.Frame
+	Name   string
+	Params []*sx.Symbol
+	Rest   *sx.Symbol
+	Expr   sxeval.Expr
 }
 
 // IsNil returns true if the object must be treated like a sx.Nil() object.
@@ -358,7 +352,7 @@ func (ll *LexLambda) GoString() string { return ll.String() }
 func (ll *LexLambda) IsPure(sx.Vector) bool { return false }
 
 // ExecuteCall the Procedure with any number of arguments.
-func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, args sx.Vector, _ *sxeval.Frame) (sx.Object, error) {
 	numParams := len(ll.Params)
 	if len(args) < numParams {
 		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[len(args):])
@@ -367,27 +361,23 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, args sx.Vector, _ *sxe
 	if ll.Rest != nil {
 		bindSize++
 	}
-	lexBind := ll.Binding.MakeChildBinding(ll.Name, bindSize)
+	lexFrame := ll.Frame.MakeChildFrame(ll.Name, bindSize)
 	for i, p := range ll.Params {
-		if err := lexBind.Bind(p, args[i]); err != nil {
-			return nil, err
-		}
+		lexFrame.Bind(p, args[i])
 	}
 	if ll.Rest != nil {
-		if err := lexBind.Bind(ll.Rest, sx.MakeList(args[numParams:]...)); err != nil {
-			return nil, err
-		}
+		lexFrame.Bind(ll.Rest, sx.MakeList(args[numParams:]...))
 	} else if len(args) > numParams {
 		return nil, fmt.Errorf("%s: excess arguments: %v", ll.Name, []sx.Object(args[numParams:]))
 	}
-	return env.ExecuteTCO(ll.Expr, lexBind)
+	return env.ExecuteTCO(ll.Expr, lexFrame)
 }
 
 // DefDynS parses a procedure definition with dynamic binding.
 var DefDynS = sxeval.Special{
 	Name: "defdyn",
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
-		sym, le, err := parseDefProc(pe, args, bind)
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
+		sym, le, err := parseDefProc(pe, args, frame)
 		if err != nil {
 			return nil, err
 		}
@@ -399,8 +389,8 @@ var DefDynS = sxeval.Special{
 // DynLambdaS parses a dynamically scoped procedure specification.
 var DynLambdaS = sxeval.Special{
 	Name: dynLambdaName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
-		expr, err := LambdaS.Fn(pe, args, bind)
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
+		expr, err := LambdaS.Fn(pe, args, frame)
 		if err == nil {
 			le := expr.(*LambdaExpr)
 			le.Type = dynLambdaType
@@ -440,13 +430,13 @@ func (dl *DynLambda) GoString() string { return dl.String() }
 func (dl *DynLambda) IsPure(sx.Vector) bool { return false }
 
 // ExecuteCall the Procedure with any number of arguments.
-func (dl *DynLambda) ExecuteCall(env *sxeval.Environment, args sx.Vector, bind *sxeval.Binding) (sx.Object, error) {
+func (dl *DynLambda) ExecuteCall(env *sxeval.Environment, args sx.Vector, frame *sxeval.Frame) (sx.Object, error) {
 	// A DynLambda is just a LexLambda with a different Binding.
 	return (&LexLambda{
-		Binding: bind,
-		Name:    dl.Name,
-		Params:  dl.Params,
-		Rest:    dl.Rest,
-		Expr:    dl.Expr,
-	}).ExecuteCall(env, args, bind)
+		Frame:  frame,
+		Name:   dl.Name,
+		Params: dl.Params,
+		Rest:   dl.Rest,
+		Expr:   dl.Expr,
+	}).ExecuteCall(env, args, frame)
 }

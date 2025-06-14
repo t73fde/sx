@@ -29,9 +29,9 @@ type Improvable interface {
 // Improver guides the improve operation.
 type Improver struct {
 	base     *Improver
-	binding  *Binding // Current binding
-	height   int      // Height of current binding
-	globals  *Binding // Global bindings
+	frame    *Frame // Current frame
+	height   int    // Height of current binding
+	env      *Environment
 	observer ImproveObserver
 }
 
@@ -49,9 +49,9 @@ type ImproveObserver interface {
 func (imp *Improver) MakeChildImprover(name string, baseSize int) *Improver {
 	return &Improver{
 		base:     imp.base,
-		binding:  imp.binding.MakeChildBinding(name, baseSize),
+		frame:    imp.frame.MakeChildFrame(name, baseSize),
 		height:   imp.height + 1,
-		globals:  imp.globals,
+		env:      imp.env,
 		observer: imp.observer,
 	}
 }
@@ -99,8 +99,8 @@ func (imp *Improver) ImproveFoldCall(proc Callable, args []Expr) (Expr, error) {
 		}
 	}
 	if proc.IsPure(vals) {
-		env := MakeEnvironment(imp.globals)
-		if result, err := proc.ExecuteCall(env, vals, imp.binding); err == nil {
+		env := MakeEnvironment(imp.env.globals)
+		if result, err := proc.ExecuteCall(env, vals, imp.frame); err == nil {
 			return imp.Improve(ObjExpr{Obj: result})
 		}
 	}
@@ -110,8 +110,8 @@ func (imp *Improver) ImproveFoldCall(proc Callable, args []Expr) (Expr, error) {
 // Height returns the difference between the actual and the base height.
 func (imp *Improver) Height() int { return imp.height - imp.base.height }
 
-// Binding returns the binding of this environment.
-func (imp *Improver) Binding() *Binding { return imp.binding }
+// Frame returns the frame of this environment.
+func (imp *Improver) Frame() *Frame { return imp.frame }
 
 // Resolve the symbol into an object, and return the binding depth plus an
 // indication about the const-ness of the value. If the symbol could not be
@@ -119,7 +119,7 @@ func (imp *Improver) Binding() *Binding { return imp.binding }
 // in the base environment, depth is set to -1, to indicate a possible unbound
 // situation.
 func (imp *Improver) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
-	obj, b, depth := imp.binding.resolveFull(sym)
+	obj, b, depth := imp.frame.resolveFull(sym)
 	if b == nil {
 		return nil, math.MinInt, false
 	}
@@ -129,7 +129,7 @@ func (imp *Improver) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
 	return obj, depth, b.IsFrozen()
 }
 
-// Bind the undefined value to the symbol in the current environment.
-func (imp *Improver) Bind(sym *sx.Symbol) error {
-	return imp.binding.Bind(sym, sx.MakeUndefined())
+// Bind the undefined value to the symbol in the current frame.
+func (imp *Improver) Bind(sym *sx.Symbol) {
+	imp.frame.Bind(sym, sx.MakeUndefined())
 }

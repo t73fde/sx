@@ -33,10 +33,10 @@ type Builtin struct {
 	TestPure func(sx.Vector) bool
 
 	// The actual builtin function, with no argument.
-	Fn0 func(*Environment, *Binding) (sx.Object, error)
+	Fn0 func(*Environment, *Frame) (sx.Object, error)
 
 	// The actual builtin function, with one argument.
-	Fn1 func(*Environment, sx.Object, *Binding) (sx.Object, error)
+	Fn1 func(*Environment, sx.Object, *Frame) (sx.Object, error)
 
 	// The actual builtin function, with any number of arguments.
 	//
@@ -44,7 +44,7 @@ type Builtin struct {
 	// is not allowed to store and process the vector itself. The vector is
 	// essentially only a slice on top of the evaluation stack, which may
 	// change its elements.
-	Fn func(*Environment, sx.Vector, *Binding) (sx.Object, error)
+	Fn func(*Environment, sx.Vector, *Frame) (sx.Object, error)
 
 	// Do not add a CallError
 	NoCallError bool
@@ -111,17 +111,17 @@ func (b *Builtin) IsPure(objs sx.Vector) bool {
 }
 
 // ExecuteCall the builtin function with the given environment and arguments.
-func (b *Builtin) ExecuteCall(env *Environment, args sx.Vector, bind *Binding) (obj sx.Object, err error) {
+func (b *Builtin) ExecuteCall(env *Environment, args sx.Vector, frame *Frame) (obj sx.Object, err error) {
 	if err = b.checkCallArity(len(args), func() []sx.Object { return args }); err != nil {
 		return nil, b.handleCallError(err)
 	}
 	switch len(args) {
 	case 0:
-		obj, err = b.Fn0(env, bind)
+		obj, err = b.Fn0(env, frame)
 	case 1:
-		obj, err = b.Fn1(env, args[0], bind)
+		obj, err = b.Fn1(env, args[0], frame)
 	default:
-		obj, err = b.Fn(env, args, bind)
+		obj, err = b.Fn(env, args, frame)
 	}
 	if err == nil {
 		return obj, nil
@@ -216,12 +216,12 @@ func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *builtinCallExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
+func (bce *builtinCallExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
 	args := bce.Args
-	if err := computeArgs(env, args, bind); err != nil {
+	if err := computeArgs(env, args, frame); err != nil {
 		return nil, err
 	}
-	obj, err := bce.Proc.Fn(env, env.Args(len(args)), bind)
+	obj, err := bce.Proc.Fn(env, env.Args(len(args)), frame)
 	env.Kill(len(args))
 	if err != nil {
 		return nil, bce.Proc.handleCallError(err)
@@ -253,8 +253,8 @@ func (bce *builtinCall0Expr) Unparse() sx.Object {
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *builtinCall0Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	obj, err := bce.Proc.Fn0(env, bind)
+func (bce *builtinCall0Expr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
+	obj, err := bce.Proc.Fn0(env, frame)
 	if err != nil {
 		return nil, bce.Proc.handleCallError(err)
 	}
@@ -290,12 +290,12 @@ func (bce *BuiltinCall1Expr) Unparse() sx.Object {
 }
 
 // Compute the value of this expression in the given environment.
-func (bce *BuiltinCall1Expr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	val, err := env.Execute(bce.Arg, bind)
+func (bce *BuiltinCall1Expr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
+	val, err := env.Execute(bce.Arg, frame)
 	if err != nil {
 		return nil, err
 	}
-	obj, err := bce.Proc.Fn1(env, val, bind)
+	obj, err := bce.Proc.Fn1(env, val, frame)
 	if err != nil {
 		return nil, bce.Proc.handleCallError(err)
 	}
