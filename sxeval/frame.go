@@ -164,17 +164,17 @@ func (f *Frame) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	return sx.Nil(), false
 }
 
-// LookupN will lookup the symbol in the N-th parent.
-func (f *Frame) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
+// lookupN will lookup the symbol in the N-th parent.
+func (f *Frame) lookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
 	for range n {
 		f = f.parent
 	}
 	return f.Lookup(sym)
 }
 
-// FindFrame returns the frame, where the symbol is bound to a value.
+// findFrame returns the frame, where the symbol is bound to a value.
 // If no binding was found, nil is returned.
-func (f *Frame) FindFrame(sym *sx.Symbol) *Frame {
+func (f *Frame) findFrame(sym *sx.Symbol) *Frame {
 	for curr := f; curr != nil; curr = curr.parent {
 		if _, found := curr.Lookup(sym); found {
 			return curr
@@ -241,8 +241,8 @@ func (f *Frame) resolveFull(sym *sx.Symbol) (sx.Object, *Frame, int) {
 	return sx.Nil(), nil, depth
 }
 
-// Resolve a symbol in a frame and all of its parent frames.
-func (f *Frame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
+// resolve a symbol in a frame and all of its parent frames.
+func (f *Frame) resolve(sym *sx.Symbol) (sx.Object, bool) {
 	if sym != nil {
 		for curr := f; curr != nil; curr = curr.parent {
 			if obj, found := curr.Lookup(sym); found {
@@ -253,9 +253,9 @@ func (f *Frame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
 	return sx.Nil(), false
 }
 
-// ResolveN resolves a symbol in the N-th parent frame and all of its parent
+// resolveN resolves a symbol in the N-th parent frame and all of its parent
 // frames.
-func (f *Frame) ResolveN(sym *sx.Symbol, n int) (sx.Object, bool) {
+func (f *Frame) resolveN(sym *sx.Symbol, n int) (sx.Object, bool) {
 	if sym != nil {
 		curr := f
 		for range n {
