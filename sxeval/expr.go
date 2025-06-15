@@ -16,7 +16,6 @@ package sxeval
 import (
 	"fmt"
 	"io"
-	"math"
 	"strings"
 
 	"t73f.de/r/sx"
@@ -143,26 +142,35 @@ func (use UnboundSymbolExpr) Unparse() sx.Object { return use.sym }
 
 // Improve the expression into a possible simpler one.
 func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
-	obj, depth, isConst := imp.Resolve(use.sym)
-	if depth == math.MinInt {
-		return use, nil
+	depth := 0
+	for currFrame := imp.frame; currFrame != nil; currFrame = currFrame.parent {
+		if _, found := currFrame.Lookup(use.sym); found {
+			return imp.Improve(&frameSymbolExpr{sym: use.sym, lvl: depth})
+		}
+		depth++
 	}
-	if isConst {
-		return imp.Improve(ObjExpr{Obj: obj})
+
+	depth = 0
+	for currBinding := imp.env.globals; currBinding != nil; currBinding = currBinding.parent {
+		if obj, found := currBinding.Lookup(use.sym); found {
+			if currBinding.frozen {
+				return imp.Improve(ObjExpr{Obj: obj})
+			}
+			return imp.Improve(&globalsSymbolExpr{sym: use.sym, lvl: depth})
+		}
+		depth++
 	}
-	if depth >= 0 {
-		return imp.Improve(&lookupSymbolExpr{sym: use.sym, lvl: depth})
-	}
-	return imp.Improve(&resolveSymbolExpr{sym: use.sym, skip: imp.Height()})
+	return use, nil
 }
 
 // Compute the expression in a frame and return the result.
 func (use UnboundSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
-	if obj, found := env.Resolve(use.sym, frame); found {
-		return obj, nil
+	for curr := env.globals; curr != nil; curr = curr.parent {
+		if obj, found := curr.Lookup(use.sym); found {
+			return obj, nil
+		}
 	}
-	return nil, frame.MakeNotBoundError(use.sym)
-
+	return nil, env.MakeNotBoundError(use.sym, frame)
 }
 
 // Print the expression on the given writer.
@@ -170,57 +178,56 @@ func (use UnboundSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{UNBOUND %v}", use.sym)
 }
 
-// resolveSymbolExpr is a special `UnboundSymbolExpr` that must be resolved in
-// the base environment. Traversal through all nested lexical bindings is not
-// needed.
-type resolveSymbolExpr struct {
-	sym  *sx.Symbol
-	skip int
-}
-
-// IsPure signals an expression that has no side effects.
-func (resolveSymbolExpr) IsPure() bool { return true }
-
-// Unparse the expression back into a form object.
-func (rse resolveSymbolExpr) Unparse() sx.Object { return rse.sym }
-
-// Compute the expression in a frame and return the result.
-func (rse resolveSymbolExpr) Compute(_ *Environment, frame *Frame) (sx.Object, error) {
-	if obj, found := frame.ResolveN(rse.sym, rse.skip); found {
-		return obj, nil
-	}
-	return nil, frame.MakeNotBoundError(rse.sym)
-}
-
-// Print the expression on the given writer.
-func (rse resolveSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{RESOLVE/%d %v}", rse.skip, rse.sym)
-}
-
-// lookupSymbolExpr is a special UnboundSymbolExpr that gives an indication
+// frameSymbolExpr is a special UnboundSymbolExpr that gives an indication
 // about the nesting level of `Binding`s, where the symbol will be bound.
-type lookupSymbolExpr struct {
+type frameSymbolExpr struct {
 	sym *sx.Symbol
 	lvl int
 }
 
 // IsPure signals an expression that has no side effects.
-func (*lookupSymbolExpr) IsPure() bool { return true }
+func (*frameSymbolExpr) IsPure() bool { return true }
 
 // Unparse the expression back into a form object.
-func (lse *lookupSymbolExpr) Unparse() sx.Object { return lse.sym }
+func (lse *frameSymbolExpr) Unparse() sx.Object { return lse.sym }
 
 // Compute the expression in a frame and return the result.
-func (lse *lookupSymbolExpr) Compute(_ *Environment, frame *Frame) (sx.Object, error) {
-	if obj, found := frame.LookupN(lse.sym, lse.lvl); found {
+func (lse *frameSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
+	if obj, found := frame.lookupN(lse.sym, lse.lvl); found {
 		return obj, nil
 	}
-	return nil, frame.MakeNotBoundError(lse.sym)
+	return nil, env.MakeNotBoundError(lse.sym, frame)
 }
 
 // Print the expression on the given writer.
-func (lse lookupSymbolExpr) Print(w io.Writer) (int, error) {
+func (lse frameSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{LOOKUP/%d %v}", lse.lvl, lse.sym)
+}
+
+// globalsSymbolExpr is a special UnboundSymbolExpr that gives an indication
+// about the nesting level of `Binding`s, where the symbol will be bound.
+type globalsSymbolExpr struct {
+	sym *sx.Symbol
+	lvl int
+}
+
+// IsPure signals an expression that has no side effects.
+func (*globalsSymbolExpr) IsPure() bool { return true }
+
+// Unparse the expression back into a form object.
+func (lse *globalsSymbolExpr) Unparse() sx.Object { return lse.sym }
+
+// Compute the expression in a frame and return the result.
+func (lse *globalsSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
+	if obj, found := env.globals.LookupN(lse.sym, lse.lvl); found {
+		return obj, nil
+	}
+	return nil, env.MakeNotBoundError(lse.sym, frame)
+}
+
+// Print the expression on the given writer.
+func (lse globalsSymbolExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{GLOBAL/%d %v}", lse.lvl, lse.sym)
 }
 
 // ----- CallExpr -------------------------------------------------------------

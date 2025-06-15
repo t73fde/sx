@@ -225,10 +225,10 @@ func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	}
 	lambdaImp := imp.MakeChildImprover(le.Name+"-improve", bindSize)
 	for _, sym := range le.Params {
-		lambdaImp.Bind(sym)
+		lambdaImp.BindFrame(sym)
 	}
 	if rest := le.Rest; rest != nil {
-		lambdaImp.Bind(rest)
+		lambdaImp.BindFrame(rest)
 	}
 
 	expr, err := lambdaImp.Improve(le.Expr)

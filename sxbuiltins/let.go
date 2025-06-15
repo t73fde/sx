@@ -215,7 +215,7 @@ func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 
 	letImp := imp.MakeChildImprover("let-improve", len(le.Vals))
 	for _, sym := range le.Symbols {
-		letImp.Bind(sym)
+		letImp.BindFrame(sym)
 	}
 	expr, err := letImp.Improve(le.Body)
 	if err == nil {
@@ -287,7 +287,7 @@ func (lse *LetStarExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		if i == 0 {
 			letStarImp = imp.MakeChildImprover("let*-improve", lse.numSymbols)
 		}
-		letStarImp.Bind(lse.Symbols[i])
+		letStarImp.BindFrame(lse.Symbols[i])
 	}
 
 	expr, err := letStarImp.Improve(lse.Body)

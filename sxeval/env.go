@@ -283,6 +283,18 @@ func (ee ExecuteError) PrintCallStack(w io.Writer, prefix string, logger *slog.L
 
 // ----- Resolve operations
 
+// BindGlobal binds a symv to a value in the global environment.
+func (env *Environment) BindGlobal(sym *sx.Symbol, val sx.Object) error {
+	return env.globals.Bind(sym, val)
+}
+
+// FindGlobal returns the binding, where the symbol is bound to a value.
+func (env *Environment) FindGlobal(sym *sx.Symbol) *Binding {
+	return env.globals.FindBinding(sym)
+}
+
+// Resolve returns the object that is bound to a symbol. It searches in all
+// frames and in the global environment.
 func (env *Environment) Resolve(sym *sx.Symbol, frame *Frame) (sx.Object, bool) {
 	if sym != nil {
 		for curr := frame; curr != nil; curr = curr.parent {
@@ -297,6 +309,44 @@ func (env *Environment) Resolve(sym *sx.Symbol, frame *Frame) (sx.Object, bool) 
 		}
 	}
 	return nil, false
+}
+
+// MakeNotBoundError builds an error to signal that a symbol was not bound in
+// the environment.
+func (env *Environment) MakeNotBoundError(sym *sx.Symbol, frame *Frame) NotBoundError {
+	return NotBoundError{Frame: frame, Globals: env.globals, Sym: sym}
+}
+
+// NotBoundError signals that a symbol was not found in a binding.
+type NotBoundError struct {
+	Frame   *Frame
+	Globals *Binding
+	Sym     *sx.Symbol
+}
+
+func (e NotBoundError) Error() string {
+	var sb strings.Builder
+	if e.Sym == nil {
+		sb.WriteString("symbol == nil, not bound in ")
+	} else {
+		fmt.Fprintf(&sb, "symbol %q not bound in ", e.Sym.String())
+	}
+	second := false
+	for frame := e.Frame; frame != nil; frame = frame.Parent() {
+		if second {
+			sb.WriteString("->")
+		}
+		fmt.Fprintf(&sb, "%q", frame.Name())
+		second = true
+	}
+	for binding := e.Globals; binding != nil; binding = binding.Parent() {
+		if second {
+			sb.WriteString("->")
+		}
+		fmt.Fprintf(&sb, "%q", binding.Name())
+		second = true
+	}
+	return sb.String()
 }
 
 // ----- Stack operations

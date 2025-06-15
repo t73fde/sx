@@ -54,23 +54,23 @@ var NotBoundError = sxeval.Builtin{
 	MinArity: 1,
 	MaxArity: 2,
 	TestPure: nil,
-	Fn1: func(_ *sxeval.Environment, arg sx.Object, frame *sxeval.Frame) (sx.Object, error) {
+	Fn1: func(env *sxeval.Environment, arg sx.Object, frame *sxeval.Frame) (sx.Object, error) {
 		sym, err := GetSymbol(arg, 0)
 		if err != nil {
 			return nil, err
 		}
-		return nil, frame.MakeNotBoundError(sym)
+		return nil, env.MakeNotBoundError(sym, frame)
 	},
-	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Frame) (sx.Object, error) {
+	Fn: func(env *sxeval.Environment, args sx.Vector, _ *sxeval.Frame) (sx.Object, error) {
 		sym, err := GetSymbol(args[0], 0)
 		if err != nil {
 			return nil, err
 		}
-		bind, err := GetBinding(args[1], 1)
+		frame, err := GetFrame(args[1], 1)
 		if err != nil {
 			return nil, err
 		}
-		return nil, bind.MakeNotBoundError(sym)
+		return nil, env.MakeNotBoundError(sym, frame)
 	},
 	NoCallError: true,
 }

@@ -151,7 +151,7 @@ func (f *Frame) Bind(sym *sx.Symbol, obj sx.Object) {
 // found, the search will *not* be continued in the parent binding.
 // Use the global `Resolve` function, if you want a search up to the parent.
 func (f *Frame) Lookup(sym *sx.Symbol) (sx.Object, bool) {
-	if sym == nil {
+	if sym == nil || f == nil {
 		return sx.Nil(), false
 	}
 	if m := f.mso; m != nil {
@@ -172,9 +172,9 @@ func (f *Frame) lookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
 	return f.Lookup(sym)
 }
 
-// findFrame returns the frame, where the symbol is bound to a value.
+// FindFrame returns the frame, where the symbol is bound to a value.
 // If no binding was found, nil is returned.
-func (f *Frame) findFrame(sym *sx.Symbol) *Frame {
+func (f *Frame) FindFrame(sym *sx.Symbol) *Frame {
 	for curr := f; curr != nil; curr = curr.parent {
 		if _, found := curr.Lookup(sym); found {
 			return curr
@@ -212,6 +212,9 @@ func (f *Frame) Symbols() []*sx.Symbol {
 
 // Bindings returns all bindings as an a-list in some random order.
 func (f *Frame) Bindings() *sx.Pair {
+	if f == nil {
+		return sx.Nil()
+	}
 	if m := f.mso; m != nil {
 		var result sx.ListBuilder
 		for sym, obj := range m {
@@ -225,56 +228,8 @@ func (f *Frame) Bindings() *sx.Pair {
 	return nil
 }
 
-// resolveFull resolves a symbol and returns its possible binding, an
-// indication about its const-ness and a reference to the binding where
-// the symbol was bound.
-func (f *Frame) resolveFull(sym *sx.Symbol) (sx.Object, *Frame, int) {
-	depth := 0
-	if sym != nil {
-		for curr := f; curr != nil; curr = curr.parent {
-			if obj, found := curr.Lookup(sym); found {
-				return obj, curr, depth
-			}
-			depth++
-		}
-	}
-	return sx.Nil(), nil, depth
-}
-
-// resolve a symbol in a frame and all of its parent frames.
-func (f *Frame) resolve(sym *sx.Symbol) (sx.Object, bool) {
-	if sym != nil {
-		for curr := f; curr != nil; curr = curr.parent {
-			if obj, found := curr.Lookup(sym); found {
-				return obj, true
-			}
-		}
-	}
-	return sx.Nil(), false
-}
-
-// resolveN resolves a symbol in the N-th parent frame and all of its parent
-// frames.
-func (f *Frame) resolveN(sym *sx.Symbol, n int) (sx.Object, bool) {
-	if sym != nil {
-		curr := f
-		for range n {
-			curr = curr.parent
-		}
-		for ; curr != nil; curr = curr.parent {
-			if obj, found := curr.Lookup(sym); found {
-				return obj, true
-			}
-		}
-	}
-	return sx.Nil(), false
-}
-
 // GetFrame returns the object as a frame, if possible.
 func GetFrame(obj sx.Object) (*Frame, bool) {
-	if sx.IsNil(obj) {
-		return nil, false
-	}
 	f, ok := obj.(*Frame)
 	return f, ok
 }

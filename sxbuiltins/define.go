@@ -74,7 +74,10 @@ func (de *DefineExpr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (de *DefineExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
-	imp.Bind(de.Sym)
+	err := imp.BindGlobals(de.Sym)
+	if err != nil {
+		return nil, err
+	}
 	expr, err := imp.Improve(de.Val)
 	if err == nil {
 		de.Val = expr
@@ -86,10 +89,9 @@ func (de *DefineExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 func (de *DefineExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
 	val, err := env.Execute(de.Val, frame)
 	if err == nil {
-		frame.Bind(de.Sym, val)
-		return val, nil
+		err = env.BindGlobal(de.Sym, val)
 	}
-	return nil, err
+	return val, err
 }
 
 // Print the expression on the given writer.
@@ -176,11 +178,19 @@ func (se *SetXExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Ob
 	sym := se.Sym
 	fr := frame.FindFrame(sym)
 	if fr == nil {
-		return nil, frame.MakeNotBoundError(sym)
+		bi := env.FindGlobal(sym)
+		if bi == nil {
+			return nil, env.MakeNotBoundError(sym, frame)
+		}
+		val, err := env.Execute(se.Val, frame)
+		if err == nil {
+			err = bi.Bind(sym, val)
+		}
+		return val, err
 	}
 	val, err := env.Execute(se.Val, frame)
 	if err == nil {
-		err = fr.Bind(sym, val)
+		fr.Bind(sym, val)
 	}
 	return val, err
 }

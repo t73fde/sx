@@ -14,8 +14,6 @@
 package sxeval
 
 import (
-	"math"
-
 	"t73f.de/r/sx"
 )
 
@@ -113,23 +111,12 @@ func (imp *Improver) Height() int { return imp.height - imp.base.height }
 // Frame returns the frame of this environment.
 func (imp *Improver) Frame() *Frame { return imp.frame }
 
-// Resolve the symbol into an object, and return the binding depth plus an
-// indication about the const-ness of the value. If the symbol could not be
-// resolved, depth has the value of `math.MinInt`. If the symbol was found
-// in the base environment, depth is set to -1, to indicate a possible unbound
-// situation.
-func (imp *Improver) Resolve(sym *sx.Symbol) (sx.Object, int, bool) {
-	obj, b, depth := imp.frame.resolveFull(sym)
-	if b == nil {
-		return nil, math.MinInt, false
-	}
-	if depth >= imp.Height() {
-		return obj, -1, b.IsFrozen()
-	}
-	return obj, depth, b.IsFrozen()
+// BindFrame the undefined value to the symbol in the current frame.
+func (imp *Improver) BindFrame(sym *sx.Symbol) {
+	imp.frame.Bind(sym, sx.MakeUndefined())
 }
 
-// Bind the undefined value to the symbol in the current frame.
-func (imp *Improver) Bind(sym *sx.Symbol) {
-	imp.frame.Bind(sym, sx.MakeUndefined())
+// BindGlobals the undefined value to the symbol in the current global binding.
+func (imp *Improver) BindGlobals(sym *sx.Symbol) error {
+	return imp.env.globals.Bind(sym, sx.MakeUndefined())
 }
