@@ -26,11 +26,11 @@ type Improvable interface {
 
 // Improver guides the improve operation.
 type Improver struct {
-	base     *Improver
 	frame    *Frame // Current frame
-	height   int    // Height of current binding
+	parent   *Improver
 	env      *Environment
 	observer ImproveObserver
+	dynamic  bool // symbol resolving by full search?
 }
 
 // ImproveObserver monitors the inner workings of the improve process.
@@ -44,13 +44,13 @@ type ImproveObserver interface {
 }
 
 // MakeChildImprover creates a subordinate improver with a new binding.
-func (imp *Improver) MakeChildImprover(name string, baseSize int) *Improver {
+func (imp *Improver) MakeChildImprover(name string, baseSize int, dynamic bool) *Improver {
 	return &Improver{
-		base:     imp.base,
+		parent:   imp.parent,
 		frame:    imp.frame.MakeChildFrame(name, baseSize),
-		height:   imp.height + 1,
 		env:      imp.env,
 		observer: imp.observer,
+		dynamic:  dynamic,
 	}
 }
 
@@ -104,9 +104,6 @@ func (imp *Improver) ImproveFoldCall(proc Callable, args []Expr) (Expr, error) {
 	}
 	return nil, nil
 }
-
-// Height returns the difference between the actual and the base height.
-func (imp *Improver) Height() int { return imp.height - imp.base.height }
 
 // Frame returns the frame of this environment.
 func (imp *Improver) Frame() *Frame { return imp.frame }

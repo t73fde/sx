@@ -223,7 +223,7 @@ func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 	if le.Rest != nil {
 		bindSize++
 	}
-	lambdaImp := imp.MakeChildImprover(le.Name+"-improve", bindSize)
+	lambdaImp := imp.MakeChildImprover(le.Name+"-improve", bindSize, le.Type > 0)
 	for _, sym := range le.Params {
 		lambdaImp.BindFrame(sym)
 	}

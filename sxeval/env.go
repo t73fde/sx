@@ -114,11 +114,10 @@ func (env *Environment) Parse(obj sx.Object, frame *Frame) (Expr, error) {
 	}
 	imp := &Improver{
 		frame:    frame,
-		height:   0,
 		env:      env,
 		observer: env.obImprove,
 	}
-	imp.base = imp
+	imp.parent = imp
 	return imp.Improve(expr)
 }
 
