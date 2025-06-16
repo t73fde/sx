@@ -15,6 +15,7 @@ package sx
 
 import (
 	"fmt"
+	"iter"
 	"regexp"
 	"sync"
 )
@@ -55,6 +56,9 @@ func (pkg *Package) String() string {
 // GoString returns the go string representation.
 func (pkg *Package) GoString() string { return pkg.name }
 
+// Name returns the package name.
+func (pkg *Package) Name() string { return pkg.name }
+
 // GetPackage returns the object as a package if possible.
 func GetPackage(obj Object) (*Package, bool) {
 	if IsNil(obj) {
@@ -65,6 +69,17 @@ func GetPackage(obj Object) (*Package, bool) {
 }
 
 var packageRegistry = map[string]*Package{}
+
+// AllPackages returns an iterator of all packages.
+func AllPackages() iter.Seq[*Package] {
+	return func(yield func(*Package) bool) {
+		for _, pkg := range packageRegistry {
+			if !yield(pkg) {
+				return
+			}
+		}
+	}
+}
 
 // FindPackage returns the package with the given name.
 func FindPackage(name string) *Package {

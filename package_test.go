@@ -47,6 +47,12 @@ func TestMakePackage(t *testing.T) {
 			}
 		})
 	}
+
+	for pkg := range sx.AllPackages() {
+		if p := sx.FindPackage(pkg.Name()); p == nil {
+			t.Error("Package missing:", pkg.Name())
+		}
+	}
 }
 
 func TestCurrentPackage(t *testing.T) {
