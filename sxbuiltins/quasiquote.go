@@ -28,7 +28,7 @@ import (
 // QuasiquoteS parses a form that is quasi-quotated
 var QuasiquoteS = sxeval.Special{
 	Name: sx.SymbolQuasiquote.String(),
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
 		if sx.IsNil(args) {
 			return nil, sxeval.ErrNoArgs
 		}
@@ -36,7 +36,7 @@ var QuasiquoteS = sxeval.Special{
 			return nil, fmt.Errorf("more than one argument: %v", args)
 		}
 		qqp := qqParser{pe: pe}
-		return qqp.parseQQ(args.Car(), bind)
+		return qqp.parseQQ(args.Car(), frame)
 	},
 }
 
@@ -44,7 +44,7 @@ var QuasiquoteS = sxeval.Special{
 // not allowed outside a quasiquote).
 var UnquoteS = sxeval.Special{
 	Name: sx.SymbolUnquote.String(),
-	Fn: func(*sxeval.ParseEnvironment, *sx.Pair, *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(*sxeval.ParseEnvironment, *sx.Pair, *sxeval.Frame) (sxeval.Expr, error) {
 		return nil, errNotAllowedOutsideQQ
 	},
 }
@@ -53,7 +53,7 @@ var UnquoteS = sxeval.Special{
 // because it is not allowed outside a quasiquote).
 var UnquoteSplicingS = sxeval.Special{
 	Name: sx.SymbolUnquoteSplicing.String(),
-	Fn: func(*sxeval.ParseEnvironment, *sx.Pair, *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(*sxeval.ParseEnvironment, *sx.Pair, *sxeval.Frame) (sxeval.Expr, error) {
 		return nil, errNotAllowedOutsideQQ
 	},
 }
@@ -62,11 +62,11 @@ var errNotAllowedOutsideQQ = errors.New("not allowed outside " + sx.SymbolQuasiq
 
 type qqParser struct{ pe *sxeval.ParseEnvironment }
 
-func (qqp *qqParser) parse(obj sx.Object, bind *sxeval.Binding) (sxeval.Expr, error) {
-	return qqp.pe.Parse(obj, bind)
+func (qqp *qqParser) parse(obj sx.Object, frame *sxeval.Frame) (sxeval.Expr, error) {
+	return qqp.pe.Parse(obj, frame)
 }
 
-func (qqp *qqParser) parseQQ(obj sx.Object, bind *sxeval.Binding) (sxeval.Expr, error) {
+func (qqp *qqParser) parseQQ(obj sx.Object, frame *sxeval.Frame) (sxeval.Expr, error) {
 	pair, isPair := sx.GetPair(obj)
 	if !isPair || pair == nil {
 		// `basic is the same as (quote basic), for any form basic that is not a list.
@@ -80,7 +80,7 @@ func (qqp *qqParser) parseQQ(obj sx.Object, bind *sxeval.Binding) (sxeval.Expr, 
 				return nil, err
 			}
 			// `,form is the same as form, for any form.
-			return qqp.parse(form, bind)
+			return qqp.parse(form, frame)
 		}
 		if sx.SymbolQuasiquote.IsEqual(sym) {
 			form, err := getUnquoteObj(sym, pair)
@@ -89,7 +89,7 @@ func (qqp *qqParser) parseQQ(obj sx.Object, bind *sxeval.Binding) (sxeval.Expr, 
 			}
 			// If the backquote syntax is nested, the innermost backquoted form should be expanded first.
 			// This means that if several commas occur in a row, the leftmost one belongs to the innermost backquote.
-			expr, err := qqp.parseQQ(form, bind)
+			expr, err := qqp.parseQQ(form, frame)
 			if err != nil {
 				return nil, err
 			}
@@ -100,7 +100,7 @@ func (qqp *qqParser) parseQQ(obj sx.Object, bind *sxeval.Binding) (sxeval.Expr, 
 			return nil, fmt.Errorf("(%v %v) is not allowed", sx.SymbolQuasiquote, obj)
 		}
 	}
-	args, err := qqp.parseList(pair, bind)
+	args, err := qqp.parseList(pair, frame)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func listStarArgs(args []sxeval.Expr) sxeval.Expr {
 	}
 }
 
-func (qqp *qqParser) parseList(lst *sx.Pair, bind *sxeval.Binding) ([]sxeval.Expr, error) {
+func (qqp *qqParser) parseList(lst *sx.Pair, frame *sxeval.Frame) ([]sxeval.Expr, error) {
 	length, prevPair, lastPair := analyseList(lst)
 	if length == 0 {
 		return nil, nil
@@ -259,7 +259,7 @@ func (qqp *qqParser) parseList(lst *sx.Pair, bind *sxeval.Binding) ([]sxeval.Exp
 					return nil, err
 				}
 				// `(x1 x2 x3 ... xn . ,form) may be interpreted to mean (append [ x1] [ x2] [ x3] ... [ xn] form)
-				expr, err := qqp.parse(obj, bind)
+				expr, err := qqp.parse(obj, frame)
 				if err != nil {
 					return nil, err
 				}
@@ -294,7 +294,7 @@ func (qqp *qqParser) parseList(lst *sx.Pair, bind *sxeval.Binding) ([]sxeval.Exp
 					if err != nil {
 						return nil, err
 					}
-					expr, err := qqp.parse(obj, bind)
+					expr, err := qqp.parse(obj, frame)
 					if err != nil {
 						return nil, err
 					}
@@ -307,7 +307,7 @@ func (qqp *qqParser) parseList(lst *sx.Pair, bind *sxeval.Binding) ([]sxeval.Exp
 					if err != nil {
 						return nil, err
 					}
-					expr, err := qqp.parse(obj, bind)
+					expr, err := qqp.parse(obj, frame)
 					if err != nil {
 						return nil, err
 					}
@@ -317,7 +317,7 @@ func (qqp *qqParser) parseList(lst *sx.Pair, bind *sxeval.Binding) ([]sxeval.Exp
 			}
 		}
 		// -- [form] is interpreted as (list `form), which contains a backquoted form that must then be further interpreted.
-		expr, err := qqp.parseQQ(elem, bind)
+		expr, err := qqp.parseQQ(elem, frame)
 		if err != nil {
 			return nil, err
 		}
@@ -384,8 +384,8 @@ func (mle MakeListExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (mle MakeListExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-	elem, err := env.Execute(mle.Elem, bind)
+func (mle MakeListExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
+	elem, err := env.Execute(mle.Elem, frame)
 	if err != nil {
 		return nil, err
 	}

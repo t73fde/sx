@@ -47,7 +47,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 
 			var sb strings.Builder
 			bind := root.MakeChildBinding(tc.name, 0)
-			env := sxeval.MakeEnvironment()
+			env := sxeval.MakeEnvironment(bind)
 			for {
 				obj, err := rd.Read()
 				if err != nil {
@@ -61,7 +61,7 @@ func (tcs tTestCases) Run(t *testing.T) {
 					t.Errorf("Error %v while reading %s", err, tc.src)
 					return
 				}
-				res, err := env.Eval(obj, bind)
+				res, err := env.Eval(obj, nil)
 				if size := env.Size(); size > 0 {
 					t.Error("stack not empty, size:", size)
 				}

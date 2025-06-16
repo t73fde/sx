@@ -47,7 +47,7 @@ func LoadPrelude(root *sxeval.Binding) error {
 	}
 
 	rd := sxreader.MakeReader(strings.NewReader(prelude))
-	env := sxeval.MakeEnvironment()
+	env := sxeval.MakeEnvironment(root)
 	for {
 		form, err := rd.Read()
 		if err != nil {
@@ -56,7 +56,7 @@ func LoadPrelude(root *sxeval.Binding) error {
 			}
 			return err
 		}
-		_, err = env.Eval(form, root)
+		_, err = env.Eval(form, nil)
 		if err != nil {
 			return err
 		}

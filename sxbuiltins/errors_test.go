@@ -57,7 +57,7 @@ var tcsError = tTestCases{
 	},
 	{name: "not-bound-error-sym-env-parent",
 		src:     "(not-bound-error 'sym (parent-binding (current-binding)))",
-		exp:     "{[{symbol \"sym\" not bound in \"vars\"->\"root\"}]}",
+		exp:     "{[{symbol \"sym\" not bound in \"not-bound-error-sym-env-parent\"->\"vars\"->\"root\"}]}",
 		withErr: true,
 	},
 }

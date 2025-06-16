@@ -34,7 +34,7 @@ can be done in advance, while computing can be done much later.
 
 To make the steps of evaluation easier to handle, `sxeval` defines an
 "environment" type (`sxeval.Environment`) that provides appropriate functions.
-Its central attribute is the current "binding".
+Its central attribute is the global "binding".
 
 `sxeval.Binding`s are effectively just a mapping of `sx.Symbol`s to an
 `sx.Object`. A `sx.Symbol` is *bound* to a `sx.Object`.
@@ -43,15 +43,19 @@ The are two types of bindings: a *constant binding* does not allow to update
 the `sx.Object` that is bound to the `sx.Symbol`. A *variable binding* allows
 this update.
 
-`sxeval.Binding`s form a hierarchy: all but one have a *parent
-binding*. This allows to overwrite constant bindings somehow: create a
-child parent and bind the `sx.Symbol` to another `sx.Object`, and evaluate a
-`sx.Object` in the new child binding.
+`sxeval.Binding`s form a hierarchy: all but one have a *parent binding*. This
+allows to overwrite constant bindings somehow: create a child parent and bind
+the `sx.Symbol` to another `sx.Object`, and evaluate a `sx.Object` in the new
+child binding.
 
-Resolving a `sx.Symbol` works as follows: when a `sx.Symbol` is looked up in a
-given environment, and it is not bound in that environments binding, the
-`sx.Symbol` is resolved in the parent binding.
+Similar, a `sxeval.Frame` also binds symbols to ocjects, but for the current
+call. Frames also form a hierarchy, up to the outmost call.
 
-Of course, there is a binding that does not have a parent binding: the
-*root binding*. If a `sx.Symbol` is not bound in the root binding, the
-lookup operation fails.
+Resolving a `sx.Symbol` works as follows: when a `sx.Symbol` is looked up in
+a given frame, and it is not bound in that frames binding, the `sx.Symbol` is
+resolved in the parent frame. If the symbol is still not found, it is looked up
+in the global `sxeval.Binding` and in its parent bindings.
+
+Of course, there is a binding that does not have a parent binding: the *root
+binding*. If a `sx.Symbol` is not bound in the root binding, the lookup
+operation fails.

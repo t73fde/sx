@@ -29,8 +29,10 @@ import (
 type Environment struct {
 	stack []sx.Object
 
-	newExpr Expr
-	newBind *Binding
+	globals *Binding
+
+	newExpr  Expr
+	newFrame *Frame
 
 	obCompute ComputeObserver
 	obParse   ParseObserver
@@ -60,18 +62,19 @@ func (env *Environment) String() string {
 type ComputeObserver interface {
 	// BeforeCompute is called immediate before the given expression is computed.
 	// The observer may change the expression or abort computation with an error.
-	BeforeCompute(*Environment, Expr, *Binding) (Expr, error)
+	BeforeCompute(*Environment, Expr, *Frame) (Expr, error)
 
 	// AfterCompute is called immediate after the given expression was computed,
 	// resulting in an `sx.Object` and an error.
-	AfterCompute(*Environment, Expr, *Binding, sx.Object, error)
+	AfterCompute(*Environment, Expr, *Frame, sx.Object, error)
 }
 
 // MakeEnvironment creates an environment for later parsing, improving, and
 // computation of expressions.
-func MakeEnvironment() *Environment {
+func MakeEnvironment(globals *Binding) *Environment {
 	return &Environment{
-		stack: make([]sx.Object, 0, 1024),
+		stack:   make([]sx.Object, 0, 1024),
+		globals: globals,
 	}
 }
 
@@ -94,27 +97,27 @@ func (env *Environment) SetImproveObserver(observe ImproveObserver) *Environment
 }
 
 // Eval parses the given object and runs it in the environment.
-func (env *Environment) Eval(obj sx.Object, bind *Binding) (sx.Object, error) {
-	expr, err := env.Parse(obj, bind)
+func (env *Environment) Eval(obj sx.Object, frame *Frame) (sx.Object, error) {
+	expr, err := env.Parse(obj, frame)
 	if err != nil {
 		return sx.Nil(), err
 	}
-	return env.Run(expr, bind)
+	return env.Run(expr, frame)
 }
 
 // Parse the given object.
-func (env *Environment) Parse(obj sx.Object, bind *Binding) (Expr, error) {
+func (env *Environment) Parse(obj sx.Object, frame *Frame) (Expr, error) {
 	pe := env.MakeParseEnvironment()
-	expr, err := pe.Parse(obj, bind)
+	expr, err := pe.Parse(obj, frame)
 	if err != nil {
 		return expr, err
 	}
 	imp := &Improver{
-		binding:  bind,
-		height:   0,
+		frame:    frame,
+		env:      env,
 		observer: env.obImprove,
 	}
-	imp.base = imp
+	imp.parent = imp
 	return imp.Improve(expr)
 }
 
@@ -124,65 +127,65 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 }
 
 // Run the given expression.
-func (env *Environment) Run(expr Expr, bind *Binding) (sx.Object, error) {
-	return env.Execute(expr, bind)
+func (env *Environment) Run(expr Expr, frame *Frame) (sx.Object, error) {
+	return env.Execute(expr, frame)
 }
 
 // Execute the given expression.
-func (env *Environment) Execute(expr Expr, bind *Binding) (res sx.Object, err error) {
+func (env *Environment) Execute(expr Expr, frame *Frame) (res sx.Object, err error) {
 	for {
 		if exec := env.obCompute; exec != nil {
-			if expr, err = exec.BeforeCompute(env, expr, bind); err != nil {
+			if expr, err = exec.BeforeCompute(env, expr, frame); err != nil {
 				break
 			}
 		}
 
-		if res, err = expr.Compute(env, bind); err == nil {
+		if res, err = expr.Compute(env, frame); err == nil {
 			if exec := env.obCompute; exec != nil {
-				exec.AfterCompute(env, expr, bind, res, nil)
+				exec.AfterCompute(env, expr, frame, res, nil)
 			}
 			return res, nil
 		}
 
 		if exec := env.obCompute; exec != nil {
-			exec.AfterCompute(env, expr, bind, res, err)
+			exec.AfterCompute(env, expr, frame, res, err)
 		}
 		if err != errExecuteAgain {
 			break
 		}
 		expr = env.newExpr
-		bind = env.newBind
+		frame = env.newFrame
 	}
-	return res, env.addExecuteError(expr, bind, err)
+	return res, env.addExecuteError(expr, frame, err)
 }
 
 // ExecuteTCO is called when the expression should be executed at last
 // position, aka as tail call order.
-func (env *Environment) ExecuteTCO(expr Expr, bind *Binding) (sx.Object, error) {
+func (env *Environment) ExecuteTCO(expr Expr, frame *Frame) (sx.Object, error) {
 	// Uncomment this line to test for non-TCO
-	// return env.Execute(expr, bind)
+	// return env.Execute(expr, frame)
 
 	// Just return relevant data for real TCO
 	env.newExpr = expr
-	env.newBind = bind
+	env.newFrame = frame
 	return nil, errExecuteAgain
 }
 
 // ApplyMacro executes the Callable in a macro environment.
-func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, bind *Binding) (sx.Object, error) {
-	macroBind := bind.MakeChildBinding(name, 0)
-	return env.Apply(fn, args, macroBind)
+func (env *Environment) ApplyMacro(name string, fn Callable, args sx.Vector, frame *Frame) (sx.Object, error) {
+	macroFrame := frame.MakeChildFrame(name, 0)
+	return env.Apply(fn, args, macroFrame)
 }
 
 // Apply the given Callable with the arguments.
-func (env *Environment) Apply(fn Callable, args sx.Vector, bind *Binding) (res sx.Object, err error) {
-	if res, err = fn.ExecuteCall(env, args, bind); err == nil {
+func (env *Environment) Apply(fn Callable, args sx.Vector, frame *Frame) (res sx.Object, err error) {
+	if res, err = fn.ExecuteCall(env, args, frame); err == nil {
 		return res, nil
 	}
 	if err == errExecuteAgain {
-		return env.Execute(env.newExpr, env.newBind)
+		return env.Execute(env.newExpr, env.newFrame)
 	}
-	return nil, env.addExecuteError(&applyErrExpr{Proc: fn, Args: args}, bind, err)
+	return nil, env.addExecuteError(&applyErrExpr{Proc: fn, Args: args}, frame, err)
 }
 
 // applyErrExpr is needed, when an error occurs during `env.Apply`, to give a better
@@ -202,27 +205,27 @@ func (ce *applyErrExpr) Unparse() sx.Object {
 	return args.Cons(ce.Proc.(sx.Object))
 }
 
-func (ce *applyErrExpr) Compute(env *Environment, bind *Binding) (sx.Object, error) {
-	return env.Apply(ce.Proc, ce.Args, bind)
+func (ce *applyErrExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
+	return env.Apply(ce.Proc, ce.Args, frame)
 }
 
 func (ce *applyErrExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{call %v %v}", ce.Proc, ce.Args)
 }
 
-// errExecuteAgain is a non-error error signalling that the given expression should be
-// executed again in the given binding.
+// errExecuteAgain is a non-error error signalling that an expression
+// (env.newExpr) should be executed in a frame (env.newFrame).
 var errExecuteAgain = errors.New("TCO trampoline")
 
-func (env *Environment) addExecuteError(expr Expr, bind *Binding, err error) error {
+func (env *Environment) addExecuteError(expr Expr, frame *Frame, err error) error {
 	var execError ExecuteError
 	if errors.As(err, &execError) {
 		execError.CallStack = append(
-			execError.CallStack, ExecuteState{env, slices.Clone(env.stack), bind, expr})
+			execError.CallStack, ExecuteState{env, slices.Clone(env.stack), frame, expr})
 		return execError
 	}
 	return ExecuteError{
-		CallStack: []ExecuteState{{env, slices.Clone(env.stack), bind, expr}},
+		CallStack: []ExecuteState{{env, slices.Clone(env.stack), frame, expr}},
 		err:       err,
 	}
 }
@@ -235,11 +238,11 @@ type ExecuteError struct {
 }
 
 // ExecuteState stores the curent environment, the current stack content,
-// the current binding, and the expression to be computed, for better error messages.
+// the current frame, and the expression to be computed, for better error messages.
 type ExecuteState struct {
 	Env   *Environment
 	Stack []sx.Object
-	Bind  *Binding
+	Frame *Frame
 	Expr  Expr
 }
 
@@ -254,10 +257,10 @@ func (ee ExecuteError) PrintCallStack(w io.Writer, prefix string, logger *slog.L
 		val := elem.Expr.Unparse()
 		stack := elem.Stack
 		if logger != nil {
-			logger.Debug(logmsg, "env", elem.Env, "stack", stack, "binding", elem.Bind, "expr", val)
+			logger.Debug(logmsg, "env", elem.Env, "stack", stack, "frame", elem.Frame, "expr", val)
 		}
 		_, _ = fmt.Fprintf(w, "%v%2d: expr = %T/%v\n", prefix, i, val, val)
-		_, _ = fmt.Fprintf(w, "%v    bind = %v\n", prefix, elem.Bind)
+		_, _ = fmt.Fprintf(w, "%v    frame= %v\n", prefix, elem.Frame)
 		_, _ = fmt.Fprintf(w, "%v    stack= %d:(", prefix, len(stack))
 		for j := 0; j < lengthDataStackOnError && len(stack)-j > 0; j++ {
 			if j > 0 {
@@ -275,6 +278,74 @@ func (ee ExecuteError) PrintCallStack(w io.Writer, prefix string, logger *slog.L
 		_, _ = io.WriteString(w, "\n")
 	}
 
+}
+
+// ----- Resolve operations
+
+// BindGlobal binds a symv to a value in the global environment.
+func (env *Environment) BindGlobal(sym *sx.Symbol, val sx.Object) error {
+	return env.globals.Bind(sym, val)
+}
+
+// FindGlobal returns the binding, where the symbol is bound to a value.
+func (env *Environment) FindGlobal(sym *sx.Symbol) *Binding {
+	return env.globals.FindBinding(sym)
+}
+
+// Resolve returns the object that is bound to a symbol. It searches in all
+// frames and in the global environment.
+func (env *Environment) Resolve(sym *sx.Symbol, frame *Frame) (sx.Object, bool) {
+	if sym != nil {
+		for curr := frame; curr != nil; curr = curr.parent {
+			if obj, found := curr.Lookup(sym); found {
+				return obj, true
+			}
+		}
+		for curr := env.globals; curr != nil; curr = curr.parent {
+			if obj, found := curr.Lookup(sym); found {
+				return obj, true
+			}
+		}
+	}
+	return nil, false
+}
+
+// MakeNotBoundError builds an error to signal that a symbol was not bound in
+// the environment.
+func (env *Environment) MakeNotBoundError(sym *sx.Symbol, frame *Frame) NotBoundError {
+	return NotBoundError{Frame: frame, Globals: env.globals, Sym: sym}
+}
+
+// NotBoundError signals that a symbol was not found in a frame/binding.
+type NotBoundError struct {
+	Frame   *Frame
+	Globals *Binding
+	Sym     *sx.Symbol
+}
+
+func (e NotBoundError) Error() string {
+	var sb strings.Builder
+	if e.Sym == nil {
+		sb.WriteString("symbol == nil, not bound in ")
+	} else {
+		fmt.Fprintf(&sb, "symbol %q not bound in ", e.Sym.String())
+	}
+	second := false
+	for frame := e.Frame; frame != nil; frame = frame.Parent() {
+		if second {
+			sb.WriteString("->")
+		}
+		fmt.Fprintf(&sb, "%q", frame.Name())
+		second = true
+	}
+	for binding := e.Globals; binding != nil; binding = binding.Parent() {
+		if second {
+			sb.WriteString("->")
+		}
+		fmt.Fprintf(&sb, "%q", binding.Name())
+		second = true
+	}
+	return sb.String()
 }
 
 // ----- Stack operations

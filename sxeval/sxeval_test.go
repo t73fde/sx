@@ -34,13 +34,13 @@ func createTestBinding() *sxeval.Binding {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
-		Fn0: func(_ *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
+		Fn0: func(_ *sxeval.Environment, _ *sxeval.Frame) (sx.Object, error) {
 			return sx.String{}, nil
 		},
-		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
+		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Frame) (sx.Object, error) {
 			return sx.MakeString(arg.GoString()), nil
 		},
-		Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Binding) (sx.Object, error) {
+		Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Frame) (sx.Object, error) {
 			var sb strings.Builder
 			for _, val := range args {
 				_, err := sb.WriteString(val.GoString())
@@ -74,8 +74,8 @@ func (testcases testCases) Run(t *testing.T, root *sxeval.Binding) {
 				return
 			}
 			bind := root.MakeChildBinding(tc.name, 0)
-			env := sxeval.MakeEnvironment()
-			res, err := env.Eval(obj, bind)
+			env := sxeval.MakeEnvironment(bind)
+			res, err := env.Eval(obj, nil)
 			if size := env.Size(); size > 0 {
 				t.Error("stack not empty, size:", size)
 			}
@@ -109,7 +109,7 @@ func TestEval(t *testing.T) {
 	root := createTestBinding()
 	_ = sxeval.BindSpecials(root, &sxeval.Special{
 		Name: "quote",
-		Fn: func(_ *sxeval.ParseEnvironment, args *sx.Pair, _ *sxeval.Binding) (sxeval.Expr, error) {
+		Fn: func(_ *sxeval.ParseEnvironment, args *sx.Pair, _ *sxeval.Frame) (sxeval.Expr, error) {
 			return sxeval.ObjExpr{Obj: args.Car()}, nil
 		},
 	})
@@ -144,7 +144,7 @@ func createBindingForTCO() *sxeval.Binding {
 	root.Freeze()
 	rd := sxreader.MakeReader(strings.NewReader(sxevalTests))
 	bind := root.MakeChildBinding("TCO", 128)
-	env := sxeval.MakeEnvironment()
+	env := sxeval.MakeEnvironment(bind)
 	for {
 		obj, err := rd.Read()
 		if err != nil {
@@ -153,7 +153,7 @@ func createBindingForTCO() *sxeval.Binding {
 			}
 			panic(err)
 		}
-		if _, err = env.Eval(obj, bind); err != nil {
+		if _, err = env.Eval(obj, nil); err != nil {
 			panic(err)
 		}
 	}

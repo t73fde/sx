@@ -28,8 +28,8 @@ const defvarName = "defvar"
 // DefVarS parses a (defvar name value) form.
 var DefVarS = sxeval.Special{
 	Name: defvarName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
-		sym, val, err := parseSymValue(pe, args, bind)
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
+		sym, val, err := parseSymValue(pe, args, frame)
 		if err != nil {
 			return nil, err
 		}
@@ -37,7 +37,7 @@ var DefVarS = sxeval.Special{
 	},
 }
 
-func parseSymValue(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (*sx.Symbol, sxeval.Expr, error) {
+func parseSymValue(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (*sx.Symbol, sxeval.Expr, error) {
 	if args == nil {
 		return nil, nil, fmt.Errorf("need at least two arguments")
 	}
@@ -54,7 +54,7 @@ func parseSymValue(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Bind
 	if !isPair {
 		return nil, nil, fmt.Errorf("argument 2 must be a proper list")
 	}
-	val, err := pe.Parse(pair.Car(), bind)
+	val, err := pe.Parse(pair.Car(), frame)
 	return sym, val, err
 }
 
@@ -74,7 +74,6 @@ func (de *DefineExpr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (de *DefineExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
-	_ = imp.Bind(de.Sym)
 	expr, err := imp.Improve(de.Val)
 	if err == nil {
 		de.Val = expr
@@ -83,10 +82,10 @@ func (de *DefineExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (de *DefineExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
-	val, err := env.Execute(de.Val, bind)
+func (de *DefineExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
+	val, err := env.Execute(de.Val, frame)
 	if err == nil {
-		err = bind.Bind(de.Sym, val)
+		err = env.BindGlobal(de.Sym, val)
 	}
 	return val, err
 }
@@ -122,7 +121,7 @@ const setXName = "set!"
 // SetXS parses a (set! name value) form.
 var SetXS = sxeval.Special{
 	Name: setXName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
 		if args == nil {
 			return nil, fmt.Errorf("need at least two arguments")
 		}
@@ -139,7 +138,7 @@ var SetXS = sxeval.Special{
 		if !isPair {
 			return nil, fmt.Errorf("argument 2 must be a proper list, but is: %T/%v", cdr, cdr)
 		}
-		val, err := pe.Parse(pair.Car(), bind)
+		val, err := pe.Parse(pair.Car(), frame)
 		if err != nil {
 			return val, err
 		}
@@ -171,15 +170,23 @@ func (se *SetXExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (se *SetXExpr) Compute(env *sxeval.Environment, bi *sxeval.Binding) (sx.Object, error) {
+func (se *SetXExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
 	sym := se.Sym
-	bind := bi.FindBinding(sym)
-	if bind == nil {
-		return nil, bi.MakeNotBoundError(sym)
+	fr := frame.FindFrame(sym)
+	if fr == nil {
+		bi := env.FindGlobal(sym)
+		if bi == nil {
+			return nil, env.MakeNotBoundError(sym, frame)
+		}
+		val, err := env.Execute(se.Val, frame)
+		if err == nil {
+			err = bi.Bind(sym, val)
+		}
+		return val, err
 	}
-	val, err := env.Execute(se.Val, bi)
+	val, err := env.Execute(se.Val, frame)
 	if err == nil {
-		err = bind.Bind(sym, val)
+		fr.Bind(sym, val)
 	}
 	return val, err
 }

@@ -39,7 +39,7 @@ type LetData struct {
 
 var errNoBindingSpecAndBody = errors.New("binding spec and body missing")
 
-func parseBindingsBody(pe *sxeval.ParseEnvironment, args *sx.Pair, forLetStar bool, bind *sxeval.Binding, data *LetData) error {
+func parseBindingsBody(pe *sxeval.ParseEnvironment, args *sx.Pair, forLetStar bool, frame *sxeval.Frame, data *LetData) error {
 	if args == nil {
 		return errNoBindingSpecAndBody
 	}
@@ -87,19 +87,17 @@ func parseBindingsBody(pe *sxeval.ParseEnvironment, args *sx.Pair, forLetStar bo
 	}
 
 	vals := make([]sxeval.Expr, len(objs))
-	letBind := bind.MakeChildBinding("let-def", len(symbols))
-	parseBind := bind
+	letFrame := frame.MakeChildFrame("let-def", len(symbols))
+	parseFrame := frame
 	if forLetStar {
-		parseBind = letBind
+		parseFrame = letFrame
 	}
 	for i, obj := range objs {
-		expr, err := pe.Parse(obj, parseBind)
+		expr, err := pe.Parse(obj, parseFrame)
 		if err != nil {
 			return err
 		}
-		if err = letBind.Bind(symbols[i], sx.MakeUndefined()); err != nil {
-			return err
-		}
+		letFrame.Bind(symbols[i], sx.MakeUndefined())
 		vals[i] = expr
 	}
 
@@ -107,7 +105,7 @@ func parseBindingsBody(pe *sxeval.ParseEnvironment, args *sx.Pair, forLetStar bo
 	if !isPair {
 		return sx.ErrImproper{Pair: args}
 	}
-	body, err := ParseExprSeq(pe, bodyArgs, letBind)
+	body, err := ParseExprSeq(pe, bodyArgs, letFrame)
 	if err != nil {
 		return err
 	}
@@ -185,9 +183,9 @@ const letName = "let"
 // LetS parses the `(let (binding...) expr...)` syntax.`
 var LetS = sxeval.Special{
 	Name: letName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
 		var result LetExpr
-		if err := parseBindingsBody(pe, args, false, bind, &result.LetData); err != nil {
+		if err := parseBindingsBody(pe, args, false, frame, &result.LetData); err != nil {
 			return nil, err
 		}
 		return &result, nil
@@ -215,9 +213,9 @@ func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		return le, err
 	}
 
-	letImp := imp.MakeChildImprover("let-improve", len(le.Vals))
+	letImp := imp.MakeChildImprover("let-improve", len(le.Vals), false)
 	for _, sym := range le.Symbols {
-		_ = letImp.Bind(sym)
+		letImp.Bind(sym)
 	}
 	expr, err := letImp.Improve(le.Body)
 	if err == nil {
@@ -227,19 +225,17 @@ func (le *LetExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (le *LetExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (le *LetExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
 	syms, vals := le.Symbols, le.Vals
-	letBind := bind.MakeChildBinding("let", len(syms))
+	letFrame := frame.MakeChildFrame("let", len(syms))
 	for i, sym := range syms {
-		obj, err := env.Execute(vals[i], bind)
+		obj, err := env.Execute(vals[i], frame)
 		if err != nil {
 			return nil, err
 		}
-		if err = letBind.Bind(sym, obj); err != nil {
-			return nil, err
-		}
+		letFrame.Bind(sym, obj)
 	}
-	return env.ExecuteTCO(le.Body, letBind)
+	return env.ExecuteTCO(le.Body, letFrame)
 }
 
 // Print the expression on the given writer.
@@ -252,9 +248,9 @@ const letStarName = "let*"
 // LetStarS parses the `(let* (binding...) expr...)` syntax.`
 var LetStarS = sxeval.Special{
 	Name: letStarName,
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Binding) (sxeval.Expr, error) {
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
 		var result LetStarExpr
-		if err := parseBindingsBody(pe, args, true, bind, &result.LetData); err != nil {
+		if err := parseBindingsBody(pe, args, true, frame, &result.LetData); err != nil {
 			return nil, err
 		}
 		result.numSymbols = set.New(result.Symbols...).Length()
@@ -289,9 +285,9 @@ func (lse *LetStarExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 		}
 		lse.Vals[i] = iexpr
 		if i == 0 {
-			letStarImp = imp.MakeChildImprover("let*-improve", lse.numSymbols)
+			letStarImp = imp.MakeChildImprover("let*-improve", lse.numSymbols, false)
 		}
-		_ = letStarImp.Bind(lse.Symbols[i])
+		letStarImp.Bind(lse.Symbols[i])
 	}
 
 	expr, err := letStarImp.Improve(lse.Body)
@@ -302,22 +298,20 @@ func (lse *LetStarExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
 }
 
 // Compute the expression in a frame and return the result.
-func (lse *LetStarExpr) Compute(env *sxeval.Environment, bind *sxeval.Binding) (sx.Object, error) {
+func (lse *LetStarExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
 	syms, vals := lse.Symbols, lse.Vals
-	letStarBind := bind
+	letStarFrame := frame
 	for i, sym := range syms {
-		obj, err := env.Execute(vals[i], letStarBind)
+		obj, err := env.Execute(vals[i], letStarFrame)
 		if err != nil {
 			return nil, err
 		}
 		if i == 0 {
-			letStarBind = bind.MakeChildBinding("let*", lse.numSymbols)
+			letStarFrame = frame.MakeChildFrame("let*", lse.numSymbols)
 		}
-		if err = letStarBind.Bind(sym, obj); err != nil {
-			return nil, err
-		}
+		letStarFrame.Bind(sym, obj)
 	}
-	return env.ExecuteTCO(lse.Body, letStarBind)
+	return env.ExecuteTCO(lse.Body, letStarFrame)
 }
 
 // Print the expression on the given writer.

@@ -44,7 +44,7 @@ and calls the function, resulting in a value of `17`.
 
 Other syntax functions provide a way to update the current evaluation
 environment. `(defvar SYMBOL OBJ)` binds the value of `OBJ` to the symbol
-`SYMBOL`. Later, the binding may be changed.
+`SYMBOL` in the global environment. Later, the binding may be changed.
 
 Since `(defvar add7 (lambda (x) (+ x 7)))` is a little verbose, there is a
 simpler form: `(defun add7 (x) (+x 7))`. Then you can evaluate `(add7 10)`.

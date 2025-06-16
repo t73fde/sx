@@ -30,7 +30,7 @@ type Callable interface {
 
 	// ExecuteCall calls the value with the given args in the given environment
 	// in context of the AST evaluator.
-	ExecuteCall(*Environment, sx.Vector, *Binding) (sx.Object, error)
+	ExecuteCall(*Environment, sx.Vector, *Frame) (sx.Object, error)
 }
 
 // GetCallable returns the object as a Callable, if possible.

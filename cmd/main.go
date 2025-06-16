@@ -44,18 +44,18 @@ type mainEngine struct {
 
 // ----- ComputeObserver methods
 
-func (me *mainEngine) BeforeCompute(_ *sxeval.Environment, expr sxeval.Expr, bind *sxeval.Binding) (sxeval.Expr, error) {
+func (me *mainEngine) BeforeCompute(_ *sxeval.Environment, expr sxeval.Expr, frame *sxeval.Frame) (sxeval.Expr, error) {
 	if me.logExecutor {
 		spaces := strings.Repeat(" ", me.execLevel)
 		me.execLevel++
-		fmt.Printf("%s;X%d %v<-%v ", spaces, me.execLevel, bind, bind.Parent())
+		fmt.Printf("%s;X%d %v<-%v ", spaces, me.execLevel, frame, frame.Parent())
 		_, _ = expr.Print(os.Stdout)
 		fmt.Println()
 	}
 	return expr, nil
 }
 
-func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, _ *sxeval.Binding, obj sx.Object, err error) {
+func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, _ *sxeval.Frame, obj sx.Object, err error) {
 	if me.logExecutor {
 		spaces := strings.Repeat(" ", me.execLevel-1)
 		me.execCount++
@@ -70,19 +70,19 @@ func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, _ *sxev
 
 // ----- ParseObserver methods
 
-func (me *mainEngine) BeforeParse(_ *sxeval.ParseEnvironment, form sx.Object, bind *sxeval.Binding) (sx.Object, error) {
+func (me *mainEngine) BeforeParse(_ *sxeval.ParseEnvironment, form sx.Object, frame *sxeval.Frame) (sx.Object, error) {
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel)
 		me.parseLevel++
-		fmt.Printf("%s;P%v %v<-%v %T %v\n", spaces, me.parseLevel, bind, bind.Parent(), form, form)
+		fmt.Printf("%s;P%v %v<-%v %T %v\n", spaces, me.parseLevel, frame, frame.Parent(), form, form)
 	}
 	return form, nil
 }
 
-func (me *mainEngine) AfterParse(_ *sxeval.ParseEnvironment, _ sx.Object, expr sxeval.Expr, bind *sxeval.Binding, err error) {
+func (me *mainEngine) AfterParse(_ *sxeval.ParseEnvironment, _ sx.Object, expr sxeval.Expr, frame *sxeval.Frame, err error) {
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel-1)
-		fmt.Printf("%s;Q%v %v<-%v %v ", spaces, me.parseLevel, bind, bind.Parent(), err)
+		fmt.Printf("%s;Q%v %v<-%v %v ", spaces, me.parseLevel, frame, frame.Parent(), err)
 		if err == nil {
 			_, _ = expr.Print(os.Stdout)
 		}
@@ -97,8 +97,8 @@ func (me *mainEngine) BeforeImprove(imp *sxeval.Improver, expr sxeval.Expr) sxev
 	if me.logImprove {
 		spaces := strings.Repeat(" ", me.improveLevel)
 		me.improveLevel++
-		bind := imp.Binding()
-		fmt.Printf("%s;R%v %v<-%v ", spaces, me.improveLevel, bind, bind.Parent())
+		frame := imp.Frame()
+		fmt.Printf("%s;R%v %v<-%v ", spaces, me.improveLevel, frame, frame.Parent())
 		_, _ = expr.Print(os.Stdout)
 		fmt.Println()
 	}
@@ -108,8 +108,8 @@ func (me *mainEngine) BeforeImprove(imp *sxeval.Improver, expr sxeval.Expr) sxev
 func (me *mainEngine) AfterImprove(imp *sxeval.Improver, _, result sxeval.Expr, err error) {
 	if me.logImprove {
 		spaces := strings.Repeat(" ", me.improveLevel-1)
-		bind := imp.Binding()
-		fmt.Printf("%s;S%v %v<-%v %v ", spaces, me.improveLevel, bind, bind.Parent(), err)
+		frame := imp.Frame()
+		fmt.Printf("%s;S%v %v<-%v %v ", spaces, me.improveLevel, frame, frame.Parent(), err)
 		_, _ = result.Print(os.Stdout)
 		fmt.Println()
 		me.improveLevel--
@@ -122,10 +122,10 @@ var myBuiltins = []*sxeval.Builtin{
 		MinArity: 0,
 		MaxArity: 1,
 		TestPure: nil,
-		Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+		Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 			panic("common panic")
 		},
-		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Binding) (sx.Object, error) {
+		Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Frame) (sx.Object, error) {
 			panic(arg)
 		},
 	},
@@ -134,7 +134,7 @@ var myBuiltins = []*sxeval.Builtin{
 		MinArity: 0,
 		MaxArity: 0,
 		TestPure: nil,
-		Fn0: func(env *sxeval.Environment, _ *sxeval.Binding) (sx.Object, error) {
+		Fn0: func(env *sxeval.Environment, _ *sxeval.Frame) (sx.Object, error) {
 			return sx.Vector(slices.Collect(env.Stack())), nil
 		},
 	},
@@ -147,7 +147,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				res := me.logReader
 				me.logReader = !res
 				return sx.MakeBoolean(res), nil
@@ -158,7 +158,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				res := me.logParse
 				me.logParse = !res
 				return sx.MakeBoolean(res), nil
@@ -169,7 +169,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				res := me.logImprove
 				me.logImprove = !res
 				return sx.MakeBoolean(res), nil
@@ -180,7 +180,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				res := me.logExpr
 				me.logExpr = !res
 				return sx.MakeBoolean(res), nil
@@ -191,7 +191,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				res := me.logExecutor
 				me.logExecutor = !res
 				return sx.MakeBoolean(res), nil
@@ -202,7 +202,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			MinArity: 0,
 			MaxArity: 0,
 			TestPure: nil,
-			Fn0: func(*sxeval.Environment, *sxeval.Binding) (sx.Object, error) {
+			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				me.logReader = false
 				me.logParse = false
 				me.logImprove = false
@@ -263,7 +263,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 	}()
 
 	for {
-		env := sxeval.MakeEnvironment()
+		env := sxeval.MakeEnvironment(bind)
 		env.SetComputeObserver(me).
 			SetParseObserver(me).
 			SetImproveObserver(me)
@@ -279,7 +279,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 		if me.logReader {
 			fmt.Println(";<", obj)
 		}
-		expr, err := env.Parse(obj, bind)
+		expr, err := env.Parse(obj, nil)
 		if err != nil {
 			fmt.Println(";p", err)
 			continue
@@ -294,7 +294,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			continue
 		}
 		me.execCount = 0
-		res, err := env.Run(expr, bind)
+		res, err := env.Run(expr, nil)
 		if me.logExecutor {
 			fmt.Println(";#", me.execCount)
 		}
