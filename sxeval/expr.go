@@ -159,7 +159,7 @@ func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
 			if currBinding.frozen {
 				return imp.Improve(ObjExpr{Obj: obj})
 			}
-			return imp.Improve(&globalsSymbolExpr{sym: use.sym, binding: currBinding})
+			return imp.Improve(&resolveSymbolExpr{sym: use.sym})
 		}
 	}
 	return use, nil
@@ -229,32 +229,6 @@ func (lse *resolveSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object
 // Print the expression on the given writer.
 func (lse resolveSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{RESOLVE %v}", lse.sym)
-}
-
-// globalsSymbolExpr is a special UnboundSymbolExpr that specifies in which
-// global binding the symbol was found.
-type globalsSymbolExpr struct {
-	sym     *sx.Symbol
-	binding *Binding
-}
-
-// IsPure signals an expression that has no side effects.
-func (*globalsSymbolExpr) IsPure() bool { return true }
-
-// Unparse the expression back into a form object.
-func (lse *globalsSymbolExpr) Unparse() sx.Object { return lse.sym }
-
-// Compute the expression in a frame and return the result.
-func (lse *globalsSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
-	if obj, found := lse.binding.Lookup(lse.sym); found {
-		return obj, nil
-	}
-	return nil, env.MakeNotBoundError(lse.sym, frame)
-}
-
-// Print the expression on the given writer.
-func (lse globalsSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{GLOBAL %v}", lse.sym)
 }
 
 // ----- CallExpr -------------------------------------------------------------
