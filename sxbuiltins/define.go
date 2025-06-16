@@ -74,10 +74,6 @@ func (de *DefineExpr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (de *DefineExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
-	err := imp.BindGlobals(de.Sym)
-	if err != nil {
-		return nil, err
-	}
 	expr, err := imp.Improve(de.Val)
 	if err == nil {
 		de.Val = expr

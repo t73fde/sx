@@ -43,7 +43,7 @@ type ImproveObserver interface {
 	AfterImprove(*Improver, Expr, Expr, error)
 }
 
-// MakeChildImprover creates a subordinate improver with a new binding.
+// MakeChildImprover creates a subordinate improver with a new frame.
 func (imp *Improver) MakeChildImprover(name string, baseSize int, dynamic bool) *Improver {
 	return &Improver{
 		parent:   imp.parent,
@@ -108,12 +108,7 @@ func (imp *Improver) ImproveFoldCall(proc Callable, args []Expr) (Expr, error) {
 // Frame returns the frame of this environment.
 func (imp *Improver) Frame() *Frame { return imp.frame }
 
-// BindFrame the undefined value to the symbol in the current frame.
-func (imp *Improver) BindFrame(sym *sx.Symbol) {
+// Bind the undefined value to the symbol in the current frame.
+func (imp *Improver) Bind(sym *sx.Symbol) {
 	imp.frame.Bind(sym, sx.MakeUndefined())
-}
-
-// BindGlobals the undefined value to the symbol in the current global binding.
-func (imp *Improver) BindGlobals(sym *sx.Symbol) error {
-	return imp.env.globals.Bind(sym, sx.MakeUndefined())
 }

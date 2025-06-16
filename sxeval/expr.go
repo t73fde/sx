@@ -181,7 +181,7 @@ func (use UnboundSymbolExpr) Print(w io.Writer) (int, error) {
 }
 
 // frameSymbolExpr is a special UnboundSymbolExpr that gives an indication
-// about the nesting level of `Binding`s, where the symbol will be bound.
+// about the nesting level of `Frame`s, where the symbol will be bound.
 type frameSymbolExpr struct {
 	sym *sx.Symbol
 	lvl int

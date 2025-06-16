@@ -16,9 +16,6 @@ package sxeval
 import (
 	"fmt"
 	"maps"
-	"slices"
-	"strings"
-	"unsafe"
 
 	"t73f.de/r/sx"
 )
@@ -123,27 +120,6 @@ func (b *Binding) FindBinding(sym *sx.Symbol) *Binding {
 		}
 	}
 	return nil
-}
-
-// Symbols returns all bound symbols, sorted by its GoString.
-func (b *Binding) Symbols() []*sx.Symbol {
-	result := make([]*sx.Symbol, 0, len(b.mso))
-	for sym := range b.mso {
-		result = append(result, sym)
-	}
-	slices.SortFunc(result, func(symA, symB *sx.Symbol) int {
-		facA, facB := symA.Package(), symB.Package()
-		if facA == facB {
-			return strings.Compare(symA.GetValue(), symB.GetValue())
-		}
-
-		// Make a stable descision, if symbols were created from different factories.
-		if uintptr(unsafe.Pointer(facA)) < uintptr(unsafe.Pointer(facB)) {
-			return -1
-		}
-		return 1
-	})
-	return result
 }
 
 // Bindings returns all bindings as an a-list in some random order.

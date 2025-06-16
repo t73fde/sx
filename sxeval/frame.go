@@ -16,14 +16,11 @@ package sxeval
 import (
 	"fmt"
 	"maps"
-	"slices"
-	"strings"
-	"unsafe"
 
 	"t73f.de/r/sx"
 )
 
-// Frame is a binding based on maps.
+// Frame is a binding specific for a call.
 type Frame struct {
 	mso    mapSymObj  // used if more than one symbol is bound
 	sym    *sx.Symbol // used if zero or one symbol is bound
@@ -104,13 +101,13 @@ func (f *Frame) String() string {
 	return fmt.Sprintf("#<frame:%s/%d>", f.name, f.length())
 }
 
-// GoString returns the binding as a string suitable to be used in Go code.
+// GoString returns the frame as a string suitable to be used in Go code.
 func (f *Frame) GoString() string { return f.String() }
 
-// Name returns the local name of this binding.
+// Name returns the local name of this frame.
 func (f *Frame) Name() string { return f.name }
 
-// Parent returns the parent binding.
+// Parent returns the parent frame.
 func (f *Frame) Parent() *Frame {
 	if f == nil {
 		return nil
@@ -148,7 +145,7 @@ func (f *Frame) Bind(sym *sx.Symbol, obj sx.Object) {
 }
 
 // Lookup will search for a local binding of the given symbol. If not
-// found, the search will *not* be continued in the parent binding.
+// found, the search will *not* be continued in the parent frame.
 // Use the global `Resolve` function, if you want a search up to the parent.
 func (f *Frame) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	if sym == nil || f == nil {
@@ -179,33 +176,6 @@ func (f *Frame) FindFrame(sym *sx.Symbol) *Frame {
 		if _, found := curr.Lookup(sym); found {
 			return curr
 		}
-	}
-	return nil
-}
-
-// Symbols returns all bound symbols, sorted by its GoString.
-func (f *Frame) Symbols() []*sx.Symbol {
-	if m := f.mso; m != nil {
-		result := make([]*sx.Symbol, 0, len(m))
-		for sym := range m {
-			result = append(result, sym)
-		}
-		slices.SortFunc(result, func(symA, symB *sx.Symbol) int {
-			facA, facB := symA.Package(), symB.Package()
-			if facA == facB {
-				return strings.Compare(symA.GetValue(), symB.GetValue())
-			}
-
-			// Make a stable descision, if symbols were created from different factories.
-			if uintptr(unsafe.Pointer(facA)) < uintptr(unsafe.Pointer(facB)) {
-				return -1
-			}
-			return 1
-		})
-		return result
-	}
-	if fsym := f.sym; fsym != nil {
-		return []*sx.Symbol{fsym}
 	}
 	return nil
 }

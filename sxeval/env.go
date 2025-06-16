@@ -163,7 +163,7 @@ func (env *Environment) Execute(expr Expr, frame *Frame) (res sx.Object, err err
 // position, aka as tail call order.
 func (env *Environment) ExecuteTCO(expr Expr, frame *Frame) (sx.Object, error) {
 	// Uncomment this line to test for non-TCO
-	// return env.Execute(expr, bind)
+	// return env.Execute(expr, frame)
 
 	// Just return relevant data for real TCO
 	env.newExpr = expr
@@ -213,19 +213,19 @@ func (ce *applyErrExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{call %v %v}", ce.Proc, ce.Args)
 }
 
-// errExecuteAgain is a non-error error signalling that the given expression should be
-// executed again in the given binding.
+// errExecuteAgain is a non-error error signalling that an expression
+// (env.newExpr) should be executed in a frame (env.newFrame).
 var errExecuteAgain = errors.New("TCO trampoline")
 
-func (env *Environment) addExecuteError(expr Expr, bind *Frame, err error) error {
+func (env *Environment) addExecuteError(expr Expr, frame *Frame, err error) error {
 	var execError ExecuteError
 	if errors.As(err, &execError) {
 		execError.CallStack = append(
-			execError.CallStack, ExecuteState{env, slices.Clone(env.stack), bind, expr})
+			execError.CallStack, ExecuteState{env, slices.Clone(env.stack), frame, expr})
 		return execError
 	}
 	return ExecuteError{
-		CallStack: []ExecuteState{{env, slices.Clone(env.stack), bind, expr}},
+		CallStack: []ExecuteState{{env, slices.Clone(env.stack), frame, expr}},
 		err:       err,
 	}
 }
@@ -238,11 +238,11 @@ type ExecuteError struct {
 }
 
 // ExecuteState stores the curent environment, the current stack content,
-// the current binding, and the expression to be computed, for better error messages.
+// the current frame, and the expression to be computed, for better error messages.
 type ExecuteState struct {
 	Env   *Environment
 	Stack []sx.Object
-	Bind  *Frame
+	Frame *Frame
 	Expr  Expr
 }
 
@@ -257,10 +257,10 @@ func (ee ExecuteError) PrintCallStack(w io.Writer, prefix string, logger *slog.L
 		val := elem.Expr.Unparse()
 		stack := elem.Stack
 		if logger != nil {
-			logger.Debug(logmsg, "env", elem.Env, "stack", stack, "binding", elem.Bind, "expr", val)
+			logger.Debug(logmsg, "env", elem.Env, "stack", stack, "frame", elem.Frame, "expr", val)
 		}
 		_, _ = fmt.Fprintf(w, "%v%2d: expr = %T/%v\n", prefix, i, val, val)
-		_, _ = fmt.Fprintf(w, "%v    bind = %v\n", prefix, elem.Bind)
+		_, _ = fmt.Fprintf(w, "%v    frame= %v\n", prefix, elem.Frame)
 		_, _ = fmt.Fprintf(w, "%v    stack= %d:(", prefix, len(stack))
 		for j := 0; j < lengthDataStackOnError && len(stack)-j > 0; j++ {
 			if j > 0 {
@@ -316,7 +316,7 @@ func (env *Environment) MakeNotBoundError(sym *sx.Symbol, frame *Frame) NotBound
 	return NotBoundError{Frame: frame, Globals: env.globals, Sym: sym}
 }
 
-// NotBoundError signals that a symbol was not found in a binding.
+// NotBoundError signals that a symbol was not found in a frame/binding.
 type NotBoundError struct {
 	Frame   *Frame
 	Globals *Binding

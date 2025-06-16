@@ -37,8 +37,8 @@ var CallableP = sxeval.Builtin{
 // DefunS parses a procedure/function specfication.
 var DefunS = sxeval.Special{
 	Name: "defun",
-	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, bind *sxeval.Frame) (sxeval.Expr, error) {
-		sym, le, err := parseDefProc(pe, args, bind)
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
+		sym, le, err := parseDefProc(pe, args, frame)
 		if err != nil {
 			return nil, err
 		}
@@ -112,18 +112,18 @@ func ParseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpe
 	if !isPair {
 		return nil, fmt.Errorf("body must not be a dotted pair")
 	}
-	bindSize := len(params)
+	frameSize := len(params)
 	if rest != nil {
-		bindSize++
+		frameSize++
 	}
-	lambdaBind := frame.MakeChildFrame(name+"-def", bindSize)
+	lambdaFrame := frame.MakeChildFrame(name+"-def", frameSize)
 	for _, p := range params {
-		lambdaBind.Bind(p, sx.MakeUndefined())
+		lambdaFrame.Bind(p, sx.MakeUndefined())
 	}
 	if rest != nil {
-		lambdaBind.Bind(rest, sx.MakeUndefined())
+		lambdaFrame.Bind(rest, sx.MakeUndefined())
 	}
-	expr, err := ParseExprSeq(pe, body, lambdaBind)
+	expr, err := ParseExprSeq(pe, body, lambdaFrame)
 	if err != nil {
 		return nil, err
 	}
@@ -219,16 +219,16 @@ func (le *LambdaExpr) Unparse() sx.Object {
 
 // Improve the expression into a possible simpler one.
 func (le *LambdaExpr) Improve(imp *sxeval.Improver) (sxeval.Expr, error) {
-	bindSize := len(le.Params)
+	frameSize := len(le.Params)
 	if le.Rest != nil {
-		bindSize++
+		frameSize++
 	}
-	lambdaImp := imp.MakeChildImprover(le.Name+"-improve", bindSize, le.Type > 0)
+	lambdaImp := imp.MakeChildImprover(le.Name+"-improve", frameSize, le.Type > 0)
 	for _, sym := range le.Params {
-		lambdaImp.BindFrame(sym)
+		lambdaImp.Bind(sym)
 	}
 	if rest := le.Rest; rest != nil {
-		lambdaImp.BindFrame(rest)
+		lambdaImp.Bind(rest)
 	}
 
 	expr, err := lambdaImp.Improve(le.Expr)
@@ -357,11 +357,11 @@ func (ll *LexLambda) ExecuteCall(env *sxeval.Environment, args sx.Vector, _ *sxe
 	if len(args) < numParams {
 		return nil, fmt.Errorf("%s: missing arguments: %v", ll.Name, ll.Params[len(args):])
 	}
-	bindSize := numParams
+	frameSize := numParams
 	if ll.Rest != nil {
-		bindSize++
+		frameSize++
 	}
-	lexFrame := ll.Frame.MakeChildFrame(ll.Name, bindSize)
+	lexFrame := ll.Frame.MakeChildFrame(ll.Name, frameSize)
 	for i, p := range ll.Params {
 		lexFrame.Bind(p, args[i])
 	}
@@ -431,7 +431,7 @@ func (dl *DynLambda) IsPure(sx.Vector) bool { return false }
 
 // ExecuteCall the Procedure with any number of arguments.
 func (dl *DynLambda) ExecuteCall(env *sxeval.Environment, args sx.Vector, frame *sxeval.Frame) (sx.Object, error) {
-	// A DynLambda is just a LexLambda with a different Binding.
+	// A DynLambda is just a LexLambda with a different frame.
 	return (&LexLambda{
 		Frame:  frame,
 		Name:   dl.Name,
