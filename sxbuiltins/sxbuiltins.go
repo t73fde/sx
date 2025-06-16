@@ -85,14 +85,6 @@ func GetSequence(arg sx.Object, pos int) (sx.Sequence, error) {
 	return nil, fmt.Errorf("argument %d is not a sequence, but %T/%v", pos+1, arg, arg)
 }
 
-// GetBinding returns the given argument as a binding, and checks for errors.
-func GetBinding(arg sx.Object, pos int) (*sxeval.Binding, error) {
-	if bind, ok := sxeval.GetBinding(arg); ok {
-		return bind, nil
-	}
-	return nil, fmt.Errorf("argument %d is not a binding, but %T/%v", pos+1, arg, arg)
-}
-
 // GetFrame returns the given argument as a frame, and checks for errors.
 func GetFrame(arg sx.Object, pos int) (*sxeval.Frame, error) {
 	if frame, ok := sxeval.GetFrame(arg); ok {

@@ -107,19 +107,11 @@ func (b *Binding) Bind(sym *sx.Symbol, obj sx.Object) error {
 // found, the search will *not* be continued in the parent binding.
 // Use the global `Resolve` function, if you want a search up to the parent.
 func (b *Binding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
-	if sym == nil {
-		return sx.Nil(), false
+	if sym != nil {
+		obj, found := b.mso[sym]
+		return obj, found
 	}
-	obj, found := b.mso[sym]
-	return obj, found
-}
-
-// LookupN will lookup the symbol in the N-th parent.
-func (b *Binding) LookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
-	for range n {
-		b = b.parent
-	}
-	return b.Lookup(sym)
+	return sx.Nil(), false
 }
 
 // FindBinding returns the binding, where the symbol is bound to a value.
@@ -168,12 +160,3 @@ func (b *Binding) Freeze() { b.frozen = true }
 
 // IsFrozen returns true if binding is frozen.
 func (b *Binding) IsFrozen() bool { return b.frozen }
-
-// GetBinding returns the object as a binding, if possible.
-func GetBinding(obj sx.Object) (*Binding, bool) {
-	if sx.IsNil(obj) {
-		return nil, false
-	}
-	b, ok := obj.(*Binding)
-	return b, ok
-}
