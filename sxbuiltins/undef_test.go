@@ -32,5 +32,5 @@ var tcsUndefined = tTestCases{
 		withErr: true,
 	},
 	{name: "defined-a", src: "(defined? 'a)", exp: "T"},
-	{name: "defined-lookup-xyz", src: "(defined? (binding-lookup 'xyz))", exp: "()"},
+	{name: "defined-lookup-xyz", src: "(defined? (frame-lookup 'xyz))", exp: "()"},
 }

@@ -24,7 +24,7 @@ func TestFrameLookupUnbind(t *testing.T) {
 	t.Parallel()
 	sym1 := sx.MakeSymbol("sym1")
 	sym2 := sx.MakeSymbol("sym2")
-	root := sxeval.MakeRootFrame(1)
+	root := makeRootFrame(1)
 
 	if val, found := root.Lookup(nil); found {
 		t.Errorf("nil symbol should not be found, but got: %v", val)
@@ -37,7 +37,7 @@ func TestFrameLookupUnbind(t *testing.T) {
 	}
 
 	t.Run("child", func(t *testing.T) {
-		newRoot := sxeval.MakeRootFrame(1)
+		newRoot := makeRootFrame(1)
 		newRoot.Bind(sym1, sym2)
 		child := newRoot.MakeChildFrame("assoc", 30)
 		frameLookup(t, newRoot, child, sym1, sym2)
@@ -67,7 +67,7 @@ func frameLookup(t *testing.T, root, child *sxeval.Frame, sym1, sym2 *sx.Symbol)
 
 func TestFrameAlist(t *testing.T) {
 	t.Parallel()
-	frame := sxeval.MakeRootFrame(7)
+	frame := makeRootFrame(7)
 	frame.Bind(sx.MakeSymbol("sym1"), sx.MakeString("sym1"))
 	frame.Bind(sx.MakeSymbol("sym2"), sx.MakeString("sym2"))
 	frame.Bind(sx.MakeSymbol("sym3"), sx.MakeString("sym3"))
@@ -97,14 +97,19 @@ func TestFrameAlist(t *testing.T) {
 
 func TestRootFrameEqual(t *testing.T) {
 	t.Parallel()
-	root1 := sxeval.MakeRootFrame(1)
-	root2 := sxeval.MakeRootFrame(7)
+	root1 := makeRootFrame(1)
+	root2 := makeRootFrame(7)
 	checkFrameEqual(t, root1, root2)
 
-	root := sxeval.MakeRootFrame(3)
+	root := makeRootFrame(3)
 	child1 := root.MakeChildFrame("child1", 7)
 	child2 := root.MakeChildFrame("child22", 1)
 	checkFrameEqual(t, child1, child2)
+}
+
+// MakeRootFrame creates a new root frame.
+func makeRootFrame(sizeHint int) *sxeval.Frame {
+	return (*sxeval.Frame)(nil).MakeChildFrame("root", sizeHint)
 }
 
 func checkFrameEqual(t *testing.T, frame1, frame2 *sxeval.Frame) {

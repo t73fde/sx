@@ -90,7 +90,7 @@ func GetFrame(arg sx.Object, pos int) (*sxeval.Frame, error) {
 	if frame, ok := sxeval.GetFrame(arg); ok {
 		return frame, nil
 	}
-	return nil, fmt.Errorf("argument %d is not a binding, but %T/%v", pos+1, arg, arg)
+	return nil, fmt.Errorf("argument %d is not a frame, but %T/%v", pos+1, arg, arg)
 }
 
 // GetCallable returns the given argument as a callable, and checks for errors.
@@ -169,12 +169,12 @@ func BindAll(bind *sxeval.Binding) error {
 		&CallableP,         // callable?
 		&Macroexpand0,      // macroexpand-0
 		&DefinedP,          // defined?
-		&CurrentBinding,    // current-binding
-		&ParentBinding,     // parent-binding
+		&CurrentFrame,      // current-frame
+		&ParentFrame,       // parent-frame
 		&Bindings,          // bindings
-		&BoundP,            // bound?
-		&BindingLookup,     // binding-lookup
-		&BindingResolve,    // binding-resolve
+		&SymbolBoundP,      // symbol-bound?
+		&FrameLookup,       // frame-lookup
+		&ResolveSymbol,     // resolve-symbol
 		&Pretty,            // pp
 		&Error,             // error
 		&NotBoundError,     // not-bound-error

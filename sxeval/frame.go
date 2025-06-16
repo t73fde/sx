@@ -40,9 +40,6 @@ func makeFrame(name string, parent *Frame, sizeHint int) *Frame {
 	return &f
 }
 
-// MakeRootFrame creates a new root frame.
-func MakeRootFrame(sizeHint int) *Frame { return makeFrame("root", nil, sizeHint) }
-
 // MakeChildFrame creates a new frame with a given parent.
 func (f *Frame) MakeChildFrame(name string, sizeHint int) *Frame {
 	return makeFrame(name, f, sizeHint)
