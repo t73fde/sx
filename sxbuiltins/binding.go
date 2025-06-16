@@ -43,10 +43,7 @@ var ParentBinding = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		if parent := frame.Parent(); parent != nil {
-			return parent, nil
-		}
-		return sx.MakeUndefined(), nil
+		return frame.Parent(), nil
 	},
 }
 
@@ -103,12 +100,14 @@ var BindingLookup = sxeval.Builtin{
 		if err != nil {
 			return nil, err
 		}
-		frame, err := GetFrame(args[1], 1)
-		if err != nil {
-			return nil, err
-		}
-		if obj, found := frame.Lookup(sym); found {
-			return obj, nil
+		if arg1 := args[1]; !sx.IsNil(arg1) {
+			frame, err2 := GetFrame(arg1, 1)
+			if err2 != nil {
+				return nil, err2
+			}
+			if obj, found := frame.Lookup(sym); found {
+				return obj, nil
+			}
 		}
 		return sx.MakeUndefined(), nil
 	},
