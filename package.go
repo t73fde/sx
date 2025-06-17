@@ -118,7 +118,7 @@ func MustMakePackage(name string) *Package {
 
 // Predefined package names.
 const (
-	InitName    = "sx"
+	InitName    = "INIT"
 	KeywordName = "KEYWORD"
 )
 
