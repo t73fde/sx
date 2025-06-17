@@ -295,19 +295,20 @@ func (env *Environment) FindGlobal(sym *sx.Symbol) *Binding {
 // Resolve returns the object that is bound to a symbol. It searches in all
 // frames and in the global environment.
 func (env *Environment) Resolve(sym *sx.Symbol, frame *Frame) (sx.Object, bool) {
-	if sym != nil {
-		for curr := frame; curr != nil; curr = curr.parent {
-			if obj, found := curr.Lookup(sym); found {
-				return obj, true
-			}
-		}
-		for curr := env.globals; curr != nil; curr = curr.parent {
-			if obj, found := curr.Lookup(sym); found {
-				return obj, true
-			}
+	if sym == nil {
+		return nil, false
+	}
+	for curr := frame; curr != nil; curr = curr.parent {
+		if obj, found := curr.Lookup(sym); found {
+			return obj, true
 		}
 	}
-	return nil, false
+	for curr := env.globals; curr != nil; curr = curr.parent {
+		if obj, found := curr.Lookup(sym); found {
+			return obj, true
+		}
+	}
+	return sym.Bound()
 }
 
 // MakeNotBoundError builds an error to signal that a symbol was not bound in

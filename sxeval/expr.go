@@ -151,7 +151,7 @@ func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
 	}
 
 	if imp.dynamic {
-		return imp.Improve(&resolveSymbolExpr{sym: use.sym})
+		return imp.Improve(&dynamicSymbolExpr{sym: use.sym})
 	}
 
 	for currBinding := imp.env.globals; currBinding != nil; currBinding = currBinding.parent {
@@ -159,20 +159,29 @@ func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
 			if currBinding.frozen {
 				return imp.Improve(ObjExpr{Obj: obj})
 			}
-			return imp.Improve(&resolveSymbolExpr{sym: use.sym})
+			return use, nil
 		}
 	}
+
+	if obj, found := use.sym.Bound(); found && use.sym.IsFrozen() {
+		return imp.Improve(ObjExpr{Obj: obj})
+	}
+
 	return use, nil
 }
 
 // Compute the expression in a frame and return the result.
 func (use UnboundSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
+	sym := use.sym
 	for curr := env.globals; curr != nil; curr = curr.parent {
-		if obj, found := curr.Lookup(use.sym); found {
+		if obj, found := curr.Lookup(sym); found {
 			return obj, nil
 		}
 	}
-	return nil, env.MakeNotBoundError(use.sym, frame)
+	if obj, found := sym.Bound(); found {
+		return obj, nil
+	}
+	return nil, env.MakeNotBoundError(sym, frame)
 }
 
 // Print the expression on the given writer.
@@ -191,44 +200,44 @@ type frameSymbolExpr struct {
 func (*frameSymbolExpr) IsPure() bool { return true }
 
 // Unparse the expression back into a form object.
-func (lse *frameSymbolExpr) Unparse() sx.Object { return lse.sym }
+func (fse *frameSymbolExpr) Unparse() sx.Object { return fse.sym }
 
 // Compute the expression in a frame and return the result.
-func (lse *frameSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
-	if obj, found := frame.lookupN(lse.sym, lse.lvl); found {
+func (fse *frameSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
+	if obj, found := frame.lookupN(fse.sym, fse.lvl); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(lse.sym, frame)
+	return nil, env.MakeNotBoundError(fse.sym, frame)
 }
 
 // Print the expression on the given writer.
-func (lse frameSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{LOOKUP/%d %v}", lse.lvl, lse.sym)
+func (fse frameSymbolExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{LOOKUP/%d %v}", fse.lvl, fse.sym)
 }
 
-// globalsSymbolExpr is a special UnboundSymbolExpr that specifies in which
-// global binding the symbol was found.
-type resolveSymbolExpr struct {
+// dynamicSymbolExpr is a special UnboundSymbolExpr that knows the symbol
+// is bound, but did not know its bound value at improvement time.
+type dynamicSymbolExpr struct {
 	sym *sx.Symbol
 }
 
 // IsPure signals an expression that has no side effects.
-func (*resolveSymbolExpr) IsPure() bool { return true }
+func (*dynamicSymbolExpr) IsPure() bool { return true }
 
 // Unparse the expression back into a form object.
-func (lse *resolveSymbolExpr) Unparse() sx.Object { return lse.sym }
+func (dse *dynamicSymbolExpr) Unparse() sx.Object { return dse.sym }
 
 // Compute the expression in a frame and return the result.
-func (lse *resolveSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
-	if obj, found := env.Resolve(lse.sym, frame); found {
+func (dse *dynamicSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
+	if obj, found := env.Resolve(dse.sym, frame); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(lse.sym, frame)
+	return nil, env.MakeNotBoundError(dse.sym, frame)
 }
 
 // Print the expression on the given writer.
-func (lse resolveSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{RESOLVE %v}", lse.sym)
+func (dse dynamicSymbolExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{DYNAMIC %v}", dse.sym)
 }
 
 // ----- CallExpr -------------------------------------------------------------

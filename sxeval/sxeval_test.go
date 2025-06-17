@@ -15,6 +15,7 @@ package sxeval_test
 
 import (
 	_ "embed"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -154,7 +155,7 @@ func createBindingForTCO() *sxeval.Binding {
 			panic(err)
 		}
 		if _, err = env.Eval(obj, nil); err != nil {
-			panic(err)
+			panic(fmt.Sprintf("%v, when evaluating %v", err, obj))
 		}
 	}
 	return bind

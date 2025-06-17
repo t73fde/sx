@@ -21,6 +21,8 @@ func TestBoolean(t *testing.T) {
 }
 
 var tcsBoolean = tTestCases{
+	{name: "T-sym", src: "T", exp: "T"},
+
 	{name: "err-not-0",
 		src:     "(not)",
 		exp:     "{[{not: exactly 1 arguments required, but none given}]}",

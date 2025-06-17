@@ -44,3 +44,15 @@ func TestIsFalse(t *testing.T) {
 		t.Error("Undefined is True")
 	}
 }
+
+func TestTSymbol(t *testing.T) {
+	if !sx.T.IsFrozen() {
+		t.Errorf("T must be frozen, but is not")
+	}
+	val, ok := sx.T.Bound()
+	if !ok {
+		t.Errorf("unable to get bound value of T")
+	} else if !sx.T.IsEqual(val) {
+		t.Errorf("bound value of T is not T, but: %T/%v", val, val)
+	}
+}

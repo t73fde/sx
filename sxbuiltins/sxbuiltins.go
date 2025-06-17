@@ -140,9 +140,12 @@ func BindAll(bind *sxeval.Binding) error {
 	err = sxeval.BindBuiltins(bind,
 		&Equal, &Identical, // =, ==
 		&SymbolP, &SymbolPackage, // symbol?, symbol-package
-		&NullP,         // null?
-		&Cons,          // cons
-		&PairP, &ListP, // pair?, list?
+		&SymbolValue,                           // symbol-value
+		&FreezeSymbolValue, &FrozenSymbolValue, // freeze-symbol-value, frozen-symbol-value
+		&SetSymbolValue, // set-symbol-value (temp)
+		&NullP,          // null?
+		&Cons,           // cons
+		&PairP, &ListP,  // pair?, list?
 		&Car, &Cdr, // car, cdr
 		&Caar, &Cadr, &Cdar, &Cddr,
 		&Caaar, &Caadr, &Cadar, &Caddr,

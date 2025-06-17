@@ -14,14 +14,17 @@
 package sx
 
 import (
+	"fmt"
 	"io"
 	"strings"
 )
 
 // Symbol represent a symbol value.
 type Symbol struct {
-	name string   // symbol name
-	pkg  *Package // home package
+	name   string   // symbol name
+	pkg    *Package // home package
+	bound  Object
+	frozen bool // value cannot be changed
 }
 
 // MakeSymbol creates a symbol from a string.
@@ -97,3 +100,32 @@ func GetSymbol(obj Object) (*Symbol, bool) {
 
 // Package returns the Package that created the symbol.
 func (sym *Symbol) Package() *Package { return sym.pkg }
+
+// ErrSymbolFrozen is returned when trying to update a frozen symbol.
+type ErrSymbolFrozen struct{ Symbol *Symbol }
+
+func (err ErrSymbolFrozen) Error() string {
+	sym := err.Symbol
+	if val, bound := sym.Bound(); bound {
+		return fmt.Sprintf("symbol %v is frozen, with value: %v", sym, val)
+	}
+	return fmt.Sprintf("symbol %v is frozen, without bound value", sym)
+}
+
+// Bind a value to the symbol.
+func (sym *Symbol) Bind(val Object) error {
+	if sym.frozen {
+		return ErrSymbolFrozen{Symbol: sym}
+	}
+	sym.bound = val
+	return nil
+}
+
+// Bound returns the bound value.
+func (sym *Symbol) Bound() (Object, bool) { return sym.bound, sym.bound != nil }
+
+// Freeze the symbol so that bound value cannot be changed any more.
+func (sym *Symbol) Freeze() { sym.frozen = true }
+
+// IsFrozen returns true if symbol is frozen.
+func (sym *Symbol) IsFrozen() bool { return sym.frozen }

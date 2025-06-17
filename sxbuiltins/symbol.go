@@ -44,3 +44,70 @@ var SymbolPackage = sxeval.Builtin{
 		return sym.Package(), nil
 	},
 }
+
+// SymbolValue returns the bound value of the symbol, or the undefined value.
+var SymbolValue = sxeval.Builtin{
+	Name:     "symbol-value",
+	MinArity: 1,
+	MaxArity: 1,
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Frame) (sx.Object, error) {
+		sym, err := GetSymbol(arg, 0)
+		if err != nil {
+			return nil, err
+		}
+		if val, found := sym.Bound(); found {
+			return val, nil
+		}
+		return sx.MakeUndefined(), nil
+	},
+}
+
+// SetSymbolValue sets the bound value of the symbol.
+//
+// TODO: deprecated, since in the future, this function will probably be
+// implemented by (define sym val) and (set! sym val).
+var SetSymbolValue = sxeval.Builtin{
+	Name:     "set-symbol-value",
+	MinArity: 2,
+	MaxArity: 2,
+	Fn: func(_ *sxeval.Environment, args sx.Vector, _ *sxeval.Frame) (sx.Object, error) {
+		sym, err := GetSymbol(args[0], 0)
+		if err != nil {
+			return nil, err
+		}
+		val := args[1]
+		if err = sym.Bind(val); err != nil {
+			return nil, err
+		}
+		return val, nil
+	},
+}
+
+// FreezeSymbolValue forbits future update of the symbol value.
+var FreezeSymbolValue = sxeval.Builtin{
+	Name:     "freeze-symbol-value",
+	MinArity: 1,
+	MaxArity: 1,
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Frame) (sx.Object, error) {
+		sym, err := GetSymbol(arg, 0)
+		if err != nil {
+			return nil, err
+		}
+		sym.Freeze()
+		return sx.Nil(), nil
+	},
+}
+
+// FrozenSymbolValue returns an indication whether the symbol value is frozen or not.
+var FrozenSymbolValue = sxeval.Builtin{
+	Name:     "frozen-symbol-value",
+	MinArity: 1,
+	MaxArity: 1,
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Frame) (sx.Object, error) {
+		sym, err := GetSymbol(arg, 0)
+		if err != nil {
+			return nil, err
+		}
+		return sx.MakeBoolean(sym.IsFrozen()), nil
+	},
+}

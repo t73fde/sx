@@ -24,6 +24,11 @@ func MakeBoolean(b bool) Object {
 // T is the default true object.
 var T = MakeSymbol("T")
 
+func init() {
+	_ = T.Bind(T)
+	T.Freeze()
+}
+
 // IsTrue returns true, if object is a true value.
 //
 // Everything except a nil object and the empty string, is a true value.

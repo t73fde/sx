@@ -17,11 +17,8 @@ package sx
 //
 // Used in packages sxbuiltins, sxreader.
 var (
-	SymbolQuote           = MakeSymbol("quote")
-	SymbolQuasiquote      = MakeSymbol("quasiquote")
-	SymbolUnquote         = MakeSymbol("unquote")
-	SymbolUnquoteSplicing = MakeSymbol("unquote-splicing")
+	SymbolQuote           = initPackage.MakeSymbol("quote")
+	SymbolQuasiquote      = initPackage.MakeSymbol("quasiquote")
+	SymbolUnquote         = initPackage.MakeSymbol("unquote")
+	SymbolUnquoteSplicing = initPackage.MakeSymbol("unquote-splicing")
 )
-
-// SymbolList is the symbol of the (list ...) function.
-var SymbolList = MakeSymbol("list")

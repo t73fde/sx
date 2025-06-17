@@ -29,13 +29,25 @@ var prelude string
 // LoadPrelude reads and evaluates the standard prelude. In addition some symbols
 // (NIL, T, UNDEFINED) are bound, as well as needed builtins and special forms.
 func LoadPrelude(root *sxeval.Binding) error {
-	if err := root.Bind(sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined()); err != nil {
+	var val sx.Object
+	sym, val := sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined()
+	if !sym.IsFrozen() {
+		if err := sym.Bind(val); err != nil {
+			return err
+		}
+		sym.Freeze()
+	}
+	if err := root.Bind(sym, val); err != nil {
 		return err
 	}
-	if err := root.Bind(sx.MakeSymbol("NIL"), sx.Nil()); err != nil {
-		return err
+	if !sym.IsFrozen() {
+		sym, val = sx.MakeSymbol("NIL"), sx.Nil()
+		if err := sym.Bind(val); err != nil {
+			return err
+		}
+		sym.Freeze()
 	}
-	if err := root.Bind(sx.MakeSymbol("T"), sx.MakeSymbol("T")); err != nil {
+	if err := root.Bind(sym, val); err != nil {
 		return err
 	}
 
