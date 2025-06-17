@@ -68,6 +68,65 @@ func GetPackage(obj Object) (*Package, bool) {
 	return pkg, ok
 }
 
+// MakeSymbol builds a symbol with the given string value. It tries to re-use
+// symbols, so that symbols can be compared by their reference, not by their
+// content.
+func (pkg *Package) MakeSymbol(name string) *Symbol {
+	sym := pkg.FindSymbol(name)
+	if sym != nil {
+		return sym
+	}
+
+	if name == "" {
+		return nil
+	}
+	pkg.mx.Lock()
+	sym, found := pkg.symbols[name]
+	if !found {
+		sym = &Symbol{pkg: pkg, name: name}
+		pkg.symbols[name] = sym
+	}
+	pkg.mx.Unlock()
+	return sym
+}
+
+// FindSymbol returns the symbol with the given name.
+func (pkg *Package) FindSymbol(name string) *Symbol {
+	if name == "" {
+		return nil
+	}
+	pkg.mx.RLock()
+	sym, found := pkg.symbols[name]
+	pkg.mx.RUnlock()
+	if found {
+		return sym
+	}
+	return nil
+}
+
+// AllSymbols returns an iterator of all symbols currently manages by the package.
+func (pkg *Package) AllSymbols() iter.Seq[*Symbol] {
+	return func(yield func(*Symbol) bool) {
+		pkg.mx.RLock()
+		defer pkg.mx.RUnlock()
+		for _, sym := range pkg.symbols {
+			if !yield(sym) {
+				return
+			}
+		}
+	}
+}
+
+// Size returns the number of symbols created by the package.
+func (pkg *Package) Size() int {
+	pkg.mx.RLock()
+	result := len(pkg.symbols)
+	pkg.mx.RUnlock()
+	return result
+}
+
+// ----- Package package ----------------------------------------------------
+
 var packageRegistry = map[string]*Package{}
 
 // AllPackages returns an iterator of all packages.
@@ -132,47 +191,3 @@ var currentPackage = initPackage
 
 // CurrentPackage returns the currently selected package.
 func CurrentPackage() *Package { return currentPackage }
-
-// MakeSymbol builds a symbol with the given string value. It tries to re-use
-// symbols, so that symbols can be compared by their reference, not by their
-// content.
-func (pkg *Package) MakeSymbol(name string) *Symbol {
-	sym := pkg.FindSymbol(name)
-	if sym != nil {
-		return sym
-	}
-
-	if name == "" {
-		return nil
-	}
-	pkg.mx.Lock()
-	sym, found := pkg.symbols[name]
-	if !found {
-		sym = &Symbol{pkg: pkg, name: name}
-		pkg.symbols[name] = sym
-	}
-	pkg.mx.Unlock()
-	return sym
-}
-
-// FindSymbol returns the symbol with the given name.
-func (pkg *Package) FindSymbol(name string) *Symbol {
-	if name == "" {
-		return nil
-	}
-	pkg.mx.RLock()
-	sym, found := pkg.symbols[name]
-	pkg.mx.RUnlock()
-	if found {
-		return sym
-	}
-	return nil
-}
-
-// Size returns the number of symbols created by the package.
-func (pkg *Package) Size() int {
-	pkg.mx.RLock()
-	result := len(pkg.symbols)
-	pkg.mx.RUnlock()
-	return result
-}

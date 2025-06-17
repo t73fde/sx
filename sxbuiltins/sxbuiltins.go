@@ -109,6 +109,14 @@ func GetExprObj(arg sx.Object, pos int) (*sxeval.ExprObj, error) {
 	return nil, fmt.Errorf("argument %d is not an expression, but %T/%v", pos+1, arg, arg)
 }
 
+// GetPackage returns the given argument as a package object, and checks for errors.
+func GetPackage(arg sx.Object, pos int) (*sx.Package, error) {
+	if pkg, ok := sx.GetPackage(arg); ok {
+		return pkg, nil
+	}
+	return nil, fmt.Errorf("argument %d is not a package, but %T/%v", pos+1, arg, arg)
+}
+
 // ----- BindAll
 
 // BindAll binds all builtins / spacial forms to the given binding.
@@ -182,6 +190,10 @@ func BindAll(bind *sxeval.Binding) error {
 		&UnparseExpression, // unparse-expression
 		&ExecuteExpression, // execute-expression
 		&Eval,              // eval
+
+		&CurrentPackage,            // current-package
+		&PackageList, &FindPackage, // package-list, find-package
+		&PackageSymbols, // package-symbols
 	)
 	return err
 }
