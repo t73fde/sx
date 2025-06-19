@@ -198,12 +198,16 @@ func (bce *builtinCallExpr) Improve(imp *Improver) (Expr, error) {
 	argsFn := func() []sx.Object {
 		result := make([]sx.Object, len(bce.Args))
 		for i, arg := range bce.Args {
-			result[i] = arg.Unparse()
+			if val, err := imp.env.Execute(arg, imp.frame); err == nil {
+				result[i] = val
+			} else {
+				result[i] = arg.Unparse()
+			}
 		}
 		return result
 	}
 	if err := bce.Proc.checkCallArity(len(bce.Args), argsFn); err != nil {
-		return nil, CallError{Name: bce.Proc.Name, Err: err}
+		return nil, bce.Proc.handleCallError(err)
 	}
 
 	switch len(bce.Args) {

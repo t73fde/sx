@@ -78,7 +78,7 @@ var tcsFrame = tTestCases{
 	},
 	{name: "err-lookup-3-noenv",
 		src:     "(frame-lookup 'a (current-frame) 1)",
-		exp:     "{[{frame-lookup: between 1 and 2 arguments required, but 3 given: [a (#<builtin:current-frame>) 1]}]}",
+		exp:     "{[{frame-lookup: between 1 and 2 arguments required, but 3 given: [a <nil> 1]}]}",
 		withErr: true,
 	},
 	// {name: "lookup-a", src: "(defvar a 3)(binding-lookup 'a)", exp: "3 3"},

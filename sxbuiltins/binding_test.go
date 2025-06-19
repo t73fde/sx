@@ -57,7 +57,7 @@ var tcsBinding = tTestCases{
 	},
 	{name: "err-resolve-symbol-3-noenv",
 		src:     "(resolve-symbol 'a (current-frame) 1)",
-		exp:     "{[{resolve-symbol: between 1 and 2 arguments required, but 3 given: [a (#<builtin:current-frame>) 1]}]}",
+		exp:     "{[{resolve-symbol: between 1 and 2 arguments required, but 3 given: [a <nil> 1]}]}",
 		withErr: true,
 	},
 	{name: "resolve-symbol-b", src: "(resolve-symbol 'b)", exp: "11"},

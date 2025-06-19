@@ -27,7 +27,7 @@ var tcsError = tTestCases{
 
 	{name: "err-not-bound-error-0",
 		src:     "(not-bound-error)",
-		exp:     "{[{not-bound-error: between 1 and 2 arguments required, but none given}]}",
+		exp:     "{[{between 1 and 2 arguments required, but none given}]}",
 		withErr: true,
 	},
 	{name: "err-not-bound-error-nosy",

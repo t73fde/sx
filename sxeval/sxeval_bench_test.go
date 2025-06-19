@@ -30,8 +30,8 @@ func BenchmarkEvenTCO(b *testing.B) {
 		nil,
 		sxeval.DefaultComputeHandler{},
 		sxeval.MakeLimitNestingHandler(3, sxeval.DefaultComputeHandler{}),
-		sxeval.MakeStepsLimitHandler(600000, sxeval.DefaultComputeHandler{}),
-		sxeval.MakeLimitNestingHandler(3, sxeval.MakeStepsLimitHandler(600000, sxeval.DefaultComputeHandler{})),
+		sxeval.MakeStepsLimitHandler(730000, sxeval.DefaultComputeHandler{}),
+		sxeval.MakeLimitNestingHandler(3, sxeval.MakeStepsLimitHandler(730000, sxeval.DefaultComputeHandler{})),
 	}
 
 	for _, cob := range observers {
