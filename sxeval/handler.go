@@ -71,8 +71,8 @@ func (h *LimitNestingHandler) Compute(env *Environment, expr Expr, frame *Frame)
 // Reset the handler.
 func (h *LimitNestingHandler) Reset() { h.currNesting = 0; h.next.Reset() }
 
-// MaxNesting returns the maximum nesting value occured.
-func (h *LimitNestingHandler) MaxNesting() int { return h.maxNesting }
+// Nesting returns the current and the maximum nesting value occured.
+func (h *LimitNestingHandler) Nesting() (int, int) { return h.currNesting, h.maxNesting }
 
 // ErrNestingLimit is an error to be returned if the nesting limit is exceeded.
 type ErrNestingLimit struct{ level int }
