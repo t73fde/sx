@@ -26,20 +26,32 @@ func BenchmarkEvenTCO(b *testing.B) {
 	testcases := [...]int{0, 1, 2, 4, 16, 64, 512, 4096, 65536}
 	root := createBindingForTCO()
 	evenSym := sx.MakeSymbol("even?")
-	for _, tc := range testcases {
-		b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
-			env := sxeval.MakeEnvironment(root)
-			obj := sx.MakeList(evenSym, sx.Int64(tc))
-			expr, err := env.Parse(obj, nil)
-			if err != nil {
-				b.Error(err)
-			}
-			b.ResetTimer()
-			for b.Loop() {
-				_, _ = env.Run(expr, nil)
-			}
-		})
+
+	for _, cob := range []sxeval.ComputeObserver{nil, &nilComputeObserver{}} {
+		for _, tc := range testcases {
+			b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
+				env := sxeval.MakeEnvironment(root).SetComputeObserver(cob)
+				obj := sx.MakeList(evenSym, sx.Int64(tc))
+				expr, err := env.Parse(obj, nil)
+				if err != nil {
+					b.Error(err)
+				}
+				b.ResetTimer()
+				for b.Loop() {
+					_, _ = env.Run(expr, nil)
+				}
+			})
+		}
 	}
+}
+
+type nilComputeObserver struct{}
+
+func (nilComputeObserver) BeforeCompute(_ *sxeval.Environment, expr sxeval.Expr, _ *sxeval.Frame) (sxeval.Expr, error) {
+	return expr, nil
+}
+
+func (nilComputeObserver) AfterCompute(*sxeval.Environment, sxeval.Expr, *sxeval.Frame, sx.Object, error) {
 }
 
 func BenchmarkFac(b *testing.B) {
