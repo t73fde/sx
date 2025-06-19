@@ -44,20 +44,19 @@ type mainEngine struct {
 
 // ----- ComputeObserver methods
 
-func (me *mainEngine) BeforeCompute(_ *sxeval.Environment, expr sxeval.Expr, frame *sxeval.Frame) (sxeval.Expr, error) {
+func (me *mainEngine) Compute(env *sxeval.Environment, expr sxeval.Expr, frame *sxeval.Frame) (sx.Object, error) {
+	var spaces string
 	if me.logExecutor {
-		spaces := strings.Repeat(" ", me.execLevel)
+		spaces = strings.Repeat(" ", me.execLevel)
 		me.execLevel++
 		fmt.Printf("%s;X%d %v<-%v ", spaces, me.execLevel, frame, frame.Parent())
 		_, _ = expr.Print(os.Stdout)
 		fmt.Println()
 	}
-	return expr, nil
-}
 
-func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, _ *sxeval.Frame, obj sx.Object, err error) {
+	obj, err := expr.Compute(env, frame)
+
 	if me.logExecutor {
-		spaces := strings.Repeat(" ", me.execLevel-1)
 		me.execCount++
 		if err == nil {
 			fmt.Printf("%s;O%d %T %v\n", spaces, me.execLevel, obj, obj)
@@ -66,7 +65,9 @@ func (me *mainEngine) AfterCompute(_ *sxeval.Environment, _ sxeval.Expr, _ *sxev
 		}
 		me.execLevel--
 	}
+	return obj, err
 }
+func (me *mainEngine) Reset() { me.execLevel, me.execCount = 0, 0 }
 
 // ----- ParseObserver methods
 
@@ -264,7 +265,7 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 
 	for {
 		env := sxeval.MakeEnvironment(bind)
-		env.SetComputeObserver(me).
+		env.SetComputeHandler(me).
 			SetParseObserver(me).
 			SetImproveObserver(me)
 		fmt.Print("> ")

@@ -34,7 +34,7 @@ type Environment struct {
 	newExpr  Expr
 	newFrame *Frame
 
-	obCompute ComputeObserver
+	handler   ComputeHandler
 	obParse   ParseObserver
 	obImprove ImproveObserver
 }
@@ -58,15 +58,15 @@ func (env *Environment) String() string {
 	return sb.String()
 }
 
-// ComputeObserver observes the execution of expressions.
-type ComputeObserver interface {
-	// BeforeCompute is called immediate before the given expression is computed.
-	// The observer may change the expression or abort computation with an error.
-	BeforeCompute(*Environment, Expr, *Frame) (Expr, error)
+// ComputeHandler handles the computation of expressions.
+type ComputeHandler interface {
+	// Compute the expression in a frame and return the result.
+	// It may have side-effects, on the given environment, or on the
+	// general environment of the system.
+	Compute(*Environment, Expr, *Frame) (sx.Object, error)
 
-	// AfterCompute is called immediate after the given expression was computed,
-	// resulting in an `sx.Object` and an error.
-	AfterCompute(*Environment, Expr, *Frame, sx.Object, error)
+	// Reset internal counter, etc., to bring the observer into a start state.
+	Reset()
 }
 
 // MakeEnvironment creates an environment for later parsing, improving, and
@@ -78,9 +78,9 @@ func MakeEnvironment(globals *Binding) *Environment {
 	}
 }
 
-// SetComputeObserver sets the given compute observer.
-func (env *Environment) SetComputeObserver(observe ComputeObserver) *Environment {
-	env.obCompute = observe
+// SetComputeHandler sets the given compute observer.
+func (env *Environment) SetComputeHandler(handler ComputeHandler) *Environment {
+	env.handler = handler
 	return env
 }
 
@@ -128,28 +128,24 @@ func (env *Environment) MakeParseEnvironment() *ParseEnvironment {
 
 // Run the given expression.
 func (env *Environment) Run(expr Expr, frame *Frame) (sx.Object, error) {
+	if ob := env.handler; ob != nil {
+		ob.Reset()
+	}
 	return env.Execute(expr, frame)
 }
 
 // Execute the given expression.
 func (env *Environment) Execute(expr Expr, frame *Frame) (res sx.Object, err error) {
 	for {
-		if exec := env.obCompute; exec != nil {
-			if expr, err = exec.BeforeCompute(env, expr, frame); err != nil {
-				break
-			}
+		if handler := env.handler; handler != nil {
+			res, err = handler.Compute(env, expr, frame)
+		} else {
+			res, err = expr.Compute(env, frame)
 		}
-
-		if res, err = expr.Compute(env, frame); err == nil {
-			if exec := env.obCompute; exec != nil {
-				exec.AfterCompute(env, expr, frame, res, nil)
-			}
+		if err == nil {
 			return res, nil
 		}
 
-		if exec := env.obCompute; exec != nil {
-			exec.AfterCompute(env, expr, frame, res, err)
-		}
 		if err != errExecuteAgain {
 			break
 		}

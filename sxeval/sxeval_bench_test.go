@@ -26,11 +26,18 @@ func BenchmarkEvenTCO(b *testing.B) {
 	testcases := [...]int{0, 1, 2, 4, 16, 64, 512, 4096, 65536}
 	root := createBindingForTCO()
 	evenSym := sx.MakeSymbol("even?")
+	observers := []sxeval.ComputeHandler{
+		nil,
+		sxeval.DefaultComputeHandler{},
+		sxeval.MakeLimitNestingHandler(3, sxeval.DefaultComputeHandler{}),
+		sxeval.MakeStepsLimitHandler(600000, sxeval.DefaultComputeHandler{}),
+		sxeval.MakeLimitNestingHandler(3, sxeval.MakeStepsLimitHandler(600000, sxeval.DefaultComputeHandler{})),
+	}
 
-	for _, cob := range []sxeval.ComputeObserver{nil, &nilComputeObserver{}} {
+	for _, cob := range observers {
 		for _, tc := range testcases {
 			b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
-				env := sxeval.MakeEnvironment(root).SetComputeObserver(cob)
+				env := sxeval.MakeEnvironment(root).SetComputeHandler(cob)
 				obj := sx.MakeList(evenSym, sx.Int64(tc))
 				expr, err := env.Parse(obj, nil)
 				if err != nil {
@@ -38,20 +45,14 @@ func BenchmarkEvenTCO(b *testing.B) {
 				}
 				b.ResetTimer()
 				for b.Loop() {
-					_, _ = env.Run(expr, nil)
+					if _, err = env.Run(expr, nil); err != nil {
+						b.Error(err)
+						break
+					}
 				}
 			})
 		}
 	}
-}
-
-type nilComputeObserver struct{}
-
-func (nilComputeObserver) BeforeCompute(_ *sxeval.Environment, expr sxeval.Expr, _ *sxeval.Frame) (sxeval.Expr, error) {
-	return expr, nil
-}
-
-func (nilComputeObserver) AfterCompute(*sxeval.Environment, sxeval.Expr, *sxeval.Frame, sx.Object, error) {
 }
 
 func BenchmarkFac(b *testing.B) {
