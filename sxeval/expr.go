@@ -142,46 +142,41 @@ func (use UnboundSymbolExpr) Unparse() sx.Object { return use.sym }
 
 // Improve the expression into a possible simpler one.
 func (use UnboundSymbolExpr) Improve(imp *Improver) (Expr, error) {
+	sym := use.sym
 	depth := 0
 	for currFrame := imp.frame; currFrame != nil; currFrame = currFrame.parent {
-		if _, found := currFrame.Lookup(use.sym); found {
-			return imp.Improve(&frameSymbolExpr{sym: use.sym, lvl: depth})
+		if _, found := currFrame.Lookup(sym); found {
+			return imp.Improve(&frameSymbolExpr{sym: sym, lvl: depth})
 		}
 		depth++
 	}
 
 	if imp.dynamic {
-		return imp.Improve(&dynamicSymbolExpr{sym: use.sym})
+		return use, nil
 	}
 
 	for currBinding := imp.env.globals; currBinding != nil; currBinding = currBinding.parent {
-		if obj, found := currBinding.Lookup(use.sym); found {
+		if obj, found := currBinding.Lookup(sym); found {
 			if currBinding.frozen {
 				return imp.Improve(ObjExpr{Obj: obj})
 			}
-			return use, nil
+			return imp.Improve(&envSymbolExpr{sym})
 		}
 	}
 
-	if obj, found := use.sym.Bound(); found && use.sym.IsFrozen() {
+	if obj, found := sym.Bound(); found && sym.IsFrozen() {
 		return imp.Improve(ObjExpr{Obj: obj})
 	}
 
-	return use, nil
+	return imp.Improve(&envSymbolExpr{sym})
 }
 
 // Compute the expression in a frame and return the result.
 func (use UnboundSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
-	sym := use.sym
-	for curr := env.globals; curr != nil; curr = curr.parent {
-		if obj, found := curr.Lookup(sym); found {
-			return obj, nil
-		}
-	}
-	if obj, found := sym.Bound(); found {
+	if obj, found := env.Resolve(use.sym, frame); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(sym, frame)
+	return nil, env.MakeNotBoundError(use.sym, frame)
 }
 
 // Print the expression on the given writer.
@@ -215,29 +210,35 @@ func (fse frameSymbolExpr) Print(w io.Writer) (int, error) {
 	return fmt.Fprintf(w, "{LOOKUP/%d %v}", fse.lvl, fse.sym)
 }
 
-// dynamicSymbolExpr is a special UnboundSymbolExpr that knows the symbol
-// is bound, but did not know its bound value at improvement time.
-type dynamicSymbolExpr struct {
+// envSymbolExpr is a special UnboundSymbolExpr that knows the symbol is not
+// bound in the static environment (frames).
+type envSymbolExpr struct {
 	sym *sx.Symbol
 }
 
 // IsPure signals an expression that has no side effects.
-func (*dynamicSymbolExpr) IsPure() bool { return true }
+func (*envSymbolExpr) IsPure() bool { return true }
 
 // Unparse the expression back into a form object.
-func (dse *dynamicSymbolExpr) Unparse() sx.Object { return dse.sym }
+func (ese *envSymbolExpr) Unparse() sx.Object { return ese.sym }
 
 // Compute the expression in a frame and return the result.
-func (dse *dynamicSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
-	if obj, found := env.Resolve(dse.sym, frame); found {
+func (ese *envSymbolExpr) Compute(env *Environment, frame *Frame) (sx.Object, error) {
+	sym := ese.sym
+	for curr := env.globals; curr != nil; curr = curr.parent {
+		if obj, found := curr.Lookup(sym); found {
+			return obj, nil
+		}
+	}
+	if obj, found := sym.Bound(); found {
 		return obj, nil
 	}
-	return nil, env.MakeNotBoundError(dse.sym, frame)
+	return nil, env.MakeNotBoundError(sym, frame)
 }
 
 // Print the expression on the given writer.
-func (dse dynamicSymbolExpr) Print(w io.Writer) (int, error) {
-	return fmt.Fprintf(w, "{DYNAMIC %v}", dse.sym)
+func (ese envSymbolExpr) Print(w io.Writer) (int, error) {
+	return fmt.Fprintf(w, "{DYNAMIC %v}", ese.sym)
 }
 
 // ----- CallExpr -------------------------------------------------------------
