@@ -22,11 +22,7 @@ import (
 
 // ----- Notes
 //
-// (begin1 expr1 expr2 ...)
-//    returns evaluation of expr1, but evaluates expr1, expr2 ... before that
-//    e.g. (begin1 n (set! n (+ n 1)))
-//
-// (begin2 expr1 expr2 expr3 ...)
+// TODO: (begin2 expr1 expr2 expr3 ...)
 //    returns evaluation of expr2, but evaluates expr1, expr2, expr3 ... before that;
 //    often (begin2 (open) (process) (close))
 //
