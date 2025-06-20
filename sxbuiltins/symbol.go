@@ -30,6 +30,21 @@ var SymbolP = sxeval.Builtin{
 	},
 }
 
+// KeywordP returns true if the symbol is a keyword.
+var KeywordP = sxeval.Builtin{
+	Name:     "keyword?",
+	MinArity: 1,
+	MaxArity: 1,
+	TestPure: sxeval.AssertPure,
+	Fn1: func(_ *sxeval.Environment, arg sx.Object, _ *sxeval.Frame) (sx.Object, error) {
+		sym, err := GetSymbol(arg, 0)
+		if err != nil {
+			return nil, err
+		}
+		return sx.MakeBoolean(sym.IsKeyword()), nil
+	},
+}
+
 // SymbolPackage returns the package that defined the symbol.
 var SymbolPackage = sxeval.Builtin{
 	Name:     "symbol-package",

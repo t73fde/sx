@@ -70,7 +70,14 @@ func (sym *Symbol) GoString() string { return sym.name }
 
 // Print write the string representation to the given Writer.
 func (sym *Symbol) Print(w io.Writer) (length int, err error) {
-	if pkg := sym.pkg; pkg != CurrentPackage() {
+	if pkg := sym.pkg; pkg == keywordPackage {
+		var l int
+		l, err = io.WriteString(w, ":")
+		length += l
+		if err != nil {
+			return length, err
+		}
+	} else if pkg != CurrentPackage() {
 		if sym.pkg != keywordPackage {
 			length, err = io.WriteString(w, pkg.name)
 			if err != nil {
@@ -84,6 +91,7 @@ func (sym *Symbol) Print(w io.Writer) (length int, err error) {
 			return length, err
 		}
 	}
+
 	// TODO: provide escape of symbol contains non-printable chars.
 	l, err := io.WriteString(w, sym.name)
 	return length + l, err
@@ -100,6 +108,14 @@ func GetSymbol(obj Object) (*Symbol, bool) {
 
 // Package returns the Package that created the symbol.
 func (sym *Symbol) Package() *Package { return sym.pkg }
+
+// IsKeyword returns true, if the symbols package is the keyword package.
+func (sym *Symbol) IsKeyword() bool {
+	if sym != nil {
+		return sym.pkg == keywordPackage
+	}
+	return false
+}
 
 // ErrSymbolFrozen is returned when trying to update a frozen symbol.
 type ErrSymbolFrozen struct{ Symbol *Symbol }

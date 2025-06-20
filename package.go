@@ -87,6 +87,12 @@ func (pkg *Package) MakeSymbol(name string) *Symbol {
 		pkg.symbols[name] = sym
 	}
 	pkg.mx.Unlock()
+
+	// Keywords evaluate to themself
+	if pkg == keywordPackage {
+		sym.bound = sym
+		sym.frozen = true
+	}
 	return sym
 }
 

@@ -69,3 +69,28 @@ func TestSymbolBind(t *testing.T) {
 		}
 	}
 }
+
+func TestSymbolString(t *testing.T) {
+	t.Parallel()
+	kwPkg := sx.KeywordPackage()
+	myPkg := sx.FindPackage("my")
+	if myPkg == nil {
+		myPkg = sx.MustMakePackage("my")
+	}
+	testcases := []struct {
+		name string
+		sym  *sx.Symbol
+		exp  string
+	}{
+		{"simple symbol", sx.MakeSymbol("abc"), "abc"},
+		{"simple other pkg", myPkg.MakeSymbol("abc"), "my:abc"},
+		{"simple keyword", kwPkg.MakeSymbol("abc"), ":abc"},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.sym.String(); got != tc.exp {
+				t.Errorf("symbol %q should be %q, but got %q", tc.sym.GoString(), tc.exp, got)
+			}
+		})
+	}
+}
