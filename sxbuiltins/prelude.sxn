@@ -11,8 +11,6 @@
 ;;; SPDX-FileCopyrightText: 2023-present Detlef Stern
 ;;;----------------------------------------------------------------------------
 
-;; Following code assumes defined constant T
-
 ;; Macro boolean
 (defmacro boolean (x) `(not (not ,x)))
 
@@ -22,14 +20,12 @@
 
 ;; cond macro
 ;;
-;; (cond ((COND EXPR) ...))
+;; (cond (COND EXPR) ...)
 (defmacro cond clauses
     (if (null? clauses)
         ()
         (let* ((clause (car clauses))
                (the-cond (car clause)))
-              (if (= the-cond T)
-                  `(begin ,@(cdr clause))
-                  `(if ,the-cond
-                       (begin ,@(cdr clause))
-                       (cond ,@(cdr clauses)))))))
+              `(if ,the-cond
+                   (begin ,@(cdr clause))
+                   (cond ,@(cdr clauses))))))
