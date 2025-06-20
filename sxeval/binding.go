@@ -20,12 +20,15 @@ import (
 	"t73f.de/r/sx"
 )
 
-// ErrBindingFrozen is returned when trying to update a frozen binding.
-type ErrBindingFrozen struct{ Binding *Binding }
+// ----- Notes
+//
+// TODO: Remove Binding.Freeze, since it is the **dynamic** environment.
+//
+// -----
 
-func (err ErrBindingFrozen) Error() string { return fmt.Sprintf("binding is frozen: %v", err.Binding) }
-
-// Binding is a binding based on maps.
+// Binding is a binding binds symbol to values. It is the dynamic environment
+// of a call, in contrast to `Frame`. It can be frozen, so it cannot be
+// updated any more.
 type Binding struct {
 	mso    mapSymObj
 	name   string
@@ -99,6 +102,11 @@ func (b *Binding) Bind(sym *sx.Symbol, obj sx.Object) error {
 	b.mso[sym] = obj
 	return nil
 }
+
+// ErrBindingFrozen is returned when trying to update a frozen binding.
+type ErrBindingFrozen struct{ Binding *Binding }
+
+func (err ErrBindingFrozen) Error() string { return fmt.Sprintf("binding is frozen: %v", err.Binding) }
 
 // Lookup will search for a local binding of the given symbol. If not
 // found, the search will *not* be continued in the parent binding.

@@ -20,7 +20,8 @@ import (
 	"t73f.de/r/sx"
 )
 
-// Frame is a binding specific for a call.
+// Frame is a binding specific for a call. It implements the static environment
+// of a call, in constrast to `Binding`.
 type Frame struct {
 	mso    mapSymObj  // used if more than one symbol is bound
 	sym    *sx.Symbol // used if zero or one symbol is bound

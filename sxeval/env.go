@@ -25,6 +25,12 @@ import (
 	"t73f.de/r/sx"
 )
 
+// ----- Notes
+//
+// TODO: rename Environment to VM?
+//
+// -----
+
 // Environment is a runtime object of the current computing environment.
 type Environment struct {
 	stack []sx.Object
