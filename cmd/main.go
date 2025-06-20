@@ -35,39 +35,37 @@ type mainEngine struct {
 	logParse     bool
 	logImprove   bool
 	logExpr      bool
-	logExecutor  bool
+	logCompute   bool
+	logStats     bool
 	parseLevel   int
 	improveLevel int
-	execLevel    int
-	execCount    int
+	nestHandler  *sxeval.NestingHandler
+	stepHandler  *sxeval.StepsHandler
 }
 
 // ----- ComputeObserver methods
 
 func (me *mainEngine) Compute(env *sxeval.Environment, expr sxeval.Expr, frame *sxeval.Frame) (sx.Object, error) {
-	var spaces string
-	if me.logExecutor {
-		spaces = strings.Repeat(" ", me.execLevel)
-		me.execLevel++
-		fmt.Printf("%s;X%d %v<-%v ", spaces, me.execLevel, frame, frame.Parent())
-		_, _ = expr.Print(os.Stdout)
-		fmt.Println()
+	if !me.logCompute {
+		return me.nestHandler.Compute(env, expr, frame)
 	}
 
-	obj, err := expr.Compute(env, frame)
+	currNesting, _ := me.nestHandler.Nesting()
+	spaces := strings.Repeat(" ", currNesting)
+	fmt.Printf("%s;X%d %v<-%v ", spaces, currNesting+1, frame.Name(), frame.Parent().Name())
+	_, _ = expr.Print(os.Stdout)
+	fmt.Println()
 
-	if me.logExecutor {
-		me.execCount++
-		if err == nil {
-			fmt.Printf("%s;O%d %T %v\n", spaces, me.execLevel, obj, obj)
-		} else {
-			fmt.Printf("%s;o%d %v\n", spaces, me.execLevel, err)
-		}
-		me.execLevel--
+	obj, err := me.nestHandler.Compute(env, expr, frame)
+
+	if err == nil {
+		fmt.Printf("%s;O%d %T %v\n", spaces, currNesting, obj, obj)
+	} else {
+		fmt.Printf("%s;o%d %v\n", spaces, currNesting, err)
 	}
 	return obj, err
 }
-func (me *mainEngine) Reset() { me.execLevel, me.execCount = 0, 0 }
+func (me *mainEngine) Reset() { me.nestHandler.Reset() }
 
 // ----- ParseObserver methods
 
@@ -75,7 +73,7 @@ func (me *mainEngine) BeforeParse(_ *sxeval.ParseEnvironment, form sx.Object, fr
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel)
 		me.parseLevel++
-		fmt.Printf("%s;P%v %v<-%v %T %v\n", spaces, me.parseLevel, frame, frame.Parent(), form, form)
+		fmt.Printf("%s;P%v %v<-%v %T %v\n", spaces, me.parseLevel, frame.Name(), frame.Parent().Name(), form, form)
 	}
 	return form, nil
 }
@@ -83,7 +81,7 @@ func (me *mainEngine) BeforeParse(_ *sxeval.ParseEnvironment, form sx.Object, fr
 func (me *mainEngine) AfterParse(_ *sxeval.ParseEnvironment, _ sx.Object, expr sxeval.Expr, frame *sxeval.Frame, err error) {
 	if me.logParse {
 		spaces := strings.Repeat(" ", me.parseLevel-1)
-		fmt.Printf("%s;Q%v %v<-%v %v ", spaces, me.parseLevel, frame, frame.Parent(), err)
+		fmt.Printf("%s;Q%v %v<-%v %v ", spaces, me.parseLevel, frame.Name(), frame.Parent().Name(), err)
 		if err == nil {
 			_, _ = expr.Print(os.Stdout)
 		}
@@ -99,7 +97,7 @@ func (me *mainEngine) BeforeImprove(imp *sxeval.Improver, expr sxeval.Expr) sxev
 		spaces := strings.Repeat(" ", me.improveLevel)
 		me.improveLevel++
 		frame := imp.Frame()
-		fmt.Printf("%s;R%v %v<-%v ", spaces, me.improveLevel, frame, frame.Parent())
+		fmt.Printf("%s;R%v %v<-%v ", spaces, me.improveLevel, frame.Name(), frame.Parent().Name())
 		_, _ = expr.Print(os.Stdout)
 		fmt.Println()
 	}
@@ -110,7 +108,7 @@ func (me *mainEngine) AfterImprove(imp *sxeval.Improver, _, result sxeval.Expr, 
 	if me.logImprove {
 		spaces := strings.Repeat(" ", me.improveLevel-1)
 		frame := imp.Frame()
-		fmt.Printf("%s;S%v %v<-%v %v ", spaces, me.improveLevel, frame, frame.Parent(), err)
+		fmt.Printf("%s;S%v %v<-%v %v ", spaces, me.improveLevel, frame.Name(), frame.Parent().Name(), err)
 		_, _ = result.Print(os.Stdout)
 		fmt.Println()
 		me.improveLevel--
@@ -122,7 +120,6 @@ var myBuiltins = []*sxeval.Builtin{
 		Name:     "panic",
 		MinArity: 0,
 		MaxArity: 1,
-		TestPure: nil,
 		Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 			panic("common panic")
 		},
@@ -131,10 +128,7 @@ var myBuiltins = []*sxeval.Builtin{
 		},
 	},
 	{
-		Name:     "stack",
-		MinArity: 0,
-		MaxArity: 0,
-		TestPure: nil,
+		Name: "stack",
 		Fn0: func(env *sxeval.Environment, _ *sxeval.Frame) (sx.Object, error) {
 			return sx.Vector(slices.Collect(env.Stack())), nil
 		},
@@ -144,10 +138,7 @@ var myBuiltins = []*sxeval.Builtin{
 func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 	_ = sxeval.BindBuiltins(root,
 		&sxeval.Builtin{
-			Name:     "log-reader",
-			MinArity: 0,
-			MaxArity: 0,
-			TestPure: nil,
+			Name: "log-reader",
 			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				res := me.logReader
 				me.logReader = !res
@@ -155,10 +146,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			},
 		},
 		&sxeval.Builtin{
-			Name:     "log-parse",
-			MinArity: 0,
-			MaxArity: 0,
-			TestPure: nil,
+			Name: "log-parse",
 			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				res := me.logParse
 				me.logParse = !res
@@ -166,10 +154,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			},
 		},
 		&sxeval.Builtin{
-			Name:     "log-improve",
-			MinArity: 0,
-			MaxArity: 0,
-			TestPure: nil,
+			Name: "log-improve",
 			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				res := me.logImprove
 				me.logImprove = !res
@@ -177,10 +162,7 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			},
 		},
 		&sxeval.Builtin{
-			Name:     "log-expr",
-			MinArity: 0,
-			MaxArity: 0,
-			TestPure: nil,
+			Name: "log-expr",
 			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				res := me.logExpr
 				me.logExpr = !res
@@ -188,26 +170,28 @@ func (me *mainEngine) bindOwn(root *sxeval.Binding) {
 			},
 		},
 		&sxeval.Builtin{
-			Name:     "log-executor",
-			MinArity: 0,
-			MaxArity: 0,
-			TestPure: nil,
+			Name: "log-compute",
 			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
-				res := me.logExecutor
-				me.logExecutor = !res
+				res := me.logCompute
+				me.logCompute = !res
 				return sx.MakeBoolean(res), nil
 			},
 		},
 		&sxeval.Builtin{
-			Name:     "log-off",
-			MinArity: 0,
-			MaxArity: 0,
-			TestPure: nil,
+			Name: "log-stats",
+			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
+				res := me.logStats
+				me.logStats = !res
+				return sx.MakeBoolean(res), nil
+			},
+		},
+		&sxeval.Builtin{
+			Name: "log-off",
 			Fn0: func(*sxeval.Environment, *sxeval.Frame) (sx.Object, error) {
 				me.logReader = false
 				me.logParse = false
 				me.logImprove = false
-				me.logExecutor = false
+				me.logCompute = false
 				return sx.Nil(), nil
 			},
 		},
@@ -223,12 +207,16 @@ func main() {
 	_ = root.Bind(sx.MakeSymbol("UNDEFINED"), sx.MakeUndefined())
 	_ = root.Bind(sx.MakeSymbol("NIL"), sx.Nil())
 	_ = root.Bind(sx.MakeSymbol("T"), sx.MakeSymbol("T"))
+	stepHandler := sxeval.MakeStepsHandler(sxeval.DefaultHandler{})
 	me := mainEngine{
 		logReader:   true,
 		logParse:    true,
 		logImprove:  true,
 		logExpr:     false,
-		logExecutor: true,
+		logCompute:  true,
+		logStats:    true,
+		stepHandler: stepHandler,
+		nestHandler: sxeval.MakeNestingHandler(stepHandler),
 	}
 	me.bindOwn(root)
 	err := sxbuiltins.LoadPrelude(root)
@@ -265,9 +253,12 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 
 	for {
 		env := sxeval.MakeEnvironment(bind)
-		env.SetComputeHandler(me).
-			SetParseObserver(me).
-			SetImproveObserver(me)
+		env.SetParseObserver(me).SetImproveObserver(me)
+		if me.logCompute || me.logStats {
+			env.SetComputeHandler(me)
+		} else {
+			env.SetComputeHandler(nil)
+		}
 		fmt.Print("> ")
 		obj, err := rd.Read()
 		if err != nil {
@@ -294,13 +285,14 @@ func repl(rd *sxreader.Reader, me *mainEngine, bind *sxeval.Binding, wg *sync.Wa
 			printExpr(expr, 0)
 			continue
 		}
-		me.execCount = 0
 		res, err := env.Run(expr, nil)
-		if me.logExecutor {
-			fmt.Println(";#", me.execCount)
-		}
+
 		if size := env.Size(); size > 0 {
 			fmt.Println(";W stack not empty, size:", size)
+		}
+		if me.logStats {
+			_, maxNesting := me.nestHandler.Nesting()
+			fmt.Println(";#", me.stepHandler.Steps, "/", maxNesting)
 		}
 		if err != nil {
 			fmt.Println(";e", err)

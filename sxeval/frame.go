@@ -102,7 +102,12 @@ func (f *Frame) String() string {
 func (f *Frame) GoString() string { return f.String() }
 
 // Name returns the local name of this frame.
-func (f *Frame) Name() string { return f.name }
+func (f *Frame) Name() string {
+	if f == nil {
+		return "<nil>"
+	}
+	return f.name
+}
 
 // Parent returns the parent frame.
 func (f *Frame) Parent() *Frame {

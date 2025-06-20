@@ -26,18 +26,46 @@ func BenchmarkEvenTCO(b *testing.B) {
 	testcases := [...]int{0, 1, 2, 4, 16, 64, 512, 4096, 65536}
 	root := createBindingForTCO()
 	evenSym := sx.MakeSymbol("even?")
-	observers := []sxeval.ComputeHandler{
+	for _, tc := range testcases {
+		b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
+			env := sxeval.MakeEnvironment(root)
+			obj := sx.MakeList(evenSym, sx.Int64(tc))
+			expr, err := env.Parse(obj, nil)
+			if err != nil {
+				b.Error(err)
+			}
+			b.ResetTimer()
+			for b.Loop() {
+				if _, err = env.Run(expr, nil); err != nil {
+					b.Error(err)
+					break
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkHandler(b *testing.B) {
+	testcases := [...]int{0, 1, 65536}
+	root := createBindingForTCO()
+	evenSym := sx.MakeSymbol("even?")
+	handlers := []sxeval.ComputeHandler{
 		nil,
-		sxeval.DefaultComputeHandler{},
-		sxeval.MakeLimitNestingHandler(3, sxeval.DefaultComputeHandler{}),
-		sxeval.MakeStepsLimitHandler(730000, sxeval.DefaultComputeHandler{}),
-		sxeval.MakeLimitNestingHandler(3, sxeval.MakeStepsLimitHandler(730000, sxeval.DefaultComputeHandler{})),
+		sxeval.DefaultHandler{},
+		sxeval.MakeStepsHandler(sxeval.DefaultHandler{}),
+		sxeval.MakeStepsLimitHandler(730000, sxeval.DefaultHandler{}),
+		sxeval.MakeNestingHandler(sxeval.DefaultHandler{}),
+		sxeval.MakeNestingHandler(sxeval.MakeStepsHandler(sxeval.DefaultHandler{})),
+		sxeval.MakeNestingHandler(sxeval.MakeStepsLimitHandler(730000, sxeval.DefaultHandler{})),
+		sxeval.MakeNestingLimitHandler(3, sxeval.DefaultHandler{}),
+		sxeval.MakeNestingLimitHandler(3, sxeval.MakeStepsHandler(sxeval.DefaultHandler{})),
+		sxeval.MakeNestingLimitHandler(3, sxeval.MakeStepsLimitHandler(730000, sxeval.DefaultHandler{})),
 	}
 
-	for _, cob := range observers {
+	for _, handler := range handlers {
 		for _, tc := range testcases {
 			b.Run(fmt.Sprintf("%5d", tc), func(b *testing.B) {
-				env := sxeval.MakeEnvironment(root).SetComputeHandler(cob)
+				env := sxeval.MakeEnvironment(root).SetComputeHandler(handler)
 				obj := sx.MakeList(evenSym, sx.Int64(tc))
 				expr, err := env.Parse(obj, nil)
 				if err != nil {

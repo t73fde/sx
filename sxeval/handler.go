@@ -15,45 +15,76 @@ package sxeval
 
 import (
 	"fmt"
-	"math"
 
 	"t73f.de/r/sx"
 )
 
-// DefaultComputeHandler is a ComputeHandler that just compute the expression.
+// DefaultHandler is a ComputeHandler that just compute the expression.
 //
 // It is used to terminate a handler chain.
-type DefaultComputeHandler struct{}
+type DefaultHandler struct{}
 
 // Compute the expression in the environment, within a frame.
-func (DefaultComputeHandler) Compute(env *Environment, expr Expr, frame *Frame) (sx.Object, error) {
+func (DefaultHandler) Compute(env *Environment, expr Expr, frame *Frame) (sx.Object, error) {
 	return expr.Compute(env, frame)
 }
 
 // Reset the handler.
-func (DefaultComputeHandler) Reset() {}
+func (DefaultHandler) Reset() {}
 
-// LimitNestingHandler limits nested compute call to a given maximum.
-type LimitNestingHandler struct {
+// ----- NestingHandler -----------------------------------------------------
+
+// NestingHandler counts nested compute calls.
+type NestingHandler struct {
+	next        ComputeHandler
+	currNesting int
+	maxNesting  int
+}
+
+// MakeNestingHandler builds a new NestingHandler.
+func MakeNestingHandler(next ComputeHandler) *NestingHandler {
+	return &NestingHandler{next: next}
+}
+
+// Compute the expression in the environment, within a frame.
+func (h *NestingHandler) Compute(env *Environment, expr Expr, frame *Frame) (sx.Object, error) {
+	h.currNesting++
+	level := h.currNesting
+	if level > h.maxNesting {
+		h.maxNesting = level
+	}
+
+	obj, err := h.next.Compute(env, expr, frame)
+	h.currNesting--
+	return obj, err
+}
+
+// Reset the handler.
+func (h *NestingHandler) Reset() { h.currNesting, h.maxNesting = 0, 0; h.next.Reset() }
+
+// Nesting returns the current and the maximum nesting value occured.
+func (h *NestingHandler) Nesting() (int, int) { return h.currNesting, h.maxNesting }
+
+// ----- NestingLimitHandler ------------------------------------------------
+
+// NestingLimitHandler limits nested compute call to a given maximum.
+type NestingLimitHandler struct {
 	next         ComputeHandler
 	currNesting  int
 	maxNesting   int
 	limitNesting int
 }
 
-// MakeLimitNestingHandler builds a new LimitNestingHandler.
-func MakeLimitNestingHandler(limitNesting int, next ComputeHandler) *LimitNestingHandler {
-	if limitNesting <= 0 {
-		limitNesting = math.MaxInt
-	}
-	return &LimitNestingHandler{
+// MakeNestingLimitHandler builds a new NestingLimitHandler.
+func MakeNestingLimitHandler(limitNesting int, next ComputeHandler) *NestingLimitHandler {
+	return &NestingLimitHandler{
 		next:         next,
 		limitNesting: limitNesting,
 	}
 }
 
 // Compute the expression in the environment, within a frame.
-func (h *LimitNestingHandler) Compute(env *Environment, expr Expr, frame *Frame) (sx.Object, error) {
+func (h *NestingLimitHandler) Compute(env *Environment, expr Expr, frame *Frame) (sx.Object, error) {
 	h.currNesting++
 	level := h.currNesting
 	if level > h.maxNesting {
@@ -69,15 +100,41 @@ func (h *LimitNestingHandler) Compute(env *Environment, expr Expr, frame *Frame)
 }
 
 // Reset the handler.
-func (h *LimitNestingHandler) Reset() { h.currNesting = 0; h.next.Reset() }
+func (h *NestingLimitHandler) Reset() { h.currNesting = 0; h.next.Reset() }
 
 // Nesting returns the current and the maximum nesting value occured.
-func (h *LimitNestingHandler) Nesting() (int, int) { return h.currNesting, h.maxNesting }
+func (h *NestingLimitHandler) Nesting() (int, int) { return h.currNesting, h.maxNesting }
 
 // ErrNestingLimit is an error to be returned if the nesting limit is exceeded.
 type ErrNestingLimit struct{ level int }
 
-func (e ErrNestingLimit) Error() string { return fmt.Sprintf("nesting level exceeded: %d", e.level) }
+func (e ErrNestingLimit) Error() string {
+	return fmt.Sprintf("allowed nesting level exceeded: %d", e.level)
+}
+
+// ----- StepsHandler -------------------------------------------------------
+
+// StepsHandler just counts the number of execution steps.
+type StepsHandler struct {
+	next  ComputeHandler
+	Steps int
+}
+
+// MakeStepsHandler builds a new StepsHandler.
+func MakeStepsHandler(next ComputeHandler) *StepsHandler {
+	return &StepsHandler{next: next}
+}
+
+// Compute the expression in the environment, within a frame.
+func (h *StepsHandler) Compute(env *Environment, expr Expr, frame *Frame) (sx.Object, error) {
+	h.Steps++
+	return h.next.Compute(env, expr, frame)
+}
+
+// Reset the handler.
+func (h *StepsHandler) Reset() { h.Steps = 0; h.next.Reset() }
+
+// ----- StepsLimitHandler --------------------------------------------------
 
 // StepsLimitHandler limits the number of compute steps.
 type StepsLimitHandler struct {
@@ -88,9 +145,6 @@ type StepsLimitHandler struct {
 
 // MakeStepsLimitHandler builds a new StepsLimitHandler.
 func MakeStepsLimitHandler(limitSteps int, next ComputeHandler) *StepsLimitHandler {
-	if limitSteps <= 0 {
-		limitSteps = math.MaxInt
-	}
 	return &StepsLimitHandler{
 		next:       next,
 		limitSteps: limitSteps,
@@ -116,4 +170,6 @@ func (h *StepsLimitHandler) Steps() int { return h.currSteps }
 // ErrStepsLimit is an error to signal that the number of computation steps is exceeded.
 type ErrStepsLimit struct{ steps int }
 
-func (e ErrStepsLimit) Error() string { return fmt.Sprintf("compute steps exceeded: %d", e.steps) }
+func (e ErrStepsLimit) Error() string {
+	return fmt.Sprintf("allowed compute steps exceeded: %d", e.steps)
+}
