@@ -129,9 +129,9 @@ func BindAll(bind *sxeval.Binding) error {
 		&DefDynS, &DynLambdaS, // defdyn, dyn-lambda
 		&DefMacroS,       //  defmacro
 		&LetS, &LetStarS, // let, let*
-		&SetXS,      // set!
-		&IfS,        // if
-		&BeginS,     // begin
+		&SetXS,            // set!
+		&IfS,              // if
+		&BeginS, &Begin1S, // begin, begin1
 		&AndS, &OrS, // and, or
 	)
 	if err != nil {

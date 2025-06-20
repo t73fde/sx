@@ -207,6 +207,93 @@ func (be *BeginExpr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.O
 // Print the expression on the given writer.
 func (be *BeginExpr) Print(w io.Writer) (int, error) { return be.ExprSeq.Print(w, "{BEGIN") }
 
+// ----- (begin1 expr1 ...)
+//    returns evaluation of expr1, but evaluates expr1, ... before that
+//    e.g. (begin1 n (set! n (+ n 1)))
+
+const begin1Name = "begin1"
+
+// Begin1S parses a sequence of expressions.
+var Begin1S = sxeval.Special{
+	Name: begin1Name,
+	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
+		if args == nil {
+			return sxeval.NilExpr, nil
+		}
+		var be1 Begin1Expr
+		if err := doParseExprSeq(pe, args, frame, &be1.ExprSeq); err != nil {
+			return nil, err
+		}
+		if len(be1.Front) == 0 {
+			return be1.Last, nil
+		}
+		return &be1, nil
+	}}
+
+// Begin1Expr represents the begin form.
+type Begin1Expr struct{ ExprSeq }
+
+// IsPure signals an expression that has no side effects.
+func (be1 *Begin1Expr) IsPure() bool { return be1.ExprSeq.IsPure() }
+
+// Unparse the expression as an sx.Object
+func (be1 *Begin1Expr) Unparse() sx.Object { return be1.ExprSeq.Unparse(sx.MakeSymbol(begin1Name)) }
+
+// Improve the expression into a possible simpler one.
+func (be1 *Begin1Expr) Improve(imp *sxeval.Improver) (_ sxeval.Expr, err error) {
+	last := be1.Last
+	for {
+		if last, err = imp.Improve(last); err != nil {
+			return be1, err
+		}
+		if !last.IsPure() {
+			break
+		}
+		frontLen := len(be1.Front)
+		if frontLen == 0 {
+			return last, nil
+		}
+		last = be1.Front[frontLen-1]
+		be1.Front = be1.Front[:frontLen-1]
+	}
+	if len(be1.Front) == 0 {
+		return last, nil
+	}
+	if err = imp.ImproveSlice(be1.Front); err != nil {
+		return be1, err
+	}
+
+	seq := make([]sxeval.Expr, 0, len(be1.Front))
+	for i, expr := range be1.Front {
+		if i < 1 || !expr.IsPure() {
+			seq = append(seq, expr)
+		}
+	}
+	if len(seq) == 0 {
+		return last, nil
+	}
+	be1.ExprSeq.ImproveSeq(seq, last)
+	return be1, nil
+}
+
+// Compute the expression in a frame and return the result.
+func (be1 *Begin1Expr) Compute(env *sxeval.Environment, frame *sxeval.Frame) (sx.Object, error) {
+	result, err := env.Execute(be1.Front[0], frame)
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range be1.Front[1:] {
+		if _, err = env.Execute(e, frame); err != nil {
+			return nil, err
+		}
+	}
+	_, err = env.Execute(be1.Last, frame)
+	return result, err
+}
+
+// Print the expression on the given writer.
+func (be1 *Begin1Expr) Print(w io.Writer) (int, error) { return be1.ExprSeq.Print(w, "{BEGIN1") }
+
 // ----- (and ...)
 
 const andName = "and"

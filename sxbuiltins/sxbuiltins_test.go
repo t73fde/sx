@@ -14,6 +14,7 @@
 package sxbuiltins_test
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"strings"
@@ -93,15 +94,32 @@ func createBinding() *sxeval.Binding {
 	root := sxeval.MakeRootBinding(256)
 	_ = sxbuiltins.BindAll(root)
 	root.Freeze()
-	env := root.MakeChildBinding("vars", len(objects))
-	_ = env.Bind(sx.MakeSymbol("ROOT"), root)
+	vars := root.MakeChildBinding("vars", len(objects))
+	_ = vars.Bind(sx.MakeSymbol("ROOT"), root)
 	for _, obj := range objects {
-		if err := env.Bind(sx.MakeSymbol(obj.name), obj.obj); err != nil {
+		if err := vars.Bind(sx.MakeSymbol(obj.name), obj.obj); err != nil {
 			panic(err)
 		}
 	}
-	return env
+
+	rd := sxreader.MakeReader(strings.NewReader(testprelude))
+	env := sxeval.MakeEnvironment(vars)
+	for {
+		form, err := rd.Read()
+		if err != nil {
+			if err == io.EOF {
+				return vars
+			}
+			panic(err)
+		}
+		if _, err = env.Eval(form, nil); err != nil {
+			panic(err)
+		}
+	}
 }
+
+//go:embed sxbuiltins_test.sxn
+var testprelude string
 
 var objects = []struct {
 	name string

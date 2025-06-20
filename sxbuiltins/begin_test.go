@@ -22,10 +22,21 @@ func TestBegin(t *testing.T) {
 
 var tcsBegin = tTestCases{
 	{name: "begin-0", src: "(begin)", exp: "()"},
-	{name: "begin-1", src: "(begin 1)", exp: "1"},
-	{name: "begin-2", src: "(begin 1 2)", exp: "2"},
+	{name: "begin-1-s", src: "(begin b)", exp: "11"},
+	{name: "begin-1", src: "(begin (fb))", exp: "11"},
+	{name: "begin-2", src: "(begin (fb) (fc))", exp: "(22 33)"},
+	{name: "begin-2-s", src: "(begin b c)", exp: "(22 33)"},
 	{name: "begin-10", src: "(begin (apply car '((1 2))) 1 2 3 4 5 6 7 8 9)", exp: "9"},
-	{name: "begin-cons", src: "(begin 1 2 . 3)", exp: "3"},
+	{name: "begin-cons", src: "(begin (fb) (fc) . ((fd)))", exp: "(44 55)"},
+
+	{name: "begin1-0", src: "(begin1)", exp: "()"},
+	{name: "begin1-1", src: "(begin1 (fb))", exp: "11"},
+	{name: "begin1-1-s", src: "(begin1 b)", exp: "11"},
+	{name: "begin1-2", src: "(begin1 b c)", exp: "11"},
+	{name: "begin1-2-s", src: "(begin1 (fb) (fc))", exp: "11"},
+	{name: "begin1-10", src: "(begin1 (apply car '((1 2))) 1 2 3 4 5 6 7 8 9)", exp: "1"},
+	{name: "begin1-cons", src: "(begin1 (fb) (fc) . ((fd)))", exp: "11"},
+	{name: "begin-1-nested", src: "(begin1 (begin1 (fb) (fc)) (begin1 (fc) (fd)))", exp: "11"},
 
 	// (and ...)
 	{name: "and-0", src: "(and)", exp: "T"},

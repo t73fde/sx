@@ -109,6 +109,7 @@ func (env *Environment) Eval(obj sx.Object, frame *Frame) (sx.Object, error) {
 func (env *Environment) Parse(obj sx.Object, frame *Frame) (Expr, error) {
 	pe := env.MakeParseEnvironment()
 	expr, err := pe.Parse(obj, frame)
+	// return expr, err
 	if err != nil {
 		return expr, err
 	}
