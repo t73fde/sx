@@ -39,21 +39,6 @@ type ExprSeq struct {
 }
 
 // ParseExprSeq parses a sequence of expressions.
-func ParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
-	if args == nil {
-		return sxeval.NilExpr, nil
-	}
-	var be BeginExpr
-	if err := doParseExprSeq(pe, args, frame, &be.ExprSeq); err != nil {
-		return nil, err
-	}
-	if len(be.Front) == 0 {
-		return be.Last, nil
-	}
-	return &be, nil
-}
-
-// ParseExprSeq parses a sequence of expressions.
 func doParseExprSeq(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame, es *ExprSeq) error {
 	var front []sxeval.Expr
 	var last sxeval.Expr
@@ -150,12 +135,28 @@ func (es *ExprSeq) Print(w io.Writer, prefix string) (int, error) {
 }
 
 // ----- (begin ...)
+
 const beginName = "begin"
 
 // BeginS parses a sequence of expressions.
 var BeginS = sxeval.Special{
 	Name: beginName,
-	Fn:   ParseExprSeq,
+	Fn:   ParseBeginExpr, // Use explicit, pubic function, b/c it is used by other syntax objects, e.g. if
+}
+
+// ParseBeginExpr parses a sequence of expressions.
+func ParseBeginExpr(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
+	if args == nil {
+		return sxeval.NilExpr, nil
+	}
+	var be BeginExpr
+	if err := doParseExprSeq(pe, args, frame, &be.ExprSeq); err != nil {
+		return nil, err
+	}
+	if len(be.Front) == 0 {
+		return be.Last, nil
+	}
+	return &be, nil
 }
 
 // BeginExpr represents the begin form.

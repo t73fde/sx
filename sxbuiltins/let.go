@@ -105,7 +105,7 @@ func parseBindingsBody(pe *sxeval.ParseEnvironment, args *sx.Pair, forLetStar bo
 	if !isPair {
 		return sx.ErrImproper{Pair: args}
 	}
-	body, err := ParseExprSeq(pe, bodyArgs, letFrame)
+	body, err := ParseBeginExpr(pe, bodyArgs, letFrame)
 	if err != nil {
 		return err
 	}

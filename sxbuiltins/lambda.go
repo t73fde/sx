@@ -123,7 +123,7 @@ func ParseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpe
 	if rest != nil {
 		lambdaFrame.Bind(rest, sx.MakeUndefined())
 	}
-	expr, err := ParseExprSeq(pe, body, lambdaFrame)
+	expr, err := ParseBeginExpr(pe, body, lambdaFrame)
 	if err != nil {
 		return nil, err
 	}
