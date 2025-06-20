@@ -59,9 +59,9 @@ func (me *mainEngine) Compute(env *sxeval.Environment, expr sxeval.Expr, frame *
 	obj, err := me.nestHandler.Compute(env, expr, frame)
 
 	if err == nil {
-		fmt.Printf("%s;O%d %T %v\n", spaces, currNesting, obj, obj)
+		fmt.Printf("%s;O%d %T %v\n", spaces, currNesting+1, obj, obj)
 	} else {
-		fmt.Printf("%s;o%d %v\n", spaces, currNesting, err)
+		fmt.Printf("%s;o%d %v\n", spaces, currNesting+1, err)
 	}
 	return obj, err
 }
