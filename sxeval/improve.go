@@ -13,9 +13,7 @@
 
 package sxeval
 
-import (
-	"t73f.de/r/sx"
-)
+import "t73f.de/r/sx"
 
 // Improvable is an additional interface for `Expr` that can be possibly
 // improved to simple ones.
