@@ -172,6 +172,19 @@ func (f *Frame) lookupN(sym *sx.Symbol, n int) (sx.Object, bool) {
 	return f.Lookup(sym)
 }
 
+// Resolve returns the object that is bound to a symbol. It searches in the
+// frame and in all parent frames.
+func (f *Frame) Resolve(sym *sx.Symbol) (sx.Object, bool) {
+	if sym != nil {
+		for curr := f; curr != nil; curr = curr.parent {
+			if obj, found := curr.Lookup(sym); found {
+				return obj, true
+			}
+		}
+	}
+	return sx.Nil(), false
+}
+
 // FindFrame returns the frame, where the symbol is bound to a value.
 // If no binding was found, nil is returned.
 func (f *Frame) FindFrame(sym *sx.Symbol) *Frame {

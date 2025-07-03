@@ -299,17 +299,13 @@ func (env *Environment) FindGlobal(sym *sx.Symbol) *Binding {
 // frames and in the global environment.
 func (env *Environment) Resolve(sym *sx.Symbol, frame *Frame) (sx.Object, bool) {
 	if sym == nil {
-		return nil, false
+		return sx.Nil(), false
 	}
-	for curr := frame; curr != nil; curr = curr.parent {
-		if obj, found := curr.Lookup(sym); found {
-			return obj, true
-		}
+	if obj, found := frame.Resolve(sym); found {
+		return obj, true
 	}
-	for curr := env.globals; curr != nil; curr = curr.parent {
-		if obj, found := curr.Lookup(sym); found {
-			return obj, true
-		}
+	if obj, found := env.globals.Resolve(sym); found {
+		return obj, true
 	}
 	return sym.Bound()
 }

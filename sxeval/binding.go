@@ -110,11 +110,24 @@ func (err ErrBindingFrozen) Error() string { return fmt.Sprintf("binding is froz
 
 // Lookup will search for a local binding of the given symbol. If not
 // found, the search will *not* be continued in the parent binding.
-// Use the global `Resolve` function, if you want a search up to the parent.
+// Use `Resolve`, if you want a search up to the parent.
 func (b *Binding) Lookup(sym *sx.Symbol) (sx.Object, bool) {
 	if sym != nil {
 		obj, found := b.mso[sym]
 		return obj, found
+	}
+	return sx.Nil(), false
+}
+
+// Resolve returns the object that is bound to a symbol. It searches in the
+// binding and in all parent bindings.
+func (b *Binding) Resolve(sym *sx.Symbol) (sx.Object, bool) {
+	if sym != nil {
+		for curr := b; curr != nil; curr = curr.parent {
+			if obj, found := curr.Lookup(sym); found {
+				return obj, true
+			}
+		}
 	}
 	return sx.Nil(), false
 }
