@@ -35,6 +35,9 @@ func (String) IsNil() bool { return false }
 // IsAtom always returns true because a string is an atomic value.
 func (String) IsAtom() bool { return true }
 
+// IsTrue returns true if string can be interpreted as a "true" value.
+func (s String) IsTrue() bool { return s.val != "" }
+
 // IsEqual compares two objects for equivalence.
 func (s String) IsEqual(other Object) bool {
 	otherS, ok := other.(String)

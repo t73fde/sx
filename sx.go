@@ -30,6 +30,9 @@ type Object interface {
 	// IsAtom returns true iff the object is an object that is not further decomposable.
 	IsAtom() bool
 
+	// IsTrue returns true, of the value can be considered as a "true" value.
+	IsTrue() bool
+
 	// IsEqual compare two objects for deep equality.
 	IsEqual(Object) bool
 }

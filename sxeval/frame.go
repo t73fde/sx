@@ -52,6 +52,9 @@ func (f *Frame) IsNil() bool { return f == nil }
 // IsAtom returns true if the frame is an atom.
 func (f *Frame) IsAtom() bool { return f == nil }
 
+// IsTrue returns true if frame can be interpreted as a "true" value.
+func (f *Frame) IsTrue() bool { return f != nil }
+
 // IsEqual returns true if both objects have the same value.
 func (f *Frame) IsEqual(other sx.Object) bool {
 	if f == other {

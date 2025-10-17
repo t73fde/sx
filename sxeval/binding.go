@@ -60,6 +60,9 @@ func (b *Binding) IsNil() bool { return b == nil }
 // IsAtom returns true if the binding is an atom.
 func (b *Binding) IsAtom() bool { return b == nil }
 
+// IsTrue returns true if binding can be interpreted as a "true" value.
+func (b *Binding) IsTrue() bool { return b != nil }
+
 // IsEqual returns true if both objects have the same value.
 func (b *Binding) IsEqual(other sx.Object) bool {
 	if b == other {

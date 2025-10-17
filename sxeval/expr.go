@@ -383,6 +383,9 @@ func (eo *ExprObj) IsNil() bool { return eo == nil }
 // IsAtom returns true if the object is atomic.
 func (*ExprObj) IsAtom() bool { return false }
 
+// IsTrue returns true if ExprObj can be interpreted as a "true" value.
+func (eo *ExprObj) IsTrue() bool { return eo != nil }
+
 // IsEqual returns true if the other object has the same content.
 func (eo *ExprObj) IsEqual(other sx.Object) bool {
 	if eo == nil {

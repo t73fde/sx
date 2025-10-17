@@ -29,26 +29,8 @@ func init() {
 	T.Freeze()
 }
 
-// IsTrue returns true, if object is a true value.
-//
-// Everything except a nil object and the empty string, is a true value.
-func IsTrue(obj Object) bool {
-	if IsNil(obj) {
-		return false
-	}
-	if s, ok := GetString(obj); ok && s.GetValue() == "" {
-		return false
-	}
-	return !IsUndefined(obj)
-}
+// IsTrue returns true, if the given object will be interpreted as "true" in a boolean context.
+func IsTrue(obj Object) bool { return obj != nil && obj.IsTrue() }
 
-// IsFalse returns true, if the object is a false value.
-func IsFalse(obj Object) bool {
-	if IsNil(obj) {
-		return true
-	}
-	if s, ok := GetString(obj); ok && s.GetValue() == "" {
-		return true
-	}
-	return IsUndefined(obj)
-}
+// IsFalse returns true, if the given object will be interpreted as "false" in a boolean context.
+func IsFalse(obj Object) bool { return obj == nil || !obj.IsTrue() }

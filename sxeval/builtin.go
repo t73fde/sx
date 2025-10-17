@@ -79,6 +79,9 @@ func (b *Builtin) IsNil() bool { return b == nil }
 // IsAtom returns true iff the object is an object that is not further decomposable.
 func (b *Builtin) IsAtom() bool { return b == nil }
 
+// IsTrue returns true if builtin can be interpreted as a "true" value.
+func (b *Builtin) IsTrue() bool { return b != nil }
+
 // IsEqual compare two objects for deep equality.
 func (b *Builtin) IsEqual(other sx.Object) bool { return b == other }
 

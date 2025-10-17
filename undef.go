@@ -25,6 +25,10 @@ func (Undefined) IsNil() bool { return false }
 // IsAtom always returns false because an undefined value is never atomic.
 func (Undefined) IsAtom() bool { return false }
 
+// IsTrue returns true if undefined can be interpreted as a "true" value.
+// Hint: it will never ;)
+func (Undefined) IsTrue() bool { return false }
+
 // IsEqual returns true if the other value has the same content.
 func (Undefined) IsEqual(other Object) bool { return IsUndefined(other) }
 

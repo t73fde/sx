@@ -48,6 +48,9 @@ func MakeList(objs ...Object) *Pair {
 // IsNil return true, if it is a nil pair object.
 func (pair *Pair) IsNil() bool { return pair == nil }
 
+// IsTrue returns true if pair can be interpreted as a "true" value.
+func (pair *Pair) IsTrue() bool { return pair != nil }
+
 // IsAtom returns true, if the list is an atom.
 func (pair *Pair) IsAtom() bool { return pair == nil }
 

@@ -336,6 +336,9 @@ func (ll *LexLambda) IsNil() bool { return ll == nil }
 // IsAtom returns true if the object is atomic.
 func (ll *LexLambda) IsAtom() bool { return ll == nil }
 
+// IsTrue returns true if lambda can be interpreted as a "true" value.
+func (ll *LexLambda) IsTrue() bool { return ll != nil }
+
 // IsEqual returns true if the other object has the same content.
 func (ll *LexLambda) IsEqual(other sx.Object) bool { return ll == other }
 
@@ -413,6 +416,9 @@ func (dl *DynLambda) IsNil() bool { return dl == nil }
 
 // IsAtom returns true if the object is atomic.
 func (dl *DynLambda) IsAtom() bool { return dl == nil }
+
+// IsTrue returns true if dyn-lambda can be interpreted as a "true" value.
+func (dl *DynLambda) IsTrue() bool { return dl != nil }
 
 // IsEqual returns true if the other object has the same content.
 func (dl *DynLambda) IsEqual(other sx.Object) bool { return dl == other }

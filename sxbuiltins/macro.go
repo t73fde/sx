@@ -47,6 +47,9 @@ func (m *Macro) IsNil() bool { return m == nil }
 // IsAtom returns true if the object is atomic.
 func (m *Macro) IsAtom() bool { return m == nil }
 
+// IsTrue returns true if macro can be interpreted as a "true" value.
+func (m *Macro) IsTrue() bool { return m != nil }
+
 // IsEqual returns true if the other object has the same content.
 func (m *Macro) IsEqual(other sx.Object) bool { return m == other }
 

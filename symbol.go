@@ -41,6 +41,9 @@ func (sym *Symbol) IsNil() bool { return sym == nil }
 // IsAtom always returns true because a symbol is an atomic value.
 func (*Symbol) IsAtom() bool { return true }
 
+// IsTrue returns true if symbol can be interpreted as a "true" value.
+func (sym *Symbol) IsTrue() bool { return sym != nil }
+
 // IsEqual compare the symbol with an object.
 func (sym *Symbol) IsEqual(other Object) bool {
 	if sym.IsNil() {

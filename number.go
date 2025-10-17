@@ -47,6 +47,9 @@ func (i Int64) IsNil() bool { return false }
 // IsAtom always returns true because a symbol is an atomic value.
 func (Int64) IsAtom() bool { return true }
 
+// IsTrue returns true if Int64 can be interpreted as a "true" value.
+func (i Int64) IsTrue() bool { return i != 0 }
+
 // IsEqual compare two objects.
 func (i Int64) IsEqual(other Object) bool {
 	if otherI, ok := other.(Int64); ok {

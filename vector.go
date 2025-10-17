@@ -33,6 +33,9 @@ func (v Vector) IsNil() bool { return len(v) == 0 }
 // IsAtom signals an atomic value. Only the empty vector is atomic.
 func (v Vector) IsAtom() bool { return len(v) == 0 }
 
+// IsTrue returns true if vector can be interpreted as a "true" value.
+func (v Vector) IsTrue() bool { return len(v) > 0 }
+
 // IsEqual compares the vector with another object to have the same content.
 func (v Vector) IsEqual(other Object) bool {
 	if v.IsNil() {

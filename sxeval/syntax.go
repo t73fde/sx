@@ -63,6 +63,9 @@ func (sp *Special) IsNil() bool { return sp == nil }
 // IsAtom returns true if the object is atomic.
 func (sp *Special) IsAtom() bool { return sp == nil }
 
+// IsTrue returns true if spacial can be interpreted as a "true" value.
+func (sp *Special) IsTrue() bool { return sp != nil }
+
 // IsEqual returns true if the other object has the same content.
 func (sp *Special) IsEqual(other sx.Object) bool { return sp == other }
 

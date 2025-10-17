@@ -33,6 +33,9 @@ func (pkg *Package) IsNil() bool { return pkg == nil }
 // IsAtom always returns true because a symbol is an atomic value.
 func (pkg *Package) IsAtom() bool { return pkg == nil }
 
+// IsTrue returns true if package can be interpreted as a "true" value.
+func (pkg *Package) IsTrue() bool { return pkg != nil }
+
 // IsEqual compare the symbol with an object.
 func (pkg *Package) IsEqual(other Object) bool {
 	if pkg.IsNil() {
