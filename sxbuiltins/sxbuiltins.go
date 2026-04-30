@@ -163,6 +163,7 @@ func BindAll(bind *sxeval.Binding) error {
 		&Map,                // map
 		&Apply,              // apply
 		&Fold, &FoldReverse, // fold, fold-reverse
+		&Identity,        // identity
 		&Not,             // not
 		&NumberP,         // number?
 		&Add, &Sub, &Mul, // +, -, *
