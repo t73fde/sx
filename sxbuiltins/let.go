@@ -253,7 +253,7 @@ var LetStarS = sxeval.Special{
 		if err := parseBindingsBody(pe, args, true, frame, &result.LetData); err != nil {
 			return nil, err
 		}
-		result.numSymbols = set.New(result.Symbols...).Length()
+		result.numSymbols = set.New(result.Symbols...).Len()
 		return &result, nil
 	},
 }
