@@ -136,11 +136,16 @@ func (pkg *Package) Size() int {
 
 // ----- Package package ----------------------------------------------------
 
-var packageRegistry = map[string]*Package{}
+var (
+	mxPkgRegistry   sync.RWMutex
+	packageRegistry = map[string]*Package{}
+)
 
 // AllPackages returns an iterator of all packages.
 func AllPackages() iter.Seq[*Package] {
 	return func(yield func(*Package) bool) {
+		mxPkgRegistry.RLock()
+		defer mxPkgRegistry.RUnlock()
 		for _, pkg := range packageRegistry {
 			if !yield(pkg) {
 				return
@@ -151,7 +156,11 @@ func AllPackages() iter.Seq[*Package] {
 
 // FindPackage returns the package with the given name.
 func FindPackage(name string) *Package {
-	if pkg, found := packageRegistry[name]; found {
+	mxPkgRegistry.RLock()
+	pkg, found := packageRegistry[name]
+	mxPkgRegistry.RUnlock()
+
+	if found {
 		return pkg
 	}
 	return nil
@@ -171,7 +180,9 @@ func MakePackage(name string) (*Package, error) {
 		name:    name,
 		symbols: map[string]*Symbol{},
 	}
+	mxPkgRegistry.Lock()
 	packageRegistry[name] = pkg
+	mxPkgRegistry.Unlock()
 	return pkg, nil
 }
 
