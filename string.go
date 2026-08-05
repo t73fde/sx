@@ -102,17 +102,18 @@ func (s String) Print(w io.Writer) (int, error) {
 				i += size
 				continue
 			}
-			if ch <= 0xff {
+			switch {
+			case ch <= 0xff:
 				esc = esc2
 				esc[2] = encHex[ch>>4]
 				esc[3] = encHex[ch&0xF]
-			} else if ch <= 0xffff {
+			case ch <= 0xffff:
 				esc = esc4
 				esc[2] = encHex[(ch>>12)&0xF]
 				esc[3] = encHex[(ch>>8)&0xF]
 				esc[4] = encHex[(ch>>4)&0xF]
 				esc[5] = encHex[ch&0xF]
-			} else {
+			default:
 				esc = esc6
 				esc[2] = encHex[(ch>>20)&0xF]
 				esc[3] = encHex[(ch>>16)&0xF]

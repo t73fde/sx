@@ -97,15 +97,16 @@ func (b *Builtin) GoString() string { return b.String() }
 func (b *Builtin) IsPure(objs sx.Vector) bool {
 	if testPure := b.TestPure; testPure != nil {
 		numargs, minArity, maxArity := len(objs), b.MinArity, b.MaxArity
-		if minArity == maxArity {
+		switch {
+		case minArity == maxArity:
 			if numargs != minArity {
 				return false
 			}
-		} else if maxArity < 0 {
+		case maxArity < 0:
 			if numargs < minArity {
 				return false
 			}
-		} else if numargs < minArity || maxArity < numargs {
+		case numargs < minArity || maxArity < numargs:
 			return false
 		}
 		return testPure(objs)

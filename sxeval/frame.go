@@ -135,14 +135,15 @@ func (f *Frame) length() int {
 //
 // A previous mapping will be overwritten.
 func (f *Frame) Bind(sym *sx.Symbol, obj sx.Object) {
-	if m := f.mso; m != nil {
-		m[sym] = obj
-	} else if f.sym == nil {
+	switch {
+	case f.mso != nil:
+		f.mso[sym] = obj
+	case f.sym == nil:
 		f.sym = sym
 		f.obj = obj
-	} else if f.sym == sym {
+	case f.sym == sym:
 		f.obj = obj
-	} else {
+	default:
 		f.mso = make(mapSymObj, 2)
 		f.mso[f.sym] = f.obj
 		f.sym = nil

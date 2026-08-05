@@ -179,9 +179,9 @@ func TestTailCallOptimization(t *testing.T) {
 		{name: "deriv-c", src: "(deriv 'c 'x)", exp: "0"},
 		{name: "deriv-+cx", src: "(deriv '(+ c x) 'x)", exp: "(+ 0 1)"},
 		{name: "deriv-*cx", src: "(deriv '(* c x) 'x)", exp: "(+ (* 0 x) (* c 1))"},
-		//{name: "deriv-x2", src: "(deriv '(expr x 3) 'x)", exp: "1"},
+		// {name: "deriv-x2", src: "(deriv '(expr x 3) 'x)", exp: "1"},
 		{name: "deriv-x2", src: "(deriv '(expt x 3) 'x)", exp: "(* 3 (* (expt x 2) 1))"},
-		//{name: "test-deriv", src: "(test-deriv deriv-test-cases)", exp: ""},
+		// {name: "test-deriv", src: "(test-deriv deriv-test-cases)", exp: ""},
 		{name: "collatz-27", src: "(collatz 27 0)", exp: "111"},
 		{name: "collatz-63728127", src: "(collatz 63728127 0)", exp: "949"},
 	}

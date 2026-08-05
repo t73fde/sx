@@ -27,10 +27,10 @@ type Object interface {
 	// IsNil checks if the concrete object is nil.
 	IsNil() bool
 
-	// IsAtom returns true iff the object is an object that is not further decomposable.
+	// IsAtom returns true if the object is an object that is not further decomposable.
 	IsAtom() bool
 
-	// IsTrue returns true, of the value can be considered as a "true" value.
+	// IsTrue returns true, if the value can be considered as a "true" value.
 	IsTrue() bool
 
 	// IsEqual compare two objects for deep equality.
