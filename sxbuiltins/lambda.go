@@ -60,7 +60,7 @@ func parseDefProc(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Fram
 	if args == nil {
 		return nil, nil, errNoParameterSpec
 	}
-	le, err := ParseProcedure(pe, sym.String(), args.Car(), args.Cdr(), frame)
+	le, err := parseProcedure(pe, sym.String(), args.Car(), args.Cdr(), frame)
 	return sym, le, err
 }
 
@@ -83,12 +83,12 @@ var LambdaS = sxeval.Special{
 		} else {
 			name = car.String()
 		}
-		return ParseProcedure(pe, name, car, args.Cdr(), frame)
+		return parseProcedure(pe, name, car, args.Cdr(), frame)
 	},
 }
 
-// ParseProcedure parses a procedure definition, where some parsing is already done.
-func ParseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpec sx.Object, frame *sxeval.Frame) (*LambdaExpr, error) {
+// parseProcedure parses a procedure definition, where some parsing is already done.
+func parseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpec sx.Object, frame *sxeval.Frame) (*LambdaExpr, error) {
 	var params []*sx.Symbol
 	var rest *sx.Symbol
 	if !sx.IsNil(paramSpec) {
