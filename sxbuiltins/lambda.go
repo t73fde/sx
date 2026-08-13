@@ -46,7 +46,7 @@ var DefunS = sxeval.Special{
 	},
 }
 
-var errNoParameterSpecAndBody = errors.New("parameter spec and body missing")
+var errNoParameterSpec = errors.New("parameter spec missing")
 
 func parseDefProc(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (*sx.Symbol, *LambdaExpr, error) {
 	if args == nil {
@@ -58,7 +58,7 @@ func parseDefProc(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Fram
 	}
 	args = args.Tail()
 	if args == nil {
-		return nil, nil, errNoParameterSpecAndBody
+		return nil, nil, errNoParameterSpec
 	}
 	le, err := ParseProcedure(pe, sym.String(), args.Car(), args.Cdr(), frame)
 	return sym, le, err
@@ -69,7 +69,7 @@ var LambdaS = sxeval.Special{
 	Name: lambdaName,
 	Fn: func(pe *sxeval.ParseEnvironment, args *sx.Pair, frame *sxeval.Frame) (sxeval.Expr, error) {
 		if args == nil {
-			return nil, errNoParameterSpecAndBody
+			return nil, errNoParameterSpec
 		}
 		car := args.Car()
 		var name string
@@ -77,7 +77,7 @@ var LambdaS = sxeval.Special{
 			name = sName.GetValue()
 			args = args.Tail()
 			if args == nil {
-				return nil, errNoParameterSpecAndBody
+				return nil, errNoParameterSpec
 			}
 			car = args.Car()
 		} else {
@@ -104,9 +104,6 @@ func ParseProcedure(pe *sxeval.ParseEnvironment, name string, paramSpec, bodySpe
 		default:
 			return nil, fmt.Errorf("only symbol and list allowed in parameter spec, but got: %T/%v", p, p)
 		}
-	}
-	if sx.IsNil(bodySpec) {
-		return nil, fmt.Errorf("missing body")
 	}
 	body, isPair := sx.GetPair(bodySpec)
 	if !isPair {
