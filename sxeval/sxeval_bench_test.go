@@ -95,6 +95,14 @@ func BenchmarkFib(b *testing.B) {
 	runBenchmark(b, sx.MakeList(sx.MakeSymbol("fib"), sx.Int64(10)))
 }
 
+func BenchmarkPrimeFactorsComposite(b *testing.B) {
+	runBenchmark(b, sx.MakeList(sx.MakeSymbol("prime-factors"), sx.Int64(73513440)))
+}
+
+func BenchmarkPrimeFactorsPrime(b *testing.B) {
+	runBenchmark(b, sx.MakeList(sx.MakeSymbol("prime-factors"), sx.Int64(2147483647)))
+}
+
 func BenchmarkTak(b *testing.B) {
 	runBenchmark(b, sx.MakeList(sx.MakeSymbol("tak"), sx.Int64(15), sx.Int64(10), sx.Int64(5)))
 }

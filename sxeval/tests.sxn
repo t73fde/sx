@@ -11,7 +11,7 @@
 ;;; SPDX-FileCopyrightText: 2025-present Detlef Stern
 ;;;----------------------------------------------------------------------------
 
-;; Indirekt recursive definition of even/odd
+;; Indirect recursive definition of even/odd
 (defvar odd? ()) ; define symbol odd? to make lookup in even? faster, because it is known.
 (defun even? (n) (if (= n 0) 1 (odd? (- n 1))))
 (defun odd? (n) (if (= n 0) () (even? (- n 1))))
@@ -32,6 +32,31 @@
       (tak (tak (- x 1) y z)
            (tak (- y 1) z x)
            (tak (- z 1) x y))))
+
+;; simple prime factors
+(defun prime-factors (n)
+  (let ((factors (prime-factors-iter n 2 ())))
+    (reverse factors)))
+
+(defun prime-factors-iter (n factor factors)
+  (cond
+    ((= n 1)
+     factors)
+
+    ((> (* factor factor) n)
+     (cons n factors))
+
+    ((= (mod n factor) 0)
+     (prime-factors-iter
+       (div n factor)
+       factor
+       (cons factor factors)))
+
+    (T
+     (prime-factors-iter
+       n
+       (+ factor 1)
+       factors))))
 
 ;; Symbolic derivation
 (defun deriv (expr var)
