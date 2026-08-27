@@ -29,3 +29,67 @@
               `(if ,the-cond
                    (begin ,@(cdr clause))
                    (cond ,@(cdr clauses))))))
+
+;; ----- Some function on functions, implemented as macros
+
+;; (partial fn val ...)
+;;
+;; Returns a function that applies fn to the supplied values followed by
+;; any arguments passed to the returned function.
+;;
+;; Example:
+;;
+;;   (defun make-point (x y z color)
+;;     (list x y z color))
+;;
+;;   ((partial make-point 10 20) 30 'red)
+;;   => (10 20 30 red)
+;;
+(defmacro partial (fn . vals)
+  `(lambda args
+     (apply ,fn (append ',vals args))))
+
+;; (partial-1 fn val ...)
+;;
+;; Returns a function of one argument that applies fn to the supplied
+;; values followed by the argument supplied to the returned function.
+;;
+;; Example:
+;;
+;;   ((partial-1 cons 10) 20)
+;;   => (10 . 20)
+;;
+(defmacro partial-1 (fn . vals)
+  `(lambda (x)
+     (,fn ,@vals x)))
+
+;; (rpartial fn val ...)
+;;
+;; Returns a function that applies FN to any arguments passed to the
+;; returned function followed by the supplied values.
+;;
+;; Example:
+;;
+;;   (defun make-point (x y z color)
+;;     (list x y z color))
+;;
+;;   ((rpartial make-point 10 20) 30 'red)
+;;   => (30 red 10 20)
+;;
+(defmacro rpartial (fn . vals)
+  `(lambda args
+     (apply ,fn (append args ',vals))))
+
+;; (rpartial-1 fn val ...)
+;;
+;; Returns a function of one argument that calls fn with the argument
+;; supplied to the returned function followed by the supplied values.
+;;
+;; Example:
+;;
+;;   ((rpartial-1 cons 10) 20)
+;;   => (20 . 10)
+;;
+(defmacro rpartial-1 (fn . vals)
+  `(lambda (x)
+     (,fn x ,@vals)))
